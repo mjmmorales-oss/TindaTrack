@@ -120,6 +120,11 @@ const DevUiPage = lazy(() =>
     default: m.DevUiPage,
   })),
 )
+const DevDataPage = lazy(() =>
+  import('@/features/dev/pages/DevDataPage').then((m) => ({
+    default: m.DevDataPage,
+  })),
+)
 const ForbiddenPage = lazy(() =>
   import('@/features/system/ForbiddenPage').then((m) => ({
     default: m.ForbiddenPage,
@@ -394,6 +399,17 @@ export const router = createBrowserRouter([
           <RoleRoute roles={['owner']}>
             <SuspenseWrap>
               <DevUiPage />
+            </SuspenseWrap>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'dev/data',
+        handle: { breadcrumb: 'Mock Data (Dev)' },
+        element: (
+          <RoleRoute roles={['owner']}>
+            <SuspenseWrap>
+              <DevDataPage />
             </SuspenseWrap>
           </RoleRoute>
         ),
