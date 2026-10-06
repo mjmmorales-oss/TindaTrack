@@ -1,0 +1,90 @@
+@baseUrl = http://localhost:8000/api
+@ownerToken = {{loginOwner.response.body.token}}
+@cashierToken = {{loginCashier.response.body.token}}
+
+### 1. Ping (Public Health Check)
+GET {{baseUrl}}/ping
+Accept: application/json
+
+### 2. Register Owner (creates owner + token)
+POST {{baseUrl}}/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Maria Santos",
+  "email": "maria@tindatrack.test",
+  "password": "password",
+  "password_confirmation": "password"
+}
+
+### 3. Login as Owner
+# @name loginOwner
+POST {{baseUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "owner@tindatrack.test",
+  "password": "password"
+}
+
+### 4. Get Current User Profile (Owner)
+GET {{baseUrl}}/user
+Authorization: Bearer {{ownerToken}}
+Accept: application/json
+
+### 5. Access Owner Ping as Owner (Expect: 200)
+GET {{baseUrl}}/owner/ping
+Authorization: Bearer {{ownerToken}}
+Accept: application/json
+
+### 6. Access Staff Ping as Owner (Expect: 200)
+GET {{baseUrl}}/staff/ping
+Authorization: Bearer {{ownerToken}}
+Accept: application/json
+
+### 7. Login as Cashier
+# @name loginCashier
+POST {{baseUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "cashier@tindatrack.test",
+  "password": "password"
+}
+
+### 8. Access Staff Ping as Cashier (Expect: 200)
+GET {{baseUrl}}/staff/ping
+Authorization: Bearer {{cashierToken}}
+Accept: application/json
+
+### 9. Access Owner Ping as Cashier (Expect: 403 Forbidden)
+GET {{baseUrl}}/owner/ping
+Authorization: Bearer {{cashierToken}}
+Accept: application/json
+
+### 10. Login as Inactive Cashier (Expect: 422 Unprocessable Content)
+POST {{baseUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "inactive@tindatrack.test",
+  "password": "password"
+}
+
+### 11. Request Password Reset Link
+POST {{baseUrl}}/forgot-password
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "owner@tindatrack.test"
+}
+
+### 12. Logout (Revoke Token, Expect: 204 No Content)
+POST {{baseUrl}}/logout
+Authorization: Bearer {{ownerToken}}
+Accept: application/json
