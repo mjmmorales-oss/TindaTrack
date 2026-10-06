@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/common/EmptyState'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { Kbd } from '@/components/ui/kbd'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { Kbd } from '@/components/common/Kbd'
 
 export function PosPage() {
   useDocumentTitle('POS Terminal')

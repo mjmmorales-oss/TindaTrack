@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { PasswordInput } from '@/components/common/PasswordInput'
+import { PasswordInput } from '@/components/forms/PasswordInput'
 import { useAuth } from '@/hooks/useAuth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage, getFieldErrors } from '@/lib/errors'

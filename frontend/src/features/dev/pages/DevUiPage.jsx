@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
 import {
   AlertCircle,
   AlertTriangle,
@@ -9,15 +10,23 @@ import {
   CreditCard,
   DollarSign,
   Edit,
+  Eye,
   FolderSearch,
   Info,
+  Layers,
+  LayoutGrid,
+  ListOrdered,
   Package,
   Plus,
   RefreshCw,
   Search,
   ShoppingCart,
+  Store,
+  Table as TableIcon,
   Trash2,
   Users,
+  Wifi,
+  WifiOff,
 } from 'lucide-react'
 import {
   BarChart,
@@ -112,9 +121,8 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from '@/components/ui/empty'
-import { EmptyState } from '@/components/common/EmptyState'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Kbd } from '@/components/common/Kbd'
+import { Kbd } from '@/components/ui/kbd'
 import { Spinner } from '@/components/ui/spinner'
 import { ModeToggle } from '@/components/common/ModeToggle'
 import { NumberTicker } from '@/components/ui/number-ticker'
@@ -131,6 +139,52 @@ import {
 } from '@/lib/format'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
+// Common Component Kit
+import { StatCard } from '@/components/common/StatCard'
+import { ChartCard } from '@/components/common/ChartCard'
+import { TrendBadge } from '@/components/common/TrendBadge'
+import { Money } from '@/components/common/Money'
+import { StatusBadge } from '@/components/common/StatusBadge'
+import { StockLevelBar } from '@/components/common/StockLevelBar'
+import { UserAvatar } from '@/components/common/UserAvatar'
+import { ProductThumb } from '@/components/common/ProductThumb'
+import { EmptyState } from '@/components/common/EmptyState'
+import { ErrorState } from '@/components/common/ErrorState'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { CardGridSkeleton } from '@/components/common/CardGridSkeleton'
+import { KeyValueList } from '@/components/common/KeyValueList'
+import { Timeline } from '@/components/common/Timeline'
+import { SectionCard } from '@/components/common/SectionCard'
+
+// Data Table Kit
+import { DataTable } from '@/components/data-table/DataTable'
+import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader'
+import { DataTableRowActions } from '@/components/data-table/DataTableRowActions'
+
+// Forms Kit
+import { FormInput } from '@/components/forms/FormInput'
+import { FormTextarea } from '@/components/forms/FormTextarea'
+import { FormSelect } from '@/components/forms/FormSelect'
+import { FormSwitch } from '@/components/forms/FormSwitch'
+import { FormCheckbox } from '@/components/forms/FormCheckbox'
+import { FormRadioGroup } from '@/components/forms/FormRadioGroup'
+import { MoneyInput } from '@/components/forms/MoneyInput'
+import { QuantityStepper } from '@/components/forms/QuantityStepper'
+import { SearchInput } from '@/components/forms/SearchInput'
+import { DateRangePicker } from '@/components/forms/DateRangePicker'
+import { PasswordInput } from '@/components/forms/PasswordInput'
+import { PhoneInput } from '@/components/forms/PhoneInput'
+import { CustomerCombobox } from '@/components/forms/CustomerCombobox'
+
+// Overlays Kit
+import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
+import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
+import { useConfirm } from '@/components/overlays/useConfirm'
+
+// System Kit
+import { OfflineBanner } from '@/components/system/OfflineBanner'
+import { FullPageLoader } from '@/components/system/FullPageLoader'
+
 const sampleChartData = [
   { day: 'Mon', sales: 4200, utang: 650, cash: 3550 },
   { day: 'Tue', sales: 3800, utang: 400, cash: 3400 },
@@ -141,796 +195,1216 @@ const sampleChartData = [
   { day: 'Sun', sales: 7800, utang: 950, cash: 6850 },
 ]
 
-const chartConfig = {
-  sales: {
-    label: 'Total Benta',
-    color: 'var(--color-chart-1)',
+const sampleTimelineItems = [
+  {
+    id: 1,
+    title: 'Benta sa Utang (Utang Sale)',
+    meta: 'Oct 7, 2026 · 10:15 AM · Tindahan ni Aling Nena',
+    amount: 145.0,
+    amountTone: 'utang',
+    balance: 495.0,
+    type: 'sale',
   },
-  cash: {
-    label: 'Cash',
-    color: 'var(--color-chart-2)',
+  {
+    id: 2,
+    title: 'Bahagyang Pagbabayad (Partial Payment)',
+    meta: 'Oct 6, 2026 · 4:30 PM · Resibo TT-PAY-0082',
+    amount: -200.0,
+    amountTone: 'success',
+    balance: 350.0,
+    type: 'payment',
   },
-  utang: {
-    label: 'Utang',
-    color: 'var(--color-chart-4)',
+  {
+    id: 3,
+    title: 'Benta sa Utang (Utang Sale)',
+    meta: 'Oct 5, 2026 · 8:12 AM · 3 items (Canton, Coke, Sardines)',
+    amount: 250.0,
+    amountTone: 'utang',
+    balance: 550.0,
+    type: 'sale',
   },
-}
+]
+
+const sampleCustomers = [
+  {
+    id: 'c-1',
+    name: 'Aling Rosing Dela Cruz',
+    nickname: 'Nanay ni Pedro',
+    contact: '0917-123-4567',
+    credit_balance: 495.0,
+    credit_limit: 1500.0,
+  },
+  {
+    id: 'c-2',
+    name: 'Mang Kanor Morales',
+    nickname: 'Tricycle Driver',
+    contact: '0928-888-9999',
+    credit_balance: 120.0,
+    credit_limit: 500.0,
+  },
+  {
+    id: 'c-3',
+    name: 'Tessie Santos',
+    nickname: 'Guro sa Elementary',
+    contact: '0939-555-1234',
+    credit_balance: 0.0,
+    credit_limit: 2000.0,
+  },
+  {
+    id: 'c-4',
+    name: 'Kapitan Jun Ramos',
+    nickname: 'Barangay Captain',
+    contact: '0918-222-3333',
+    credit_balance: 850.5,
+    credit_limit: 3000.0,
+  },
+]
+
+const sampleProducts = [
+  {
+    id: 'p-1',
+    sku: 'TT-NOO-001',
+    name: 'Lucky Me! Pancit Canton Kalamansi',
+    category: 'Noodles',
+    categoryColor: '#EAB308',
+    categoryIcon: 'Utensils',
+    price: 18.0,
+    cost: 14.5,
+    stock: 45,
+    reorderLevel: 20,
+    status: 'active',
+  },
+  {
+    id: 'p-2',
+    sku: 'TT-DRI-002',
+    name: 'Coca-Cola Mismo 290ml',
+    category: 'Drinks',
+    categoryColor: '#EF4444',
+    categoryIcon: 'Coffee',
+    price: 25.0,
+    cost: 21.0,
+    stock: 5,
+    reorderLevel: 12,
+    status: 'active',
+  },
+  {
+    id: 'p-3',
+    sku: 'TT-SNA-003',
+    name: 'Piattos Cheese 40g',
+    category: 'Snacks',
+    categoryColor: '#F97316',
+    categoryIcon: 'Cookie',
+    price: 22.0,
+    cost: 17.5,
+    stock: 0,
+    reorderLevel: 15,
+    status: 'active',
+  },
+  {
+    id: 'p-4',
+    sku: 'TT-CAN-004',
+    name: 'Ligo Sardines in Tomato Sauce 155g',
+    category: 'Canned Goods',
+    categoryColor: '#3B82F6',
+    categoryIcon: 'Fish',
+    price: 28.0,
+    cost: 23.0,
+    stock: 18,
+    reorderLevel: 10,
+    status: 'active',
+  },
+  {
+    id: 'p-5',
+    sku: 'TT-DAI-005',
+    name: 'Bear Brand Fortified Milk 33g',
+    category: 'Dairy',
+    categoryColor: '#06B6D4',
+    categoryIcon: 'Milk',
+    price: 15.0,
+    cost: 12.0,
+    stock: 32,
+    reorderLevel: 15,
+    status: 'inactive',
+  },
+]
 
 export function DevUiPage() {
   useDocumentTitle('UI Showcase (Dev)')
-  const [sliderVal, setSliderVal] = useState([45])
-  const [otpVal, setOtpVal] = useState('1234')
-  const [moneyVal, setMoneyVal] = useState('250.00')
 
-  const handleTestPromiseToast = () => {
-    const mockAction = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        Math.random() > 0.3
-          ? resolve('TT-20261007-0042')
-          : reject(new Error('Koneksyon nawala'))
-      }, 1500)
+  // Interactive Form State (React Hook Form)
+  const { control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      productName: 'Chippy Barbecue 110g',
+      productDescription: 'Crispy corn snack, popular with students.',
+      category: 'snacks',
+      isActive: true,
+      allowCredit: false,
+      userRole: 'cashier',
+    },
+  })
+
+  // Standalone Component States
+  const [moneyVal, setMoneyVal] = useState('150.00')
+  const [stepperVal, setStepperVal] = useState(3)
+  const [searchVal, setSearchVal] = useState('')
+  const [phoneVal, setPhoneVal] = useState('09171234567')
+  const [dateRange, setDateRange] = useState({
+    from: new Date(),
+    to: new Date(),
+  })
+  const [selectedCustomerId, setSelectedCustomerId] = useState('c-1')
+
+  // Modals & Overlays States
+  const [isResponsiveDialogOpen, setIsResponsiveDialogOpen] = useState(false)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [isDestructiveConfirmOpen, setIsDestructiveConfirmOpen] =
+    useState(false)
+  const [showFullLoader, setShowFullLoader] = useState(false)
+  const [showOfflineBannerPreview, setShowOfflineBannerPreview] =
+    useState(false)
+
+  // Imperative Confirm Hook
+  const { confirm, ConfirmDialog: ImperativeConfirmDialog } = useConfirm()
+
+  // Table parameters for demonstration
+  const [tableParams, setTableParams] = useState({
+    page: 1,
+    per_page: 10,
+    sort: 'name',
+    q: '',
+  })
+
+  // Table Columns Definition
+  const tableColumns = useMemo(
+    () => [
+      {
+        accessorKey: 'sku',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="SKU" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground font-mono text-xs font-semibold">
+            {row.original.sku}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'name',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Produkto (Product)" />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <ProductThumb
+              name={row.original.name}
+              category={row.original.category}
+              size="sm"
+            />
+            <div className="flex flex-col">
+              <span className="text-foreground text-sm leading-snug font-medium">
+                {row.original.name}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {row.original.category}
+              </span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'price',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Presyo (Price)" />
+        ),
+        cell: ({ row }) => <Money amount={row.original.price} size="sm" />,
+      },
+      {
+        accessorKey: 'stock',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Stock Level" />
+        ),
+        cell: ({ row }) => {
+          const { stock, reorderLevel } = row.original
+          let variant = 'in'
+          if (stock <= 0) variant = 'out'
+          else if (stock <= reorderLevel) variant = 'low'
+
+          return (
+            <div className="w-36 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <StatusBadge type="stock" variant={variant} />
+                <span className="text-foreground font-mono font-semibold tabular-nums">
+                  {stock} pcs
+                </span>
+              </div>
+              <StockLevelBar
+                current={stock}
+                max={reorderLevel * 2}
+                reorderLevel={reorderLevel}
+              />
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Katayuan (Status)',
+        cell: ({ row }) => (
+          <StatusBadge
+            type="active"
+            variant={row.original.status === 'active' ? 'active' : 'inactive'}
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        cell: ({ row }) => (
+          <DataTableRowActions
+            actions={[
+              {
+                label: 'Tingnan (View details)',
+                icon: Eye,
+                onClick: () => notify.info(`Viewing ${row.original.name}`),
+              },
+              {
+                label: 'I-edit (Edit product)',
+                icon: Edit,
+                onClick: () => notify.info(`Editing ${row.original.name}`),
+              },
+              {
+                label: 'I-delete',
+                icon: Trash2,
+                destructive: true,
+                onClick: () =>
+                  notify.error(`Delete requested for ${row.original.name}`),
+              },
+            ]}
+          />
+        ),
+      },
+    ],
+    [],
+  )
+
+  const handleTestImperativeConfirm = async () => {
+    const confirmed = await confirm({
+      title: 'I-void ang Resibo TT-20261007-0037?',
+      description:
+        'Ibabalik ang mga produkto sa imbentaryo at ibabawas ang utang kung nailista.',
+      tone: 'destructive',
+      confirmText: 'Oo, I-void ang Benta',
+      cancelText: 'Huwag muna',
+      requireReason: true,
+      reasonLabel: 'Dahilan ng Pag-void (Required)',
+      reasonPlaceholder: 'Halimbawa: Mali ang na-punch na item...',
+      minReasonLength: 5,
     })
 
-    notify.promise(mockAction, {
-      loading: 'Itinatala ang benta sa database...',
-      success: (data) => `Matagumpay na naitala ang ${data} (₱340.00)`,
-      error: (err) => `Pumalya ang transaksyon: ${err.message}`,
-    })
+    if (confirmed) {
+      notify.success(
+        'Matagumpay na na-void!',
+        typeof confirmed === 'string' ? `Dahilan: ${confirmed}` : undefined,
+      )
+    } else {
+      notify.info('Kinansela ang pag-void.')
+    }
+  }
+
+  const handleTestFullLoader = () => {
+    setShowFullLoader(true)
+    setTimeout(() => {
+      setShowFullLoader(false)
+      notify.success('Tapos nang mag-load!')
+    }, 2000)
   }
 
   return (
-    <PageContainer className="space-y-10 pb-16">
-      <PageHeader
-        title="Design System & UI Kit"
-        description="Comprehensive visual verification of TindaTrack tokens, Radix UI components, form inputs, typography, and theme switching."
-        actions={
+    <PageContainer className="space-y-10 pb-20">
+      {/* Offline Banner Real-time or Simulated Preview */}
+      <OfflineBanner />
+      {showOfflineBannerPreview && (
+        <div
+          role="alert"
+          className="bg-destructive text-destructive-foreground flex items-center justify-between rounded-lg px-4 py-2.5 text-xs font-medium shadow-sm sm:text-sm"
+        >
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground mr-1 hidden text-xs sm:inline">
-              Theme:
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span>
+              Preview: Nawalan ng koneksyon sa internet. Nakabukas ang offline
+              cache.
             </span>
-            <ModeToggle />
           </div>
-        }
-      />
+          <Button
+            size="xs"
+            variant="secondary"
+            onClick={() => setShowOfflineBannerPreview(false)}
+          >
+            Isara
+          </Button>
+        </div>
+      )}
 
-      {/* 1. BUTTONS & ACTIONS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg">
-            <span>1. Buttons & Variants</span>
-            <Badge variant="outline">Radix + Tailwind</Badge>
-          </CardTitle>
-          <CardDescription>
-            All standard button variants, touch targets (≥ 44px on mobile),
-            icons, and loading spinners.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="default">
-              <Plus className="mr-1.5 h-4 w-4" /> Primary (Tinda Green)
-            </Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="destructive">
-              <Trash2 className="mr-1.5 h-4 w-4" /> Destructive
-            </Button>
-            <Button variant="outline">
-              <Edit className="mr-1.5 h-4 w-4" /> Outline
-            </Button>
-            <Button variant="ghost">Ghost Action</Button>
-            <Button variant="link">Link Button</Button>
-          </div>
+      {/* Full Page Loader Preview Overlay */}
+      {showFullLoader && (
+        <FullPageLoader label="Ipinapakita ang demo loader (2 segundo)..." />
+      )}
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button size="sm">Small (sm)</Button>
-            <Button size="default">Default</Button>
-            <Button size="lg">Large (lg)</Button>
-            <Button size="icon" variant="outline" aria-label="Notifications">
-              <Bell className="h-4 w-4" />
-            </Button>
-            <Button disabled>
-              <Spinner className="mr-2" /> Saving Sale...
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Imperative Confirm Dialog Component Host */}
+      <ImperativeConfirmDialog />
 
-      {/* 2. SEMANTIC BADGES */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            2. Badges & Semantic Status Tokens
-          </CardTitle>
-          <CardDescription>
-            TindaTrack semantic color tokens (AA-contrast verified). Color is
-            never the only signal.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge className="bg-primary text-primary-foreground">
-              Primary Active
-            </Badge>
-            <Badge className="bg-highlight text-highlight-foreground font-semibold">
-              Mango Accent
-            </Badge>
-            <Badge className="bg-success text-success-foreground flex items-center gap-1 font-medium">
-              <CheckCircle2 className="h-3.5 w-3.5" /> In Stock · 42 pcs
-            </Badge>
-            <Badge className="bg-warning text-warning-foreground flex items-center gap-1 font-medium">
-              <AlertTriangle className="h-3.5 w-3.5" /> Low Stock · 3 left
-            </Badge>
-            <Badge className="bg-utang text-utang-foreground flex items-center gap-1 font-medium">
-              <CreditCard className="h-3.5 w-3.5" /> Utang · ₱1,450.00
-            </Badge>
-            <Badge className="bg-info text-info-foreground flex items-center gap-1 font-medium">
-              <Info className="h-3.5 w-3.5" /> Suki Customer
-            </Badge>
-            <Badge className="bg-destructive text-destructive-foreground flex items-center gap-1">
-              <AlertCircle className="h-3.5 w-3.5" /> Voided Sale
-            </Badge>
-            <Badge variant="outline">Neutral Outline</Badge>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Page Header */}
+      <PageHeader
+        title="TindaTrack Reusable Component Kit"
+        description="Kumpletong QA showcase ng Common, Data Table, Forms, Overlays, at System components."
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setShowOfflineBannerPreview(!showOfflineBannerPreview)
+            }
+            className="gap-1.5"
+          >
+            <Wifi className="h-4 w-4" />
+            Toggle Offline Banner
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTestFullLoader}
+            className="gap-1.5"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Test FullPageLoader
+          </Button>
+          <ModeToggle />
+        </div>
+      </PageHeader>
 
-      {/* 3. FORM CONTROLS & FIELD STATES */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            3. Form Fields & Validation States
-          </CardTitle>
-          <CardDescription>
-            Field, FieldLabel, FieldDescription, FieldError with inputs,
-            textareas, selects, and toggles.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          {/* Text Input with Error */}
-          <Field data-invalid="true">
-            <FieldLabel htmlFor="field-product">
-              Pangalan ng Produkto
-            </FieldLabel>
-            <Input
-              id="field-product"
-              defaultValue=""
-              placeholder="e.g. Lucky Me Pancit Canton"
-              aria-invalid="true"
-            />
-            <FieldError
-              errors={[
-                { message: 'Kailangan ilagay ang pangalan ng produkto.' },
-              ]}
-            />
-          </Field>
+      {/* =========================================================================
+          SECTION 1: COMMON COMPONENT KIT
+          ========================================================================= */}
+      <div className="space-y-6">
+        <div className="border-b pb-2">
+          <h2 className="text-foreground flex items-center gap-2 text-xl font-bold tracking-tight">
+            <LayoutGrid className="text-primary h-5 w-5" />
+            1. Common Component Kit (`src/components/common/`)
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Display primitives: StatCard, ChartCard, TrendBadge, Money,
+            StatusBadge, StockLevelBar, UserAvatar, ProductThumb, Timelines, at
+            Skeletons.
+          </p>
+        </div>
 
-          {/* Select dropdown */}
-          <Field>
-            <FieldLabel htmlFor="field-category">Kategorya</FieldLabel>
-            <Select defaultValue="instant-noodles">
-              <SelectTrigger id="field-category">
-                <SelectValue placeholder="Pumili ng kategorya" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="instant-noodles">
-                  Instant Noodles & Soups
-                </SelectItem>
-                <SelectItem value="canned-goods">Canned Goods</SelectItem>
-                <SelectItem value="beverages">
-                  Beverages & Softdrinks
-                </SelectItem>
-                <SelectItem value="snacks">Snacks & Biscuits</SelectItem>
-              </SelectContent>
-            </Select>
-            <FieldDescription>
-              Grupo ng paninda para sa POS filters.
-            </FieldDescription>
-          </Field>
+        {/* 1A. KPI Stat Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Benta Ngayong Araw (Today's Sales)"
+            value={3482.5}
+            format="currency"
+            delta={8.4}
+            deltaPeriod="vs. kahapon"
+            tone="success"
+            icon={DollarSign}
+            tooltip="Kabuuang nalikom na benta ngayong araw"
+          />
+          <StatCard
+            label="Mga Transaksyon"
+            value={37}
+            format="number"
+            delta={12.0}
+            deltaPeriod="vs. kahapon"
+            tone="default"
+            icon={ShoppingCart}
+          />
+          <StatCard
+            label="Kabuuang Utang (Debtors)"
+            value={5120.0}
+            format="currency"
+            delta={-3.5}
+            deltaPeriod="vs. nakaraang linggo"
+            tone="warning"
+            icon={CreditCard}
+          />
+          <StatCard
+            label="Ubos na Stock (Out of Stock)"
+            value={3}
+            format="number"
+            tone="destructive"
+            icon={Package}
+          />
+        </div>
 
-          {/* Textarea */}
-          <Field className="md:col-span-2">
-            <FieldLabel htmlFor="field-notes">
-              Dahilan ng Pag-void (Void Reason)
-            </FieldLabel>
-            <Textarea
-              id="field-notes"
-              rows={2}
-              placeholder="Halimbawa: Mali ang na-punch na dami ng parokyano..."
-            />
-            <FieldDescription>
-              Kinakailangan kapag nagba-bawi ng naitalang resibo.
-            </FieldDescription>
-          </Field>
-
-          {/* Checkbox and Switch */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="terms" defaultChecked />
-              <label
-                htmlFor="terms"
-                className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Aktibong Paninda (Active for POS sales)
-              </label>
+        {/* 1B. Money Tokens & Sizes */}
+        <SectionCard
+          title="Money Formatter & Tones"
+          description="Palaging tabular-nums na may tamang ₱ currency symbol at semantic tones."
+        >
+          <div className="grid grid-cols-2 items-center gap-4 sm:grid-cols-3 md:grid-cols-6">
+            <div className="space-y-1">
+              <span className="text-muted-foreground block text-xs">
+                Default (base)
+              </span>
+              <Money amount={1240.5} size="base" />
             </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <div className="text-sm font-medium">Payagan ang Utang</div>
-                <div className="text-muted-foreground text-xs">
-                  Pahintulutan ang parokyano na mag-utang
-                </div>
-              </div>
-              <Switch defaultChecked />
+            <div className="space-y-1">
+              <span className="text-muted-foreground block text-xs">
+                Success
+              </span>
+              <Money amount={850.0} tone="success" size="lg" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground block text-xs">
+                Utang (Amber)
+              </span>
+              <Money amount={320.0} tone="utang" size="lg" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground block text-xs">
+                Destructive
+              </span>
+              <Money amount={45.0} tone="destructive" size="lg" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground block text-xs">Muted</span>
+              <Money amount={0.0} tone="muted" size="sm" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground block text-xs">
+                2XL KPI
+              </span>
+              <Money amount={9540.75} tone="highlight" size="2xl" />
             </div>
           </div>
+        </SectionCard>
 
-          {/* Radio Group and Slider */}
-          <div className="space-y-4">
-            <Field>
-              <FieldLabel>Paraan ng Pagbabayad</FieldLabel>
-              <RadioGroup defaultValue="cash" className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="cash" id="r-cash" />
-                  <label htmlFor="r-cash" className="text-sm">
-                    Cash (Bayad Agad)
-                  </label>
+        {/* 1C. StatusBadges & StockLevelBars */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <SectionCard
+            title="Config-driven StatusBadge"
+            description="Laging may Icon + Text (hindi kulay lang) para sa accessibility."
+          >
+            <div className="space-y-4">
+              <div>
+                <span className="text-muted-foreground mb-2 block text-xs font-semibold tracking-wider uppercase">
+                  Stock Status
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge type="stock" variant="in" />
+                  <StatusBadge type="stock" variant="low" />
+                  <StatusBadge type="stock" variant="out" />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="utang" id="r-utang" />
-                  <label htmlFor="r-utang" className="text-sm">
-                    Utang (Suki Credit)
-                  </label>
-                </div>
-              </RadioGroup>
-            </Field>
-
-            <Field>
-              <div className="flex justify-between text-sm">
-                <FieldLabel>Low Stock Alert Level</FieldLabel>
-                <span className="font-mono text-xs">{sliderVal[0]} pcs</span>
               </div>
-              <Slider
-                value={sliderVal}
-                onValueChange={setSliderVal}
-                max={100}
-                step={5}
-                className="py-2"
-              />
-            </Field>
-          </div>
 
-          {/* Input OTP */}
-          <Field className="md:col-span-2">
-            <FieldLabel>Cashier PIN Code (Input OTP)</FieldLabel>
-            <InputOTP maxLength={4} value={otpVal} onChange={setOtpVal}>
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-              </InputOTPGroup>
-            </InputOTP>
-            <FieldDescription>
-              4-digit PIN para sa mabilisang cashier switch.
-            </FieldDescription>
-          </Field>
-        </CardContent>
-      </Card>
+              <div>
+                <span className="text-muted-foreground mb-2 block text-xs font-semibold tracking-wider uppercase">
+                  Benta & Bayad (Sales & Payment)
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge type="sale" variant="completed" />
+                  <StatusBadge type="sale" variant="voided" />
+                  <StatusBadge type="payment" variant="cash" />
+                  <StatusBadge type="payment" variant="utang" />
+                </div>
+              </div>
 
-      {/* 4. INPUT GROUPS & MONEY INPUTS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            4. Input Groups & Money Input (₱ Prefix)
-          </CardTitle>
-          <CardDescription>
-            InputGroup with currency prefix, formatted Philippine Peso totals,
-            and shortcut key search bar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          <div>
-            <Field>
-              <FieldLabel>Halaga ng Presyo (Selling Price)</FieldLabel>
-              <InputGroup>
-                <InputGroupAddon align="inline-start">₱</InputGroupAddon>
-                <InputGroupInput
-                  type="number"
-                  step="0.25"
-                  value={moneyVal}
-                  onChange={(e) => setMoneyVal(e.target.value)}
-                  placeholder="0.00"
-                  className="font-mono text-base tabular-nums"
-                />
-              </InputGroup>
-              <FieldDescription>
-                Formatted value:{' '}
-                <strong className="text-foreground">
-                  {formatCurrency(moneyVal)}
-                </strong>
-              </FieldDescription>
-            </Field>
-          </div>
+              <div>
+                <span className="text-muted-foreground mb-2 block text-xs font-semibold tracking-wider uppercase">
+                  Role & Account
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge type="role" variant="owner" />
+                  <StatusBadge type="role" variant="cashier" />
+                  <StatusBadge type="active" variant="active" />
+                  <StatusBadge type="active" variant="inactive" />
+                </div>
+              </div>
+            </div>
+          </SectionCard>
 
-          <div>
-            <Field>
-              <FieldLabel>Mabilisang Hanap (Quick Search)</FieldLabel>
-              <InputGroup>
-                <InputGroupAddon align="inline-start">
-                  <Search className="h-4 w-4" />
-                </InputGroupAddon>
-                <InputGroupInput placeholder="Maghanap ng produkto, SKU, barcode..." />
-                <InputGroupAddon align="inline-end">
-                  <Kbd>⌘K</Kbd>
-                </InputGroupAddon>
-              </InputGroup>
-              <FieldDescription>
-                Sinusuportahan ang barcode scanning o typing.
-              </FieldDescription>
-            </Field>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 5. OVERLAYS: DIALOG, DRAWER, SHEET */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            5. Overlays: Dialog, Drawer & Sheet
-          </CardTitle>
-          <CardDescription>
-            Responsive overlays: Dialog for desktop modals, Drawer for mobile
-            bottom sheets, and Sheet for sidebars.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          {/* Dialog */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <CreditCard className="mr-2 h-4 w-4" /> Open Dialog (Payment)
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Kumpirmahin ang Bayad</DialogTitle>
-                <DialogDescription>
-                  Ilagay ang halaga ng inabot na pera ng parokyano para
-                  kalkulahin ang sukli.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="bg-muted flex items-center justify-between rounded-lg p-3">
-                  <span className="text-sm font-medium">Kabuuang Halaga:</span>
-                  <span className="text-primary font-mono text-lg font-bold">
-                    ₱340.00
+          <SectionCard
+            title="StockLevelBar & ProductThumb"
+            description="Progress bar na nagpapalit ng kulay at category color product tiles."
+          >
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium">
+                    Pancit Canton (Normal Stock)
+                  </span>
+                  <span className="text-muted-foreground font-mono">
+                    45 / 50 pcs
                   </span>
                 </div>
-                <Field>
-                  <FieldLabel>Inabot na Pera (Cash Received)</FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">₱</InputGroupAddon>
-                    <InputGroupInput
-                      defaultValue="500.00"
-                      className="font-mono tabular-nums"
-                    />
-                  </InputGroup>
-                </Field>
-                <div className="text-success flex items-center justify-between text-sm font-semibold">
-                  <span>Sukli (Change):</span>
-                  <span className="font-mono text-base">₱160.00</span>
-                </div>
+                <StockLevelBar current={45} max={50} reorderLevel={15} />
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Kanselahin</Button>
-                </DialogClose>
-                <Button
-                  onClick={() =>
-                    notify.success(
-                      'Bayad natanggap!',
-                      'Resibo TT-0012 nailimbag.',
-                    )
-                  }
-                >
-                  Kumpletuhin ang Benta
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
-          {/* Drawer */}
-          <Drawer>
-            <DrawerTrigger asChild>
-              <Button variant="outline">
-                <ShoppingCart className="mr-2 h-4 w-4" /> Open Drawer (Mobile
-                Cart)
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="mx-auto max-w-md">
-              <DrawerHeader>
-                <DrawerTitle>Cart (3 aytem)</DrawerTitle>
-                <DrawerDescription>
-                  Listahan ng bibilhing paninda sa tindahan.
-                </DrawerDescription>
-              </DrawerHeader>
-              <div className="space-y-3 p-4">
-                <div className="flex items-center justify-between border-b pb-2 text-sm">
-                  <div>
-                    <p className="font-medium">Lucky Me Kalamansi</p>
-                    <p className="text-muted-foreground text-xs">2 × ₱16.00</p>
-                  </div>
-                  <span className="font-mono font-medium">₱32.00</span>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-warning font-medium">
+                    Coke Mismo (Low Stock warning)
+                  </span>
+                  <span className="text-warning font-mono font-semibold">
+                    5 / 30 pcs
+                  </span>
                 </div>
-                <div className="flex items-center justify-between border-b pb-2 text-sm">
-                  <div>
-                    <p className="font-medium">Coke Mismo 290ml</p>
-                    <p className="text-muted-foreground text-xs">1 × ₱18.00</p>
-                  </div>
-                  <span className="font-mono font-medium">₱18.00</span>
-                </div>
-                <div className="flex justify-between pt-2 font-bold">
-                  <span>Total</span>
-                  <span className="text-primary font-mono text-lg">₱50.00</span>
-                </div>
+                <StockLevelBar current={5} max={30} reorderLevel={12} />
               </div>
-              <DrawerFooter>
-                <Button onClick={() => notify.success('Check out kumpleto!')}>
-                  Magbayad (Checkout)
-                </Button>
-                <DrawerClose asChild>
-                  <Button variant="outline">Isara</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </DrawerContent>
-          </Drawer>
 
-          {/* Sheet */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline">
-                <Package className="mr-2 h-4 w-4" /> Open Sheet (Paninda
-                Details)
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader>
-                <SheetTitle>Detalye ng Produkto</SheetTitle>
-                <SheetDescription>
-                  I-edit ang impormasyon at imbentaryo.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-4 py-6">
-                <Field>
-                  <FieldLabel>SKU / Barcode</FieldLabel>
-                  <Input
-                    defaultValue="4800016644810"
-                    className="font-mono text-xs"
-                    readOnly
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-destructive font-medium">
+                    Piattos Cheese (Out of stock)
+                  </span>
+                  <span className="text-destructive font-mono font-semibold">
+                    0 / 25 pcs
+                  </span>
+                </div>
+                <StockLevelBar current={0} max={25} reorderLevel={10} />
+              </div>
+
+              <div className="border-t pt-2">
+                <span className="text-muted-foreground mb-2 block text-xs font-semibold">
+                  Product Thumbnails (Colored tiles + category icons + initials)
+                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <ProductThumb
+                    name="Lucky Me! Pancit Canton"
+                    category="Noodles"
+                    size="sm"
                   />
-                </Field>
-                <Field>
-                  <FieldLabel>Pangalan</FieldLabel>
-                  <Input defaultValue="San Miguel Pale Pilsen 330ml" />
-                </Field>
-                <Field>
-                  <FieldLabel>Kasalukuyang Stock</FieldLabel>
-                  <Input defaultValue="24" type="number" />
-                </Field>
+                  <ProductThumb
+                    name="Coca-Cola Mismo"
+                    category="Drinks"
+                    size="md"
+                  />
+                  <ProductThumb
+                    name="Piattos Cheese"
+                    category="Snacks"
+                    size="lg"
+                  />
+                  <ProductThumb
+                    name="Ligo Sardines"
+                    category="Canned Goods"
+                    size="md"
+                  />
+                </div>
               </div>
-              <SheetFooter>
-                <SheetClose asChild>
-                  <Button
-                    onClick={() => notify.info('Nai-save ang mga pagbabago')}
-                  >
-                    I-save
-                  </Button>
-                </SheetClose>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-        </CardContent>
-      </Card>
+            </div>
+          </SectionCard>
+        </div>
 
-      {/* 6. TOAST FEEDBACK */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            6. Notifications & Toasts (Sonner)
-          </CardTitle>
-          <CardDescription>
-            Centralized notification helper (@/lib/notify) with success, error,
-            info, and async promise states.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              className="text-success hover:bg-success/10 hover:text-success"
-              onClick={() =>
-                notify.success('Benta naitala!', '₱185.00 natanggap na bayad.')
-              }
-            >
-              <CheckCircle2 className="mr-1.5 h-4 w-4" /> Trigger Success Toast
-            </Button>
-            <Button
-              variant="outline"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() =>
-                notify.error(
-                  'Hindi sapat ang stock!',
-                  'Kulang ng 2 piraso para makumpleto.',
-                )
-              }
-            >
-              <AlertCircle className="mr-1.5 h-4 w-4" /> Trigger Error Toast
-            </Button>
-            <Button
-              variant="outline"
-              className="text-info hover:bg-info/10 hover:text-info"
-              onClick={() =>
-                notify.info(
-                  'Paalala sa Utang',
-                  'Si Mang Kanor ay may ₱350.00 na babayaran.',
-                )
-              }
-            >
-              <Info className="mr-1.5 h-4 w-4" /> Trigger Info Toast
-            </Button>
-            <Button variant="default" onClick={handleTestPromiseToast}>
-              <RefreshCw className="mr-1.5 h-4 w-4" /> Trigger Async Promise
-              Toast
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* 1D. Timeline, KeyValueList & ChartCard */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <SectionCard
+            title="Utang Ledger Timeline"
+            description="Vertical timeline para sa listahan ng utang at bayad."
+            className="lg:col-span-1"
+          >
+            <Timeline items={sampleTimelineItems} />
+          </SectionCard>
 
-      {/* 7. DATA VISUALIZATION / CHARTS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            7. Data Visualization (Recharts + OKLCH Tokens)
-          </CardTitle>
-          <CardDescription>
-            Fixed semantic chart tokens: Chart-1 (Primary Green), Chart-2
-            (Mango), Chart-4 (Utang Amber).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[280px] w-full">
-            <ChartContainer config={chartConfig} className="h-full w-full">
+          <SectionCard
+            title="KeyValueList (Resibo / Impormasyon)"
+            description="Label-value list na may integrated copy-to-clipboard."
+            className="lg:col-span-1"
+          >
+            <KeyValueList
+              items={[
+                { label: 'Store Name', value: 'Tindahan ni Aling Nena' },
+                {
+                  label: 'Resibo No.',
+                  value: 'TT-20261007-0037',
+                  copyable: true,
+                },
+                { label: 'Kahera (Cashier)', value: 'Juan Dela Cruz' },
+                {
+                  label: 'Paraan ng Bayad',
+                  value: <StatusBadge type="payment" variant="cash" />,
+                },
+                {
+                  label: 'Kabuuang Halaga',
+                  value: <Money amount={145.0} tone="highlight" size="lg" />,
+                },
+              ]}
+            />
+          </SectionCard>
+
+          <ChartCard
+            title="ChartCard Container"
+            description="Lingguhang trend ng Benta vs. Utang"
+            className="lg:col-span-1"
+            actions={
+              <Badge variant="outline" className="text-xs">
+                7 Days
+              </Badge>
+            }
+          >
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={sampleChartData}>
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 3"
-                  className="stroke-border/40"
-                />
-                <XAxis
-                  dataKey="day"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(val) => `₱${val}`}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="day" fontSize={11} />
+                <YAxis fontSize={11} />
                 <Bar
                   dataKey="cash"
-                  fill="var(--color-chart-2)"
+                  fill="var(--color-primary)"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
                   dataKey="utang"
-                  fill="var(--color-chart-4)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="sales"
-                  fill="var(--color-chart-1)"
+                  fill="var(--color-utang)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
-            </ChartContainer>
-          </div>
-        </CardContent>
-      </Card>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
 
-      {/* 8. SKELETONS & EMPTY STATES */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">8A. Loading Skeletons</CardTitle>
-            <CardDescription>
-              Smooth placeholder animations for content loading states.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-12 w-12 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[200px]" />
-                <Skeleton className="h-4 w-[140px]" />
+        {/* 1E. EmptyState, ErrorState, Skeletons */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <SectionCard title="EmptyState & ErrorState">
+            <div className="space-y-6">
+              <EmptyState
+                icon={Package}
+                title="Walang nahanap na produkto"
+                description="Subukang magpalit ng filter o magdagdag ng bagong paninda sa tindahan."
+                action={
+                  <Button
+                    size="sm"
+                    onClick={() => notify.info('Add product clicked')}
+                  >
+                    Magdagdag ng Produkto
+                  </Button>
+                }
+              />
+              <ErrorState
+                title="Hindi ma-load ang datos"
+                description="Nagkaroon ng problema sa koneksyon sa lokal na database."
+                onRetry={() => notify.info('Retrying connection...')}
+              />
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Table & CardGrid Skeletons">
+            <div className="space-y-6">
+              <div>
+                <span className="text-muted-foreground mb-2 block text-xs font-semibold uppercase">
+                  TableSkeleton (3 rows, 4 columns)
+                </span>
+                <TableSkeleton rows={3} columns={4} />
+              </div>
+              <div>
+                <span className="text-muted-foreground mb-2 block text-xs font-semibold uppercase">
+                  CardGridSkeleton (2 cards)
+                </span>
+                <CardGridSkeleton
+                  count={2}
+                  columns="grid-cols-1 sm:grid-cols-2"
+                />
               </div>
             </div>
-            <Skeleton className="h-20 w-full rounded-lg" />
-            <div className="flex justify-between">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-24" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">8B. Empty State Kit</CardTitle>
-            <CardDescription>
-              Empty placeholder with helpful guidance and call-to-action.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={FolderSearch}
-              title="Walang natagpuang transaksyon"
-              description="Subukang baguhin ang petsa o filter para makita ang mga naitalang benta."
-              action={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => notify.info('Filter reset')}
-                >
-                  I-reset ang Filter
-                </Button>
-              }
-            />
-          </CardContent>
-        </Card>
+          </SectionCard>
+        </div>
       </div>
 
-      {/* 9. AVATARS & IDENTITIES */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">9. Offline DiceBear Avatars</CardTitle>
-          <CardDescription>
-            Fully offline SVG avatars generated from seeds via @dicebear/core
-            and @dicebear/collection.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h4 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase">
-              Staff Avatars (Initials Style)
-            </h4>
-            <div className="flex flex-wrap items-center gap-4">
-              {[
-                'Aling Nena',
-                'Kiko Cashier',
-                'Lorna Morales',
-                'Benjie Cruz',
-              ].map((name) => (
-                <div
-                  key={name}
-                  className="flex items-center gap-2 rounded-lg border p-2"
-                >
-                  <Avatar>
-                    <AvatarImage
-                      src={getAvatarUri(name, 'initials')}
-                      alt={name}
-                    />
-                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* =========================================================================
+          SECTION 2: DATA TABLE KIT
+          ========================================================================= */}
+      <div className="space-y-6">
+        <div className="border-b pb-2">
+          <h2 className="text-foreground flex items-center gap-2 text-xl font-bold tracking-tight">
+            <TableIcon className="text-primary h-5 w-5" />
+            2. Data Table Kit (`src/components/data-table/`)
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Server-mode TanStack Table na may sorting, filtering, pagination,
+            URL synchronization, at mobile card renderer sa ilalim ng `md`.
+          </p>
+        </div>
 
-          <div>
-            <h4 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase">
-              Customer Avatars (Notionists & Thumbs Styles)
-            </h4>
-            <div className="flex flex-wrap items-center gap-4">
-              {['Mang Kanor', 'Tessie Santos', 'Kapitan Jun', 'Ate Bebang'].map(
-                (name, i) => (
-                  <div
-                    key={name}
-                    className="flex items-center gap-2 rounded-lg border p-2"
-                  >
-                    <Avatar>
-                      <AvatarImage
-                        src={getAvatarUri(
-                          name,
-                          i % 2 === 0 ? 'notionists' : 'thumbs',
-                        )}
-                        alt={name}
-                      />
-                      <AvatarFallback>{getInitials(name)}</AvatarFallback>
-                    </Avatar>
+        <SectionCard
+          title="Interactive Products DataTable"
+          description="I-resize ang screen sa mobile (&lt; 768px) para makita ang card renderer mode."
+        >
+          <DataTable
+            columns={tableColumns}
+            data={sampleProducts}
+            meta={{
+              current_page: 1,
+              last_page: 3,
+              per_page: 10,
+              total: 24,
+              from: 1,
+              to: 5,
+            }}
+            params={tableParams}
+            onParamsChange={setTableParams}
+            enableRowSelection={true}
+            renderMobileCard={(product) => (
+              <Card key={product.id} className="p-4 shadow-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <ProductThumb
+                      name={product.name}
+                      category={product.category}
+                      size="md"
+                    />
                     <div>
-                      <p className="text-sm font-medium">{name}</p>
+                      <h4 className="text-foreground text-sm font-bold">
+                        {product.name}
+                      </h4>
                       <p className="text-muted-foreground font-mono text-xs">
-                        Suki #{i + 1}
+                        {product.sku} · {product.category}
                       </p>
                     </div>
                   </div>
+                  <Money amount={product.price} size="sm" />
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t pt-3">
+                  <StatusBadge
+                    type="stock"
+                    variant={
+                      product.stock <= 0
+                        ? 'out'
+                        : product.stock <= product.reorderLevel
+                          ? 'low'
+                          : 'in'
+                    }
+                  />
+                  <span className="font-mono text-xs font-medium">
+                    {product.stock} pcs left
+                  </span>
+                </div>
+              </Card>
+            )}
+          />
+        </SectionCard>
+      </div>
+
+      {/* =========================================================================
+          SECTION 3: FORMS & SPECIALIZED INPUTS KIT
+          ========================================================================= */}
+      <div className="space-y-6">
+        <div className="border-b pb-2">
+          <h2 className="text-foreground flex items-center gap-2 text-xl font-bold tracking-tight">
+            <Edit className="text-primary h-5 w-5" />
+            3. Forms & Inputs Kit (`src/components/forms/`)
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            React Hook Form wrappers (FormInput, FormSelect, FormSwitch,
+            FormCheckbox, FormRadioGroup) at mga specialized sari-sari store
+            inputs.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* 3A. RHF Integrated Form */}
+          <SectionCard
+            title="React Hook Form Integration"
+            description="FormInput, FormTextarea, FormSelect, FormSwitch, FormCheckbox, FormRadioGroup."
+          >
+            <form
+              onSubmit={handleSubmit((data) =>
+                notify.success(
+                  'Form saved successfully!',
+                  JSON.stringify(data),
                 ),
               )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              className="space-y-4"
+            >
+              <FormInput
+                name="productName"
+                control={control}
+                label="Pangalan ng Produkto"
+                placeholder="Hal. Lucky Me! Pancit Canton"
+                description="Ipakikita sa POS grid at resibo"
+              />
 
-      {/* 10. KBD & KEYBOARD SHORTCUTS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            10. Keyboard Shortcut Badges (&lt;Kbd&gt;)
-          </CardTitle>
-          <CardDescription>
-            Visual shortcut indicators for high-speed POS interaction.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <span>Mabilisang Hanap:</span>
-              <Kbd>⌘K</Kbd>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span>Pumunta sa POS:</span>
-              <Kbd>F2</Kbd>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span>Magbayad / Checkout:</span>
-              <Kbd>F9</Kbd>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span>Kanselahin / Isara:</span>
-              <Kbd>Esc</Kbd>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span>I-kumpirma:</span>
-              <Kbd>Enter</Kbd>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <FormTextarea
+                name="productDescription"
+                control={control}
+                label="Deskripsyon / Detalye"
+                placeholder="Maikling paliwanag..."
+              />
 
-      {/* 11. MAGIC UI & MICRO-ANIMATIONS */}
-      <Card className="relative overflow-hidden">
-        <BorderBeam size={250} duration={12} delay={9} />
-        <CardHeader>
-          <CardTitle className="text-lg">11. Magic UI & Delights</CardTitle>
-          <CardDescription>
-            Micro-interactions for delight without bloating bundle size.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="bg-muted/40 rounded-xl border p-4">
-              <span className="text-muted-foreground block text-xs">
-                Animated Number Ticker (Sales Count)
-              </span>
-              <div className="text-primary flex items-center font-mono text-2xl font-bold">
-                <span>₱</span>
-                <NumberTicker value={12450} decimalPlaces={2} />
+              <FormSelect
+                name="category"
+                control={control}
+                label="Kategorya (Category)"
+                placeholder="Pumili ng kategorya"
+                options={[
+                  { value: 'noodles', label: 'Noodles & Pastas' },
+                  { value: 'drinks', label: 'Beverages & Softdrinks' },
+                  { value: 'snacks', label: 'Chichirya & Snacks' },
+                  { value: 'canned', label: 'Canned Goods & Sardines' },
+                ]}
+              />
+
+              <div className="space-y-3 border-t pt-2">
+                <FormSwitch
+                  name="isActive"
+                  control={control}
+                  label="Aktibo sa Tindahan (Active Status)"
+                  description="Maaaring ibenta sa POS kapag naka-on"
+                />
+
+                <FormCheckbox
+                  name="allowCredit"
+                  control={control}
+                  label="Puwede Utangin (Eligible for Utang)"
+                  description="Payagan ang suki na ilista sa utang ang produktong ito"
+                />
+
+                <FormRadioGroup
+                  name="userRole"
+                  control={control}
+                  label="Tungkulin (Assigned Staff Role)"
+                  orientation="horizontal"
+                  options={[
+                    {
+                      value: 'cashier',
+                      label: 'Cashier (Kahera)',
+                      description: 'Access sa POS at Utang collection',
+                    },
+                    {
+                      value: 'owner',
+                      label: 'Store Owner',
+                      description: 'Buong access sa inventory at reports',
+                    },
+                  ]}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-3">
+                <Button type="submit">I-save ang Form</Button>
+                <Button type="button" variant="outline" onClick={() => reset()}>
+                  I-reset
+                </Button>
+              </div>
+            </form>
+          </SectionCard>
+
+          {/* 3B. Standalone Specialized Store Controls */}
+          <SectionCard
+            title="Specialized Store Inputs"
+            description="MoneyInput, QuantityStepper, PhoneInput, CustomerCombobox, DateRangePicker, PasswordInput, SearchInput."
+          >
+            <div className="space-y-5">
+              {/* MoneyInput */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  MoneyInput (₱ Addon, Decimal Guard, Never Negative)
+                </label>
+                <MoneyInput
+                  value={moneyVal}
+                  onChange={(e) => setMoneyVal(e.target.value)}
+                  placeholder="0.00"
+                />
+                <span className="text-muted-foreground block text-xs">
+                  Current raw state:{' '}
+                  <code className="font-mono">{moneyVal}</code>
+                </span>
+              </div>
+
+              {/* QuantityStepper */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  QuantityStepper (≥ 44px Buttons, Long-press Rapid Repeat,
+                  Min/Max)
+                </label>
+                <div className="flex items-center gap-4">
+                  <QuantityStepper
+                    value={stepperVal}
+                    onChange={setStepperVal}
+                    min={1}
+                    max={15}
+                    stockHint={
+                      stepperVal >= 12 ? 'Limitado na ang stock!' : undefined
+                    }
+                  />
+                  <div className="text-muted-foreground text-xs">
+                    Quantity:{' '}
+                    <b className="text-foreground font-mono text-sm">
+                      {stepperVal}
+                    </b>{' '}
+                    pcs
+                  </div>
+                </div>
+              </div>
+
+              {/* PhoneInput */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  PhoneInput (Philippine Mask: 09XX-XXX-XXXX)
+                </label>
+                <PhoneInput
+                  value={phoneVal}
+                  onChange={(e) => setPhoneVal(e.target.value)}
+                  placeholder="09XX-XXX-XXXX"
+                />
+              </div>
+
+              {/* CustomerCombobox */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  CustomerCombobox (Searchable Suki Picker + Balance Badge)
+                </label>
+                <CustomerCombobox
+                  value={selectedCustomerId}
+                  onChange={(id) => setSelectedCustomerId(id)}
+                  customers={sampleCustomers}
+                  onAddNew={() =>
+                    notify.info('Add new customer modal triggered')
+                  }
+                />
+              </div>
+
+              {/* DateRangePicker */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  DateRangePicker (Popover + Calendar + PH Presets)
+                </label>
+                <DateRangePicker value={dateRange} onChange={setDateRange} />
+              </div>
+
+              {/* SearchInput with Debounce */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  SearchInput (300ms Debounce, Clear Button, ⌘K Hint)
+                </label>
+                <SearchInput
+                  value={searchVal}
+                  onChange={setSearchVal}
+                  placeholder="Maghanap ng paninda o SKU..."
+                />
+              </div>
+
+              {/* PasswordInput with Strength Meter */}
+              <div className="space-y-1.5">
+                <label className="text-foreground text-xs font-semibold">
+                  PasswordInput (Show/Hide Toggle + Dynamic Strength Meter)
+                </label>
+                <PasswordInput
+                  showStrength={true}
+                  placeholder="Subukang mag-type ng password..."
+                />
               </div>
             </div>
+          </SectionCard>
+        </div>
+      </div>
 
-            <div className="bg-background rounded-full border px-4 py-1.5">
-              <AnimatedShinyText className="inline-flex items-center justify-center text-sm font-medium">
-                <span>✨ Built specifically para sa mga sari-sari store</span>
-                <ArrowRight className="ml-1.5 size-3" />
-              </AnimatedShinyText>
+      {/* =========================================================================
+          SECTION 4: OVERLAYS & MODALS KIT
+          ========================================================================= */}
+      <div className="space-y-6">
+        <div className="border-b pb-2">
+          <h2 className="text-foreground flex items-center gap-2 text-xl font-bold tracking-tight">
+            <Layers className="text-primary h-5 w-5" />
+            4. Overlays & Dialogs Kit (`src/components/overlays/`)
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            ResponsiveDialog (Dialog sa Desktop, Drawer sa Mobile),
+            ConfirmDialog na may destructive tone at required reason, at
+            useConfirm hook.
+          </p>
+        </div>
+
+        <SectionCard
+          title="Modal & Confirmation Actions"
+          description="I-click ang mga button para ma-QA ang mga iba't ibang modal behaviors."
+        >
+          <div className="flex flex-wrap items-center gap-4">
+            {/* 4A. ResponsiveDialog Trigger */}
+            <Button
+              variant="outline"
+              onClick={() => setIsResponsiveDialogOpen(true)}
+              className="gap-2"
+            >
+              <Store className="h-4 w-4" />
+              Buksan ang ResponsiveDialog
+            </Button>
+
+            {/* 4B. Standard ConfirmDialog */}
+            <Button
+              variant="secondary"
+              onClick={() => setIsConfirmDialogOpen(true)}
+              className="gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Standard ConfirmDialog
+            </Button>
+
+            {/* 4C. Destructive Confirm with Reason */}
+            <Button
+              variant="destructive"
+              onClick={() => setIsDestructiveConfirmOpen(true)}
+              className="gap-2"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Destructive Confirm (With Reason)
+            </Button>
+
+            {/* 4D. Imperative useConfirm() Hook Trigger */}
+            <Button
+              variant="default"
+              onClick={handleTestImperativeConfirm}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Test Imperative useConfirm()
+            </Button>
+          </div>
+        </SectionCard>
+
+        {/* ResponsiveDialog instance */}
+        <ResponsiveDialog
+          open={isResponsiveDialogOpen}
+          onOpenChange={setIsResponsiveDialogOpen}
+          title="Responsive Form / Details"
+          description="Sa desktop (md+), ito ay Dialog; sa mobile (< md), ito ay ilalim na Drawer."
+          footer={
+            <div className="flex w-full justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsResponsiveDialogOpen(false)}
+              >
+                Isara (Close)
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsResponsiveDialogOpen(false)
+                  notify.success('Nai-save ang aksyon!')
+                }}
+              >
+                I-save
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4 py-2">
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Ang modal na ito ay awtomatikong sumusunod sa screen size ng user
+              upang maging madali ang pag-encode kahit hawak lang ang smartphone
+              nang isang kamay.
+            </p>
+            <div className="bg-muted/20 rounded-lg border p-3">
+              <span className="text-foreground mb-1 block text-xs font-semibold">
+                Sampol na Input sa loob ng Dialog:
+              </span>
+              <Input placeholder="Pangalan ng kustomer o produkto..." />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </ResponsiveDialog>
+
+        {/* Standard ConfirmDialog instance */}
+        <ConfirmDialog
+          open={isConfirmDialogOpen}
+          onOpenChange={setIsConfirmDialogOpen}
+          title="I-save ang mga pagbabago?"
+          description="Nais mo bang i-update ang mga presyo at reorder levels ng mga produkto?"
+          confirmText="Oo, I-save"
+          cancelText="Bumalik"
+          tone="default"
+          onConfirm={() => {
+            notify.success('Nai-save ang mga pagbabago!')
+          }}
+        />
+
+        {/* Destructive ConfirmDialog with Reason instance */}
+        <ConfirmDialog
+          open={isDestructiveConfirmOpen}
+          onOpenChange={setIsDestructiveConfirmOpen}
+          title="I-delete ang Produkto?"
+          description="Hindi na ito makikita sa POS. Ang mga nakaraang benta ay mananatili pa rin sa ulat."
+          confirmText="I-delete ang Produkto"
+          cancelText="Kanselahin"
+          tone="destructive"
+          requireReason={true}
+          reasonLabel="Dahilan ng Pagbura (Bakit buburahin?)"
+          reasonPlaceholder="Hal. Discontinued na ng supplier, expired..."
+          minReasonLength={4}
+          onConfirm={(reason) => {
+            notify.error('Nabura ang produkto!', `Dahilan: ${reason}`)
+          }}
+        />
+      </div>
+
+      {/* =========================================================================
+          SECTION 5: SYSTEM COMPONENTS & NOTIFICATIONS
+          ========================================================================= */}
+      <div className="space-y-6">
+        <div className="border-b pb-2">
+          <h2 className="text-foreground flex items-center gap-2 text-xl font-bold tracking-tight">
+            <Bell className="text-primary h-5 w-5" />
+            5. System Components & Toast Helper (`src/lib/notify.js`)
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            OfflineBanner, FullPageLoader, Sonner notification toasts sa
+            pamamagitan ng `@/lib/notify`.
+          </p>
+        </div>
+
+        <SectionCard
+          title="Toast Notifications Test"
+          description="I-trigger ang mga semantic notification types mula sa lib/notify.js."
+        >
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={() =>
+                notify.success(
+                  'Matagumpay na naitala ang benta!',
+                  'Resibo TT-20261007-0037 · ₱145.00',
+                )
+              }
+            >
+              Success Toast
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                notify.error(
+                  'Hindi sapat ang stock!',
+                  '3 piraso na lamang ang natitira.',
+                )
+              }
+            >
+              Error Toast
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                notify.info(
+                  'Bagong update sa system',
+                  'Bersyon 2.0 ay handa nang gamitin.',
+                )
+              }
+            >
+              Info Toast
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const promise = new Promise((resolve) =>
+                  setTimeout(() => resolve({ id: 101 }), 1500),
+                )
+                notify.promise(promise, {
+                  loading: 'Nag-iimpok ng datos...',
+                  success: 'Matagumpay na na-sync sa server!',
+                  error: 'Nabigong i-sync ang transaksyon.',
+                })
+              }}
+            >
+              Promise Toast
+            </Button>
+          </div>
+        </SectionCard>
+      </div>
     </PageContainer>
   )
 }
+
 export default DevUiPage

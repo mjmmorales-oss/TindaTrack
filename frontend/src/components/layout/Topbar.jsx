@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/popover'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ModeToggle } from '@/components/common/ModeToggle'
-import { Kbd } from '@/components/common/Kbd'
+import { Kbd } from '@/components/ui/kbd'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 
