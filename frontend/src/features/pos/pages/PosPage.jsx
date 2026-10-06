@@ -17,7 +17,7 @@ export function PosPage() {
         description="Fast barcode scanning, instant change calculator, and cash/utang checkout"
         actions={
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground hidden sm:inline">
+            <span className="text-muted-foreground hidden text-xs sm:inline">
               Shortcuts: <Kbd>F2</Kbd> Search <Kbd>F9</Kbd> Pay
             </span>
             <Button variant="outline" size="sm" asChild>

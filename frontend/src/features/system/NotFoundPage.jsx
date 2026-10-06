@@ -10,18 +10,19 @@ export function NotFoundPage() {
   const homePath = user?.role === 'cashier' ? '/pos' : '/dashboard'
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto min-h-[60vh]">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-6">
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center p-6 text-center">
+      <div className="bg-primary/10 text-primary mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
         <FileQuestion className="h-8 w-8" />
       </div>
-      <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-3">
+      <span className="text-primary bg-primary/10 mb-3 rounded-full px-2.5 py-1 text-xs font-bold tracking-wider uppercase">
         404 · Not Found
       </span>
-      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+      <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
         Page Not Found
       </h1>
-      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-        Paumanhin, hindi mahanap ang pahinang hinahanap mo. Maaaring mali ang link o nailipat ang lokasyon nito.
+      <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+        Paumanhin, hindi mahanap ang pahinang hinahanap mo. Maaaring mali ang
+        link o nailipat ang lokasyon nito.
       </p>
 
       <div className="mt-8">

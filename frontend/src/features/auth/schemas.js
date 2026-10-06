@@ -5,9 +5,7 @@ export const loginSchema = z.object({
     .string()
     .min(1, 'Email is required')
     .email('Please enter a valid email address'),
-  password: z
-    .string()
-    .min(1, 'Password is required'),
+  password: z.string().min(1, 'Password is required'),
   remember: z.boolean().optional(),
 })
 
@@ -21,12 +19,8 @@ export const registerSchema = z
       .string()
       .min(1, 'Email is required')
       .email('Please enter a valid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters'),
-    password_confirmation: z
-      .string()
-      .min(1, 'Please confirm your password'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password_confirmation: z.string().min(1, 'Please confirm your password'),
     terms: z
       .boolean()
       .refine((val) => val === true, 'You must agree to the terms to proceed'),
@@ -50,12 +44,8 @@ export const resetPasswordSchema = z
       .string()
       .min(1, 'Email is required')
       .email('Please enter a valid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters'),
-    password_confirmation: z
-      .string()
-      .min(1, 'Please confirm your password'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password_confirmation: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.password_confirmation, {
     message: 'Passwords do not match',

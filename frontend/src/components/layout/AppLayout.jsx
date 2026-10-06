@@ -8,7 +8,7 @@ export function AppLayout() {
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <SidebarInset className="flex flex-col min-h-screen">
+      <SidebarInset className="flex min-h-screen flex-col">
         <Topbar />
         <main className="flex-1 pb-24 md:pb-8">
           <Outlet />

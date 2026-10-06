@@ -18,15 +18,17 @@ export function PageHeader({
     >
       <div className="space-y-1">
         {breadcrumbs && (
-          <div className="mb-2 text-sm text-muted-foreground">{breadcrumbs}</div>
+          <div className="text-muted-foreground mb-2 text-sm">
+            {breadcrumbs}
+          </div>
         )}
         {title && (
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          <h1 className="text-foreground text-2xl font-bold tracking-tight md:text-3xl">
             {title}
           </h1>
         )}
         {description && (
-          <p className="text-sm text-muted-foreground md:text-base">
+          <p className="text-muted-foreground text-sm md:text-base">
             {description}
           </p>
         )}

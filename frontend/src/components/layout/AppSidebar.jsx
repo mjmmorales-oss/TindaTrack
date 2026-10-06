@@ -25,14 +25,14 @@ export function AppSidebar({ ...props }) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to={homePath} className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+                <div className="bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-lg shadow-xs">
                   <Store className="h-5 w-5" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-bold tracking-tight text-foreground text-base">
+                  <span className="text-foreground truncate text-base font-bold tracking-tight">
                     TindaTrack
                   </span>
-                  <span className="truncate text-xs text-muted-foreground font-medium">
+                  <span className="text-muted-foreground truncate text-xs font-medium">
                     Tindahan ni Aling Nena
                   </span>
                 </div>

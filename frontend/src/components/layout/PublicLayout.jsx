@@ -9,10 +9,13 @@ export function PublicLayout() {
   const homePath = user?.role === 'cashier' ? '/pos' : '/dashboard'
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/80 bg-background/95 px-4 backdrop-blur-md md:px-8">
-        <Link to="/" className="flex items-center gap-2.5 font-bold text-foreground">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+    <div className="bg-background flex min-h-screen flex-col">
+      <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 backdrop-blur-md md:px-8">
+        <Link
+          to="/"
+          className="text-foreground flex items-center gap-2.5 font-bold"
+        >
+          <div className="bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-lg shadow-xs">
             <Store className="h-5 w-5" />
           </div>
           <div>
@@ -43,8 +46,8 @@ export function PublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-border text-muted-foreground border-t py-8 text-center text-xs">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
           <p>© 2026 TindaTrack · Tindahan ni Aling Nena</p>
           <div className="flex items-center gap-3">
             <span>SDG 1 No Poverty</span>

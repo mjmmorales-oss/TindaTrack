@@ -13,7 +13,13 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -86,85 +92,91 @@ export function DashboardPage() {
       />
 
       {/* System & Auth Status Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/80">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               API Connection
             </CardTitle>
-            <Activity className="h-4 w-4 text-primary" />
+            <Activity className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
             {isLoadingPing ? (
-              <span className="text-xs text-muted-foreground">Connecting...</span>
+              <span className="text-muted-foreground text-xs">
+                Connecting...
+              </span>
             ) : apiPing?.status === 'ok' ? (
-              <div className="flex items-center gap-1.5 text-success font-semibold text-sm">
+              <div className="text-success flex items-center gap-1.5 text-sm font-semibold">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>Connected (Laravel 13)</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-destructive font-semibold text-sm">
+              <div className="text-destructive flex items-center gap-1.5 text-sm font-semibold">
                 <XCircle className="h-4 w-4 shrink-0" />
                 <span>Offline / Error</span>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Backend URL: {import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}
+            <p className="text-muted-foreground mt-1 text-[11px]">
+              Backend URL:{' '}
+              {import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-border/80">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Current Session
             </CardTitle>
-            <ShieldCheck className="h-4 w-4 text-primary" />
+            <ShieldCheck className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-foreground text-base capitalize">
+              <span className="text-foreground text-base font-bold capitalize">
                 {user?.role_label || user?.role}
               </span>
-              <Badge variant={isOwner ? 'default' : 'secondary'} className="text-[10px] uppercase font-bold">
+              <Badge
+                variant={isOwner ? 'default' : 'secondary'}
+                className="text-[10px] font-bold uppercase"
+              >
                 {user?.role}
               </Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1 truncate">
+            <p className="text-muted-foreground mt-1 truncate text-[11px]">
               {user?.email}
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-border/80">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Store Profile
             </CardTitle>
-            <Store className="h-4 w-4 text-primary" />
+            <Store className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <p className="font-semibold text-sm text-foreground">
+            <p className="text-foreground text-sm font-semibold">
               Tindahan ni Aling Nena
             </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Purok 3, Brgy. San Isidro
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-border/80">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Access Scope
             </CardTitle>
-            <Lock className="h-4 w-4 text-primary" />
+            <Lock className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <p className="font-semibold text-sm text-foreground">
+            <p className="text-foreground text-sm font-semibold">
               {isOwner ? 'Full Administrative' : 'POS & Customer Suki'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               {isOwner ? 'All 11 modules enabled' : 'Restricted owner modules'}
             </p>
           </CardContent>
@@ -174,20 +186,24 @@ export function DashboardPage() {
       {/* Real Sanctum API & Middleware Verification Panel */}
       <Card className="border-border/80 bg-card/60">
         <CardHeader>
-          <CardTitle className="text-lg">Real Backend Auth & Middleware Live Check</CardTitle>
+          <CardTitle className="text-lg">
+            Real Backend Auth & Middleware Live Check
+          </CardTitle>
           <CardDescription>
-            I-test ang proteksyon ng Sanctum bearer token at Laravel role middleware nang direkta mula sa browser:
+            I-test ang proteksyon ng Sanctum bearer token at Laravel role
+            middleware nang direkta mula sa browser:
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Owner Endpoint Check */}
-            <div className="rounded-xl border border-border p-4 space-y-3 bg-background">
+            <div className="border-border bg-background space-y-3 rounded-xl border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-semibold text-sm">Owner Endpoint</h4>
-                  <p className="text-xs text-muted-foreground">
-                    <code>GET /api/owner/ping</code> (Protektado ng <code>role:owner</code>)
+                  <h4 className="text-sm font-semibold">Owner Endpoint</h4>
+                  <p className="text-muted-foreground text-xs">
+                    <code>GET /api/owner/ping</code> (Protektado ng{' '}
+                    <code>role:owner</code>)
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={testOwnerEndpoint}>
@@ -197,25 +213,28 @@ export function DashboardPage() {
 
               {ownerTestResult && (
                 <div
-                  className={`p-3 rounded-lg text-xs font-mono flex items-center justify-between ${
+                  className={`flex items-center justify-between rounded-lg p-3 font-mono text-xs ${
                     ownerTestResult.status === 200
-                      ? 'bg-success/10 text-success border border-success/30'
-                      : 'bg-destructive/10 text-destructive border border-destructive/30'
+                      ? 'bg-success/10 text-success border-success/30 border'
+                      : 'bg-destructive/10 text-destructive border-destructive/30 border'
                   }`}
                 >
                   <span>HTTP {ownerTestResult.status}</span>
-                  <span className="truncate max-w-[200px]">{ownerTestResult.message}</span>
+                  <span className="max-w-[200px] truncate">
+                    {ownerTestResult.message}
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Staff Endpoint Check */}
-            <div className="rounded-xl border border-border p-4 space-y-3 bg-background">
+            <div className="border-border bg-background space-y-3 rounded-xl border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-semibold text-sm">Staff Endpoint</h4>
-                  <p className="text-xs text-muted-foreground">
-                    <code>GET /api/staff/ping</code> (Kasama ang <code>role:owner,cashier</code>)
+                  <h4 className="text-sm font-semibold">Staff Endpoint</h4>
+                  <p className="text-muted-foreground text-xs">
+                    <code>GET /api/staff/ping</code> (Kasama ang{' '}
+                    <code>role:owner,cashier</code>)
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={testStaffEndpoint}>
@@ -225,14 +244,16 @@ export function DashboardPage() {
 
               {staffTestResult && (
                 <div
-                  className={`p-3 rounded-lg text-xs font-mono flex items-center justify-between ${
+                  className={`flex items-center justify-between rounded-lg p-3 font-mono text-xs ${
                     staffTestResult.status === 200
-                      ? 'bg-success/10 text-success border border-success/30'
-                      : 'bg-destructive/10 text-destructive border border-destructive/30'
+                      ? 'bg-success/10 text-success border-success/30 border'
+                      : 'bg-destructive/10 text-destructive border-destructive/30 border'
                   }`}
                 >
                   <span>HTTP {staffTestResult.status}</span>
-                  <span className="truncate max-w-[200px]">{staffTestResult.message}</span>
+                  <span className="max-w-[200px] truncate">
+                    {staffTestResult.message}
+                  </span>
                 </div>
               )}
             </div>
@@ -241,43 +262,53 @@ export function DashboardPage() {
       </Card>
 
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Link
           to="/products"
-          className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/50 hover:bg-muted/40 transition-all"
+          className="border-border bg-card hover:border-primary/50 hover:bg-muted/40 flex items-center gap-4 rounded-xl border p-4 transition-all"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-xl">
             <Warehouse className="h-6 w-6" />
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-foreground">Mga Paninda</h4>
-            <p className="text-xs text-muted-foreground">Tingnan ang listahan ng stock at presyo</p>
+            <h4 className="text-foreground text-sm font-semibold">
+              Mga Paninda
+            </h4>
+            <p className="text-muted-foreground text-xs">
+              Tingnan ang listahan ng stock at presyo
+            </p>
           </div>
         </Link>
 
         <Link
           to="/customers"
-          className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/50 hover:bg-muted/40 transition-all"
+          className="border-border bg-card hover:border-primary/50 hover:bg-muted/40 flex items-center gap-4 rounded-xl border p-4 transition-all"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-xl">
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-foreground">Mga Suki</h4>
-            <p className="text-xs text-muted-foreground">Pamahalaan ang mga regular na mamimili</p>
+            <h4 className="text-foreground text-sm font-semibold">Mga Suki</h4>
+            <p className="text-muted-foreground text-xs">
+              Pamahalaan ang mga regular na mamimili
+            </p>
           </div>
         </Link>
 
         <Link
           to="/pos"
-          className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/50 hover:bg-muted/40 transition-all"
+          className="border-border bg-card hover:border-primary/50 hover:bg-muted/40 flex items-center gap-4 rounded-xl border p-4 transition-all"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-highlight/10 text-highlight">
+          <div className="bg-highlight/10 text-highlight flex h-12 w-12 items-center justify-center rounded-xl">
             <ScanBarcode className="h-6 w-6" />
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-foreground">Magbenta Ngayon</h4>
-            <p className="text-xs text-muted-foreground">Buksan ang POS cash & utang register</p>
+            <h4 className="text-foreground text-sm font-semibold">
+              Magbenta Ngayon
+            </h4>
+            <p className="text-muted-foreground text-xs">
+              Buksan ang POS cash & utang register
+            </p>
           </div>
         </Link>
       </div>

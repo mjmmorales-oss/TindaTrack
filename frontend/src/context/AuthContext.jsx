@@ -40,7 +40,8 @@ export function AuthProvider({ children }) {
   }, [clearSession])
 
   const login = useCallback(
-    async (credentials) => saveSession((await api.post('/login', credentials)).data),
+    async (credentials) =>
+      saveSession((await api.post('/login', credentials)).data),
     [saveSession],
   )
 

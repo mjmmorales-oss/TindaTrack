@@ -91,7 +91,7 @@ export function RegisterPage() {
               {...register('name')}
             />
             {errors.name && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.name.message}
               </p>
             )}
@@ -107,7 +107,7 @@ export function RegisterPage() {
               {...register('email')}
             />
             {errors.email && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.email.message}
               </p>
             )}
@@ -122,7 +122,7 @@ export function RegisterPage() {
               {...register('password')}
             />
             {errors.password && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.password.message}
               </p>
             )}
@@ -137,7 +137,7 @@ export function RegisterPage() {
               {...register('password_confirmation')}
             />
             {errors.password_confirmation && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.password_confirmation.message}
               </p>
             )}
@@ -147,29 +147,42 @@ export function RegisterPage() {
             <input
               type="checkbox"
               id="terms"
-              className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              className="border-border text-primary focus:ring-primary mt-1 h-4 w-4 rounded"
               {...register('terms')}
             />
-            <Label htmlFor="terms" className="text-xs font-normal text-muted-foreground leading-tight cursor-pointer">
-              I agree to the TindaTrack terms and acknowledge this is an educational prototype.
+            <Label
+              htmlFor="terms"
+              className="text-muted-foreground cursor-pointer text-xs leading-tight font-normal"
+            >
+              I agree to the TindaTrack terms and acknowledge this is an
+              educational prototype.
             </Label>
           </div>
           {errors.terms && (
-            <p className="text-xs font-medium text-destructive">
+            <p className="text-destructive text-xs font-medium">
               {errors.terms.message}
             </p>
           )}
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full gap-2"
+            disabled={isSubmitting}
+          >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Creating account...' : 'Create Store Owner Account'}
+            {isSubmitting
+              ? 'Creating account...'
+              : 'Create Store Owner Account'}
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-center text-xs">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-primary hover:underline">
+            <Link
+              to="/login"
+              className="text-primary font-semibold hover:underline"
+            >
               Sign In
             </Link>
           </p>

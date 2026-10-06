@@ -57,7 +57,9 @@ export function ResetPasswordPage() {
     setServerError(null)
     try {
       await resetPassword(data)
-      notify.success('Password reset successfully! Please sign in with your new password.')
+      notify.success(
+        'Password reset successfully! Please sign in with your new password.',
+      )
       navigate('/login', { replace: true })
     } catch (err) {
       const fieldErrors = getFieldErrors(err)
@@ -101,7 +103,7 @@ export function ResetPasswordPage() {
               {...register('email')}
             />
             {errors.email && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.email.message}
               </p>
             )}
@@ -116,7 +118,7 @@ export function ResetPasswordPage() {
               {...register('password')}
             />
             {errors.password && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.password.message}
               </p>
             )}
@@ -131,7 +133,7 @@ export function ResetPasswordPage() {
               {...register('password_confirmation')}
             />
             {errors.password_confirmation && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.password_confirmation.message}
               </p>
             )}
@@ -139,14 +141,21 @@ export function ResetPasswordPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full gap-2"
+            disabled={isSubmitting}
+          >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Resetting password...' : 'Update Password'}
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-center text-xs">
             Remembered your password?{' '}
-            <Link to="/login" className="font-semibold text-primary hover:underline">
+            <Link
+              to="/login"
+              className="text-primary font-semibold hover:underline"
+            >
               Back to Sign In
             </Link>
           </p>

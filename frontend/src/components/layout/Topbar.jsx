@@ -1,9 +1,5 @@
 import { Link, useMatches } from 'react-router'
-import {
-  Bell,
-  Search,
-  Store,
-} from 'lucide-react'
+import { Bell, Search, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Breadcrumb,
@@ -36,14 +32,20 @@ export function Topbar() {
     }))
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/80 bg-background/95 px-4 backdrop-blur-md md:px-6">
+    <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-md md:px-6">
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="hidden md:flex -ml-1 text-muted-foreground hover:text-foreground" />
-        <Separator orientation="vertical" className="hidden md:block mr-2 h-4" />
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground -ml-1 hidden md:flex" />
+        <Separator
+          orientation="vertical"
+          className="mr-2 hidden h-4 md:block"
+        />
 
         {/* Brand logo shown on mobile topbar */}
-        <Link to="/dashboard" className="flex md:hidden items-center gap-2 font-bold text-foreground">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <Link
+          to="/dashboard"
+          className="text-foreground flex items-center gap-2 font-bold md:hidden"
+        >
+          <div className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-md">
             <Store className="h-4 w-4" />
           </div>
           <span className="text-base font-bold tracking-tight">TindaTrack</span>
@@ -58,7 +60,7 @@ export function Topbar() {
                 <BreadcrumbItem key={crumb.path}>
                   {index > 0 && <BreadcrumbSeparator />}
                   {isLast ? (
-                    <BreadcrumbPage className="font-semibold text-foreground">
+                    <BreadcrumbPage className="text-foreground font-semibold">
                       {crumb.title}
                     </BreadcrumbPage>
                   ) : (
@@ -78,7 +80,7 @@ export function Topbar() {
         <Button
           variant="outline"
           size="sm"
-          className="hidden sm:flex h-9 items-center gap-2 rounded-lg border-border/80 bg-muted/40 px-3 text-xs text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+          className="border-border/80 bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground hidden h-9 items-center gap-2 rounded-lg px-3 text-xs sm:flex"
           onClick={() => {}}
         >
           <Search className="h-3.5 w-3.5" />
@@ -92,37 +94,41 @@ export function Topbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="relative h-9 w-9 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground relative h-9 w-9"
               aria-label="View notifications"
             >
               <Bell className="h-4 w-4" />
               <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-highlight opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-highlight"></span>
+                <span className="bg-highlight absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+                <span className="bg-highlight relative inline-flex h-2 w-2 rounded-full"></span>
               </span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80 p-0" align="end">
             <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="font-semibold text-sm">Notifications</span>
+              <span className="text-sm font-semibold">Notifications</span>
               <Badge variant="outline" className="text-xs font-normal">
                 2 new
               </Badge>
             </div>
-            <div className="divide-y divide-border text-sm">
-              <div className="p-3 hover:bg-muted/50 transition-colors">
-                <p className="font-medium text-xs text-warning">Running Low</p>
-                <p className="text-xs text-foreground mt-0.5">
+            <div className="divide-border divide-y text-sm">
+              <div className="hover:bg-muted/50 p-3 transition-colors">
+                <p className="text-warning text-xs font-medium">Running Low</p>
+                <p className="text-foreground mt-0.5 text-xs">
                   Coca-Cola Mismo 295ml has only 3 bottles remaining.
                 </p>
-                <span className="text-[10px] text-muted-foreground mt-1 block">15m ago</span>
+                <span className="text-muted-foreground mt-1 block text-[10px]">
+                  15m ago
+                </span>
               </div>
-              <div className="p-3 hover:bg-muted/50 transition-colors">
-                <p className="font-medium text-xs text-utang">Utang Aging</p>
-                <p className="text-xs text-foreground mt-0.5">
+              <div className="hover:bg-muted/50 p-3 transition-colors">
+                <p className="text-utang text-xs font-medium">Utang Aging</p>
+                <p className="text-foreground mt-0.5 text-xs">
                   Aling Rosing has an overdue balance of ₱320.00 (34 days).
                 </p>
-                <span className="text-[10px] text-muted-foreground mt-1 block">2h ago</span>
+                <span className="text-muted-foreground mt-1 block text-[10px]">
+                  2h ago
+                </span>
               </div>
             </div>
           </PopoverContent>

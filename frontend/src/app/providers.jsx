@@ -27,7 +27,9 @@ export function Providers({ children }) {
           <TooltipProvider delayDuration={200}>
             {children}
             <Toaster richColors position="top-right" />
-            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+            {import.meta.env.DEV && (
+              <ReactQueryDevtools initialIsOpen={false} />
+            )}
           </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>

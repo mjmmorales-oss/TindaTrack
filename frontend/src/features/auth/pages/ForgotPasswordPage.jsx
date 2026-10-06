@@ -56,19 +56,25 @@ export function ForgotPasswordPage() {
   if (isSuccess) {
     return (
       <Card className="border-border/80 shadow-md">
-        <CardHeader className="space-y-1 text-center pb-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
+        <CardHeader className="space-y-1 pb-4 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Check your email</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            Check your email
+          </CardTitle>
           <CardDescription>
             We have sent password reset instructions to your email address.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3 text-center text-xs text-muted-foreground">
+        <CardContent className="text-muted-foreground space-y-3 text-center text-xs">
           <p>
-            In the local development environment, the password reset email is logged to{' '}
-            <code className="bg-muted px-1.5 py-0.5 rounded font-mono">backend/storage/logs/laravel.log</code>.
+            In the local development environment, the password reset email is
+            logged to{' '}
+            <code className="bg-muted rounded px-1.5 py-0.5 font-mono">
+              backend/storage/logs/laravel.log
+            </code>
+            .
           </p>
         </CardContent>
         <CardFooter className="pt-2">
@@ -112,7 +118,7 @@ export function ForgotPasswordPage() {
               />
             </div>
             {errors.email && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.email.message}
               </p>
             )}
@@ -120,14 +126,21 @@ export function ForgotPasswordPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full gap-2"
+            disabled={isSubmitting}
+          >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Sending instructions...' : 'Send Reset Link'}
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-center text-xs">
             Remembered your password?{' '}
-            <Link to="/login" className="font-semibold text-primary hover:underline">
+            <Link
+              to="/login"
+              className="text-primary font-semibold hover:underline"
+            >
               Back to Sign In
             </Link>
           </p>

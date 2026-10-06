@@ -7,11 +7,7 @@ import {
   Sun,
   User as UserIcon,
 } from 'lucide-react'
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -59,14 +55,15 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={avatarUrl} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
+                <AvatarFallback className="bg-primary/10 text-primary rounded-lg font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {user.role_label || (user.role === 'owner' ? 'Store Owner' : 'Cashier')}
+                <span className="text-muted-foreground truncate text-xs">
+                  {user.role_label ||
+                    (user.role === 'owner' ? 'Store Owner' : 'Cashier')}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -82,19 +79,19 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={avatarUrl} alt={user.name} />
-                  <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
+                  <AvatarFallback className="bg-primary/10 text-primary rounded-lg font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
                 </div>
                 <Badge
                   variant={user.role === 'owner' ? 'default' : 'secondary'}
-                  className="text-[10px] uppercase font-semibold"
+                  className="text-[10px] font-semibold uppercase"
                 >
                   {user.role}
                 </Badge>
@@ -103,7 +100,10 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link to="/account" className="flex items-center cursor-pointer">
+                <Link
+                  to="/account"
+                  className="flex cursor-pointer items-center"
+                >
                   <BadgeCheck className="mr-2 h-4 w-4" />
                   Account & Settings
                 </Link>

@@ -17,7 +17,7 @@ export function MobileBottomNav() {
     <>
       <nav
         aria-label="Mobile navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/80 bg-background/95 backdrop-blur-md pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg"
+        className="border-border/80 bg-background/95 fixed right-0 bottom-0 left-0 z-40 border-t pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-md md:hidden"
       >
         <div className="flex h-16 items-center justify-around px-2">
           {/* Home */}
@@ -25,7 +25,7 @@ export function MobileBottomNav() {
             to="/dashboard"
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center gap-1 w-14 py-1 text-[11px] font-medium transition-colors',
+                'flex w-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium transition-colors',
                 isActive
                   ? 'text-primary font-bold'
                   : 'text-muted-foreground hover:text-foreground',
@@ -41,7 +41,7 @@ export function MobileBottomNav() {
             to="/products"
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center gap-1 w-14 py-1 text-[11px] font-medium transition-colors',
+                'flex w-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium transition-colors',
                 isActive
                   ? 'text-primary font-bold'
                   : 'text-muted-foreground hover:text-foreground',
@@ -59,14 +59,16 @@ export function MobileBottomNav() {
               aria-label="Open Point of Sale"
               className={({ isActive }) =>
                 cn(
-                  'flex h-13 w-13 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 ring-4 ring-background',
+                  'bg-primary text-primary-foreground ring-background flex h-13 w-13 items-center justify-center rounded-full shadow-lg ring-4 transition-transform active:scale-95',
                   isActive ? 'ring-primary/30' : '',
                 )
               }
             >
               <ScanBarcode className="h-6 w-6 stroke-[2.5]" />
             </NavLink>
-            <span className="text-[10px] font-bold text-primary mt-0.5">POS</span>
+            <span className="text-primary mt-0.5 text-[10px] font-bold">
+              POS
+            </span>
           </div>
 
           {/* Utang */}
@@ -74,7 +76,7 @@ export function MobileBottomNav() {
             to="/utang"
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center gap-1 w-14 py-1 text-[11px] font-medium transition-colors',
+                'flex w-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium transition-colors',
                 isActive
                   ? 'text-primary font-bold'
                   : 'text-muted-foreground hover:text-foreground',
@@ -89,7 +91,7 @@ export function MobileBottomNav() {
           <button
             type="button"
             onClick={() => setMoreOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 w-14 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground flex w-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium transition-colors"
           >
             <MoreHorizontal className="h-5 w-5" />
             <span>More</span>

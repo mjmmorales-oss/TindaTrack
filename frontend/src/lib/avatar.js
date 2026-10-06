@@ -1,13 +1,51 @@
-/**
- * Generate a DiceBear avatar URL based on user seed.
- * @param {string} seed
- * @param {'initials'|'thumbs'|'notionists'} [style='initials']
- * @returns {string}
- */
-export function getAvatarUrl(seed, style = 'initials') {
-  const encoded = encodeURIComponent(seed || 'User')
-  return `https://api.dicebear.com/9.x/${style}/svg?seed=${encoded}&backgroundColor=0E7C66,F5A524,0369A1,15803D`
+import { createAvatar } from '@dicebear/core'
+import { initials, notionists, thumbs } from '@dicebear/collection'
+
+const styleMap = {
+  initials,
+  notionists,
+  thumbs,
 }
+
+// In-memory memoization cache for generated SVGs
+const avatarCache = new Map()
+
+/**
+ * Generate a DiceBear avatar Data URI based on user seed and style.
+ * Uses local npm packages with zero external HTTP requests, fully memoized.
+ *
+ * @param {string} seed - Unique seed for avatar generation (e.g. name or email)
+ * @param {'initials'|'notionists'|'thumbs'} [style='initials']
+ * @returns {string} data URI string
+ */
+export function getAvatarUri(seed, style = 'initials') {
+  const normalizedSeed = (seed || 'User').trim()
+  const selectedStyle = styleMap[style] || initials
+  const cacheKey = `${style}:${normalizedSeed}`
+
+  if (avatarCache.has(cacheKey)) {
+    return avatarCache.get(cacheKey)
+  }
+
+  const options = {
+    seed: normalizedSeed,
+  }
+
+  if (style === 'initials') {
+    options.backgroundColor = ['0e7c66', 'f5a524', '0369a1', '15803d', 'b45309']
+  }
+
+  const avatar = createAvatar(selectedStyle, options)
+  const uri = avatar.toDataUri()
+  avatarCache.set(cacheKey, uri)
+
+  return uri
+}
+
+/**
+ * Alias for getAvatarUri to maintain backwards compatibility with existing callers.
+ */
+export const getAvatarUrl = getAvatarUri
 
 /**
  * Get 1-2 character initials for fallback avatar display.

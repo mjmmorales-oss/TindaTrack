@@ -18,70 +18,117 @@ import { RouteErrorBoundary } from '@/features/system/RouteErrorBoundary'
 
 // Lazy-loaded pages
 const LandingPage = lazy(() =>
-  import('@/features/landing/pages/LandingPage').then((m) => ({ default: m.LandingPage })),
+  import('@/features/landing/pages/LandingPage').then((m) => ({
+    default: m.LandingPage,
+  })),
 )
 const LoginPage = lazy(() =>
-  import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
+  import('@/features/auth/pages/LoginPage').then((m) => ({
+    default: m.LoginPage,
+  })),
 )
 const RegisterPage = lazy(() =>
-  import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+  import('@/features/auth/pages/RegisterPage').then((m) => ({
+    default: m.RegisterPage,
+  })),
 )
 const ForgotPasswordPage = lazy(() =>
-  import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })),
+  import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
 )
 const ResetPasswordPage = lazy(() =>
-  import('@/features/auth/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
+  import('@/features/auth/pages/ResetPasswordPage').then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
 )
 const DashboardPage = lazy(() =>
-  import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+  import('@/features/dashboard/pages/DashboardPage').then((m) => ({
+    default: m.DashboardPage,
+  })),
 )
 const PosPage = lazy(() =>
   import('@/features/pos/pages/PosPage').then((m) => ({ default: m.PosPage })),
 )
 const SalesPage = lazy(() =>
-  import('@/features/sales/pages/SalesPage').then((m) => ({ default: m.SalesPage })),
+  import('@/features/sales/pages/SalesPage').then((m) => ({
+    default: m.SalesPage,
+  })),
 )
 const SaleDetailPage = lazy(() =>
-  import('@/features/sales/pages/SaleDetailPage').then((m) => ({ default: m.SaleDetailPage })),
+  import('@/features/sales/pages/SaleDetailPage').then((m) => ({
+    default: m.SaleDetailPage,
+  })),
 )
 const ProductsPage = lazy(() =>
-  import('@/features/products/pages/ProductsPage').then((m) => ({ default: m.ProductsPage })),
+  import('@/features/products/pages/ProductsPage').then((m) => ({
+    default: m.ProductsPage,
+  })),
 )
 const ProductDetailPage = lazy(() =>
-  import('@/features/products/pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })),
+  import('@/features/products/pages/ProductDetailPage').then((m) => ({
+    default: m.ProductDetailPage,
+  })),
 )
 const CategoriesPage = lazy(() =>
-  import('@/features/categories/pages/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
+  import('@/features/categories/pages/CategoriesPage').then((m) => ({
+    default: m.CategoriesPage,
+  })),
 )
 const InventoryPage = lazy(() =>
-  import('@/features/inventory/pages/InventoryPage').then((m) => ({ default: m.InventoryPage })),
+  import('@/features/inventory/pages/InventoryPage').then((m) => ({
+    default: m.InventoryPage,
+  })),
 )
 const CustomersPage = lazy(() =>
-  import('@/features/customers/pages/CustomersPage').then((m) => ({ default: m.CustomersPage })),
+  import('@/features/customers/pages/CustomersPage').then((m) => ({
+    default: m.CustomersPage,
+  })),
 )
 const CustomerDetailPage = lazy(() =>
-  import('@/features/customers/pages/CustomerDetailPage').then((m) => ({ default: m.CustomerDetailPage })),
+  import('@/features/customers/pages/CustomerDetailPage').then((m) => ({
+    default: m.CustomerDetailPage,
+  })),
 )
 const UtangPage = lazy(() =>
-  import('@/features/utang/pages/UtangPage').then((m) => ({ default: m.UtangPage })),
+  import('@/features/utang/pages/UtangPage').then((m) => ({
+    default: m.UtangPage,
+  })),
 )
 const ReportsPage = lazy(() =>
-  import('@/features/reports/pages/ReportsPage').then((m) => ({ default: m.ReportsPage })),
+  import('@/features/reports/pages/ReportsPage').then((m) => ({
+    default: m.ReportsPage,
+  })),
 )
 const StaffPage = lazy(() =>
-  import('@/features/staff/pages/StaffPage').then((m) => ({ default: m.StaffPage })),
+  import('@/features/staff/pages/StaffPage').then((m) => ({
+    default: m.StaffPage,
+  })),
 )
 const SettingsPage = lazy(() =>
-  import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+  import('@/features/settings/pages/SettingsPage').then((m) => ({
+    default: m.SettingsPage,
+  })),
 )
 const AccountPage = lazy(() =>
-  import('@/features/account/pages/AccountPage').then((m) => ({ default: m.AccountPage })),
+  import('@/features/account/pages/AccountPage').then((m) => ({
+    default: m.AccountPage,
+  })),
+)
+const DevUiPage = lazy(() =>
+  import('@/features/dev/pages/DevUiPage').then((m) => ({
+    default: m.DevUiPage,
+  })),
 )
 const ForbiddenPage = lazy(() =>
-  import('@/features/system/ForbiddenPage').then((m) => ({ default: m.ForbiddenPage })),
+  import('@/features/system/ForbiddenPage').then((m) => ({
+    default: m.ForbiddenPage,
+  })),
 )
 const NotFoundPage = lazy(() =>
-  import('@/features/system/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+  import('@/features/system/NotFoundPage').then((m) => ({
+    default: m.NotFoundPage,
+  })),
 )
 
 function SuspenseWrap({ children }) {
@@ -89,7 +136,7 @@ function SuspenseWrap({ children }) {
     <Suspense
       fallback={
         <div className="flex min-h-[50vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
         </div>
       }
     >
@@ -118,7 +165,11 @@ export const router = createBrowserRouter([
 
   // Guest Auth routes
   {
-    element: <GuestRoute><AuthLayout /></GuestRoute>,
+    element: (
+      <GuestRoute>
+        <AuthLayout />
+      </GuestRoute>
+    ),
     errorElement: <RouteErrorBoundary />,
     children: [
       {
@@ -158,7 +209,11 @@ export const router = createBrowserRouter([
 
   // Focus POS Shell
   {
-    element: <ProtectedRoute><PosLayout /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <PosLayout />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorBoundary />,
     children: [
       {
@@ -177,7 +232,11 @@ export const router = createBrowserRouter([
 
   // Main App Shell (Sidebar + Topbar + Bottom Nav)
   {
-    element: <ProtectedRoute><AppLayout /></ProtectedRoute>,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorBoundary />,
     children: [
       {
@@ -324,6 +383,17 @@ export const router = createBrowserRouter([
           <RoleRoute ability="account.manage">
             <SuspenseWrap>
               <AccountPage />
+            </SuspenseWrap>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'dev/ui',
+        handle: { breadcrumb: 'UI Kit (Dev)' },
+        element: (
+          <RoleRoute roles={['owner']}>
+            <SuspenseWrap>
+              <DevUiPage />
             </SuspenseWrap>
           </RoleRoute>
         ),

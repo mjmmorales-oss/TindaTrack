@@ -10,17 +10,17 @@ export function ForbiddenPage() {
   const isCashier = user?.role === 'cashier'
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto min-h-[60vh]">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mb-6">
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center p-6 text-center">
+      <div className="bg-destructive/10 text-destructive mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
         <ShieldAlert className="h-8 w-8" />
       </div>
-      <span className="text-xs font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-2.5 py-1 rounded-full mb-3">
+      <span className="text-destructive bg-destructive/10 mb-3 rounded-full px-2.5 py-1 text-xs font-bold tracking-wider uppercase">
         403 · Access Denied
       </span>
-      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+      <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
         Store Owner Access Only
       </h1>
-      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+      <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
         {isCashier
           ? 'Ang pahinang ito ay para lamang sa store owner. Ang iyong cashier account ay may limitadong access upang maprotektahan ang mga ulat at settings.'
           : 'You do not have permission to view or manage this module.'}

@@ -45,37 +45,79 @@ export function MoreSheet({ open, onOpenChange }) {
   const initials = getInitials(user.name || user.email)
 
   const moreLinks = [
-    { title: 'Sales History', path: '/sales', icon: ReceiptText, visible: true },
-    { title: 'Categories', path: '/categories', icon: Tags, visible: can('categories.manage') },
-    { title: 'Stock & Inventory', path: '/inventory', icon: Warehouse, visible: can('inventory.adjust') },
-    { title: 'Customers', path: '/customers', icon: Users, visible: can('customers.view') },
-    { title: 'Reports & Analytics', path: '/reports', icon: ChartColumn, visible: can('reports.view') },
-    { title: 'Staff Accounts', path: '/staff', icon: UserCog, visible: can('staff.manage') },
-    { title: 'Store Settings', path: '/settings', icon: Settings, visible: can('settings.manage') },
+    {
+      title: 'Sales History',
+      path: '/sales',
+      icon: ReceiptText,
+      visible: true,
+    },
+    {
+      title: 'Categories',
+      path: '/categories',
+      icon: Tags,
+      visible: can('categories.manage'),
+    },
+    {
+      title: 'Stock & Inventory',
+      path: '/inventory',
+      icon: Warehouse,
+      visible: can('inventory.adjust'),
+    },
+    {
+      title: 'Customers',
+      path: '/customers',
+      icon: Users,
+      visible: can('customers.view'),
+    },
+    {
+      title: 'Reports & Analytics',
+      path: '/reports',
+      icon: ChartColumn,
+      visible: can('reports.view'),
+    },
+    {
+      title: 'Staff Accounts',
+      path: '/staff',
+      icon: UserCog,
+      visible: can('staff.manage'),
+    },
+    {
+      title: 'Store Settings',
+      path: '/settings',
+      icon: Settings,
+      visible: can('settings.manage'),
+    },
   ]
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto px-5 pb-8 pt-4">
-        <SheetHeader className="text-left pb-2">
-          <SheetTitle className="text-base font-semibold">TindaTrack Menu</SheetTitle>
+      <SheetContent
+        side="bottom"
+        className="max-h-[85vh] overflow-y-auto rounded-t-2xl px-5 pt-4 pb-8"
+      >
+        <SheetHeader className="pb-2 text-left">
+          <SheetTitle className="text-base font-semibold">
+            TindaTrack Menu
+          </SheetTitle>
         </SheetHeader>
 
         {/* User profile card */}
-        <div className="flex items-center gap-3 rounded-xl bg-muted/60 p-3 mb-4">
+        <div className="bg-muted/60 mb-4 flex items-center gap-3 rounded-xl p-3">
           <Avatar className="h-10 w-10 rounded-lg">
             <AvatarImage src={avatarUrl} alt={user.name} />
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{user.name}</p>
+            <p className="text-muted-foreground truncate text-xs">
+              {user.email}
+            </p>
           </div>
           <Badge
             variant={user.role === 'owner' ? 'default' : 'secondary'}
-            className="text-[10px] uppercase font-bold"
+            className="text-[10px] font-bold uppercase"
           >
             {user.role}
           </Badge>
@@ -92,9 +134,9 @@ export function MoreSheet({ open, onOpenChange }) {
                   key={link.path}
                   to={link.path}
                   onClick={() => onOpenChange(false)}
-                  className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card p-3 text-sm font-medium text-foreground hover:bg-muted/70 transition-colors"
+                  className="border-border/60 bg-card text-foreground hover:bg-muted/70 flex items-center gap-2.5 rounded-lg border p-3 text-sm font-medium transition-colors"
                 >
-                  <Icon className="h-4 w-4 text-primary shrink-0" />
+                  <Icon className="text-primary h-4 w-4 shrink-0" />
                   <span className="truncate">{link.title}</span>
                 </Link>
               )
@@ -107,10 +149,10 @@ export function MoreSheet({ open, onOpenChange }) {
           <Link
             to="/account"
             onClick={() => onOpenChange(false)}
-            className="flex items-center justify-between w-full rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+            className="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
           >
             <span className="flex items-center gap-2.5">
-              <BadgeCheck className="h-4 w-4 text-muted-foreground" />
+              <BadgeCheck className="text-muted-foreground h-4 w-4" />
               Account & Security
             </span>
           </Link>
@@ -118,22 +160,24 @@ export function MoreSheet({ open, onOpenChange }) {
           <button
             type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center justify-between w-full rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+            className="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
           >
             <span className="flex items-center gap-2.5">
               {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-muted-foreground" />
+                <Sun className="text-muted-foreground h-4 w-4" />
               ) : (
-                <Moon className="h-4 w-4 text-muted-foreground" />
+                <Moon className="text-muted-foreground h-4 w-4" />
               )}
               Appearance
             </span>
-            <span className="text-xs text-muted-foreground capitalize">{theme}</span>
+            <span className="text-muted-foreground text-xs capitalize">
+              {theme}
+            </span>
           </button>
 
           <Button
             variant="destructive"
-            className="w-full justify-center gap-2 mt-4"
+            className="mt-4 w-full justify-center gap-2"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />

@@ -15,7 +15,11 @@ export function SettingsPage() {
         description="Configure tindahan profile, receipt headers/footers, default reorder levels, and demo data"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:bg-destructive/10">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 gap-1.5"
+            >
               <RotateCcw className="h-4 w-4" />
               Reset Demo Data
             </Button>

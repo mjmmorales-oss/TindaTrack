@@ -1,7 +1,13 @@
 import { UserCheck, Shield, Palette } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,64 +28,77 @@ export function AccountPage() {
         description="Profile details, security credentials, and application preferences"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Profile Card */}
         <Card className="border-border/80 md:col-span-1">
-          <CardHeader className="text-center pb-2">
-            <Avatar className="h-20 w-20 mx-auto mb-3 rounded-2xl">
+          <CardHeader className="pb-2 text-center">
+            <Avatar className="mx-auto mb-3 h-20 w-20 rounded-2xl">
               <AvatarImage src={avatarUrl} alt={user?.name} />
-              <AvatarFallback className="rounded-2xl text-xl font-bold bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary rounded-2xl text-xl font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <CardTitle className="text-lg font-bold">{user?.name}</CardTitle>
             <CardDescription className="text-xs">{user?.email}</CardDescription>
             <div className="pt-2">
-              <Badge variant={user?.role === 'owner' ? 'default' : 'secondary'} className="uppercase text-[10px]">
+              <Badge
+                variant={user?.role === 'owner' ? 'default' : 'secondary'}
+                className="text-[10px] uppercase"
+              >
                 {user?.role_label || user?.role}
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground space-y-2 pt-4 border-t border-border mt-4">
+          <CardContent className="text-muted-foreground border-border mt-4 space-y-2 border-t pt-4 text-xs">
             <div className="flex justify-between">
               <span>Account Status:</span>
-              <span className="font-semibold text-success">Active</span>
+              <span className="text-success font-semibold">Active</span>
             </div>
             <div className="flex justify-between">
               <span>Member Since:</span>
-              <span>{user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Today'}</span>
+              <span>
+                {user?.created_at
+                  ? new Date(user.created_at).toLocaleDateString()
+                  : 'Today'}
+              </span>
             </div>
           </CardContent>
         </Card>
 
         {/* Security & Appearance placeholders */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-6 md:col-span-2">
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="text-primary h-4 w-4" />
                 Security & Authentication
               </CardTitle>
-              <CardDescription>Password updates and active sessions</CardDescription>
+              <CardDescription>
+                Password updates and active sessions
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Your account is authenticated via Laravel Sanctum bearer tokens. Password change dialog will be available in the next phase.
+              <p className="text-muted-foreground text-sm">
+                Your account is authenticated via Laravel Sanctum bearer tokens.
+                Password change dialog will be available in the next phase.
               </p>
             </CardContent>
           </Card>
 
           <Card className="border-border/80">
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Palette className="h-4 w-4 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Palette className="text-primary h-4 w-4" />
                 Appearance
               </CardTitle>
-              <CardDescription>Color theme and layout preferences</CardDescription>
+              <CardDescription>
+                Color theme and layout preferences
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                You can toggle between Light and Dark mode using the sun/moon icon in the topbar or sidebar profile menu.
+              <p className="text-muted-foreground text-sm">
+                You can toggle between Light and Dark mode using the sun/moon
+                icon in the topbar or sidebar profile menu.
               </p>
             </CardContent>
           </Card>

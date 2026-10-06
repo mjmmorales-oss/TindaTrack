@@ -49,7 +49,7 @@ export function NavMain() {
                     </NavLink>
                   </SidebarMenuButton>
                   {item.badgeKey && (
-                    <SidebarMenuBadge className="text-xs bg-highlight/20 text-highlight-foreground font-semibold">
+                    <SidebarMenuBadge className="bg-highlight/20 text-highlight-foreground text-xs font-semibold">
                       •
                     </SidebarMenuBadge>
                   )}

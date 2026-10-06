@@ -52,7 +52,8 @@ export function LoginPage() {
     try {
       const user = await login(data)
       notify.success(`Welcome back, ${user.name}!`)
-      const destination = from || (user.role === 'cashier' ? '/pos' : '/dashboard')
+      const destination =
+        from || (user.role === 'cashier' ? '/pos' : '/dashboard')
       navigate(destination, { replace: true })
     } catch (err) {
       const fieldErrors = getFieldErrors(err)
@@ -102,7 +103,7 @@ export function LoginPage() {
               {...register('email')}
             />
             {errors.email && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.email.message}
               </p>
             )}
@@ -113,7 +114,7 @@ export function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Link
                 to="/forgot-password"
-                className="text-xs text-primary hover:underline font-medium"
+                className="text-primary text-xs font-medium hover:underline"
               >
                 Forgot password?
               </Link>
@@ -125,16 +126,16 @@ export function LoginPage() {
               {...register('password')}
             />
             {errors.password && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-destructive text-xs font-medium">
                 {errors.password.message}
               </p>
             )}
           </div>
 
           {showDemo && (
-            <div className="rounded-lg border border-dashed border-border/80 bg-muted/40 p-3 text-xs space-y-2">
-              <span className="font-semibold text-foreground flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5 text-primary" />
+            <div className="border-border/80 bg-muted/40 space-y-2 rounded-lg border border-dashed p-3 text-xs">
+              <span className="text-foreground flex items-center gap-1.5 font-semibold">
+                <KeyRound className="text-primary h-3.5 w-3.5" />
                 Demo Credentials:
               </span>
               <div className="flex gap-2">
@@ -142,20 +143,20 @@ export function LoginPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs flex-1 gap-1"
+                  className="h-7 flex-1 gap-1 text-xs"
                   onClick={() => fillDemo('owner@tindatrack.test')}
                 >
-                  <UserCheck className="h-3 w-3 text-primary" />
+                  <UserCheck className="text-primary h-3 w-3" />
                   Owner Demo
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs flex-1 gap-1"
+                  className="h-7 flex-1 gap-1 text-xs"
                   onClick={() => fillDemo('cashier@tindatrack.test')}
                 >
-                  <UserCheck className="h-3 w-3 text-muted-foreground" />
+                  <UserCheck className="text-muted-foreground h-3 w-3" />
                   Cashier Demo
                 </Button>
               </div>
@@ -164,14 +165,21 @@ export function LoginPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full gap-2"
+            disabled={isSubmitting}
+          >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Signing in...' : 'Sign In'}
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-center text-xs">
             Don&apos;t have an account yet?{' '}
-            <Link to="/register" className="font-semibold text-primary hover:underline">
+            <Link
+              to="/register"
+              className="text-primary font-semibold hover:underline"
+            >
               Register as Store Owner
             </Link>
           </p>

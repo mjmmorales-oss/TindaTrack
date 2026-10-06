@@ -16,14 +16,14 @@ export function RouteErrorBoundary() {
   }
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center max-w-lg mx-auto">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mb-6">
+    <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center p-6 text-center">
+      <div className="bg-destructive/10 text-destructive mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
         <AlertTriangle className="h-8 w-8" />
       </div>
-      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+      <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
         {title}
       </h1>
-      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+      <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
         {message}
       </p>
 
