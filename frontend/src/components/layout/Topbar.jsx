@@ -76,12 +76,13 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Search trigger placeholder */}
+        {/* Search trigger opens Command Palette */}
         <Button
           variant="outline"
           size="sm"
           className="border-border/80 bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground hidden h-9 items-center gap-2 rounded-lg px-3 text-xs sm:flex"
-          onClick={() => {}}
+          onClick={() => window.dispatchEvent(new Event('app:open-command-palette'))}
+          aria-label="Buksan ang search at command palette"
         >
           <Search className="h-3.5 w-3.5" />
           <span>Search tindahan...</span>
