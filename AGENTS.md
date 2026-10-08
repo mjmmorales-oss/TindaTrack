@@ -4,7 +4,7 @@ You are working on **TindaTrack**, a web-based POS and inventory system for Phil
 
 ## Project shape
 - Monorepo: `backend/` = Laravel 13 API (Breeze `api` stack + Sanctum **bearer tokens**), deploys to Railway with MySQL. `frontend/` = React 19 SPA (Vite 8, JavaScript/JSX), deploys to Vercel. Root `package.json` only runs both (`npm run dev`).
-- **Prototype scope:** the ONLY real database feature is authentication (users, tokens, roles, active status, password reset). All business data (products, categories, sales, customers, utang, stock, reports, staff, settings) is **mock data** in `frontend/src/mocks`, served by `frontend/src/services` with Laravel-shaped responses. Do NOT add business tables, models or controllers to Laravel unless explicitly asked.
+- **Phase 3 scope:** Business data (products, categories, sales, customers, utang, stock, reports, staff, settings) is fully implemented in the real Laravel API and MySQL database. Mock data is retained in `frontend/src/mocks` as an offline/development fallback controlled via `VITE_DATA_SOURCE=mock` (`api` is the default). Railway and Vercel deploy targets stay.
 
 ## Backend rules (Laravel)
 - PHP 8.3+, Laravel 13, PSR-12; run `./vendor/bin/pint` and `php artisan test` before finishing.
