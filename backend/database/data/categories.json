@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "name": "Drinks",
+    "code": "DRK",
+    "description": "Softdrinks, bottled water, juices, at energy drinks",
+    "color": "#EF4444",
+    "icon": "GlassWater",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Coffee & Milk",
+    "code": "COF",
+    "description": "3-in-1 coffee sachets, powdered milk, at tsokolate",
+    "color": "#8B5CF6",
+    "icon": "Coffee",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Instant Noodles",
+    "code": "NOO",
+    "description": "Pancit canton, ramen, mami, at cup noodles",
+    "color": "#EAB308",
+    "icon": "Utensils",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Canned Goods",
+    "code": "CAN",
+    "description": "Sardinas, corned beef, tuna, at liver spread",
+    "color": "#3B82F6",
+    "icon": "Package",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Snacks",
+    "code": "SNA",
+    "description": "Chichirya, biskwit, tsokolate, at mani",
+    "color": "#F97316",
+    "icon": "Cookie",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "name": "Bread",
+    "code": "BRD",
+    "description": "Pandesal, sliced bread, monay, at pastries",
+    "color": "#D97706",
+    "icon": "Croissant",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "name": "Condiments",
+    "code": "CND",
+    "description": "Suka, toyo, mantika, catsup, at pampalasa",
+    "color": "#10B981",
+    "icon": "Sparkles",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 8,
+    "name": "Rice & Cooking",
+    "code": "RCE",
+    "description": "Bigas, asukal, asin, mantika, at itlog",
+    "color": "#84CC16",
+    "icon": "Flame",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 9,
+    "name": "Personal Care",
+    "code": "PER",
+    "description": "Sabong pampaligo, shampoo, at toothpaste",
+    "color": "#EC4899",
+    "icon": "Heart",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 10,
+    "name": "Household",
+    "code": "HOU",
+    "description": "Detergent powder, bleach, posporo, at kandila",
+    "color": "#6366F1",
+    "icon": "Home",
+    "created_at": "2026-01-01T00:00:00.000Z"
+  }
+]
