@@ -6,7 +6,6 @@ import {
   FieldError,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
 
 /**
  * React Hook Form wrapped Input field with label, description, and error integration.

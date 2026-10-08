@@ -29,3 +29,18 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - **T9**: Optimized frontend bundle with route lazy loading, DEV-only conditional inclusion of dev routes, and Vite manualChunks (recharts, motion, radix, router, tanstack, lucide, date); reduced main bundle from 876 kB to 715 kB (220 kB gzip). Hardened backend with `GET /` returning JSON `{name, status}`, verified `trustProxies(at: '*')`, `/up` health route, rate limits, eager loading across all index methods, and production .env documentation. All 41 Pest tests, pint, build, and ESLint passed.
 - **T10**: Prepared deployment configuration for Railway (`backend/railway.toml` with NIXPACKS, pre-deploy migration/seed, healthcheck `/up`, and `backend/nixpacks.toml` public root configuration) and Vercel (`frontend/vercel.json` SPA rewrites). Authored click-by-click beginner deployment guide in `docs/DEPLOY.md` and complete project documentation in `README.md`. Production config/route cache and build gates verified green.
 - **T11**: Conducted final bug hunt and integrity audit: backend tests (41/41 passing), pint (passed), reconciliation (`tindatrack:check` 100% clean), route audit (47 api routes), frontend build & ESLint (0 errors), contract check (37/37 passing), mock data check (discrepancy ₱0.0000), and comprehensive grep scans (zero console.log, zero debugger, zero TODO/FIXME, zero react-router-dom, zero .ts/.tsx, zero hex colors in features, zero unhandled errors). Authored `docs/CHANGELOG.md`. Merged `phase-3` into `main` and tagged `v1.0.0`.
+
+---
+## Runtime Audit (F1–F6)
+- [x] **F1 — Strict Linter**: Catch undefined components (`no-undef`, `react/jsx-no-undef`), unused vars, react-hooks rules.
+- [ ] **F2 — Render Tests**: Headless jsdom route and interaction smoke tests using Vitest + RTL.
+- [ ] **F3 — Fix Runtime Failures**: Fix missing UI imports (`/inventory`), null form controls (`/settings`), and all failures found by F2.
+- [ ] **F4 — Systematic Code Audit**: Imports graph, mock vs API service contract checks, hook safety, data shape guards.
+- [ ] **F5 — API-Mode Sanity**: Backend Resource field alignment with frontend models, contract verification.
+- [ ] **F6 — Wrap Up**: Documentation, full test verification, merge to `main`, and tag `v1.0.1`.
+
+### F1 Log:
+- Implemented strict flat ESLint config in `frontend/eslint.config.js` with `no-undef`, `react/jsx-no-undef`, `react/jsx-uses-vars`, `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps`, and `unused-imports`.
+- Caught and resolved missing `Table` imports in `InventoryPage.jsx` and missing `cmdOpen`/`shortcutsOpen` dialog states in `PosLayout.jsx`.
+- Cleaned all unused imports and variables across `src`. `npx eslint src` (0 errors) and `npm run build` both passing.
+

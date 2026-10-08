@@ -11,7 +11,6 @@ import {
   Phone,
   MapPin,
   AlertCircle,
-  Clock,
   Filter,
 } from 'lucide-react'
 
@@ -21,7 +20,6 @@ import { DataTable } from '@/components/data-table/DataTable'
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'

@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Check, Loader2, PackagePlus } from 'lucide-react'
+import { Loader2, PackagePlus } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Money } from '@/components/common/Money'
 import { useAdjustStock } from '@/features/inventory/hooks/useInventory'
 import { notify } from '@/lib/notify'
 

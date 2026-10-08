@@ -3,8 +3,6 @@ import { Link, useParams, useNavigate } from 'react-router'
 import {
   ArrowDownUp,
   ArrowLeft,
-  Calendar,
-  Clock,
   Layers,
   Package,
   Pencil,
@@ -26,21 +24,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+
+
 import { PageContainer } from '@/components/layout/PageContainer'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { Money } from '@/components/common/Money'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { StockLevelBar } from '@/components/common/StockLevelBar'
-import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
@@ -84,7 +74,6 @@ export function ProductDetailPage() {
   // Movements audit log for this product
   const {
     data: movementsRes,
-    isLoading: isLoadingMovements,
     refetch: refetchMovements,
   } = useStockMovements({ product_id: id, per_page: 15 })
   const movements = useMemo(() => movementsRes?.data || [], [movementsRes?.data])

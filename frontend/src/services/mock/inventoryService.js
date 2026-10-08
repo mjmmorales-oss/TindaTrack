@@ -6,7 +6,7 @@
  */
 
 import { useMockDb } from '../../mocks/db.js'
-import { delay, paginate, applySearch, applySort } from '../../lib/mockApi.js'
+import { delay, paginate, applySort } from '../../lib/mockApi.js'
 
 function toMoney(n) {
   return Math.round(n * 100) / 100

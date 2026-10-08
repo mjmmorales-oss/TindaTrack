@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router'
+import { Outlet } from 'react-router'
 import {
   CheckCircle2,
   ShieldCheck,

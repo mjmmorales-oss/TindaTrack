@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
 import {
   ArrowLeft,
@@ -11,12 +11,9 @@ import {
   MapPin,
   AlertCircle,
   Clock,
-  MoreVertical,
-  CheckCircle2,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { Money } from '@/components/common/Money'
 import { StatusBadge } from '@/components/common/StatusBadge'

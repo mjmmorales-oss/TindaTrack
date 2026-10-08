@@ -29,7 +29,6 @@ export const utangService = {
 
     const now = Date.now()
     const sevenDaysAgo = now - 7 * 24 * 3600000
-    const thirtyDaysAgo = now - 30 * 24 * 3600000
 
     // Collected this week
     const collectedThisWeek = toMoney(

@@ -3,16 +3,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
-  Shield,
   Palette,
   Sun,
   Moon,
   Monitor,
   LogOut,
   KeyRound,
-  User,
-  Mail,
-  ShieldCheck,
   CheckCircle2,
   Loader2,
 } from 'lucide-react'
@@ -22,7 +18,6 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { PasswordInput } from '@/components/forms/PasswordInput'
-import { FormInput } from '@/components/forms/FormInput'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import {
   Card,

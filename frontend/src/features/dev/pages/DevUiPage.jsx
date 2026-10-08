@@ -1,30 +1,21 @@
 import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import {
-  AlertCircle,
   AlertTriangle,
-  ArrowRight,
   Bell,
   CheckCircle2,
-  ChevronRight,
   CreditCard,
   DollarSign,
   Edit,
   Eye,
-  FolderSearch,
-  Info,
   Layers,
   LayoutGrid,
-  ListOrdered,
   Package,
-  Plus,
   RefreshCw,
-  Search,
   ShoppingCart,
   Store,
   Table as TableIcon,
   Trash2,
-  Users,
   Wifi,
   WifiOff,
 } from 'lucide-react'
@@ -43,110 +34,38 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Switch } from '@/components/ui/switch'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Slider } from '@/components/ui/slider'
-import {
-  Field,
-  FieldLabel,
-  FieldDescription,
-  FieldError,
-} from '@/components/ui/field'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from '@/components/ui/input-otp'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-  EmptyMedia,
-} from '@/components/ui/empty'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Kbd } from '@/components/ui/kbd'
-import { Spinner } from '@/components/ui/spinner'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { ModeToggle } from '@/components/common/ModeToggle'
-import { NumberTicker } from '@/components/ui/number-ticker'
-import { AnimatedShinyText } from '@/components/ui/animated-shiny-text'
-import { BorderBeam } from '@/components/ui/border-beam'
 import { notify } from '@/lib/notify'
-import { getAvatarUri, getInitials } from '@/lib/avatar'
-import {
-  formatCurrency,
-  formatDate,
-  formatDateTime,
-  formatRelative,
-  toMoney,
-} from '@/lib/format'
+
+
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // Common Component Kit
 import { StatCard } from '@/components/common/StatCard'
 import { ChartCard } from '@/components/common/ChartCard'
-import { TrendBadge } from '@/components/common/TrendBadge'
 import { Money } from '@/components/common/Money'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { StockLevelBar } from '@/components/common/StockLevelBar'
-import { UserAvatar } from '@/components/common/UserAvatar'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'

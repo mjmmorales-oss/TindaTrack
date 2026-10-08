@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
   HandCoins,
@@ -8,11 +8,7 @@ import {
   Copy,
   Check,
   MoreVertical,
-  Calendar,
-  Phone,
   ArrowRight,
-  TrendingUp,
-  ReceiptText,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -22,7 +18,6 @@ import { DataTable } from '@/components/data-table/DataTable'
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -60,7 +55,7 @@ export function UtangPage() {
   const storeName = settingsRes?.data?.store_name || 'Tindahan ni Aling Nena'
 
   // Table params synced with URL
-  const { params, setParams, resetParams } = useTableParams({
+  const { params, setParams } = useTableParams({
     q: '',
     sort: '-credit_balance',
     page: 1,
@@ -90,7 +85,7 @@ export function UtangPage() {
   }
 
   // Copy polite Taglish SMS reminder from blueprint 7.10
-  const handleCopyReminder = (customer) => {
+  const handleCopyReminder = useCallback((customer) => {
     const amount = Number(customer.credit_balance || 0).toFixed(2)
     const displayName = customer.nickname || customer.name
     const message = `Hi ${displayName}, paalala lang po sa utang ninyo na ₱${amount} sa ${storeName}. Salamat po!`
@@ -102,7 +97,7 @@ export function UtangPage() {
       `Mensahe para kay ${displayName} ay nakopya sa clipboard.`,
     )
     setTimeout(() => setCopiedId(null), 2500)
-  }
+  }, [storeName])
 
   // Aging buckets calculations
   const aging = summary?.aging_buckets || {
@@ -312,7 +307,7 @@ export function UtangPage() {
         },
       },
     ],
-    [navigate, canCollect, copiedId],
+    [navigate, canCollect, copiedId, handleCopyReminder],
   )
 
   // Mobile card renderer below md

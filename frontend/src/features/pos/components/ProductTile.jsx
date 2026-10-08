@@ -9,7 +9,6 @@ import {
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { Money } from '@/components/common/Money'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 /**

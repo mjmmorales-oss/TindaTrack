@@ -9,7 +9,6 @@ import {
   RotateCcw,
   AlertTriangle,
   Loader2,
-  CheckCircle2,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -18,7 +17,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FormInput } from '@/components/forms/FormInput'
-import { FormTextarea } from '@/components/forms/FormTextarea'
 import { PhoneInput } from '@/components/forms/PhoneInput'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -50,7 +48,7 @@ export function SettingsPage() {
     control,
     watch,
     reset,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty },
   } = useForm({
     defaultValues: {
       store_name: '',

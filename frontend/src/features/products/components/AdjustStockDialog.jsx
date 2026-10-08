@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, ArrowDownUp, Loader2, PackageCheck } from 'lucide-react'
+import { AlertTriangle, Loader2, PackageCheck } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'

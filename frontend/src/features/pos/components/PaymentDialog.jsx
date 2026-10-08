@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import {
   Banknote,
   BookOpen,
-  CheckCircle2,
   AlertTriangle,
   Loader2,
   Receipt,

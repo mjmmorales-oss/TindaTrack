@@ -3,16 +3,13 @@ import { Link } from 'react-router'
 import {
   AlertTriangle,
   ArrowDownUp,
-  BarChart3,
   CheckCircle2,
   DollarSign,
   PackageCheck,
   PackagePlus,
-  PackageSearch,
   Printer,
   RotateCcw,
   Warehouse,
-  XCircle,
 } from 'lucide-react'
 import {
   Bar,
@@ -27,19 +24,22 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatCard } from '@/components/common/StatCard'
 import { ChartCard } from '@/components/common/ChartCard'
-import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
-import { DataTable } from '@/components/data-table/DataTable'
-import { DataTableToolbar } from '@/components/data-table/DataTableToolbar'
-import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader'
 import { DateRangePicker } from '@/components/forms/DateRangePicker'
 import { useTableParams } from '@/components/data-table/useTableParams'
 import { BulkRestockDialog } from '@/features/inventory/components/BulkRestockDialog'
@@ -54,7 +54,7 @@ import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { formatCurrency, formatDateTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 
 /**
  * Main Inventory & Stock Management page for Store Owners.
@@ -68,7 +68,6 @@ export function InventoryPage() {
   // Overview Query
   const {
     data: overviewRes,
-    isLoading: isLoadingOverview,
     refetch: refetchOverview,
   } = useInventoryOverview()
   const overview = overviewRes?.data
@@ -80,7 +79,6 @@ export function InventoryPage() {
   // Restock List Query
   const {
     data: restockRes,
-    isLoading: isLoadingRestock,
     refetch: refetchRestock,
   } = useRestockList()
   const restockData = restockRes?.data
@@ -99,7 +97,6 @@ export function InventoryPage() {
 
   const {
     data: runningLowRes,
-    isLoading: isLoadingRunningLow,
     refetch: refetchRunningLow,
   } = useProducts({
     stock: 'low',
@@ -151,8 +148,6 @@ export function InventoryPage() {
 
   const {
     data: movementsRes,
-    isLoading: isLoadingMovements,
-    isError: isMovementsError,
     refetch: refetchMovements,
   } = useStockMovements({
     type: movementType || undefined,

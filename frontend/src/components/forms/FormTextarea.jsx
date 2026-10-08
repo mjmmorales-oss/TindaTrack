@@ -6,7 +6,6 @@ import {
   FieldError,
 } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 
 /**
  * React Hook Form wrapped Textarea field with label, description, and error integration.

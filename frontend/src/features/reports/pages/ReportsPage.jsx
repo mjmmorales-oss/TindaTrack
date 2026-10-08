@@ -1,25 +1,18 @@
 import { useState, useMemo } from 'react'
 import {
   TrendingUp,
-  Receipt,
   Download,
   Printer,
-  Calendar,
   Layers,
-  Clock,
   Award,
   Wallet,
   ShoppingBag,
   CircleDollarSign,
-  PieChart as PieIcon,
-  BarChart3,
 } from 'lucide-react'
 import {
   subDays,
   startOfToday,
   endOfToday,
-  parseISO,
-  format,
 } from 'date-fns'
 import {
   ResponsiveContainer,
@@ -55,8 +48,6 @@ import {
 } from '@/features/reports/hooks/useReports'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { exportToCsv } from '@/lib/toCsv'
-import { formatCurrency, formatNumber } from '@/lib/format'
-import { cn } from '@/lib/utils'
 
 export function ReportsPage() {
   useDocumentTitle('Mga Ulat at Benta (Reports)')

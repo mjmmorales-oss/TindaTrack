@@ -2,7 +2,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TrendBadge } from '@/components/common/TrendBadge'
 import { NumberTicker } from '@/components/ui/number-ticker'
-import { formatCurrency, formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 const toneIconColors = {
@@ -59,7 +58,6 @@ export function StatCard({
     )
   }
 
-  const isNumeric = typeof value === 'number'
 
   return (
     <Card

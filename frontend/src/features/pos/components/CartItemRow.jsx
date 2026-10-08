@@ -3,7 +3,6 @@ import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { QuantityStepper } from '@/components/forms/QuantityStepper'
 import { Money } from '@/components/common/Money'
-import { cn } from '@/lib/utils'
 
 /**
  * Single line item in the POS cart with quantity controls and stock warnings.
