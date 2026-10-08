@@ -95,14 +95,32 @@ export const utangService = {
     await delay()
     const { q = '', page = 1, per_page = 15, sort = '-credit_balance' } = params
 
-    let items = useMockDb
-      .getState()
-      .customers.filter((c) => c.credit_balance > 0)
-      .map((c) => ({
-        ...c,
-        utilization_rate: c.credit_limit > 0 ? toMoney((c.credit_balance / c.credit_limit) * 100) : 100,
-        is_over_limit: c.credit_balance > c.credit_limit,
-      }))
+    const state = useMockDb.getState()
+    const now = Date.now()
+    let items = state.customers
+      .filter((c) => c.credit_balance > 0)
+      .map((c) => {
+        const custSales = state.sales
+          .filter(
+            (s) =>
+              s.customer_id === c.id &&
+              s.payment_type === 'utang' &&
+              s.status === 'completed',
+          )
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+        const oldestDate = custSales.length > 0 ? custSales[0].created_at : c.created_at
+        const ageInDays = Math.floor((now - new Date(oldestDate).getTime()) / (24 * 3600000))
+
+        return {
+          ...c,
+          utilization_rate:
+            c.credit_limit > 0 ? toMoney((c.credit_balance / c.credit_limit) * 100) : 100,
+          is_over_limit: c.credit_balance > c.credit_limit,
+          oldest_debt_date: oldestDate,
+          days_overdue: Math.max(0, ageInDays),
+        }
+      })
 
     items = applySearch(items, q, ['name', 'nickname', 'contact_number'])
     items = applySort(items, sort)

@@ -42,6 +42,13 @@ export const saleService = {
 
     let items = [...useMockDb.getState().sales]
 
+    // Cashier sees only own sales
+    const role = getCurrentUserRole()
+    const currentUser = getCurrentUser()
+    if (role === 'cashier' && currentUser) {
+      items = items.filter((s) => s.user_id === currentUser.id)
+    }
+
     if (payment_type) {
       items = items.filter((s) => s.payment_type === payment_type)
     }
@@ -71,7 +78,46 @@ export const saleService = {
     items = applySearch(items, q, ['sale_no'])
     items = applySort(items, sort)
 
-    return paginate(items, page, per_page)
+    // Compute summary metrics for current filtered results before pagination
+    const completedItems = items.filter((s) => s.status === 'completed')
+    const totalAmount = toMoney(
+      completedItems.reduce((acc, s) => acc + (s.total_amount ?? s.total ?? 0), 0),
+    )
+    const totalCount = items.length
+    const averageSale =
+      completedItems.length > 0 ? toMoney(totalAmount / completedItems.length) : 0
+
+    const { staff, customers } = useMockDb.getState()
+    const staffMap = new Map(staff.map((u) => [u.id, u]))
+    const customerMap = new Map(customers.map((c) => [c.id, c]))
+
+    const enrichedItems = items.map((s) => {
+      const cashier = staffMap.get(s.user_id)
+      const customer = s.customer_id ? customerMap.get(s.customer_id) : null
+      return {
+        ...s,
+        cashier: cashier ? { id: cashier.id, name: cashier.name, role: cashier.role } : null,
+        customer: customer
+          ? {
+              id: customer.id,
+              name: customer.name,
+              nickname: customer.nickname,
+              contact_number: customer.contact_number,
+            }
+          : null,
+      }
+    })
+
+    const paginated = paginate(enrichedItems, page, per_page)
+
+    return {
+      ...paginated,
+      summary: {
+        total_amount: totalAmount,
+        total_count: totalCount,
+        average_sale: averageSale,
+      },
+    }
   },
 
   /**

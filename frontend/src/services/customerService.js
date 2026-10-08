@@ -37,7 +37,35 @@ export const customerService = {
       sort = 'name',
     } = params
 
-    let items = [...useMockDb.getState().customers]
+    const state = useMockDb.getState()
+    let items = state.customers.map((c) => {
+      let latestDate = c.created_at
+      const custSales = state.sales.filter((s) => s.customer_id === c.id)
+      const custPayments = state.utangPayments.filter((p) => p.customer_id === c.id)
+
+      if (custSales.length > 0) {
+        const sortedSales = [...custSales].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        if (new Date(sortedSales[0].created_at) > new Date(latestDate)) {
+          latestDate = sortedSales[0].created_at
+        }
+      }
+
+      if (custPayments.length > 0) {
+        const sortedPayments = [...custPayments].sort(
+          (a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime(),
+        )
+        if (new Date(sortedPayments[0].payment_date) > new Date(latestDate)) {
+          latestDate = sortedPayments[0].payment_date
+        }
+      }
+
+      return {
+        ...c,
+        last_activity: latestDate,
+      }
+    })
 
     if (with_balance === true || with_balance === 'true') {
       items = items.filter((c) => c.credit_balance > 0)
@@ -60,13 +88,36 @@ export const customerService = {
   async get(id) {
     await delay()
     const custId = Number(id)
-    const customer = useMockDb.getState().customers.find((c) => c.id === custId)
+    const state = useMockDb.getState()
+    const customer = state.customers.find((c) => c.id === custId)
 
     if (!customer) {
       throw new ApiError(404, 'Customer not found.')
     }
 
-    return { data: customer }
+    let latestDate = customer.created_at
+    const custSales = state.sales.filter((s) => s.customer_id === custId)
+    const custPayments = state.utangPayments.filter((p) => p.customer_id === custId)
+
+    if (custSales.length > 0) {
+      const sortedSales = [...custSales].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      if (new Date(sortedSales[0].created_at) > new Date(latestDate)) {
+        latestDate = sortedSales[0].created_at
+      }
+    }
+
+    if (custPayments.length > 0) {
+      const sortedPayments = [...custPayments].sort(
+        (a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime(),
+      )
+      if (new Date(sortedPayments[0].payment_date) > new Date(latestDate)) {
+        latestDate = sortedPayments[0].payment_date
+      }
+    }
+
+    return { data: { ...customer, last_activity: latestDate } }
   },
 
   /**
