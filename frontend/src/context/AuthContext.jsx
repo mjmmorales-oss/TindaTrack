@@ -1,6 +1,8 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { api, TOKEN_KEY } from '@/lib/api'
 
+import { notify } from '@/lib/notify'
+
 export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
@@ -35,8 +37,27 @@ export function AuthProvider({ children }) {
   }, [clearSession])
 
   useEffect(() => {
-    window.addEventListener('auth:unauthorized', clearSession)
-    return () => window.removeEventListener('auth:unauthorized', clearSession)
+    const handleUnauthorized = (e) => {
+      clearSession()
+      notify.error(
+        'Sesyon Nag-expire (401)',
+        e.detail || 'Nag-expire ang iyong sesyon. Mag-sign in muli upang magpatuloy.',
+      )
+    }
+
+    const handleForbidden = (e) => {
+      notify.error(
+        'Walang Pahintulot (403)',
+        e.detail || 'Bawal ang aksyong ito sa iyong kasalukuyang tungkulin.',
+      )
+    }
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    window.addEventListener('auth:forbidden', handleForbidden)
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized)
+      window.removeEventListener('auth:forbidden', handleForbidden)
+    }
   }, [clearSession])
 
   const login = useCallback(

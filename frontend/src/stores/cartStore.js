@@ -125,24 +125,59 @@ export const useCartStore = create(
        */
       holdCurrentCart: () => {
         const { items, heldCarts } = get()
-        if (items.length === 0 || heldCarts.length >= 3) return
+        if (items.length === 0 || heldCarts.length >= 3) return false
+        const total = toMoney(items.reduce((sum, i) => sum + i.quantity * i.price, 0))
+        const count = items.reduce((sum, i) => sum + i.quantity, 0)
         set({
-          heldCarts: [...heldCarts, { id: Date.now(), items, savedAt: new Date().toISOString() }],
+          heldCarts: [
+            ...heldCarts,
+            {
+              id: Date.now(),
+              items: [...items],
+              total,
+              itemCount: count,
+              savedAt: new Date().toISOString(),
+            },
+          ],
           items: [],
         })
+        return true
       },
 
       /**
        * Restores a held cart back to active cart.
        */
-      restoreHeldCart: (index) => {
-        const { heldCarts } = get()
-        if (!heldCarts[index]) return
-        const target = heldCarts[index]
+      restoreHeldCart: (id) => {
+        const { items, heldCarts } = get()
+        const target = heldCarts.find((c) => c.id === id)
+        if (!target) return
+        const newHeld = heldCarts.filter((c) => c.id !== id)
+
+        if (items.length > 0 && newHeld.length < 3) {
+          const total = toMoney(items.reduce((sum, i) => sum + i.quantity * i.price, 0))
+          const count = items.reduce((sum, i) => sum + i.quantity, 0)
+          newHeld.push({
+            id: Date.now(),
+            items: [...items],
+            total,
+            itemCount: count,
+            savedAt: new Date().toISOString(),
+          })
+        }
+
         set({
           items: target.items,
-          heldCarts: heldCarts.filter((_, i) => i !== index),
+          heldCarts: newHeld,
         })
+      },
+
+      /**
+       * Discards a held cart permanently.
+       */
+      discardHeldCart: (id) => {
+        set((state) => ({
+          heldCarts: state.heldCarts.filter((c) => c.id !== id),
+        }))
       },
     }),
     {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react'
+import { ShoppingCart, Trash2, ArrowRight, Pause } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
 import {
   Drawer,
   DrawerContent,
@@ -13,6 +14,9 @@ import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { CartItemRow } from '@/features/pos/components/CartItemRow'
 import { CartSummary } from '@/features/pos/components/CartSummary'
+import { HeldCartsDialog } from '@/features/pos/components/HeldCartsDialog'
+import { useCartStore } from '@/stores/cartStore'
+import { notify } from '@/lib/notify'
 
 /**
  * Mobile drawer for displaying full cart items, quantity adjustments, and checkout trigger.
@@ -40,7 +44,23 @@ export function CartDrawer({
   onOpenPayment,
 }) {
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
+  const [heldDialogOpen, setHeldDialogOpen] = useState(false)
   const isEmpty = items.length === 0
+
+  const heldCarts = useCartStore((state) => state.heldCarts)
+  const holdCurrentCart = useCartStore((state) => state.holdCurrentCart)
+
+  const handleHoldCart = () => {
+    if (heldCarts.length >= 3) {
+      notify.warning('Puno na ang hold slots', 'Hanggang 3 benta lamang ang maaaring i-hold.')
+      return
+    }
+    const success = holdCurrentCart()
+    if (success) {
+      notify.success('Naka-hold na ang benta.')
+      onOpenChange(false)
+    }
+  }
 
   return (
     <>
@@ -58,18 +78,52 @@ export function CartDrawer({
               </Badge>
             </div>
 
-            {!isEmpty && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setClearDialogOpen(true)}
-                className="text-muted-foreground hover:text-destructive h-8 px-2 text-xs gap-1"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Linisin
-              </Button>
-            )}
+            <div className="flex items-center gap-1">
+              {heldCarts.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setHeldDialogOpen(true)}
+                  className="h-8 px-2 text-xs gap-1 border-warning/40 text-warning hover:bg-warning/10"
+                  aria-label={`Tingnan ang ${heldCarts.length} naka-hold na benta`}
+                >
+                  <Pause className="h-3.5 w-3.5" />
+                  <Badge variant="secondary" className="bg-warning/20 text-warning px-1 py-0 text-[10px]">
+                    {heldCarts.length}
+                  </Badge>
+                </Button>
+              )}
+
+              {!isEmpty && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleHoldCart}
+                    disabled={heldCarts.length >= 3}
+                    className="text-muted-foreground hover:text-foreground h-8 px-2 text-xs gap-1"
+                    aria-label="I-hold ang benta"
+                  >
+                    <Pause className="h-3.5 w-3.5" />
+                    Hold
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setClearDialogOpen(true)}
+                    className="text-muted-foreground hover:text-destructive h-8 px-2 text-xs gap-1"
+                    aria-label="Linisin ang cart"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Linisin
+                  </Button>
+                </>
+              )}
+            </div>
           </DrawerHeader>
 
           {/* Body */}
@@ -79,14 +133,16 @@ export function CartDrawer({
                 Walang laman ang cart.
               </div>
             ) : (
-              items.map((item) => (
-                <CartItemRow
-                  key={item.product_id}
-                  item={item}
-                  onQuantityChange={onQuantityChange}
-                  onRemove={onRemove}
-                />
-              ))
+              <AnimatePresence initial={false}>
+                {items.map((item) => (
+                  <CartItemRow
+                    key={item.product_id}
+                    item={item}
+                    onQuantityChange={onQuantityChange}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </AnimatePresence>
             )}
           </div>
 
@@ -125,6 +181,11 @@ export function CartDrawer({
           setClearDialogOpen(false)
           onOpenChange(false)
         }}
+      />
+
+      <HeldCartsDialog
+        open={heldDialogOpen}
+        onOpenChange={setHeldDialogOpen}
       />
     </>
   )

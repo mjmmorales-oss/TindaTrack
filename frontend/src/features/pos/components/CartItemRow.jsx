@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react'
+import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { QuantityStepper } from '@/components/forms/QuantityStepper'
 import { Money } from '@/components/common/Money'
@@ -17,7 +18,14 @@ export function CartItemRow({ item, onQuantityChange, onRemove }) {
   const stockHint = isAtMaxStock ? `Natira: ${item.stock} ${item.unit || 'pc'}` : undefined
 
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-border/50 py-3 last:border-b-0">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="flex items-start justify-between gap-3 border-b border-border/50 py-3 last:border-b-0"
+    >
       {/* Item info */}
       <div className="min-w-0 flex-1 space-y-1">
         <h4 className="text-foreground line-clamp-2 text-xs font-semibold leading-tight sm:text-sm">
@@ -64,7 +72,7 @@ export function CartItemRow({ item, onQuantityChange, onRemove }) {
           className="font-bold font-mono text-right"
         />
       </div>
-    </div>
+    </motion.div>
   )
 }
 

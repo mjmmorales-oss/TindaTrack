@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router'
-import { ArrowLeft, Clock, Store, Wifi } from 'lucide-react'
+import { ArrowLeft, Clock, Store, Wifi, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
 import { getAvatarUrl, getInitials } from '@/lib/avatar'
 import { ModeToggle } from '@/components/common/ModeToggle'
+import { CommandPalette } from '@/components/layout/CommandPalette'
+import { ShortcutsHelpDialog } from '@/components/layout/ShortcutsHelpDialog'
 
 export function PosLayout() {
   const { user } = useAuth()
@@ -87,6 +89,17 @@ export function PosLayout() {
             </div>
           </div>
 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShortcutsOpen(true)}
+            className="text-muted-foreground hover:text-foreground h-9 w-9"
+            aria-label="Mga Keyboard Shortcut (?)"
+            title="Keyboard Shortcuts (?)"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+
           <ModeToggle />
         </div>
       </header>
@@ -95,6 +108,9 @@ export function PosLayout() {
       <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
+
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+      <ShortcutsHelpDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </div>
   )
 }

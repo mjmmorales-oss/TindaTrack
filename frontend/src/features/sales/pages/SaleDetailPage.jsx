@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/common/ErrorState'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useSale, useVoidSale } from '@/features/sales/hooks/useSales'
+import { useSettings } from '@/features/settings/hooks/useSettings'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatDateTime } from '@/lib/format'
@@ -39,6 +40,12 @@ export function SaleDetailPage() {
 
   const { data: saleRes, isLoading, isError, refetch } = useSale(id)
   const sale = saleRes?.data
+  const { data: settingsRes } = useSettings()
+  const settings = settingsRes?.data
+  const storeName = settings?.store_name || 'Tindahan ni Aling Nena'
+  const storeAddress = settings?.address || 'Purok 3, Brgy. San Isidro'
+  const storeContact = settings?.contact_number || '0917-123-4567'
+  const receiptFooter = settings?.receipt_footer || 'Salamat po! Balik po kayo muli!'
   const voidMutation = useVoidSale()
 
   const [voidDialogOpen, setVoidDialogOpen] = useState(false)
@@ -247,10 +254,10 @@ export function SaleDetailPage() {
             {/* Store Header */}
             <div className="text-center space-y-0.5 border-b border-dashed border-border/80 pb-3">
               <h2 className="text-sm font-bold tracking-tight text-foreground uppercase">
-                Tindahan ni Aling Nena
+                {storeName}
               </h2>
-              <p className="text-[11px] text-muted-foreground">Purok 3, Brgy. San Isidro</p>
-              <p className="text-[11px] text-muted-foreground">0917-123-4567</p>
+              {storeAddress && <p className="text-[11px] text-muted-foreground">{storeAddress}</p>}
+              {storeContact && <p className="text-[11px] text-muted-foreground">{storeContact}</p>}
             </div>
 
             {/* Receipt Metadata */}
@@ -348,7 +355,7 @@ export function SaleDetailPage() {
             {/* Receipt Footer */}
             <div className="pt-3 text-center space-y-1">
               <p className="text-[11px] font-medium text-foreground">
-                Salamat po! Balik po kayo muli!
+                {receiptFooter}
               </p>
               <p className="text-[9px] text-muted-foreground">
                 POS Powered by TindaTrack · Libre at Bukas

@@ -14,8 +14,10 @@ import {
   Mail,
   ShieldCheck,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react'
 
+import { api } from '@/lib/api'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
@@ -58,10 +60,13 @@ export function AccountPage() {
   const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
 
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
+
   const {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(passwordChangeSchema),
@@ -72,12 +77,41 @@ export function AccountPage() {
     },
   })
 
-  const onSubmitPassword = (data) => {
-    notify.info(
-      'Available after API integration',
-      'Magiging aktibo ang pagpapalit ng password sa susunod na API release.',
-    )
-    reset()
+  const onSubmitPassword = async (data) => {
+    if (import.meta.env.VITE_DATA_SOURCE === 'mock') {
+      notify.info(
+        'Naka-mock mode',
+        'Nasa mock data mode ka ngayon. Matagumpay na naitala ang pagpalit ng password.',
+      )
+      reset()
+      return
+    }
+
+    setIsSubmittingPassword(true)
+    try {
+      await api.put('/user/password', {
+        current_password: data.current_password,
+        password: data.new_password,
+        password_confirmation: data.confirm_password,
+      })
+      notify.success('Matagumpay na napalitan ang iyong password.')
+      reset()
+    } catch (err) {
+      if (err.response?.status === 422 && err.response.data?.errors) {
+        const backendErrors = err.response.data.errors
+        if (backendErrors.current_password) {
+          setError('current_password', { message: backendErrors.current_password[0] })
+        }
+        if (backendErrors.password) {
+          setError('new_password', { message: backendErrors.password[0] })
+        }
+        notify.error('Hindi wastong datos', err.response.data.message || 'Pakisuri ang mga patlang.')
+      } else {
+        notify.error('Nabigong palitan ang password', err.response?.data?.message || err.message)
+      }
+    } finally {
+      setIsSubmittingPassword(false)
+    }
   }
 
   const handleSignOut = async () => {
@@ -220,7 +254,12 @@ export function AccountPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end border-t border-border/70 pt-4">
-                <Button type="submit" className="w-full sm:w-auto">
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPassword}
+                  className="w-full sm:w-auto gap-2"
+                >
+                  {isSubmittingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
                   I-save ang Bagong Password
                 </Button>
               </CardFooter>

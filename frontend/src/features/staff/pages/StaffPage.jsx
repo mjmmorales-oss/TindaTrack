@@ -122,15 +122,17 @@ export function StaffPage() {
         }
       />
 
-      {/* Prototype Disclaimer Banner */}
-      <div className="rounded-xl border border-warning/30 bg-warning/10 p-3.5 text-xs text-warning-foreground flex items-start gap-2.5 shadow-xs">
-        <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-        <p className="leading-relaxed">
-          <strong>Paalala sa Prototayp:</strong> Ang mga pagbabago sa staff dito ay
-          pansamantalang nakatala sa local prototype database. Ang mga tunay na multi-user
-          accounts ay pamamahalaan ng central API sa susunod na release.
-        </p>
-      </div>
+      {/* Prototype Disclaimer Banner (shown only in mock fallback mode) */}
+      {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
+        <div className="rounded-xl border border-warning/30 bg-warning/10 p-3.5 text-xs text-warning-foreground flex items-start gap-2.5 shadow-xs">
+          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            <strong>Paalala sa Prototayp:</strong> Ang mga pagbabago sa staff dito ay
+            pansamantalang nakatala sa local prototype database. Ang mga tunay na multi-user
+            accounts ay pamamahalaan ng central API sa susunod na release.
+          </p>
+        </div>
+      )}
 
       {/* Staff Directory List */}
       <Card className="border-border">

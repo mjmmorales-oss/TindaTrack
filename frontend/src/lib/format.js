@@ -78,6 +78,18 @@ export function formatDateTime(date, pattern = 'MMM d, yyyy · h:mm a') {
 }
 
 /**
+ * Format a time only (e.g. "10:42 AM").
+ * @param {string|number|Date} date
+ * @param {string} [pattern="h:mm a"]
+ * @returns {string}
+ */
+export function formatTime(date, pattern = 'h:mm a') {
+  const d = toValidDate(date)
+  if (!d) return ''
+  return format(d, pattern)
+}
+
+/**
  * Format relative time distance from now (e.g. "5 minutes ago").
  * @param {string|number|Date} date
  * @param {object} [options]
