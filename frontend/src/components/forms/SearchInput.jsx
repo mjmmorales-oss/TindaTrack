@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, forwardRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
 import {
@@ -22,18 +22,23 @@ import { cn } from '@/lib/utils'
  * @param {boolean} [props.showKbdHint=true] - Whether to show the ⌘K badge
  * @param {number} [props.debounceMs=300] - Debounce delay in milliseconds
  * @param {string} [props.className] - Additional classes
+ * @param {React.Ref<HTMLInputElement>} [props.inputRef] - Optional inner input ref
  * @returns {React.JSX.Element}
  */
-export function SearchInput({
-  value = '',
-  onChange,
-  onClear,
-  placeholder = 'Maghanap...',
-  showKbdHint = true,
-  debounceMs = 300,
-  className,
-  ...props
-}) {
+export const SearchInput = forwardRef(function SearchInput(
+  {
+    value = '',
+    onChange,
+    onClear,
+    placeholder = 'Maghanap...',
+    showKbdHint = true,
+    debounceMs = 300,
+    className,
+    inputRef,
+    ...props
+  },
+  ref,
+) {
   const [localValue, setLocalValue] = useState(value)
   const [debouncedValue] = useDebounce(localValue, debounceMs)
 
@@ -64,6 +69,7 @@ export function SearchInput({
       </InputGroupAddon>
 
       <InputGroupInput
+        ref={inputRef || ref}
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
@@ -91,6 +97,6 @@ export function SearchInput({
       ) : null}
     </InputGroup>
   )
-}
+})
 
 export default SearchInput

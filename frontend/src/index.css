@@ -190,3 +190,21 @@
 @utility w-sidebar-icon {
   width: var(--sidebar-width-icon);
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  header, nav, aside {
+    display: none !important;
+  }
+  #pos-thermal-receipt {
+    display: block !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 80mm !important;
+  }
+}

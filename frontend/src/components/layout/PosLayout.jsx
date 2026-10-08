@@ -27,7 +27,7 @@ export function PosLayout() {
   return (
     <div className="bg-background flex min-h-screen flex-col">
       {/* Slim Focus Header */}
-      <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-md">
+      <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-md print:hidden">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
