@@ -3,8 +3,10 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
@@ -32,6 +34,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         ->middleware('role:owner');
     Route::get('/staff/ping', fn () => ['message' => 'Hello, staff! Any active role can see this.'])
         ->middleware('role:owner,cashier');
+
+    // Dashboard (accessible by both owner and cashier with role-specific views)
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Categories (viewing is accessible to all active staff)
     Route::get('/categories', [CategoryController::class, 'index']);
@@ -62,6 +67,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     // OWNER-ONLY PROTECTED ROUTES
     // ==========================================
     Route::middleware('role:owner')->group(function () {
+        // Reports
+        Route::get('/reports/sales', [ReportController::class, 'sales']);
+        Route::get('/reports/best-sellers', [ReportController::class, 'bestSellers']);
+        Route::get('/reports/category-breakdown', [ReportController::class, 'categoryBreakdown']);
+        Route::get('/reports/hourly', [ReportController::class, 'hourly']);
+
         // Category management
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::put('/categories/{category}', [CategoryController::class, 'update']);
