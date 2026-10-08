@@ -115,16 +115,20 @@ const AccountPage = lazy(() =>
     default: m.AccountPage,
   })),
 )
-const DevUiPage = lazy(() =>
-  import('@/features/dev/pages/DevUiPage').then((m) => ({
-    default: m.DevUiPage,
-  })),
-)
-const DevDataPage = lazy(() =>
-  import('@/features/dev/pages/DevDataPage').then((m) => ({
-    default: m.DevDataPage,
-  })),
-)
+const DevUiPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('@/features/dev/pages/DevUiPage').then((m) => ({
+        default: m.DevUiPage,
+      })),
+    )
+  : () => null
+const DevDataPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('@/features/dev/pages/DevDataPage').then((m) => ({
+        default: m.DevDataPage,
+      })),
+    )
+  : () => null
 const ForbiddenPage = lazy(() =>
   import('@/features/system/ForbiddenPage').then((m) => ({
     default: m.ForbiddenPage,
@@ -392,28 +396,32 @@ export const router = createBrowserRouter([
           </RoleRoute>
         ),
       },
-      {
-        path: 'dev/ui',
-        handle: { breadcrumb: 'UI Kit (Dev)' },
-        element: (
-          <RoleRoute roles={['owner']}>
-            <SuspenseWrap>
-              <DevUiPage />
-            </SuspenseWrap>
-          </RoleRoute>
-        ),
-      },
-      {
-        path: 'dev/data',
-        handle: { breadcrumb: 'Mock Data (Dev)' },
-        element: (
-          <RoleRoute roles={['owner']}>
-            <SuspenseWrap>
-              <DevDataPage />
-            </SuspenseWrap>
-          </RoleRoute>
-        ),
-      },
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: 'dev/ui',
+              handle: { breadcrumb: 'UI Kit (Dev)' },
+              element: (
+                <RoleRoute roles={['owner']}>
+                  <SuspenseWrap>
+                    <DevUiPage />
+                  </SuspenseWrap>
+                </RoleRoute>
+              ),
+            },
+            {
+              path: 'dev/data',
+              handle: { breadcrumb: 'Mock Data (Dev)' },
+              element: (
+                <RoleRoute roles={['owner']}>
+                  <SuspenseWrap>
+                    <DevDataPage />
+                  </SuspenseWrap>
+                </RoleRoute>
+              ),
+            },
+          ]
+        : []),
     ],
   },
 
