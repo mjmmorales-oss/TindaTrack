@@ -44,7 +44,13 @@ export const reportService = {
       const d = new Date(s.created_at)
       let key = d.toISOString().slice(0, 10) // default daily: YYYY-MM-DD
 
-      if (granularity === 'monthly') {
+      if (granularity === 'weekly') {
+        const startOfWeek = new Date(d)
+        const day = startOfWeek.getDay()
+        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1)
+        startOfWeek.setDate(diff)
+        key = `Wk ${startOfWeek.toISOString().slice(5, 10)}`
+      } else if (granularity === 'monthly') {
         key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       }
 
@@ -207,6 +213,50 @@ export const reportService = {
         categories: breakdown,
       },
     }
+  },
+
+  /**
+   * Retrieves hourly sales and transaction distribution (0-23 hours).
+   * Future: GET /api/reports/hourly
+   */
+  async hourly(params = {}) {
+    await delay()
+    const { from, to } = params
+    const { sales } = useMockDb.getState()
+
+    let filtered = sales.filter((s) => s.status === 'completed')
+    if (from) {
+      filtered = filtered.filter(
+        (s) => new Date(s.created_at).getTime() >= new Date(from).getTime(),
+      )
+    }
+    if (to) {
+      filtered = filtered.filter(
+        (s) => new Date(s.created_at).getTime() <= new Date(to).getTime(),
+      )
+    }
+
+    const hours = Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      label:
+        i === 0
+          ? '12 AM'
+          : i < 12
+            ? `${i} AM`
+            : i === 12
+              ? '12 PM'
+              : `${i - 12} PM`,
+      sales: 0,
+      transactions: 0,
+    }))
+
+    for (const s of filtered) {
+      const h = new Date(s.created_at).getHours()
+      hours[h].sales = toMoney(hours[h].sales + s.total_amount)
+      hours[h].transactions++
+    }
+
+    return { data: hours }
   },
 }
 

@@ -6,6 +6,7 @@ export const reportKeys = {
   sales: (params) => [...reportKeys.all, 'sales', params],
   bestSellers: (params) => [...reportKeys.all, 'best-sellers', params],
   categories: (params) => [...reportKeys.all, 'categories', params],
+  hourly: (params) => [...reportKeys.all, 'hourly', params],
 }
 
 export function useSalesReport(params = {}) {
@@ -28,3 +29,11 @@ export function useCategoryBreakdown(params = {}) {
     queryFn: () => reportService.categoryBreakdown(params),
   })
 }
+
+export function useHourlyBreakdown(params = {}) {
+  return useQuery({
+    queryKey: reportKeys.hourly(params),
+    queryFn: () => reportService.hourly(params),
+  })
+}
+
