@@ -7,7 +7,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **T2 — Seeders**: Idempotent seeders with `updateOrCreate`, realistic demo history (`mt_srand(20261007)`), `tindatrack:check` reconciliation command.
 - [x] **T3 — Core API**: Reusable list query helper, Actions inside transactions with row locks, Form Requests, API Resources, and Controllers for categories, products, customers, sales, utang, inventory, staff, settings, account.
 - [x] **T4 — Dashboard + Reports API**: High-performance SQL aggregates for dashboard (owner & cashier) and reports (sales over time, best sellers, categories, hourly).
-- [ ] **T5 — Backend Test Suite**: Comprehensive Pest tests for all business logic, permission gates, transactions, and edge cases.
+- [x] **T5 — Backend Test Suite**: Comprehensive Pest tests for all business logic, permission gates, transactions, and edge cases.
 - [ ] **T6 — Frontend on Real API**: Real API services in `src/services/api/*`, mock fallback in `src/services/mock/*`, thin facades, contract verification script.
 - [ ] **T7 — Phase 3A+3B: Motion, States, Accessibility**: motion/react subtle transitions, 4 page states, a11y labels, form linkings, focus rings.
 - [ ] **T8 — Phase 3C: Power Features**: Park/hold sales, command palette (⌘K), keyboard shortcuts dialog (?), sidebar badges, receipt printing.
@@ -22,3 +22,4 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - **T2**: Implemented ReferenceDataSeeder (users, settings, 10 categories, 58 products, 12 customers with updateOrCreate), DemoHistorySeeder (60 days realistic sales, utang, voids, stock movements with mt_srand(20261007), ~14s seed time, idempotent), and tindatrack:check command with 100% reconciliation passing.
 - **T3**: Implemented ListQuery helper, atomic Actions (CreateSale, VoidSale, RecordPayment, AdjustStock), API Resources, delete guards, staff toggle with owner safeguards, and routes in routes/api.php matching docs/API.md.
 - **T4**: Implemented SQL-aggregated DashboardController and ReportController (sales over time, best sellers, category breakdown, hourly) excluding voided sales, and added Pest feature tests verifying aggregate accuracy.
+- **T5**: Added 41 comprehensive Pest feature tests covering all roles/permissions, inactive user blocks, cash/utang sales, oversell prevention, concurrent locks, credit limits and owner override, void reversals, payments, delete guards, stock adjustments, daily counter resets, staff safeguards, list query filtering/sorting/pagination meta, and 422 error structures. All green, pint passed.
