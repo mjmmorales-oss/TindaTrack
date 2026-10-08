@@ -12,7 +12,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **T7 — Phase 3A+3B: Motion, States, Accessibility**: motion/react subtle transitions, 4 page states, a11y labels, form linkings, focus rings.
 - [x] **T8 — Phase 3C: Power Features**: Park/hold sales, command palette (⌘K), keyboard shortcuts dialog (?), sidebar badges, receipt printing.
 - [x] **T9 — Phase 3D: Performance & Hardening**: Code splitting (React.lazy), chunk optimization, proxy trust, health check, production hardening.
-- [ ] **T10 — Deploy Prep**: Railway & Vercel deployment configuration, `docs/DEPLOY.md` guide, `README.md` updates.
+- [x] **T10 — Deploy Prep**: Railway & Vercel deployment configuration, `docs/DEPLOY.md` guide, `README.md` updates.
 - [ ] **T11 — Final Bug Hunt, Merge, Tag**: Code-only scan, fix edge cases, merge `phase-3` to `main`, tag `v1.0.0`.
 
 ---
@@ -27,3 +27,4 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - **T7**: Integrated `MotionConfig` with `reducedMotion="user"`, page entrance transitions in `PageContainer`, cart add/remove item transitions with `AnimatePresence`, global `OfflineBanner`, 401/403 event toasts and redirect handling in `api.js` and `AuthContext`. Audited all icon buttons for accessible `aria-label`s and updated `index.html` title. Build and ESLint passed.
 - **T8**: Implemented hold sales in `cartStore` (up to 3 parked carts, resume/discard, badge counter in CartPanel/CartDrawer), Command Palette (`CommandPalette.jsx` triggered via ⌘K/Ctrl+K with role-aware nav, actions, quick product search), Shortcuts Help Dialog (`ShortcutsHelpDialog.jsx` triggered via `?`), dynamic sidebar badges in `NavMain` (low/out stock count, overdue utang debtors), and thermal 58/80mm receipt printing with dynamic store settings in `SaleDetailPage` and `@media print` CSS. Build and ESLint passed.
 - **T9**: Optimized frontend bundle with route lazy loading, DEV-only conditional inclusion of dev routes, and Vite manualChunks (recharts, motion, radix, router, tanstack, lucide, date); reduced main bundle from 876 kB to 715 kB (220 kB gzip). Hardened backend with `GET /` returning JSON `{name, status}`, verified `trustProxies(at: '*')`, `/up` health route, rate limits, eager loading across all index methods, and production .env documentation. All 41 Pest tests, pint, build, and ESLint passed.
+- **T10**: Prepared deployment configuration for Railway (`backend/railway.toml` with NIXPACKS, pre-deploy migration/seed, healthcheck `/up`, and `backend/nixpacks.toml` public root configuration) and Vercel (`frontend/vercel.json` SPA rewrites). Authored click-by-click beginner deployment guide in `docs/DEPLOY.md` and complete project documentation in `README.md`. Production config/route cache and build gates verified green.
