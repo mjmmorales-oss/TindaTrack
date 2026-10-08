@@ -141,10 +141,12 @@ export function SettingsPage() {
               <Boxes className="h-4 w-4" />
               Mga Default sa Stock
             </TabsTrigger>
-            <TabsTrigger value="data" className="flex-1 sm:flex-none gap-2">
-              <Database className="h-4 w-4" />
-              Datos & Reset
-            </TabsTrigger>
+            {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
+              <TabsTrigger value="data" className="flex-1 sm:flex-none gap-2">
+                <Database className="h-4 w-4" />
+                Datos & Reset
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -376,53 +378,57 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 4: Data Management & Reset Demo Data */}
-        <TabsContent value="data">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Pamamahala ng Datos (Reset Demo Data)
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Ibalik ang buong database sa orihinal na binhi (seed) para sa pagsusulit o demonstrasyon.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive space-y-1.5">
-                <p className="font-semibold text-sm">BABALA SA PAG-RESET:</p>
-                <p>
-                  Ang pag-reset ay magbabalik ng lahat ng paninda, mga kustomer, mga naitalang benta sa POS,
-                  at kasaysayan ng utang sa orihinal na mock dataset. Lahat ng bagong naidagdag ay mabubura.
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end border-t border-border/70 pt-4">
-              <Button
-                variant="destructive"
-                onClick={() => setResetDialogOpen(true)}
-                className="gap-2 w-full sm:w-auto"
-              >
-                <RotateCcw className="h-4 w-4" />
-                I-reset ang Lahat ng Demo Data
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+        {/* TAB 4: Data Management & Reset Demo Data (Mock fallback only) */}
+        {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
+          <TabsContent value="data">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  Pamamahala ng Datos (Reset Demo Data)
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Ibalik ang buong database sa orihinal na binhi (seed) para sa pagsusulit o demonstrasyon.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive space-y-1.5">
+                  <p className="font-semibold text-sm">BABALA SA PAG-RESET:</p>
+                  <p>
+                    Ang pag-reset ay magbabalik ng lahat ng paninda, mga kustomer, mga naitalang benta sa POS,
+                    at kasaysayan ng utang sa orihinal na mock dataset. Lahat ng bagong naidagdag ay mabubura.
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end border-t border-border/70 pt-4">
+                <Button
+                  variant="destructive"
+                  onClick={() => setResetDialogOpen(true)}
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  I-reset ang Lahat ng Demo Data
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Confirm Reset Dialog */}
-      <ConfirmDialog
-        open={resetDialogOpen}
-        onOpenChange={setResetDialogOpen}
-        title="I-reset ang Lahat ng Datos sa Simula?"
-        description="Mawawala ang lahat ng mga bagong produktong idinagdag, nabagong utang, at bagong benta. Sigurado ka bang nais mong ibalik ang default demo seed data?"
-        confirmText="Oo, Ibalik sa Simula"
-        cancelText="Huwag Ituloy"
-        tone="destructive"
-        onConfirm={handleConfirmReset}
-        isLoading={resetMutation.isPending}
-      />
+      {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
+        <ConfirmDialog
+          open={resetDialogOpen}
+          onOpenChange={setResetDialogOpen}
+          title="I-reset ang Lahat ng Datos sa Simula?"
+          description="Mawawala ang lahat ng mga bagong produktong idinagdag, nabagong utang, at bagong benta. Sigurado ka bang nais mong ibalik ang default demo seed data?"
+          confirmText="Oo, Ibalik sa Simula"
+          cancelText="Huwag Ituloy"
+          tone="destructive"
+          onConfirm={handleConfirmReset}
+          isLoading={resetMutation.isPending}
+        />
+      )}
     </PageContainer>
   )
 }

@@ -8,7 +8,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **T3 — Core API**: Reusable list query helper, Actions inside transactions with row locks, Form Requests, API Resources, and Controllers for categories, products, customers, sales, utang, inventory, staff, settings, account.
 - [x] **T4 — Dashboard + Reports API**: High-performance SQL aggregates for dashboard (owner & cashier) and reports (sales over time, best sellers, categories, hourly).
 - [x] **T5 — Backend Test Suite**: Comprehensive Pest tests for all business logic, permission gates, transactions, and edge cases.
-- [ ] **T6 — Frontend on Real API**: Real API services in `src/services/api/*`, mock fallback in `src/services/mock/*`, thin facades, contract verification script.
+- [x] **T6 — Frontend on Real API**: Real API services in `src/services/api/*`, mock fallback in `src/services/mock/*`, thin facades, contract verification script.
 - [ ] **T7 — Phase 3A+3B: Motion, States, Accessibility**: motion/react subtle transitions, 4 page states, a11y labels, form linkings, focus rings.
 - [ ] **T8 — Phase 3C: Power Features**: Park/hold sales, command palette (⌘K), keyboard shortcuts dialog (?), sidebar badges, receipt printing.
 - [ ] **T9 — Phase 3D: Performance & Hardening**: Code splitting (React.lazy), chunk optimization, proxy trust, health check, production hardening.
@@ -23,3 +23,4 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - **T3**: Implemented ListQuery helper, atomic Actions (CreateSale, VoidSale, RecordPayment, AdjustStock), API Resources, delete guards, staff toggle with owner safeguards, and routes in routes/api.php matching docs/API.md.
 - **T4**: Implemented SQL-aggregated DashboardController and ReportController (sales over time, best sellers, category breakdown, hourly) excluding voided sales, and added Pest feature tests verifying aggregate accuracy.
 - **T5**: Added 41 comprehensive Pest feature tests covering all roles/permissions, inactive user blocks, cash/utang sales, oversell prevention, concurrent locks, credit limits and owner override, void reversals, payments, delete guards, stock adjustments, daily counter resets, staff safeguards, list query filtering/sorting/pagination meta, and 422 error structures. All green, pint passed.
+- **T6**: Modularized services into real `src/services/api/*` and `src/services/mock/*` with thin facades controlled by `VITE_DATA_SOURCE`. Unified Axios error handling to `ApiError`. Connected real password update in Account, removed prototype banner in api mode, hid reset demo data in API mode. Added `scripts/check-contract.mjs` verifying all 37 service contracts against Laravel routes. Build, lint, mock check, contract check all green.
