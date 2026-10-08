@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Kbd } from '@/components/ui/kbd'
@@ -78,14 +79,16 @@ export function CartPanel({
           ) : (
             <ScrollArea className="h-full px-4">
               <div className="py-2">
-                {items.map((item) => (
-                  <CartItemRow
-                    key={item.product_id}
-                    item={item}
-                    onQuantityChange={onQuantityChange}
-                    onRemove={onRemove}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {items.map((item) => (
+                    <CartItemRow
+                      key={item.product_id}
+                      item={item}
+                      onQuantityChange={onQuantityChange}
+                      onRemove={onRemove}
+                    />
+                  ))}
+                </AnimatePresence>
               </div>
             </ScrollArea>
           )}

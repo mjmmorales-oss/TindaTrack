@@ -21,7 +21,19 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY)
-      window.dispatchEvent(new Event('auth:unauthorized'))
+      window.dispatchEvent(
+        new CustomEvent('auth:unauthorized', {
+          detail: error.response?.data?.message,
+        }),
+      )
+    } else if (error.response?.status === 403) {
+      window.dispatchEvent(
+        new CustomEvent('auth:forbidden', {
+          detail: error.response?.data?.message,
+        }),
+      )
+    } else if (!error.response && !window.navigator.onLine) {
+      window.dispatchEvent(new CustomEvent('network:offline'))
     }
     return Promise.reject(error)
   },

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
 import {
   Drawer,
   DrawerContent,
@@ -79,14 +80,16 @@ export function CartDrawer({
                 Walang laman ang cart.
               </div>
             ) : (
-              items.map((item) => (
-                <CartItemRow
-                  key={item.product_id}
-                  item={item}
-                  onQuantityChange={onQuantityChange}
-                  onRemove={onRemove}
-                />
-              ))
+              <AnimatePresence initial={false}>
+                {items.map((item) => (
+                  <CartItemRow
+                    key={item.product_id}
+                    item={item}
+                    onQuantityChange={onQuantityChange}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </AnimatePresence>
             )}
           </div>
 
