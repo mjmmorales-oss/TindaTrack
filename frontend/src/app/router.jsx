@@ -154,7 +154,7 @@ function SuspenseWrap({ children }) {
   )
 }
 
-export const router = createBrowserRouter([
+export const routes = [
   // Public Landing route
   {
     path: '/',
@@ -448,4 +448,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+]
+
+export const router = createBrowserRouter(routes)
