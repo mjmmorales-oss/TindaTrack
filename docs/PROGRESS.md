@@ -36,7 +36,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **F2 — Render Tests**: Headless jsdom route and interaction smoke tests using Vitest + RTL.
 - [x] **F3 — Fix Runtime Failures**: Fix missing UI imports (`/inventory`), null form controls (`/settings`), and all failures found by F2.
 - [x] **F4 — Systematic Code Audit**: Imports graph, mock vs API service contract checks, hook safety, data shape guards.
-- [ ] **F5 — API-Mode Sanity**: Backend Resource field alignment with frontend models, contract verification.
+- [x] **F5 — API-Mode Sanity**: Backend Resource field alignment with frontend models, contract verification.
 - [ ] **F6 — Wrap Up**: Documentation, full test verification, merge to `main`, and tag `v1.0.1`.
 
 ### F1 Log:
@@ -65,4 +65,9 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - `src/features/utang/components/RecordPaymentDialog.jsx:35` -> cast `currentBalance` to `Number(...)`.
   - `src/features/utang/pages/UtangPage.jsx:112-150` -> cast aging bucket values to `Number(...)`.
 - Gates passed: `node scripts/check-services.mjs`, `npx eslint src` (0 errors), `npm run build`, and `npx vitest run` (44/44 green).
+
+### F5 Log:
+- Verified all 37 frontend API service endpoints against registered Laravel routes (`php artisan route:list --path=api --json`) with `scripts/check-contract.mjs` (exited 0).
+- Audited all API Resource classes (`CategoryResource`, `CustomerResource`, `ProductResource`, `SaleItemResource`, `SaleResource`, `SettingResource`, `StockMovementResource`, `UserResource`, `UtangPaymentResource`). Added `'stock'` alias in `ProductResource` for compatibility with UI components.
+- Verified backend suite: `php artisan test` (41/41 passing), `./vendor/bin/pint --test` (passed), and `php artisan tindatrack:check` (100% reconciled).
 
