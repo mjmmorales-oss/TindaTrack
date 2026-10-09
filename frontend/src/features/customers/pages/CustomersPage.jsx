@@ -539,7 +539,7 @@ export function CustomersPage() {
               <p className="text-xs mt-1 text-destructive/90">
                 May natitirang utang pa na{' '}
                 <strong className="underline">
-                  ₱{blockedCustomer?.credit_balance?.toFixed(2)}
+                  ₱{Number(blockedCustomer?.credit_balance || 0).toFixed(2)}
                 </strong>{' '}
                 si {blockedCustomer?.name}. Kailangang makolekta o ma-clear muna ang utang bago
                 burahin ang kanyang account.

@@ -123,8 +123,8 @@ export function CustomerDetailPage() {
     )
   }
 
-  const balance = customer.credit_balance || 0
-  const limit = customer.credit_limit || 0
+  const balance = Number(customer.credit_balance || 0)
+  const limit = Number(customer.credit_limit || 0)
   const utilization = limit > 0 ? Math.min(100, Math.round((balance / limit) * 100)) : 100
   const isOverLimit = balance > limit
 

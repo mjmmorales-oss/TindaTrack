@@ -41,7 +41,7 @@ export function ProductFormDialog({
   const updateMutation = useUpdateProduct()
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const categoryOptions = categories.map((c) => ({
+  const categoryOptions = (categories || []).map((c) => ({
     value: String(c.id),
     label: c.name,
   }))

@@ -32,7 +32,7 @@ export function RecordPaymentDialog({
   const recordPaymentMutation = useRecordPayment()
   const isPending = recordPaymentMutation.isPending
 
-  const currentBalance = customer?.credit_balance ?? 0
+  const currentBalance = Number(customer?.credit_balance ?? 0)
 
   const getTodayDateString = () => {
     const today = new Date()

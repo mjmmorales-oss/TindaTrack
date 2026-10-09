@@ -35,7 +35,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **F1 — Strict Linter**: Catch undefined components (`no-undef`, `react/jsx-no-undef`), unused vars, react-hooks rules.
 - [x] **F2 — Render Tests**: Headless jsdom route and interaction smoke tests using Vitest + RTL.
 - [x] **F3 — Fix Runtime Failures**: Fix missing UI imports (`/inventory`), null form controls (`/settings`), and all failures found by F2.
-- [ ] **F4 — Systematic Code Audit**: Imports graph, mock vs API service contract checks, hook safety, data shape guards.
+- [x] **F4 — Systematic Code Audit**: Imports graph, mock vs API service contract checks, hook safety, data shape guards.
 - [ ] **F5 — API-Mode Sanity**: Backend Resource field alignment with frontend models, contract verification.
 - [ ] **F6 — Wrap Up**: Documentation, full test verification, merge to `main`, and tag `v1.0.1`.
 
@@ -52,4 +52,17 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Fixed DOM attribute leakage on Radix primitives (`indicatorClassName` on Progress, `hasError` on PasswordInput).
 - Made services dynamically delegate to mock implementations in test mode via Proxy to ensure isolated headless testing without backend server dependencies.
 - 44 of 44 Vitest tests passing; ESLint (0 errors/warnings) and Vite build clean.
+
+### F4 Log:
+- Created `frontend/scripts/check-services.mjs` comparing all 10 service pairs across mock and API implementations and validating all hook calls; all 37 service methods matched 1-to-1.
+- Validated import graph: zero broken imports and zero pre-T6 imports across `src/`.
+- Validated routes: all 11 paths in `nav.js` map to router paths, and all lazy routes resolve to existing exports.
+- Audited environment variables: documented `VITE_MOCK_LATENCY` in `.env.development` and `.env.production.example`.
+- Fixed data shape vulnerabilities:
+  - `src/features/products/components/ProductFormDialog.jsx:44` -> guarded `categories.map` with `(categories || []).map(...)`.
+  - `src/features/customers/pages/CustomersPage.jsx:542` -> safe `Number(blockedCustomer?.credit_balance || 0).toFixed(2)`.
+  - `src/features/customers/pages/CustomerDetailPage.jsx:126` -> cast `credit_balance` and `credit_limit` to `Number(...)`.
+  - `src/features/utang/components/RecordPaymentDialog.jsx:35` -> cast `currentBalance` to `Number(...)`.
+  - `src/features/utang/pages/UtangPage.jsx:112-150` -> cast aging bucket values to `Number(...)`.
+- Gates passed: `node scripts/check-services.mjs`, `npx eslint src` (0 errors), `npm run build`, and `npx vitest run` (44/44 green).
 

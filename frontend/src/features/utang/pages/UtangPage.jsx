@@ -109,10 +109,10 @@ export function UtangPage() {
 
   const totalAgingDebt = Math.max(
     1,
-    (aging['0_7'] || 0) +
-      (aging['8_30'] || 0) +
-      (aging['31_60'] || 0) +
-      (aging['60_plus'] || 0),
+    (Number(aging['0_7']) || 0) +
+      (Number(aging['8_30']) || 0) +
+      (Number(aging['31_60']) || 0) +
+      (Number(aging['60_plus']) || 0),
   )
 
   const agingItems = [
@@ -120,8 +120,8 @@ export function UtangPage() {
       key: '0_7',
       label: '0–7 Araw',
       sublabel: 'Kamakailan / Bago',
-      amount: aging['0_7'] || 0,
-      pct: Math.round(((aging['0_7'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['0_7'] || 0),
+      pct: Math.round(((Number(aging['0_7']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-success',
       textClass: 'text-success',
     },
@@ -129,8 +129,8 @@ export function UtangPage() {
       key: '8_30',
       label: '8–30 Araw',
       sublabel: 'Katamtaman',
-      amount: aging['8_30'] || 0,
-      pct: Math.round(((aging['8_30'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['8_30'] || 0),
+      pct: Math.round(((Number(aging['8_30']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-highlight',
       textClass: 'text-highlight-foreground',
     },
@@ -138,8 +138,8 @@ export function UtangPage() {
       key: '31_60',
       label: '31–60 Araw',
       sublabel: 'Medyo Matagal',
-      amount: aging['31_60'] || 0,
-      pct: Math.round(((aging['31_60'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['31_60'] || 0),
+      pct: Math.round(((Number(aging['31_60']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-utang',
       textClass: 'text-utang',
     },
@@ -147,8 +147,8 @@ export function UtangPage() {
       key: '60_plus',
       label: '60+ Araw',
       sublabel: 'Overdue / May Panganib',
-      amount: aging['60_plus'] || 0,
-      pct: Math.round(((aging['60_plus'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['60_plus'] || 0),
+      pct: Math.round(((Number(aging['60_plus']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-destructive',
       textClass: 'text-destructive',
     },
