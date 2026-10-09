@@ -58,6 +58,7 @@ export function StaffPage() {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     setError,
     formState: { errors, isSubmitting },
@@ -290,20 +291,22 @@ export function StaffPage() {
       >
         <form onSubmit={handleSubmit(onSubmitAdd)} className="space-y-4">
           <FormInput
+            name="name"
+            control={control}
             label="Buong Pangalan ng Kahera"
             placeholder="Hal. Maria Clara"
             required
             error={errors.name?.message}
-            {...register('name')}
           />
 
           <FormInput
+            name="email"
+            control={control}
             label="Email Address"
             type="email"
             placeholder="maria@tindatrack.test"
             required
             error={errors.email?.message}
-            {...register('email')}
           />
 
           <Field error={errors.password?.message}>

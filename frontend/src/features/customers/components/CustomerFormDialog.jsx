@@ -46,7 +46,6 @@ export function CustomerFormDialog({
   }
 
   const {
-    register,
     handleSubmit,
     control,
     reset,
@@ -107,17 +106,19 @@ export function CustomerFormDialog({
         {/* Name and Nickname */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormInput
+            name="name"
+            control={control}
             label="Buong Pangalan (Full Name)"
             placeholder="Hal. Rosario Mercado"
             required
             error={errors.name?.message}
-            {...register('name')}
           />
           <FormInput
+            name="nickname"
+            control={control}
             label="Palayaw / Bansag (Nickname)"
             placeholder="Hal. Aling Rosing"
             error={errors.nickname?.message}
-            {...register('nickname')}
           />
         </div>
 
@@ -168,19 +169,21 @@ export function CustomerFormDialog({
 
         {/* Address */}
         <FormInput
+          name="address"
+          control={control}
           label="Tirahan / Purok (Address)"
           placeholder="Purok 1, Brgy. San Isidro"
           error={errors.address?.message}
-          {...register('address')}
         />
 
         {/* Notes */}
         <FormTextarea
+          name="notes"
+          control={control}
           label="Karagdagang Tala (Notes)"
           placeholder="Hal. Nanay ni Pedro; suki sa bigas at palaman..."
           rows={3}
           error={errors.notes?.message}
-          {...register('notes')}
         />
 
         {/* Sticky-style Dialog Footer */}

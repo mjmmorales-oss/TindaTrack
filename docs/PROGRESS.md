@@ -33,8 +33,8 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 ---
 ## Runtime Audit (F1–F6)
 - [x] **F1 — Strict Linter**: Catch undefined components (`no-undef`, `react/jsx-no-undef`), unused vars, react-hooks rules.
-- [ ] **F2 — Render Tests**: Headless jsdom route and interaction smoke tests using Vitest + RTL.
-- [ ] **F3 — Fix Runtime Failures**: Fix missing UI imports (`/inventory`), null form controls (`/settings`), and all failures found by F2.
+- [x] **F2 — Render Tests**: Headless jsdom route and interaction smoke tests using Vitest + RTL.
+- [x] **F3 — Fix Runtime Failures**: Fix missing UI imports (`/inventory`), null form controls (`/settings`), and all failures found by F2.
 - [ ] **F4 — Systematic Code Audit**: Imports graph, mock vs API service contract checks, hook safety, data shape guards.
 - [ ] **F5 — API-Mode Sanity**: Backend Resource field alignment with frontend models, contract verification.
 - [ ] **F6 — Wrap Up**: Documentation, full test verification, merge to `main`, and tag `v1.0.1`.
@@ -43,4 +43,13 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Implemented strict flat ESLint config in `frontend/eslint.config.js` with `no-undef`, `react/jsx-no-undef`, `react/jsx-uses-vars`, `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps`, and `unused-imports`.
 - Caught and resolved missing `Table` imports in `InventoryPage.jsx` and missing `cmdOpen`/`shortcutsOpen` dialog states in `PosLayout.jsx`.
 - Cleaned all unused imports and variables across `src`. `npx eslint src` (0 errors) and `npm run build` both passing.
+
+### F2 & F3 Log:
+- Built headless test harness in `src/test`: `setup.js` (DOM stubs: ResizeObserver, IntersectionObserver, matchMedia, print, scrollIntoView), `server.js` (mock DB reset & data source forcing), `renderRoute.jsx` (providers wrapper with QueryClient, MemoryRouter, Theme, and AuthContext with mock roles).
+- Implemented table-driven route smoke test `src/test/routes.test.jsx` covering all 33 router routes across roles with error-boundary and console.error assertions.
+- Implemented interaction smoke test `src/test/interactions.test.jsx` covering 11 critical flows: Add/Edit dialogs (products, categories, customers, staff), tabs (/inventory, /settings, /customers/:id), and payment/stock dialogs.
+- Fixed `SettingsPage.jsx` null `control` runtime crash by explicitly passing `control={control}` and `name="..."` to FormInput/FormTextarea, adding defensive guards in form components, and fixing missing `errors` in `useForm` destructuring.
+- Fixed DOM attribute leakage on Radix primitives (`indicatorClassName` on Progress, `hasError` on PasswordInput).
+- Made services dynamically delegate to mock implementations in test mode via Proxy to ensure isolated headless testing without backend server dependencies.
+- 44 of 44 Vitest tests passing; ESLint (0 errors/warnings) and Vite build clean.
 

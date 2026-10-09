@@ -1,6 +1,17 @@
 import apiImpl from './api/utangService.js'
 import mockImpl from './mock/utangService.js'
 
-const isMock = import.meta.env.VITE_DATA_SOURCE === 'mock'
-export const utangService = isMock ? mockImpl : apiImpl
+function getImpl() {
+  return import.meta.env.MODE === 'test' || import.meta.env.VITE_DATA_SOURCE === 'mock'
+    ? mockImpl
+    : apiImpl
+}
+
+export const utangService = new Proxy({}, {
+  get(_, prop) {
+    const impl = getImpl()
+    const val = impl[prop]
+    return typeof val === 'function' ? val.bind(impl) : val
+  },
+})
 export default utangService

@@ -48,7 +48,7 @@ function getPasswordStrength(pass = '') {
  * @returns {React.JSX.Element}
  */
 export const PasswordInput = forwardRef(
-  ({ className, showStrength = false, value, onChange, ...props }, ref) => {
+  ({ className, showStrength = false, hasError, value, onChange, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false)
     const [internalVal, setInternalVal] = useState('')
 
@@ -71,6 +71,7 @@ export const PasswordInput = forwardRef(
             ref={ref}
             value={value}
             onChange={handleChange}
+            aria-invalid={hasError ? true : props['aria-invalid']}
             {...props}
           />
           <Button
@@ -100,8 +101,13 @@ export const PasswordInput = forwardRef(
             </div>
             <Progress
               value={strengthInfo.score}
-              className="h-1.5"
-              indicatorClassName={strengthInfo.color}
+              className={cn(
+                'h-1.5',
+                strengthInfo.color === 'bg-destructive' && '[&>div]:bg-destructive',
+                strengthInfo.color === 'bg-warning' && '[&>div]:bg-warning',
+                strengthInfo.color === 'bg-highlight' && '[&>div]:bg-highlight',
+                strengthInfo.color === 'bg-success' && '[&>div]:bg-success',
+              )}
             />
           </div>
         )}
