@@ -37,7 +37,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **F3 — Fix Runtime Failures**: Fix missing UI imports (`/inventory`), null form controls (`/settings`), and all failures found by F2.
 - [x] **F4 — Systematic Code Audit**: Imports graph, mock vs API service contract checks, hook safety, data shape guards.
 - [x] **F5 — API-Mode Sanity**: Backend Resource field alignment with frontend models, contract verification.
-- [ ] **F6 — Wrap Up**: Documentation, full test verification, merge to `main`, and tag `v1.0.1`.
+- [x] **F6 — Wrap Up**: Documentation, full test verification, merge to `main`, and tag `v1.0.1`.
 
 ### F1 Log:
 - Implemented strict flat ESLint config in `frontend/eslint.config.js` with `no-undef`, `react/jsx-no-undef`, `react/jsx-uses-vars`, `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps`, and `unused-imports`.
@@ -70,4 +70,11 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Verified all 37 frontend API service endpoints against registered Laravel routes (`php artisan route:list --path=api --json`) with `scripts/check-contract.mjs` (exited 0).
 - Audited all API Resource classes (`CategoryResource`, `CustomerResource`, `ProductResource`, `SaleItemResource`, `SaleResource`, `SettingResource`, `StockMovementResource`, `UserResource`, `UtangPaymentResource`). Added `'stock'` alias in `ProductResource` for compatibility with UI components.
 - Verified backend suite: `php artisan test` (41/41 passing), `./vendor/bin/pint --test` (passed), and `php artisan tindatrack:check` (100% reconciled).
+
+### F6 Log:
+- Documented testing protocol in `README.md` and `docs/PROGRESS.md`: developers MUST run `npm run test` (Vitest) for every change, because build and lint do not render components.
+- Final pass verified all gates across frontend and backend:
+  - Frontend: `npx vitest run` (44 tests pass), `npx eslint src` (0 errors), `npm run build` (success), `node scripts/check-contract.mjs` (37/37 pass), `node scripts/check-services.mjs` (37/37 pass), `node scripts/check-mockdata.mjs` (pass).
+  - Backend: `php artisan test` (41/41 pass), `./vendor/bin/pint --test` (pass), `php artisan tindatrack:check` (100% pass).
+- Merged `fix/runtime-audit` to `main`, pushed, and tagged `v1.0.1`.
 

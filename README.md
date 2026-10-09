@@ -144,13 +144,17 @@ The database comes pre-seeded with 3 demo accounts:
 | Command | Working Directory | Description |
 |---|---|---|
 | `npm run dev` | Root | Runs backend API + frontend dev server concurrently |
+| `npm run test` | `frontend/` | Runs Vitest headless jsdom route & dialog render smoke tests (catches runtime crashes that build and lint miss) |
 | `php artisan test` | `backend/` | Runs Pest feature test suite |
 | `./vendor/bin/pint` | `backend/` | Fixes backend PHP formatting (PSR-12) |
 | `php artisan tindatrack:check` | `backend/` | Reconciles customer utang balances and stock movements |
 | `npm run build` | `frontend/` | Builds production SPA bundle |
-| `npx eslint src` | `frontend/` | Lints frontend codebase |
+| `npx eslint src` | `frontend/` | Lints frontend codebase with strict rules |
 | `node scripts/check-contract.mjs` | `frontend/` | Verifies frontend API service contracts match Laravel routes |
+| `node scripts/check-services.mjs` | `frontend/` | Verifies mock and API service methods match 1-to-1 |
 | `node scripts/check-mockdata.mjs` | `frontend/` | Validates in-memory mock datasets and generator |
+
+> **Note on Frontend Quality Checks:** Always run `npm run test` (Vitest) in `frontend/` when verifying changes. `npm run build` and `npx eslint src` validate syntax and static imports, but **only Vitest renders components in jsdom**, catching runtime errors such as missing Radix/UI imports or null form controls.
 
 ---
 
