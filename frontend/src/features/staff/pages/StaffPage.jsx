@@ -6,17 +6,13 @@ import {
   Plus,
   UserCog,
   AlertTriangle,
-  Shield,
   Clock,
-  Mail,
   Loader2,
-  CheckCircle2,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -35,7 +31,7 @@ import {
   useToggleStaffActive,
 } from '@/features/staff/hooks/useStaff'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { formatRelative, formatDateTime } from '@/lib/format'
+import { formatRelative } from '@/lib/format'
 
 const createCashierSchema = z.object({
   name: z.string().min(1, 'Kailangan ang buong pangalan ng cashier.'),
@@ -62,6 +58,7 @@ export function StaffPage() {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     setError,
     formState: { errors, isSubmitting },
@@ -294,20 +291,22 @@ export function StaffPage() {
       >
         <form onSubmit={handleSubmit(onSubmitAdd)} className="space-y-4">
           <FormInput
+            name="name"
+            control={control}
             label="Buong Pangalan ng Kahera"
             placeholder="Hal. Maria Clara"
             required
             error={errors.name?.message}
-            {...register('name')}
           />
 
           <FormInput
+            name="email"
+            control={control}
             label="Email Address"
             type="email"
             placeholder="maria@tindatrack.test"
             required
             error={errors.email?.message}
-            {...register('email')}
           />
 
           <Field error={errors.password?.message}>

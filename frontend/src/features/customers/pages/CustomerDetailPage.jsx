@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
 import {
   ArrowLeft,
@@ -11,12 +11,9 @@ import {
   MapPin,
   AlertCircle,
   Clock,
-  MoreVertical,
-  CheckCircle2,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { Money } from '@/components/common/Money'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -126,8 +123,8 @@ export function CustomerDetailPage() {
     )
   }
 
-  const balance = customer.credit_balance || 0
-  const limit = customer.credit_limit || 0
+  const balance = Number(customer.credit_balance || 0)
+  const limit = Number(customer.credit_limit || 0)
   const utilization = limit > 0 ? Math.min(100, Math.round((balance / limit) * 100)) : 100
   const isOverLimit = balance > limit
 

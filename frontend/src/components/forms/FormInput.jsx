@@ -6,7 +6,6 @@ import {
   FieldError,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
 
 /**
  * React Hook Form wrapped Input field with label, description, and error integration.
@@ -32,14 +31,55 @@ export function FormInput({
   type = 'text',
   disabled = false,
   className,
+  error: explicitError,
   ...props
 }) {
+  // Defensive guard: if control is not provided, render as standard Field + Input
+  // without mounting Controller (which throws if outside FormProvider).
+  // Supports both control={control} and {...register('name')} patterns.
+  if (!control) {
+    const hasError = !!explicitError
+    return (
+      <Field data-invalid={hasError} className={className}>
+        {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+        <Input
+          id={name}
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          disabled={disabled}
+          aria-invalid={hasError}
+          aria-describedby={
+            hasError
+              ? `${name}-error`
+              : description
+                ? `${name}-desc`
+                : undefined
+          }
+          {...props}
+        />
+        {description && !hasError && (
+          <FieldDescription id={`${name}-desc`}>
+            {description}
+          </FieldDescription>
+        )}
+        {hasError && (
+          <FieldError
+            id={`${name}-error`}
+            errors={Array.isArray(explicitError) ? explicitError : [explicitError]}
+          />
+        )}
+      </Field>
+    )
+  }
+
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState: { error } }) => {
-        const hasError = !!error
+        const hasError = !!(explicitError || error)
+        const errorMsg = explicitError || error?.message
 
         return (
           <Field data-invalid={hasError} className={className}>
@@ -66,7 +106,12 @@ export function FormInput({
                 {description}
               </FieldDescription>
             )}
-            {hasError && <FieldError id={`${name}-error`} errors={[error]} />}
+            {hasError && errorMsg && (
+              <FieldError
+                id={`${name}-error`}
+                errors={Array.isArray(errorMsg) ? errorMsg : [errorMsg]}
+              />
+            )}
           </Field>
         )
       }}

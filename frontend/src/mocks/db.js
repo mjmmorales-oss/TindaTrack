@@ -35,7 +35,7 @@ function createInitialDatabase() {
  */
 export const useMockDb = create(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       ...createInitialDatabase(),
 
       /**

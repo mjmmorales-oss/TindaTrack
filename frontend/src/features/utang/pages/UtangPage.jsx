@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
   HandCoins,
@@ -8,11 +8,7 @@ import {
   Copy,
   Check,
   MoreVertical,
-  Calendar,
-  Phone,
   ArrowRight,
-  TrendingUp,
-  ReceiptText,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -22,7 +18,6 @@ import { DataTable } from '@/components/data-table/DataTable'
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -60,7 +55,7 @@ export function UtangPage() {
   const storeName = settingsRes?.data?.store_name || 'Tindahan ni Aling Nena'
 
   // Table params synced with URL
-  const { params, setParams, resetParams } = useTableParams({
+  const { params, setParams } = useTableParams({
     q: '',
     sort: '-credit_balance',
     page: 1,
@@ -90,7 +85,7 @@ export function UtangPage() {
   }
 
   // Copy polite Taglish SMS reminder from blueprint 7.10
-  const handleCopyReminder = (customer) => {
+  const handleCopyReminder = useCallback((customer) => {
     const amount = Number(customer.credit_balance || 0).toFixed(2)
     const displayName = customer.nickname || customer.name
     const message = `Hi ${displayName}, paalala lang po sa utang ninyo na ₱${amount} sa ${storeName}. Salamat po!`
@@ -102,7 +97,7 @@ export function UtangPage() {
       `Mensahe para kay ${displayName} ay nakopya sa clipboard.`,
     )
     setTimeout(() => setCopiedId(null), 2500)
-  }
+  }, [storeName])
 
   // Aging buckets calculations
   const aging = summary?.aging_buckets || {
@@ -114,10 +109,10 @@ export function UtangPage() {
 
   const totalAgingDebt = Math.max(
     1,
-    (aging['0_7'] || 0) +
-      (aging['8_30'] || 0) +
-      (aging['31_60'] || 0) +
-      (aging['60_plus'] || 0),
+    (Number(aging['0_7']) || 0) +
+      (Number(aging['8_30']) || 0) +
+      (Number(aging['31_60']) || 0) +
+      (Number(aging['60_plus']) || 0),
   )
 
   const agingItems = [
@@ -125,8 +120,8 @@ export function UtangPage() {
       key: '0_7',
       label: '0–7 Araw',
       sublabel: 'Kamakailan / Bago',
-      amount: aging['0_7'] || 0,
-      pct: Math.round(((aging['0_7'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['0_7'] || 0),
+      pct: Math.round(((Number(aging['0_7']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-success',
       textClass: 'text-success',
     },
@@ -134,8 +129,8 @@ export function UtangPage() {
       key: '8_30',
       label: '8–30 Araw',
       sublabel: 'Katamtaman',
-      amount: aging['8_30'] || 0,
-      pct: Math.round(((aging['8_30'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['8_30'] || 0),
+      pct: Math.round(((Number(aging['8_30']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-highlight',
       textClass: 'text-highlight-foreground',
     },
@@ -143,8 +138,8 @@ export function UtangPage() {
       key: '31_60',
       label: '31–60 Araw',
       sublabel: 'Medyo Matagal',
-      amount: aging['31_60'] || 0,
-      pct: Math.round(((aging['31_60'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['31_60'] || 0),
+      pct: Math.round(((Number(aging['31_60']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-utang',
       textClass: 'text-utang',
     },
@@ -152,8 +147,8 @@ export function UtangPage() {
       key: '60_plus',
       label: '60+ Araw',
       sublabel: 'Overdue / May Panganib',
-      amount: aging['60_plus'] || 0,
-      pct: Math.round(((aging['60_plus'] || 0) / totalAgingDebt) * 100),
+      amount: Number(aging['60_plus'] || 0),
+      pct: Math.round(((Number(aging['60_plus']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-destructive',
       textClass: 'text-destructive',
     },
@@ -312,7 +307,7 @@ export function UtangPage() {
         },
       },
     ],
-    [navigate, canCollect, copiedId],
+    [navigate, canCollect, copiedId, handleCopyReminder],
   )
 
   // Mobile card renderer below md

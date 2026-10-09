@@ -17,7 +17,6 @@ import {
   DollarSign,
   Package,
   PackagePlus,
-  Plus,
   Receipt,
   ScanBarcode,
   ShoppingCart,

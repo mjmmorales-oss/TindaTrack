@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Keyboard } from 'lucide-react'
 import {
   Dialog,

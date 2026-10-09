@@ -4,14 +4,10 @@ import {
   BookOpen,
   Clock,
   PackageCheck,
-  Shield,
   Sparkles,
   Store,
-  ScanBarcode,
   Search,
   ShoppingCart,
-  HeartHandshake,
-  TrendingUp,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'

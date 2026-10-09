@@ -11,7 +11,6 @@ import {
   Phone,
   MapPin,
   AlertCircle,
-  Clock,
   Filter,
 } from 'lucide-react'
 
@@ -21,7 +20,6 @@ import { DataTable } from '@/components/data-table/DataTable'
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader'
 import { UserAvatar } from '@/components/common/UserAvatar'
 import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'
@@ -541,7 +539,7 @@ export function CustomersPage() {
               <p className="text-xs mt-1 text-destructive/90">
                 May natitirang utang pa na{' '}
                 <strong className="underline">
-                  ₱{blockedCustomer?.credit_balance?.toFixed(2)}
+                  ₱{Number(blockedCustomer?.credit_balance || 0).toFixed(2)}
                 </strong>{' '}
                 si {blockedCustomer?.name}. Kailangang makolekta o ma-clear muna ang utang bago
                 burahin ang kanyang account.

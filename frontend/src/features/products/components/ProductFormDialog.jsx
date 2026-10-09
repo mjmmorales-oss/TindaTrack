@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertTriangle, Loader2, PackagePlus } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'
@@ -41,7 +41,7 @@ export function ProductFormDialog({
   const updateMutation = useUpdateProduct()
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const categoryOptions = categories.map((c) => ({
+  const categoryOptions = (categories || []).map((c) => ({
     value: String(c.id),
     label: c.name,
   }))
@@ -66,7 +66,6 @@ export function ProductFormDialog({
     reset,
     watch,
     setError,
-    formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues,

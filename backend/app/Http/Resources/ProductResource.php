@@ -21,6 +21,7 @@ class ProductResource extends JsonResource
             'unit' => $this->unit,
             'price' => (float) $this->price,
             'stock_quantity' => (int) $this->stock_quantity,
+            'stock' => (int) $this->stock_quantity,
             'reorder_level' => (int) $this->reorder_level,
             'is_active' => (bool) $this->is_active,
             'description' => $this->description,

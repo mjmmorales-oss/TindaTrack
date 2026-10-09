@@ -4,14 +4,8 @@ import {
   ArrowLeft,
   Printer,
   Ban,
-  ReceiptText,
-  User,
-  Calendar,
-  AlertTriangle,
-  Clock,
   ShieldCheck,
   CreditCard,
-  Building,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -25,7 +19,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/common/ErrorState'
-import { EmptyState } from '@/components/common/EmptyState'
 import { useSale, useVoidSale } from '@/features/sales/hooks/useSales'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { usePermissions } from '@/hooks/usePermissions'

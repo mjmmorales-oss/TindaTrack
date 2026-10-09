@@ -47,8 +47,12 @@ export function StockLevelBar({
       )}
       <Progress
         value={percent}
-        className="bg-muted/60 h-2"
-        indicatorClassName={cn('transition-all duration-300', toneColor)}
+        className={cn(
+          'bg-muted/60 h-2 [&>div]:transition-all [&>div]:duration-300',
+          toneColor === 'bg-destructive' && '[&>div]:bg-destructive',
+          toneColor === 'bg-warning' && '[&>div]:bg-warning',
+          toneColor === 'bg-success' && '[&>div]:bg-success',
+        )}
       />
     </div>
   )

@@ -1,9 +1,8 @@
 import { useEffect } from 'react'
-import { CheckCircle2, Printer, PlusCircle, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Printer, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
-import { formatDate, formatDateTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 
 /**
  * Printable POS receipt preview displayed after successful sale checkout.

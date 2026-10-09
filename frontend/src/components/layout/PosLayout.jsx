@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router'
-import { ArrowLeft, Clock, Store, Wifi, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Clock, Store, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -12,10 +12,26 @@ import { ShortcutsHelpDialog } from '@/components/layout/ShortcutsHelpDialog'
 export function PosLayout() {
   const { user } = useAuth()
   const [currentTime, setCurrentTime] = useState(() => new Date())
+  const [cmdOpen, setCmdOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCmdOpen((prev) => !prev)
+      } else if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        e.preventDefault()
+        setShortcutsOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   const avatarUrl = getAvatarUrl(user?.name || 'Cashier')

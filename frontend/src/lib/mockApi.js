@@ -44,6 +44,10 @@ export async function delay(customMs) {
     if (!isNaN(envVal)) baseMs = envVal
   }
 
+  if (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test') {
+    return Promise.resolve()
+  }
+
   // Jitter ± 150 ms, minimum 30 ms
   const jitter = Math.floor(Math.random() * 300) - 150
   const totalDelay = Math.max(30, baseMs + jitter)

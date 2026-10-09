@@ -9,7 +9,6 @@ import {
   RotateCcw,
   AlertTriangle,
   Loader2,
-  CheckCircle2,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -18,7 +17,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FormInput } from '@/components/forms/FormInput'
-import { FormTextarea } from '@/components/forms/FormTextarea'
 import { PhoneInput } from '@/components/forms/PhoneInput'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -45,12 +43,11 @@ export function SettingsPage() {
 
   // React Hook Form for settings
   const {
-    register,
     handleSubmit,
     control,
     watch,
     reset,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty, errors },
   } = useForm({
     defaultValues: {
       store_name: '',
@@ -165,15 +162,19 @@ export function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormInput
+                    name="store_name"
+                    control={control}
                     label="Pangalan ng Tindahan (Store Name)"
                     placeholder="Hal. Tindahan ni Aling Nena"
                     required
-                    {...register('store_name')}
+                    error={errors.store_name?.message}
                   />
                   <FormInput
+                    name="owner_name"
+                    control={control}
                     label="Pangalan ng May-ari (Owner Name)"
                     placeholder="Hal. Nena Santos"
-                    {...register('owner_name')}
+                    error={errors.owner_name?.message}
                   />
                 </div>
 
@@ -194,9 +195,11 @@ export function SettingsPage() {
                     />
                   </div>
                   <FormInput
+                    name="address"
+                    control={control}
                     label="Tirahan / Lokasyon (Address)"
                     placeholder="Purok 3, Brgy. San Isidro"
-                    {...register('address')}
+                    error={errors.address?.message}
                   />
                 </div>
               </CardContent>
@@ -235,15 +238,19 @@ export function SettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormInput
+                      name="store_name"
+                      control={control}
                       label="Header ng Resibo (Pangalan sa Itaas)"
                       placeholder="Hal. TINDAHAN NI ALING NENA"
-                      {...register('store_name')}
+                      error={errors.store_name?.message}
                     />
 
                     <FormInput
+                      name="receipt_footer"
+                      control={control}
                       label="Mensahe sa Ibaba (Footer Greetings)"
                       placeholder="Hal. Salamat po! Balik po kayo muli!"
-                      {...register('receipt_footer')}
+                      error={errors.receipt_footer?.message}
                     />
 
                     <div className="flex items-center justify-between rounded-lg border border-border p-3.5">
@@ -327,11 +334,13 @@ export function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <FormInput
+                    name="default_reorder_level"
+                    control={control}
                     label="Default Reorder Level (Piraso)"
                     type="number"
                     min="1"
                     placeholder="10"
-                    {...register('default_reorder_level', { valueAsNumber: true })}
+                    error={errors.default_reorder_level?.message}
                   />
 
                   <div className="space-y-2">

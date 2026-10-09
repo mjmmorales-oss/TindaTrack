@@ -1,14 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import {
-  PackageSearch,
-  RotateCcw,
-  Search,
-  ShoppingCart,
   X,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { SearchInput } from '@/components/forms/SearchInput'
 import { ProductGrid } from '@/features/pos/components/ProductGrid'

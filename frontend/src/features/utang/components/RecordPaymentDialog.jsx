@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { HandCoins, Loader2, Calendar } from 'lucide-react'
+import { HandCoins, Loader2 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export function RecordPaymentDialog({
   const recordPaymentMutation = useRecordPayment()
   const isPending = recordPaymentMutation.isPending
 
-  const currentBalance = customer?.credit_balance ?? 0
+  const currentBalance = Number(customer?.credit_balance ?? 0)
 
   const getTodayDateString = () => {
     const today = new Date()
@@ -43,7 +43,6 @@ export function RecordPaymentDialog({
   }
 
   const {
-    register,
     handleSubmit,
     control,
     setValue,
@@ -206,19 +205,21 @@ export function RecordPaymentDialog({
 
         {/* Payment Date */}
         <FormInput
+          name="payment_date"
+          control={control}
           label="Petsa ng Pagbabayad (Payment Date)"
           type="date"
           error={errors.payment_date?.message}
-          {...register('payment_date')}
         />
 
         {/* Payment Note */}
         <FormTextarea
+          name="notes"
+          control={control}
           label="Tala sa Resibo (Note / Reference)"
           placeholder="Hal. Binigay ng anak, paunang bayad sa bigas..."
           rows={2}
           error={errors.notes?.message}
-          {...register('notes')}
         />
 
         {/* Sticky-style Dialog Footer */}

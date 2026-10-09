@@ -2,7 +2,6 @@ import { Link } from 'react-router'
 import {
   AlertTriangle,
   ArrowRight,
-  Clock,
   DollarSign,
   Package,
   Receipt,
