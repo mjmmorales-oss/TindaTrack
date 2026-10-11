@@ -28,7 +28,7 @@ export function MobileCartBar({
           type="button"
           onClick={onOpenDrawer}
           className="flex min-w-0 flex-1 items-center gap-2.5 text-left outline-none cursor-pointer"
-          aria-label={`Buksan ang cart na may ${itemCount} items na nagkakahalaga ng ₱${total.toFixed(2)}`}
+          aria-label={`Buksan ang cart na may ${itemCount} items na nagkakahalaga ng ₱${Number(total || 0).toFixed(2)}`}
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <ShoppingBag className="h-5 w-5" />

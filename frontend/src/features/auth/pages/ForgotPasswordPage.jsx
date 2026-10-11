@@ -112,7 +112,7 @@ export function ForgotPasswordPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@tindatrack.test"
+                placeholder="you@email.com"
                 autoComplete="email"
                 {...register('email')}
               />

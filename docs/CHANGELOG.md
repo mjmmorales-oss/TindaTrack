@@ -2,6 +2,17 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.0.2] - Final Polish (A1–A4)
+- **UI Chrome & Navigation**: Removed duplicated `<header>` and `<footer>` from `LandingPage.jsx`; layout chrome is now strictly owned by `PublicLayout.jsx`.
+- **Copy Consistency**: Unified public CTA button labels across header and hero to `Magsimula` and `Sign In`, eliminating duplicate side-by-side English/Tagalog parentheticals.
+- **Demo Credentials Security**: Gated demo account switcher behind `SHOW_DEMO_ACCOUNTS` (`import.meta.env.DEV`), ensuring deployed production builds never expose demo credentials. Generic placeholders applied across all auth and staff inputs.
+- **Layout & Duplication Guard Tests**: Extended Vitest route smoke tests to enforce single `<header>` (`role="banner"`), single primary `<nav>`, exactly 1 `<h1>` (or 0 on `/pos`), and no duplicated CTA buttons in top chrome.
+- **Static Defensiveness Sweep**: Guarded all monetary/numeric calculations and aria-labels in `PaymentDialog.jsx` and `MobileCartBar.jsx` with `Number(... || 0)`.
+
+## [v1.0.1] - Runtime Stability & Headless Test Suite
+- **Runtime Fixes**: Restored missing imports in `InventoryPage` and guarded `FormInput`/`FormTextarea` against null React Hook Form contexts.
+- **Automated Smoke Suite**: Added headless Vitest test suite (`src/test/routes.test.jsx`, `src/test/interactions.test.jsx`, `src/test/auth.test.jsx`) rendering all 33 routes and interaction modals in JSDOM.
+
 ## [v1.0.0] - Phase 3 Complete
 
 ### Backend (Laravel 13 & MySQL)

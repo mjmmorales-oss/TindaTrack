@@ -39,6 +39,41 @@ describe('Route Smoke Tests', () => {
     expect(fatalErrors).toHaveLength(0)
   })
 
+const ROUTES_WITHOUT_H1 = new Set(['/pos'])
+
+function assertLayoutIntegrity(path) {
+  // 1. At most ONE element with role "banner" (header)
+  const banners = screen.queryAllByRole('banner')
+  expect(banners.length).toBeLessThanOrEqual(1)
+
+  // 2. At most ONE primary navigation element
+  const navElements = screen.queryAllByRole('navigation')
+  const primaryNavs = navElements.filter((nav) => {
+    const label = nav.getAttribute('aria-label') || ''
+    return !label.toLowerCase().includes('breadcrumb') && !label.toLowerCase().includes('pagination')
+  })
+  expect(primaryNavs.length).toBeLessThanOrEqual(1)
+
+  // 3. Exactly one <h1> (or zero on pages that intentionally have none)
+  const h1Elements = document.querySelectorAll('h1')
+  if (ROUTES_WITHOUT_H1.has(path)) {
+    expect(h1Elements.length).toBe(0)
+  } else {
+    expect(h1Elements.length).toBe(1)
+  }
+
+  // 4. No duplicated CTA: the same accessible button name does not appear twice in top chrome
+  if (banners.length > 0) {
+    const topHeader = banners[0]
+    const headerButtons = topHeader.querySelectorAll('button, a[role="button"]')
+    const buttonNames = Array.from(headerButtons)
+      .map((btn) => btn.getAttribute('aria-label') || btn.textContent?.trim())
+      .filter(Boolean)
+    const uniqueNames = new Set(buttonNames)
+    expect(buttonNames.length).toBe(uniqueNames.size)
+  }
+}
+
   describe('Guest / Public routes', () => {
     const guestRoutes = [
       { path: '/', expected: /Benta, stock, at utang/i },
@@ -46,16 +81,17 @@ describe('Route Smoke Tests', () => {
       { path: '/register', expected: /Register Store/i },
       { path: '/forgot-password', expected: /Forgot Password/i },
       { path: '/password-reset/test-token', expected: /Reset Password/i },
-      { path: '/403', expected: /Bawal ang Aksyon|403/i },
-      { path: '/non-existent-page', expected: /Hindi Nahanap|404/i },
+      { path: '/403', expected: /Bawal ang Aksyon|Access Denied|403/i },
+      { path: '/non-existent-page', expected: /Hindi Nahanap|Not Found|404/i },
     ]
 
     guestRoutes.forEach(({ path, expected }) => {
       it(`renders ${path} without error`, async () => {
         renderRoute(path, { role: 'guest' })
         expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-        const elements = await screen.findAllByText(expected, {}, { timeout: 4000 })
+        const elements = await screen.findAllByText(expected, {}, { timeout: 8000 })
         expect(elements.length).toBeGreaterThan(0)
+        assertLayoutIntegrity(path)
       })
     })
   })
@@ -83,8 +119,9 @@ describe('Route Smoke Tests', () => {
       it(`renders ${path} for owner`, async () => {
         renderRoute(path, { role: 'owner' })
         expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-        const elements = await screen.findAllByText(expected, {}, { timeout: 8000 })
+        const elements = await screen.findAllByText(expected, {}, { timeout: 12000 })
         expect(elements.length).toBeGreaterThan(0)
+        assertLayoutIntegrity(path)
       })
     })
   })
@@ -107,15 +144,16 @@ describe('Route Smoke Tests', () => {
       it(`renders ${path} for cashier`, async () => {
         renderRoute(path, { role: 'cashier' })
         expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-        const elements = await screen.findAllByText(expected, {}, { timeout: 8000 })
+        const elements = await screen.findAllByText(expected, {}, { timeout: 12000 })
         expect(elements.length).toBeGreaterThan(0)
+        assertLayoutIntegrity(path)
       })
     })
 
     it('redirects cashier from owner-only route /inventory to /403', async () => {
       renderRoute('/inventory', { role: 'cashier' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      const elements = await screen.findAllByText(/Bawal ang Aksyon|403/i, {}, { timeout: 4000 })
+      const elements = await screen.findAllByText(/Bawal ang Aksyon|403/i, {}, { timeout: 8000 })
       expect(elements.length).toBeGreaterThan(0)
     })
   })

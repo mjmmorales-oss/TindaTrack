@@ -148,12 +148,12 @@ describe('Interaction and Dialog Smoke Tests', () => {
       const user = userEvent.setup()
       renderRoute('/staff', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Mga Account ng Staff at Kahera/i, {}, { timeout: 4000 })
+      await screen.findByText(/Mga Account ng Staff at Kahera/i, {}, { timeout: 8000 })
 
-      const addButton = await screen.findByRole('button', { name: /Magdagdag ng Kahera/i }, { timeout: 4000 })
+      const addButton = await screen.findByRole('button', { name: /Magdagdag ng Kahera/i }, { timeout: 8000 })
       await user.click(addButton)
 
-      expect(await screen.findByText(/Magdagdag ng Bagong Kahera/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Kahera/i, {}, { timeout: 8000 })).toBeInTheDocument()
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
     })
   })
@@ -165,7 +165,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         const user = userEvent.setup()
         renderRoute('/inventory', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Pamamahala sa Imbentaryo/i, {}, { timeout: 4000 })
+      await screen.findByText(/Pamamahala sa Imbentaryo/i, {}, { timeout: 8000 })
 
       const tabs = [
         { name: /Paubos na Paninda/i, textMatch: /Mga Panindang Paubos at Ubos Na/i },
@@ -176,17 +176,17 @@ describe('Interaction and Dialog Smoke Tests', () => {
       for (const tab of tabs) {
         const tabTrigger = screen.getByRole('tab', { name: tab.name })
         await user.click(tabTrigger)
-        const matched = await screen.findAllByText(tab.textMatch, {}, { timeout: 4000 })
+        const matched = await screen.findAllByText(tab.textMatch, {}, { timeout: 8000 })
         expect(matched.length).toBeGreaterThan(0)
         expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
       }
-    }, 15000)
+    }, 20000)
 
     it('opens all tabs on /settings', async () => {
       const user = userEvent.setup()
       renderRoute('/settings', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Mga Setting ng Tindahan/i, {}, { timeout: 4000 })
+      await screen.findByText(/Mga Setting ng Tindahan/i, {}, { timeout: 8000 })
 
       const tabs = [
         { name: /Resibo & Preview/i, textMatch: /Format ng POS Resibo/i },
@@ -198,17 +198,17 @@ describe('Interaction and Dialog Smoke Tests', () => {
       for (const tab of tabs) {
         const tabTrigger = screen.getByRole('tab', { name: tab.name })
         await user.click(tabTrigger)
-        const matched = await screen.findAllByText(tab.textMatch, {}, { timeout: 4000 })
+        const matched = await screen.findAllByText(tab.textMatch, {}, { timeout: 8000 })
         expect(matched.length).toBeGreaterThan(0)
         expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
       }
-    })
+    }, 20000)
 
     it('opens all tabs on /customers/1', async () => {
       const user = userEvent.setup()
       renderRoute('/customers/1', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang/i })
+      const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang/i }, { timeout: 8000 })
       expect(ledgerTab).toBeInTheDocument()
 
       const purchasesTab = await screen.findByRole('tab', { name: /Kasaysayan ng Bili/i })

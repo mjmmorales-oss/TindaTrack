@@ -5,7 +5,6 @@ import {
   Clock,
   PackageCheck,
   Sparkles,
-  Store,
   Search,
   ShoppingCart,
 } from 'lucide-react'
@@ -27,30 +26,7 @@ export function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-xs">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-xs">
-              TT
-            </div>
-            <span className="text-lg font-extrabold tracking-tight text-foreground">
-              TindaTrack
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild className="text-xs">
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button size="sm" asChild className="text-xs">
-              <Link to="/register">Magsimula (Register)</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="flex flex-col bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-primary/5 via-background to-background py-14 sm:py-20 lg:py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
@@ -78,7 +54,7 @@ export function LandingPage() {
               className="w-full sm:w-auto h-12 px-7 text-base shadow-md gap-2"
             >
               <Link to="/register">
-                Magsimula Ngayon (Get Started)
+                Magsimula
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -88,7 +64,7 @@ export function LandingPage() {
               asChild
               className="w-full sm:w-auto h-12 px-7 text-base border-border"
             >
-              <Link to="/login">Mag-log In (Log In)</Link>
+              <Link to="/login">Sign In</Link>
             </Button>
           </div>
 
@@ -173,7 +149,7 @@ export function LandingPage() {
                   <span className="font-mono font-extrabold text-primary text-sm">₱61.00</span>
                 </div>
                 <div className="rounded-md bg-primary text-primary-foreground px-3 py-1 font-semibold text-xs flex items-center gap-1">
-                  <span>Magbayad (Pay)</span>
+                  <span>Magbayad</span>
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
@@ -285,24 +261,6 @@ export function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* Footer with Team Credits */}
-      <footer className="mt-auto py-8 bg-card border-t border-border/80 text-xs text-muted-foreground">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Store className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-foreground">TindaTrack</span>
-            <span>· Integrative Programming Project</span>
-          </div>
-
-          <div className="text-center sm:text-right">
-            <p>Binuo para sa Sari-Sari Store Micro-Retailers sa Pilipinas.</p>
-            <p className="text-[11px] text-muted-foreground/80 mt-0.5">
-              React 19 + Laravel 13 API · Open Source Educational Prototype
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
