@@ -54,7 +54,7 @@ export function LandingPage() {
               className="w-full sm:w-auto h-12 px-7 text-base shadow-md gap-2"
             >
               <Link to="/register">
-                Magsimula (Register)
+                Magsimula
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -149,7 +149,7 @@ export function LandingPage() {
                   <span className="font-mono font-extrabold text-primary text-sm">₱61.00</span>
                 </div>
                 <div className="rounded-md bg-primary text-primary-foreground px-3 py-1 font-semibold text-xs flex items-center gap-1">
-                  <span>Magbayad (Pay)</span>
+                  <span>Magbayad</span>
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>

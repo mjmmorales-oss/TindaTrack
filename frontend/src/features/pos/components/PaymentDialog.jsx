@@ -154,7 +154,7 @@ export function PaymentDialog({
       description={
         completedSale
           ? 'Nai-record na ang transaksyon sa system.'
-          : `Kabuuang Babayaran: ₱${total.toFixed(2)}`
+          : `Kabuuang Babayaran: ₱${Number(total || 0).toFixed(2)}`
       }
       className="sm:max-w-md"
     >
@@ -220,7 +220,7 @@ export function PaymentDialog({
                     onClick={handleExactCash}
                     className="h-auto p-0 text-xs text-primary font-bold"
                   >
-                    Eksaktong Halaga (₱{total.toFixed(2)})
+                    Eksaktong Halaga (₱{Number(total || 0).toFixed(2)})
                   </Button>
                 </div>
                 <MoneyInput
@@ -279,7 +279,7 @@ export function PaymentDialog({
                 </div>
                 {!isTenderedSufficient && tenderedNum > 0 && (
                   <p className="text-[11px] text-destructive font-medium mt-1">
-                    Kulang pa ng ₱{(total - tenderedNum).toFixed(2)}
+                    Kulang pa ng ₱{Math.max(0, Number(total || 0) - tenderedNum).toFixed(2)}
                   </p>
                 )}
               </div>
@@ -300,7 +300,7 @@ export function PaymentDialog({
                 ) : (
                   <>
                     <Receipt className="h-5 w-5" />
-                    Kumpirmahin ang Cash (Sukli: ₱{changeAmount.toFixed(2)})
+                    Kumpirmahin ang Cash (Sukli: ₱{Number(changeAmount || 0).toFixed(2)})
                   </>
                 )}
               </Button>

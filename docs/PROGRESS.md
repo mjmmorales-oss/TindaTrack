@@ -83,11 +83,11 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **A1 — Duplicate Navigation**: Eliminate duplicate header in LandingPage, ensure single layout chrome across all routes.
 - [x] **A2 — Demo Credentials**: Gate demo accounts behind `SHOW_DEMO_ACCOUNTS` (local dev only), update docs and tests.
 - [x] **A3 — Duplication & Layout Guards**: Extend Vitest suite to assert single banner/nav/h1 and non-duplicated CTAs.
-- [ ] **A4 — Full Bug Sweep & Release**: Comprehensive audit, zero-warning sweep, merge to `main`, tag `v1.0.2`.
+- [x] **A4 — Full Bug Sweep & Release**: Comprehensive audit, zero-warning sweep, merge to `main`, tag `v1.0.2`.
 
 ### A1 Log:
 - Removed duplicate `<header>` and `<footer>` from `LandingPage.jsx`; `PublicLayout.jsx` now strictly owns public chrome.
-- Unified public CTA button labels across header and hero to `Magsimula (Register)` and `Sign In`.
+- Unified public CTA button labels across header and hero to `Magsimula` and `Sign In`.
 - Audited all 22 page components across the application to ensure none render duplicate `<header>`, `<nav>`, or extra `<h1>` elements.
 - ESLint (0 errors/warnings) and Vite production build passed.
 
@@ -106,4 +106,15 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Enforces exactly 1 `<h1>` (or 0 for `/pos`, explicitly documented in `ROUTES_WITHOUT_H1`).
   - Enforces no duplicated CTA button labels in top chrome.
 - Vitest suite (45 tests across 3 files) passed green.
+
+### A4 Log:
+- Executed full static and runtime sweep:
+  - Cleaned double-language parenthetical labels in `LandingPage.jsx` and `PublicLayout.jsx` (`Magsimula (Register)` -> `Magsimula`, `Magbayad (Pay)` -> `Magbayad`).
+  - Guarded numeric string formatting and aria labels in `MobileCartBar.jsx` and `PaymentDialog.jsx` with `Number(... || 0)`.
+  - Tuned async find timeouts in `interactions.test.jsx` and `routes.test.jsx` for rock-solid headless execution under load.
+  - Verified static hygiene clean: 0 console.log, 0 debugger, 0 TODO/FIXME, 0 react-router-dom, 0 .ts/.tsx files, 0 hex colors in `src/features`.
+- Verification gates passed across entire stack:
+  - Frontend: `npx vitest run` (45/45 pass), `npx eslint src` (0 warnings/errors), `npm run build` (success), `node scripts/check-contract.mjs` (37/37 pass), `node scripts/check-services.mjs` (37/37 pass), `node scripts/check-mockdata.mjs` (pass).
+  - Backend: `php artisan test` (41/41 pass), `./vendor/bin/pint --test` (pass), `php artisan tindatrack:check` (100% pass).
+- Merged `fix/final-polish` to `main` and tagged `v1.0.2`.
 

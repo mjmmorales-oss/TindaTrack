@@ -35,7 +35,7 @@ export function PublicLayout() {
                 <Link to="/login">Sign In</Link>
               </Button>
               <Button asChild size="sm">
-                <Link to="/register">Magsimula (Register)</Link>
+                <Link to="/register">Magsimula</Link>
               </Button>
             </>
           )}
