@@ -35,7 +35,7 @@ export function PublicLayout() {
                 <Link to="/login">Sign In</Link>
               </Button>
               <Button asChild size="sm">
-                <Link to="/register">Get Started</Link>
+                <Link to="/register">Magsimula (Register)</Link>
               </Button>
             </>
           )}
@@ -46,9 +46,13 @@ export function PublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-border text-muted-foreground border-t py-8 text-center text-xs">
+      <footer className="border-border text-muted-foreground border-t py-8 text-xs">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
-          <p>© 2026 TindaTrack · Tindahan ni Aling Nena</p>
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <Store className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-foreground">TindaTrack</span>
+            <span>· Integrative Programming Project (React 19 + Laravel 13)</span>
+          </div>
           <div className="flex items-center gap-3">
             <span>SDG 1 No Poverty</span>
             <span>•</span>

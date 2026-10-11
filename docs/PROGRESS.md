@@ -78,3 +78,16 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Backend: `php artisan test` (41/41 pass), `./vendor/bin/pint --test` (pass), `php artisan tindatrack:check` (100% pass).
 - Merged `fix/runtime-audit` to `main`, pushed, and tagged `v1.0.1`.
 
+---
+## Final Polish (A1–A4)
+- [x] **A1 — Duplicate Navigation**: Eliminate duplicate header in LandingPage, ensure single layout chrome across all routes.
+- [ ] **A2 — Demo Credentials**: Gate demo accounts behind `SHOW_DEMO_ACCOUNTS` (local dev only), update docs and tests.
+- [ ] **A3 — Duplication & Layout Guards**: Extend Vitest suite to assert single banner/nav/h1 and non-duplicated CTAs.
+- [ ] **A4 — Full Bug Sweep & Release**: Comprehensive audit, zero-warning sweep, merge to `main`, tag `v1.0.2`.
+
+### A1 Log:
+- Removed duplicate `<header>` and `<footer>` from `LandingPage.jsx`; `PublicLayout.jsx` now strictly owns public chrome.
+- Unified public CTA button labels across header and hero to `Magsimula (Register)` and `Sign In`.
+- Audited all 22 page components across the application to ensure none render duplicate `<header>`, `<nav>`, or extra `<h1>` elements.
+- ESLint (0 errors/warnings) and Vite production build passed.
+
