@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { api, TOKEN_KEY } from '@/lib/api'
 
 import { notify } from '@/lib/notify'
@@ -6,6 +7,7 @@ import { notify } from '@/lib/notify'
 export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState(null)
   const [status, setStatus] = useState('loading') // 'loading' | 'authenticated' | 'guest'
 
@@ -20,7 +22,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(TOKEN_KEY)
     setUser(null)
     setStatus('guest')
-  }, [])
+    queryClient?.clear()
+  }, [queryClient])
 
   useEffect(() => {
     if (!localStorage.getItem(TOKEN_KEY)) {

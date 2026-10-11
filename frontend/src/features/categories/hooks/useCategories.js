@@ -20,6 +20,7 @@ export function useCreateCategory() {
     mutationFn: (data) => categoryService.create(data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
       notify.success('Nai-save ang kategorya!', `${res.data.name} has been added.`)
     },
     onError: (err) => {
@@ -34,6 +35,7 @@ export function useUpdateCategory() {
     mutationFn: ({ id, data }) => categoryService.update(id, data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
       notify.success('Na-update ang kategorya!', `${res.data.name} has been updated.`)
     },
     onError: (err) => {
@@ -48,6 +50,7 @@ export function useDeleteCategory() {
     mutationFn: (id) => categoryService.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
       notify.success('Nabura ang kategorya.')
     },
     onError: (err) => {

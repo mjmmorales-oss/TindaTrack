@@ -31,6 +31,7 @@ export function useRecordPayment() {
       queryClient.invalidateQueries({ queryKey: utangKeys.all })
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
       notify.success(
         'Naitala ang bayad!',
         `Bayad: ₱${res.data.payment.amount.toFixed(2)} · Natitirang Utang: ₱${res.data.new_balance.toFixed(2)}`,

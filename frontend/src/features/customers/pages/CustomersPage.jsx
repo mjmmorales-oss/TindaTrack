@@ -127,8 +127,8 @@ export function CustomersPage() {
 
   // Helper to render balance badge
   const renderBalanceBadge = (customer) => {
-    const bal = customer.credit_balance || 0
-    const limit = customer.credit_limit || 0
+    const bal = Number(customer?.credit_balance || 0)
+    const limit = Number(customer?.credit_limit || 0)
 
     if (bal <= 0) {
       return (
@@ -252,7 +252,7 @@ export function CustomersPage() {
                     Tingnan ang Profile
                   </DropdownMenuItem>
 
-                  {canCollect && c.credit_balance > 0 && (
+                  {canCollect && Number(c.credit_balance || 0) > 0 && (
                     <DropdownMenuItem
                       onClick={() => handleOpenPayment(c)}
                       className="text-utang focus:text-utang"

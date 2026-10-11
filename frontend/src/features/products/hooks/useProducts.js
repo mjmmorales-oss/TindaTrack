@@ -42,6 +42,7 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
       notify.success('Nai-save ang produkto!', `${res.data.name} has been added.`)
     },
     onError: (err) => {
@@ -58,6 +59,7 @@ export function useUpdateProduct() {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
       notify.success('Na-update ang produkto!', `${res.data.name} has been updated.`)
     },
     onError: (err) => {
@@ -74,6 +76,7 @@ export function useDeleteProduct() {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
       notify.success('Nabura ang produkto.')
     },
     onError: (err) => {

@@ -123,7 +123,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **C1 — The Confirmed Bug (Products)**: Complete default entity in create mode, robust `row.original` and `category_id` handling in table columns, mobile cards, and details.
 - [x] **C2 — Deep Test Harness**: Comprehensive flow, dialog, edge-state, and role interaction tests with `@testing-library/user-event`.
 - [x] **C3 — Page-by-Page Critical Read**: Surgical audit of all 22 page routes, ensuring loading guards, error states, and responsive contracts.
-- [ ] **C4 — Cross-Cutting Correctness**: Query keys, cart store, auth session, permissions parity, numeric casting, date handling.
+- [x] **C4 — Cross-Cutting Correctness**: Query keys, cart store, auth session, permissions parity, numeric casting, date handling.
 - [ ] **C5 — Backend and Contract**: API Resource parity, validation rules alignment, N+1 eager loading, row-locking transaction guarantees.
 - [ ] **C6 — Hygiene Sweep**: Zero console.log, debugger, TODO/FIXME, react-router-dom, TS files, hex colors, dead exports.
 - [ ] **C7 — Final Verification & Release**: Re-run all test suites and checks, merge to `main`, tag `v1.0.3`.
@@ -159,6 +159,16 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - `UtangPage.jsx:314` -> `renderMobileCard` destructured `debtor.days_overdue` directly. Guarded with `const d = debtor?.original || debtor || {}` and used `d` throughout mobile card renderer.
   - `RecordPaymentDialog.jsx:67` -> `useEffect` reset `amount: customer.credit_balance` directly without cast. Wrapped with `Number(customer.credit_balance || 0)`.
 - Gates passed: `npm run build` (success), `npx eslint src` (0 errors/warnings), `npx vitest run` (103/103 tests green).
+
+### C4 Log:
+- Cross-cutting audit of query keys, cart, auth session, permissions, and numeric/date integrity:
+  - Query Invalidation Completeness: Added `['reports']` invalidation to `useCreateSale`, `useVoidSale`, and `useRecordPayment`; added `['categories']` invalidation to product mutations, and `['products']` invalidation to category mutations.
+  - Cart State Robustness: Verified store persistence, maximum 3 held/parked sales, non-negative quantity clamping, and float round safety with `toMoney`.
+  - Session Cache Purge: Integrated `useQueryClient` into `AuthContext.jsx` to execute `queryClient?.clear()` on `clearSession()`, guaranteeing that signing out purges all cached tenant queries from memory.
+  - Permissions Parity: Cross-checked `src/config/permissions.js` against backend `role:owner` and `role:owner,cashier` middleware. Abilities match backend route authorization with zero divergence.
+  - Numeric Type Coercion: Guarded table cell calculations and badges in `CustomersPage.jsx` and `UtangPage.jsx` with `Number(...)`.
+- Gates passed: `npm run build` (success), `npx eslint src` (0 errors/warnings), `npx vitest run` (103/103 tests green).
+
 
 
 

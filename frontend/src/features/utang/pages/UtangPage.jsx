@@ -208,8 +208,8 @@ export function UtangPage() {
         header: 'Paggamit sa Limit',
         cell: ({ row }) => {
           const c = row.original
-          const limit = c.credit_limit || 0
-          const bal = c.credit_balance || 0
+          const limit = Number(c.credit_limit || 0)
+          const bal = Number(c.credit_balance || 0)
           const rate = limit > 0 ? Math.min(100, Math.round((bal / limit) * 100)) : 100
           const isOver = bal > limit
 

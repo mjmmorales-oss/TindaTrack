@@ -37,6 +37,7 @@ export function useCreateSale() {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['utang'] })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
       notify.success(
         'Matagumpay na naitala ang benta!',
         `Resibo ${res.data.sale_no} · ₱${res.data.total_amount.toFixed(2)}`,
@@ -59,6 +60,7 @@ export function useVoidSale() {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['utang'] })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
       notify.success('Nai-void ang benta!', `Resibo ${res.data.sale_no} has been voided.`)
     },
     onError: (err) => {
