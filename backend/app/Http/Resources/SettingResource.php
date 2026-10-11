@@ -14,6 +14,7 @@ class SettingResource extends JsonResource
             'store_name' => $this->store_name,
             'store_tagline' => $this->store_tagline,
             'phone' => $this->phone,
+            'contact_number' => $this->phone,
             'address' => $this->address,
             'receipt_header' => $this->receipt_header,
             'receipt_footer' => $this->receipt_footer,

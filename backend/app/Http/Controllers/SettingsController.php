@@ -31,6 +31,10 @@ class SettingsController extends Controller
 
     public function update(Request $request): JsonResponse
     {
+        if ($request->has('contact_number') && ! $request->has('phone')) {
+            $request->merge(['phone' => $request->input('contact_number')]);
+        }
+
         $validated = $request->validate([
             'store_name' => ['sometimes', 'required', 'string', 'max:255'],
             'store_tagline' => ['nullable', 'string', 'max:255'],

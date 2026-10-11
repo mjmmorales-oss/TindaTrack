@@ -169,6 +169,11 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Numeric Type Coercion: Guarded table cell calculations and badges in `CustomersPage.jsx` and `UtangPage.jsx` with `Number(...)`.
 - Gates passed: `npm run build` (success), `npx eslint src` (0 errors/warnings), `npx vitest run` (103/103 tests green).
 
-
-
-
+### C5 Log:
+- Verified backend and contract parity across API resources, controllers, and validation rules:
+  - `php artisan test` (41/41 passing, 206 assertions).
+  - `./vendor/bin/pint --test` (passed, zero style issues).
+  - `php artisan tindatrack:check` (100% reconciled: product stock, movements, utang balances, payments, unique sale numbers).
+  - Contract & Service verification: `check-contract.mjs` (37/37 contracts verified against Laravel API routes), `check-services.mjs` (10/10 services matched 1-to-1 between mock and API), `check-mockdata.mjs` (₱0.0000 balance discrepancy).
+  - Resource field parity: Updated `SettingResource.php` to include `contact_number` alias alongside `phone` to ensure exact compatibility with frontend settings forms, and updated `SettingsController.php` to merge `contact_number` into `phone` if supplied.
+  - Eager loading & locking: Audited all index controllers for eager relations (`::with(...)`) and verified that transactional writes in actions (`CreateSaleAction`, `VoidSaleAction`, `AdjustStockAction`, `RecordPaymentAction`) lock rows with `lockForUpdate()`.
