@@ -16,24 +16,39 @@ import { productSchema, PRODUCT_UNITS } from '@/features/products/schemas'
 import { useCreateProduct, useUpdateProduct } from '@/features/products/hooks/useProducts'
 import { usePermissions } from '@/hooks/usePermissions'
 
+export const DEFAULT_PRODUCT = {
+  name: '',
+  category_id: '',
+  sku: '',
+  barcode: '',
+  unit: 'pc',
+  price: 0,
+  cost_price: 0,
+  stock_quantity: 0,
+  reorder_level: 10,
+  is_active: true,
+  description: '',
+}
+
 /**
  * Product Create & Edit modal form using React Hook Form + Zod.
  *
  * @param {object} props
  * @param {boolean} props.open - Modal open state
  * @param {(open: boolean) => void} props.onOpenChange - Open state handler
- * @param {object|null} [props.product] - Product to edit (null for create)
+ * @param {object|null} [props.product=DEFAULT_PRODUCT] - Product to edit (defaults to full empty entity)
  * @param {Array<object>} [props.categories=[]] - Category options
  * @param {() => void} [props.onSuccess] - Success callback
  */
 export function ProductFormDialog({
   open,
   onOpenChange,
-  product = null,
+  product = DEFAULT_PRODUCT,
   categories = [],
   onSuccess,
 }) {
-  const isEdit = !!product && !product.__isDuplicate
+  const currentProduct = product || DEFAULT_PRODUCT
+  const isEdit = Boolean(currentProduct.id && !currentProduct.__isDuplicate)
   const { can } = usePermissions()
   const canViewCost = can('products.view_cost')
 
@@ -47,17 +62,17 @@ export function ProductFormDialog({
   }))
 
   const defaultValues = {
-    name: product?.name || '',
-    category_id: product?.category_id ? String(product.category_id) : '',
-    sku: product?.sku || '',
-    barcode: product?.barcode || '',
-    unit: product?.unit || 'pc',
-    price: product?.price ?? 0,
-    cost_price: product?.cost_price ?? 0,
-    stock_quantity: product?.stock_quantity ?? 0,
-    reorder_level: product?.reorder_level ?? 10,
-    is_active: product?.is_active ?? true,
-    description: product?.description || '',
+    name: currentProduct.name || '',
+    category_id: currentProduct.category_id ? String(currentProduct.category_id) : '',
+    sku: currentProduct.sku || '',
+    barcode: currentProduct.barcode || '',
+    unit: currentProduct.unit || 'pc',
+    price: currentProduct.price ?? 0,
+    cost_price: currentProduct.cost_price ?? 0,
+    stock_quantity: currentProduct.stock_quantity ?? 0,
+    reorder_level: currentProduct.reorder_level ?? 10,
+    is_active: currentProduct.is_active ?? true,
+    description: currentProduct.description || '',
   }
 
   const {
@@ -73,18 +88,19 @@ export function ProductFormDialog({
 
   useEffect(() => {
     if (open) {
+      const p = product || DEFAULT_PRODUCT
       reset({
-        name: product?.name || '',
-        category_id: product?.category_id ? String(product.category_id) : '',
-        sku: product?.sku || '',
-        barcode: product?.barcode || '',
-        unit: product?.unit || 'pc',
-        price: product?.price ?? 0,
-        cost_price: product?.cost_price ?? 0,
-        stock_quantity: product?.stock_quantity ?? 0,
-        reorder_level: product?.reorder_level ?? 10,
-        is_active: product?.is_active ?? true,
-        description: product?.description || '',
+        name: p.name || '',
+        category_id: p.category_id ? String(p.category_id) : '',
+        sku: p.sku || '',
+        barcode: p.barcode || '',
+        unit: p.unit || 'pc',
+        price: p.price ?? 0,
+        cost_price: p.cost_price ?? 0,
+        stock_quantity: p.stock_quantity ?? 0,
+        reorder_level: p.reorder_level ?? 10,
+        is_active: p.is_active ?? true,
+        description: p.description || '',
       })
     }
   }, [open, product, reset])

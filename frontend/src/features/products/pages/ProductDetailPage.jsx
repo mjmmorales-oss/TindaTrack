@@ -67,7 +67,7 @@ export function ProductDetailPage() {
   const { data: categoriesRes } = useCategories()
   const categories = useMemo(() => categoriesRes?.data || [], [categoriesRes?.data])
   const category = useMemo(
-    () => categories.find((c) => c.id === product?.category_id),
+    () => (product?.category_id ? categories.find((c) => c.id === product.category_id) || null : null),
     [categories, product?.category_id],
   )
 

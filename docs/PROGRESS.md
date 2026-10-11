@@ -118,3 +118,20 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Backend: `php artisan test` (41/41 pass), `./vendor/bin/pint --test` (pass), `php artisan tindatrack:check` (100% pass).
 - Merged `fix/final-polish` to `main` and tagged `v1.0.2`.
 
+---
+## Deep audit (C1–C7)
+- [x] **C1 — The Confirmed Bug (Products)**: Complete default entity in create mode, robust `row.original` and `category_id` handling in table columns, mobile cards, and details.
+- [ ] **C2 — Deep Test Harness**: Comprehensive flow, dialog, edge-state, and role interaction tests with `@testing-library/user-event`.
+- [ ] **C3 — Page-by-Page Critical Read**: Surgical audit of all 22 page routes, ensuring loading guards, error states, and responsive contracts.
+- [ ] **C4 — Cross-Cutting Correctness**: Query keys, cart store, auth session, permissions parity, numeric casting, date handling.
+- [ ] **C5 — Backend and Contract**: API Resource parity, validation rules alignment, N+1 eager loading, row-locking transaction guarantees.
+- [ ] **C6 — Hygiene Sweep**: Zero console.log, debugger, TODO/FIXME, react-router-dom, TS files, hex colors, dead exports.
+- [ ] **C7 — Final Verification & Release**: Re-run all test suites and checks, merge to `main`, tag `v1.0.3`.
+
+### C1 Log:
+- `ProductsPage.jsx:365` -> `renderMobileCard` was reading `row.original` when `DataTable` already passes `row.original` directly as the first argument, causing `p` to be `undefined` and throwing `Cannot read properties of undefined (reading 'category_id')` on mobile viewports. Fixed with `const p = row?.original || row || {}` and guarded `(p.category_id && categoryMap[p.category_id]) || 'Iba pa'`.
+- `ProductsPage.jsx:219` -> Guarded `category_id` table cell with `const p = row?.original || row || {}`.
+- `ProductFormDialog.jsx` -> Exported and utilized `DEFAULT_PRODUCT` providing a full default entity for create mode (`name: ''`, `category_id: ''`, `sku: ''`, `barcode: ''`, `unit: 'pc'`, `price: 0`, `cost_price: 0`, `stock_quantity: 0`, `reorder_level: 10`, `is_active: true`, `description: ''`) instead of undefined properties.
+- `ProductDetailPage.jsx:69` -> Safely guarded category memoization with `product?.category_id`.
+- Gates passed: `npx eslint src` (0 errors) and `npm run build` (success).
+

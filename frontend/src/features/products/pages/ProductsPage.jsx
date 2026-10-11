@@ -32,7 +32,10 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
-import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import {
+  ProductFormDialog,
+  DEFAULT_PRODUCT,
+} from '@/features/products/components/ProductFormDialog'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
 import { useProducts, useDeleteProduct } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
@@ -91,7 +94,7 @@ export function ProductsPage() {
   const [deletingProduct, setDeletingProduct] = useState(null)
 
   const handleCreate = () => {
-    setEditingProduct(null)
+    setEditingProduct(DEFAULT_PRODUCT)
     setFormDialogOpen(true)
   }
 
@@ -216,7 +219,8 @@ export function ProductsPage() {
           <DataTableColumnHeader column={column} title="Kategorya" />
         ),
         cell: ({ row }) => {
-          const catName = categoryMap[row.original.category_id] || 'Iba pa'
+          const p = row?.original || row || {}
+          const catName = (p.category_id && categoryMap[p.category_id]) || 'Iba pa'
           return (
             <Badge variant="outline" className="text-xs font-normal">
               {catName}
@@ -363,8 +367,8 @@ export function ProductsPage() {
 
   // Mobile card renderer for screens below md
   const renderMobileCard = (row) => {
-    const p = row.original
-    const catName = categoryMap[p.category_id] || 'Iba pa'
+    const p = row?.original || row || {}
+    const catName = (p.category_id && categoryMap[p.category_id]) || 'Iba pa'
 
     return (
       <div
