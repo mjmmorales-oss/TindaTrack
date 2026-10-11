@@ -32,10 +32,8 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
-import {
-  ProductFormDialog,
-  DEFAULT_PRODUCT,
-} from '@/features/products/components/ProductFormDialog'
+import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
 import { useProducts, useDeleteProduct } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'

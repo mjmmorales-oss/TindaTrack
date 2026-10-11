@@ -30,8 +30,18 @@ export function EmptyState({
   title = 'Walang nahanap',
   description = 'Walang tala o rekord na maipakita sa ngayon.',
   action,
+  actionText,
+  onAction,
   className,
 }) {
+  const ctaAction =
+    action ||
+    (actionText ? (
+      <Button size="sm" onClick={onAction}>
+        {actionText}
+      </Button>
+    ) : null)
+
   return (
     <Empty
       className={cn(
@@ -61,20 +71,20 @@ export function EmptyState({
           </EmptyDescription>
         )}
       </EmptyHeader>
-      {action && (
+      {ctaAction && (
         <EmptyContent>
-          {isValidElement(action) ? (
-            action
-          ) : typeof action === 'object' && (action.label || action.text) ? (
+          {isValidElement(ctaAction) ? (
+            ctaAction
+          ) : typeof ctaAction === 'object' && (ctaAction.label || ctaAction.text) ? (
             <Button
-              variant={action.variant || 'default'}
-              size={action.size || 'sm'}
-              onClick={action.onClick}
+              variant={ctaAction.variant || 'default'}
+              size={ctaAction.size || 'sm'}
+              onClick={ctaAction.onClick}
             >
-              {action.label || action.text}
+              {ctaAction.label || ctaAction.text}
             </Button>
           ) : (
-            action
+            ctaAction
           )}
         </EmptyContent>
       )}

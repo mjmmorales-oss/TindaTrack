@@ -18,14 +18,21 @@ import { cn } from '@/lib/utils'
 export function ErrorState({
   title = 'May naganap na error',
   message,
+  description,
   error,
   onRetry,
+  actionText,
+  onAction,
   className,
 }) {
   const errorMessage =
     message ||
+    description ||
     (typeof error === 'string' ? error : error?.message) ||
     'Hindi maikarga ang datos. Subukang muli.'
+
+  const handleAction = onRetry || onAction
+  const actionLabel = actionText || 'Subukan Muli (Retry)'
 
   return (
     <Alert
@@ -47,15 +54,15 @@ export function ErrorState({
           </AlertDescription>
         </div>
       </div>
-      {onRetry && (
+      {handleAction && (
         <Button
           size="sm"
           variant="outline"
           className="border-destructive/40 hover:bg-destructive/10 text-destructive shrink-0 self-start sm:self-auto"
-          onClick={onRetry}
+          onClick={handleAction}
         >
           <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-          Subukan Muli (Retry)
+          {actionLabel}
         </Button>
       )}
     </Alert>

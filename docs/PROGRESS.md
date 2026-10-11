@@ -121,7 +121,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 ---
 ## Deep audit (C1–C7)
 - [x] **C1 — The Confirmed Bug (Products)**: Complete default entity in create mode, robust `row.original` and `category_id` handling in table columns, mobile cards, and details.
-- [ ] **C2 — Deep Test Harness**: Comprehensive flow, dialog, edge-state, and role interaction tests with `@testing-library/user-event`.
+- [x] **C2 — Deep Test Harness**: Comprehensive flow, dialog, edge-state, and role interaction tests with `@testing-library/user-event`.
 - [ ] **C3 — Page-by-Page Critical Read**: Surgical audit of all 22 page routes, ensuring loading guards, error states, and responsive contracts.
 - [ ] **C4 — Cross-Cutting Correctness**: Query keys, cart store, auth session, permissions parity, numeric casting, date handling.
 - [ ] **C5 — Backend and Contract**: API Resource parity, validation rules alignment, N+1 eager loading, row-locking transaction guarantees.
@@ -134,4 +134,19 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - `ProductFormDialog.jsx` -> Exported and utilized `DEFAULT_PRODUCT` providing a full default entity for create mode (`name: ''`, `category_id: ''`, `sku: ''`, `barcode: ''`, `unit: 'pc'`, `price: 0`, `cost_price: 0`, `stock_quantity: 0`, `reorder_level: 10`, `is_active: true`, `description: ''`) instead of undefined properties.
 - `ProductDetailPage.jsx:69` -> Safely guarded category memoization with `product?.category_id`.
 - Gates passed: `npx eslint src` (0 errors) and `npm run build` (success).
+
+### C2 Log:
+- Implemented deep interaction and flow test harness:
+  - `src/test/flows.test.jsx` (13 tests): End-to-end user flows driving real UI interactions with `@testing-library/user-event` (cash sale, utang sale, inline new suki creation, oversell blocked, credit limit with cashier block & owner override, void with reason & stock/utang reversal, payment recording & overpayment rejection, product CRUD & stock adjustments, category delete constraints, customer phone validation & balance delete guards, cashier staff management & owner deactivation block, settings persistence & receipt update, table filters/search/pagination).
+  - `src/test/dialogs.test.jsx` (19 tests): Renders every create/edit dialog in both empty and seeded modes (ProductFormDialog, CategoryFormDialog, CustomerFormDialog, Cashier dialog, AdjustStockDialog, BulkRestock, PaymentDialog cash/utang, NewCustomerMiniForm, ConfirmDialogs) with zero console errors.
+  - `src/test/edge-states.test.jsx` (12 tests): Resilient rendering of EmptyState across all 7 list pages when DB is empty, 404 error states on invalid detail route IDs, and ErrorState with Retry when services throw.
+  - `src/test/roles.test.jsx` (14 tests): Role-based action presence/absence and 403 Forbidden boundary enforcement for cashiers trying to access owner-only routes.
+- Latent bugs discovered and resolved:
+  - `src/components/common/EmptyState.jsx:27` -> `EmptyState` ignored `actionText` and `onAction` props passed by `ProductsPage.jsx` and `CategoriesPage.jsx`. Fixed by rendering fallback CTA button.
+  - `src/components/common/ErrorState.jsx:18` -> `ErrorState` dropped `description`, `actionText`, and `onAction` props passed by detail pages. Fixed prop acceptance and action button.
+  - `src/services/mock/utangService.js:159` -> `customer.credit_balance.toFixed(2)` threw when credit_balance was null/undefined. Guarded with `Number(customer.credit_balance || 0).toFixed(2)`.
+  - `src/features/products/schemas.js` -> Moved `DEFAULT_PRODUCT` constant into `schemas.js` to eliminate fast refresh export warning in `ProductFormDialog.jsx`.
+  - `vite.config.js` -> Configured `fileParallelism: false` in test config to prevent cross-file state clobbering in the shared in-memory mock database.
+- Gates passed: `npx vitest run` (103/103 tests green, up from 45), `npx eslint src` (0 errors/warnings), `npm run build` (success).
+
 

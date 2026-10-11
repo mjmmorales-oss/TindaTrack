@@ -12,23 +12,9 @@ import { FormSwitch } from '@/components/forms/FormSwitch'
 import { FormTextarea } from '@/components/forms/FormTextarea'
 import { MoneyInput } from '@/components/forms/MoneyInput'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
-import { productSchema, PRODUCT_UNITS } from '@/features/products/schemas'
+import { productSchema, PRODUCT_UNITS, DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { useCreateProduct, useUpdateProduct } from '@/features/products/hooks/useProducts'
 import { usePermissions } from '@/hooks/usePermissions'
-
-export const DEFAULT_PRODUCT = {
-  name: '',
-  category_id: '',
-  sku: '',
-  barcode: '',
-  unit: 'pc',
-  price: 0,
-  cost_price: 0,
-  stock_quantity: 0,
-  reorder_level: 10,
-  is_active: true,
-  description: '',
-}
 
 /**
  * Product Create & Edit modal form using React Hook Form + Zod.

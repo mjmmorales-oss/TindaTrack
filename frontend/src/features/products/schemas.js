@@ -46,3 +46,18 @@ export const adjustStockSchema = z.object({
   quantity: z.coerce.number().int().min(1, 'Maglagay ng bilang na hindi bababa sa 1.'),
   notes: z.string().max(255, 'Hanggang 255 titik lamang ang tala.').optional().or(z.literal('')),
 })
+
+export const DEFAULT_PRODUCT = {
+  name: '',
+  category_id: null,
+  sku: '',
+  barcode: '',
+  unit: 'pc',
+  price: 0,
+  cost_price: 0,
+  stock_quantity: 0,
+  reorder_level: 10,
+  is_active: true,
+  description: '',
+}
+

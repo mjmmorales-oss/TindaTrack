@@ -151,12 +151,13 @@ export const utangService = {
     }
 
     // Business rule: payment <= current balance
-    if (amount > customer.credit_balance) {
+    const currentCreditBalance = Number(customer.credit_balance || 0)
+    if (amount > currentCreditBalance) {
       throw new ApiError(422, {
         message: 'Payment exceeds outstanding balance.',
         errors: {
           amount: [
-            `Hindi maaaring lumampas ang bayad sa kasalukuyang utang na ₱${customer.credit_balance.toFixed(2)}.`,
+            `Hindi maaaring lumampas ang bayad sa kasalukuyang utang na ₱${currentCreditBalance.toFixed(2)}.`,
           ],
         },
       })
