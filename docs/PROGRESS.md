@@ -177,3 +177,17 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Contract & Service verification: `check-contract.mjs` (37/37 contracts verified against Laravel API routes), `check-services.mjs` (10/10 services matched 1-to-1 between mock and API), `check-mockdata.mjs` (₱0.0000 balance discrepancy).
   - Resource field parity: Updated `SettingResource.php` to include `contact_number` alias alongside `phone` to ensure exact compatibility with frontend settings forms, and updated `SettingsController.php` to merge `contact_number` into `phone` if supplied.
   - Eager loading & locking: Audited all index controllers for eager relations (`::with(...)`) and verified that transactional writes in actions (`CreateSaleAction`, `VoidSaleAction`, `AdjustStockAction`, `RecordPaymentAction`) lock rows with `lockForUpdate()`.
+
+### C6 Log:
+- Performed exhaustive hygiene sweep across frontend and backend:
+  - `console.log`: 0 hits across `frontend/src`.
+  - `debugger`: 0 hits across `frontend/src`.
+  - `TODO|FIXME`: 0 hits in `frontend/src` or `backend/app`.
+  - `react-router-dom`: 0 hits in `frontend/src` (all use React Router v8 `react-router`).
+  - `.ts` / `.tsx`: 0 files in `frontend/src`.
+  - Hex colors in `src/features`: 0 hits (all use Tailwind semantic theme tokens).
+  - `dangerouslySetInnerHTML`: Only 1 hit in `src/components/ui/chart.jsx:62` (shadcn ChartStyle injecting CSS variables).
+  - `dd(` / `dump(`: 0 hits in `backend/app`.
+  - Hard-coded localhost: Only fallback default in `src/lib/api.js` and standard Laravel `config/*` defaults.
+  - Demo credentials: Sole usage in `LoginPage.jsx` is guarded by `{SHOW_DEMO_ACCOUNTS && (...)}`, with test coverage in `auth.test.jsx`.
+- Gates passed: `npm run build` (success), `npx eslint src` (0 errors/warnings), `npx vitest run` (103/103 tests green), `php artisan test` (41/41 green), `./vendor/bin/pint --test` (clean).
