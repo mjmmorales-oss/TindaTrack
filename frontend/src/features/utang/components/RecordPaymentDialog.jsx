@@ -64,7 +64,7 @@ export function RecordPaymentDialog({
   useEffect(() => {
     if (open && customer) {
       reset({
-        amount: customer.credit_balance,
+        amount: Number(customer.credit_balance || 0),
         payment_date: getTodayDateString(),
         notes: '',
       })

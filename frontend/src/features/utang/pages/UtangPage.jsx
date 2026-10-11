@@ -312,35 +312,36 @@ export function UtangPage() {
 
   // Mobile card renderer below md
   const renderMobileCard = (debtor) => {
-    const days = debtor.days_overdue || 0
+    const d = debtor?.original || debtor || {}
+    const days = d.days_overdue || 0
     const isOverdue = days > 30
 
     return (
       <Card
-        key={debtor.id}
+        key={d.id}
         className="p-3.5 space-y-3 border-border shadow-xs hover:border-primary/40 transition-colors"
       >
         {/* Top: Avatar, name, balance */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <UserAvatar name={debtor.name} style="notionists" size="md" />
+            <UserAvatar name={d.name} style="notionists" size="md" />
             <div className="min-w-0">
               <Link
-                to={`/customers/${debtor.id}`}
+                to={`/customers/${d.id}`}
                 className="font-bold text-sm text-foreground hover:text-primary hover:underline truncate block"
               >
-                {debtor.name}
+                {d.name}
               </Link>
-              {debtor.nickname && (
+              {d.nickname && (
                 <span className="text-xs text-muted-foreground block truncate">
-                  "{debtor.nickname}"
+                  "{d.nickname}"
                 </span>
               )}
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <Money amount={debtor.credit_balance} size="base" tone="utang" className="font-bold" />
+            <Money amount={d.credit_balance} size="base" tone="utang" className="font-bold" />
             <span
               className={cn(
                 'text-[11px] block font-medium',
@@ -354,8 +355,8 @@ export function UtangPage() {
 
         {/* Contact and limit line */}
         <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 pt-2">
-          <span className="font-mono">{debtor.contact_number || 'Walang telepono'}</span>
-          <span>Limit: ₱{Math.round(debtor.credit_limit || 0)}</span>
+          <span className="font-mono">{d.contact_number || 'Walang telepono'}</span>
+          <span>Limit: ₱{Math.round(d.credit_limit || 0)}</span>
         </div>
 
         {/* Actions row: Collect is a visible button, Copy reminder lives in actions menu */}
@@ -363,7 +364,7 @@ export function UtangPage() {
           {canCollect ? (
             <Button
               size="sm"
-              onClick={() => handleOpenPayment(debtor)}
+              onClick={() => handleOpenPayment(d)}
               className="h-11 flex-1 gap-1.5 text-xs font-semibold"
             >
               <HandCoins className="h-4 w-4" />
@@ -379,17 +380,17 @@ export function UtangPage() {
                 variant="outline"
                 size="icon"
                 className="h-11 w-11 text-muted-foreground hover:text-foreground touch-manipulation shrink-0"
-                aria-label={`Aksyon para kay ${debtor.name}`}
+                aria-label={`Aksyon para kay ${d.name}`}
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={() => handleCopyReminder(debtor)}>
+              <DropdownMenuItem onClick={() => handleCopyReminder(d)}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Reminder (SMS)
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/customers/${debtor.id}`)}>
+              <DropdownMenuItem onClick={() => navigate(`/customers/${d.id}`)}>
                 <ArrowRight className="mr-2 h-4 w-4" />
                 Tingnan ang Profile
               </DropdownMenuItem>

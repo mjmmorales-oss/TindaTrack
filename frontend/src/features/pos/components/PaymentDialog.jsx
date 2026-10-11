@@ -84,9 +84,9 @@ export function PaymentDialog({
   // Calculations for Utang Tab
   const paidNowNum = Math.max(0, parseFloat(paidNowAmount) || 0)
   const debtIncrease = Math.max(0, total - paidNowNum)
-  const currentCreditBalance = selectedCustomer?.credit_balance ?? 0
+  const currentCreditBalance = Number(selectedCustomer?.credit_balance || 0)
   const projectedCreditBalance = currentCreditBalance + debtIncrease
-  const creditLimit = selectedCustomer?.credit_limit ?? 1000
+  const creditLimit = Number(selectedCustomer?.credit_limit ?? 1000)
   const isOverCreditLimit =
     !!selectedCustomer && projectedCreditBalance > creditLimit
   const canConfirmUtang =

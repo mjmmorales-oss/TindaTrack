@@ -122,7 +122,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 ## Deep audit (C1–C7)
 - [x] **C1 — The Confirmed Bug (Products)**: Complete default entity in create mode, robust `row.original` and `category_id` handling in table columns, mobile cards, and details.
 - [x] **C2 — Deep Test Harness**: Comprehensive flow, dialog, edge-state, and role interaction tests with `@testing-library/user-event`.
-- [ ] **C3 — Page-by-Page Critical Read**: Surgical audit of all 22 page routes, ensuring loading guards, error states, and responsive contracts.
+- [x] **C3 — Page-by-Page Critical Read**: Surgical audit of all 22 page routes, ensuring loading guards, error states, and responsive contracts.
 - [ ] **C4 — Cross-Cutting Correctness**: Query keys, cart store, auth session, permissions parity, numeric casting, date handling.
 - [ ] **C5 — Backend and Contract**: API Resource parity, validation rules alignment, N+1 eager loading, row-locking transaction guarantees.
 - [ ] **C6 — Hygiene Sweep**: Zero console.log, debugger, TODO/FIXME, react-router-dom, TS files, hex colors, dead exports.
@@ -148,5 +148,17 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - `src/features/products/schemas.js` -> Moved `DEFAULT_PRODUCT` constant into `schemas.js` to eliminate fast refresh export warning in `ProductFormDialog.jsx`.
   - `vite.config.js` -> Configured `fileParallelism: false` in test config to prevent cross-file state clobbering in the shared in-memory mock database.
 - Gates passed: `npx vitest run` (103/103 tests green, up from 45), `npx eslint src` (0 errors/warnings), `npm run build` (success).
+
+### C3 Log:
+- Methodical page-by-page critical audit of all 22 application routes and subcomponents:
+  - `PaymentDialog.jsx:87-89` -> Raw arithmetic on `currentCreditBalance` and `creditLimit` risked string concatenation when API returns decimal strings ("250.00"). Converted safely with `Number(...)`.
+  - `SalesPage.jsx:320` -> `renderMobileCard` destructured `sale.status` directly. Guarded with `const s = sale?.original || sale || {}` and used `s` throughout mobile card renderer.
+  - `CustomersPage.jsx:93` -> `handleDeleteClick` checked `customer.credit_balance > 0` without numeric cast. Guarded with `Number(customer?.credit_balance || 0) > 0`.
+  - `CustomersPage.jsx:292` -> `renderMobileCard` destructured `customer.name` without row fallback. Guarded with `const c = customer?.original || customer || {}` and `Number(c.credit_balance || 0) > 0`.
+  - `CustomerDetailPage.jsx:83` -> `handleDeleteClick` checked `(customer?.credit_balance || 0) > 0`. Guarded with `Number(customer?.credit_balance || 0) > 0`.
+  - `UtangPage.jsx:314` -> `renderMobileCard` destructured `debtor.days_overdue` directly. Guarded with `const d = debtor?.original || debtor || {}` and used `d` throughout mobile card renderer.
+  - `RecordPaymentDialog.jsx:67` -> `useEffect` reset `amount: customer.credit_balance` directly without cast. Wrapped with `Number(customer.credit_balance || 0)`.
+- Gates passed: `npm run build` (success), `npx eslint src` (0 errors/warnings), `npx vitest run` (103/103 tests green).
+
 
 

@@ -90,7 +90,7 @@ export function CustomersPage() {
   }
 
   const handleDeleteClick = (customer) => {
-    if (customer.credit_balance > 0) {
+    if (Number(customer?.credit_balance || 0) > 0) {
       setBlockedCustomer(customer)
       setBlockedAlertOpen(true)
       return
@@ -290,24 +290,27 @@ export function CustomersPage() {
 
   // Mobile card renderer below md
   const renderMobileCard = (customer) => {
+    const c = customer?.original || customer || {}
+    const hasBalance = Number(c.credit_balance || 0) > 0
+
     return (
       <Card
-        key={customer.id}
+        key={c.id}
         className="p-3.5 space-y-3 border-border shadow-xs hover:border-primary/40 transition-colors"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <UserAvatar name={customer.name} style="notionists" size="md" />
+            <UserAvatar name={c.name} style="notionists" size="md" />
             <div className="min-w-0">
               <Link
-                to={`/customers/${customer.id}`}
+                to={`/customers/${c.id}`}
                 className="font-semibold text-sm text-foreground hover:text-primary hover:underline truncate block"
               >
-                {customer.name}
+                {c.name}
               </Link>
-              {customer.nickname && (
+              {c.nickname && (
                 <span className="text-xs text-muted-foreground block truncate">
-                  "{customer.nickname}"
+                  "{c.nickname}"
                 </span>
               )}
             </div>
@@ -319,19 +322,19 @@ export function CustomersPage() {
                 variant="ghost"
                 size="icon"
                 className="h-11 w-11 text-muted-foreground hover:text-foreground touch-manipulation shrink-0"
-                aria-label={`Aksyon para kay ${customer.name}`}
+                aria-label={`Aksyon para kay ${c.name}`}
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate(`/customers/${customer.id}`)}>
+              <DropdownMenuItem onClick={() => navigate(`/customers/${c.id}`)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Tingnan ang Profile
               </DropdownMenuItem>
-              {canCollect && customer.credit_balance > 0 && (
+              {canCollect && hasBalance && (
                 <DropdownMenuItem
-                  onClick={() => handleOpenPayment(customer)}
+                  onClick={() => handleOpenPayment(c)}
                   className="text-utang focus:text-utang"
                 >
                   <HandCoins className="mr-2 h-4 w-4" />
@@ -339,14 +342,14 @@ export function CustomersPage() {
                 </DropdownMenuItem>
               )}
               {canManage && (
-                <DropdownMenuItem onClick={() => handleEdit(customer)}>
+                <DropdownMenuItem onClick={() => handleEdit(c)}>
                   <Edit2 className="mr-2 h-4 w-4" />
                   I-edit
                 </DropdownMenuItem>
               )}
               {canDelete && (
                 <DropdownMenuItem
-                  onClick={() => handleDeleteClick(customer)}
+                  onClick={() => handleDeleteClick(c)}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -359,28 +362,28 @@ export function CustomersPage() {
 
         {/* Contact and address metadata */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-muted-foreground border-t border-border/60 pt-2">
-          {customer.contact_number && (
+          {c.contact_number && (
             <div className="flex items-center gap-1.5 truncate">
               <Phone className="h-3 w-3 shrink-0" />
-              <span className="font-mono">{customer.contact_number}</span>
+              <span className="font-mono">{c.contact_number}</span>
             </div>
           )}
-          {customer.address && (
+          {c.address && (
             <div className="flex items-center gap-1.5 truncate">
               <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{customer.address}</span>
+              <span className="truncate">{c.address}</span>
             </div>
           )}
         </div>
 
         {/* Balance & Quick Collect Action */}
         <div className="flex items-center justify-between border-t border-border/60 pt-2">
-          <div>{renderBalanceBadge(customer)}</div>
-          {canCollect && customer.credit_balance > 0 && (
+          <div>{renderBalanceBadge(c)}</div>
+          {canCollect && hasBalance && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleOpenPayment(customer)}
+              onClick={() => handleOpenPayment(c)}
               className="h-8 gap-1.5 text-xs text-utang hover:text-utang border-utang/40 hover:bg-utang/10"
             >
               <HandCoins className="h-3.5 w-3.5" />

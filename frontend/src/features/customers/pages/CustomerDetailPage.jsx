@@ -80,7 +80,7 @@ export function CustomerDetailPage() {
   const [blockedAlertOpen, setBlockedAlertOpen] = useState(false)
 
   const handleDeleteClick = () => {
-    if ((customer?.credit_balance || 0) > 0) {
+    if (Number(customer?.credit_balance || 0) > 0) {
       setBlockedAlertOpen(true)
       return
     }

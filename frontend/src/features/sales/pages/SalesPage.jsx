@@ -318,14 +318,15 @@ export function SalesPage() {
 
   // Mobile card renderer below md
   const renderMobileCard = (sale) => {
-    const isVoided = sale.status === 'voided'
-    const amt = sale.total_amount ?? sale.total ?? 0
+    const s = sale?.original || sale || {}
+    const isVoided = s.status === 'voided'
+    const amt = s.total_amount ?? s.total ?? 0
     const canVoidThis = canVoid && !isVoided
-    const cust = sale.customer
+    const cust = s.customer
 
     return (
       <Card
-        key={sale.id}
+        key={s.id}
         className="p-3.5 space-y-3 border-border shadow-xs hover:border-primary/40 transition-colors"
       >
         {/* Top: Sale No, Time, Total */}
@@ -333,13 +334,13 @@ export function SalesPage() {
           <div className="min-w-0 flex-1">
             <button
               type="button"
-              onClick={() => navigate(`/sales/${sale.id}`)}
+              onClick={() => navigate(`/sales/${s.id}`)}
               className="font-mono text-sm font-bold text-primary hover:underline truncate block"
             >
-              {sale.sale_no}
+              {s.sale_no}
             </button>
             <span className="text-[11px] text-muted-foreground block">
-              {formatDateTime(sale.created_at)}
+              {formatDateTime(s.created_at)}
             </span>
           </div>
           <div className="text-right shrink-0">
@@ -349,7 +350,7 @@ export function SalesPage() {
               className={isVoided ? 'line-through text-muted-foreground' : 'text-foreground font-bold'}
             />
             <span className="text-[10px] text-muted-foreground block">
-              {sale.items?.length || 0} items
+              {s.items?.length || 0} items
             </span>
           </div>
         </div>
@@ -362,9 +363,9 @@ export function SalesPage() {
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <UserAvatar name={sale.cashier?.name || 'Juan'} size="xs" />
+            <UserAvatar name={s.cashier?.name || 'Juan'} size="xs" />
             <span className="text-[11px] truncate max-w-[90px]">
-              {sale.cashier?.name || 'Juan'}
+              {s.cashier?.name || 'Juan'}
             </span>
           </div>
         </div>
@@ -373,8 +374,8 @@ export function SalesPage() {
         <div className="flex items-center justify-between border-t border-border/60 pt-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             <StatusBadge
-              status={sale.payment_type === 'utang' ? 'utang' : 'completed'}
-              label={sale.payment_type === 'utang' ? 'Utang' : 'Cash'}
+              status={s.payment_type === 'utang' ? 'utang' : 'completed'}
+              label={s.payment_type === 'utang' ? 'Utang' : 'Cash'}
             />
             <StatusBadge
               status={isVoided ? 'archived' : 'success'}
@@ -388,19 +389,19 @@ export function SalesPage() {
                 variant="ghost"
                 size="icon"
                 className="h-11 w-11 text-muted-foreground hover:text-foreground touch-manipulation"
-                aria-label={`Aksyon sa resibo ${sale.sale_no}`}
+                aria-label={`Aksyon sa resibo ${s.sale_no}`}
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate(`/sales/${sale.id}`)}>
+              <DropdownMenuItem onClick={() => navigate(`/sales/${s.id}`)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Tingnan ang Resibo
               </DropdownMenuItem>
               {canVoidThis && (
                 <DropdownMenuItem
-                  onClick={() => handleOpenVoid(sale)}
+                  onClick={() => handleOpenVoid(s)}
                   className="text-destructive focus:text-destructive"
                 >
                   <Ban className="mr-2 h-4 w-4" />
