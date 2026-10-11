@@ -2,6 +2,23 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.0.3] - Deep Audit & Interaction Resilience (C1–C7)
+- **Resolved Live Products Page Crash**: Fixed undefined dereferencing of `category_id` in `ProductsPage.jsx` mobile card renderer and table cell; provided full `DEFAULT_PRODUCT` entity in `ProductFormDialog.jsx` for create mode.
+- **Deep Automated Test Harness (Vitest expanded from 45 to 103 tests)**:
+  - Added `src/test/flows.test.jsx` (13 tests) driving full real-user workflows (cash sale, utang sale, inline new suki creation, oversell blocked, credit limit with cashier block & owner override, void with reason & stock/utang reversal, payment recording & overpayment rejection, product CRUD & stock adjustments, category delete constraints, customer phone validation & balance delete guards, cashier staff management & owner deactivation block, settings persistence & receipt update, table filters/search/pagination).
+  - Added `src/test/dialogs.test.jsx` (19 tests) asserting every modal/dialog in both create and edit mode renders cleanly with zero console errors.
+  - Added `src/test/edge-states.test.jsx` (12 tests) verifying empty DB EmptyState rendering, 404 friendly error states, and query Retry triggers.
+  - Added `src/test/roles.test.jsx` (14 tests) enforcing owner-only action visibility and 403 Forbidden boundaries for cashiers.
+- **Page-by-Page Defensiveness**:
+  - Guarded mobile card renderers across `SalesPage.jsx`, `CustomersPage.jsx`, and `UtangPage.jsx` with fallback object references.
+  - Guarded `EmptyState` and `ErrorState` components to ensure passed `actionText`, `description`, and `onAction` buttons render properly.
+  - Coerced monetary strings and balances to numeric values (`Number(...)`) in `PaymentDialog.jsx`, `RecordPaymentDialog.jsx`, `CustomersPage.jsx`, `CustomerDetailPage.jsx`, `UtangPage.jsx`, and `utangService.js`.
+- **Cache Invalidation & Auth State**:
+  - Purged cached queries (`queryClient.clear()`) on user sign-out in `AuthContext.jsx` to prevent cross-tenant data leaks.
+  - Synchronized query invalidation across reports, categories, and products on mutating transactions.
+- **Backend & Contract Alignment**:
+  - Added `contact_number` alias in `SettingResource.php` and mapped it in `SettingsController.php` for seamless parity with frontend receipt and settings forms.
+
 ## [v1.0.2] - Final Polish (A1–A4)
 - **UI Chrome & Navigation**: Removed duplicated `<header>` and `<footer>` from `LandingPage.jsx`; layout chrome is now strictly owned by `PublicLayout.jsx`.
 - **Copy Consistency**: Unified public CTA button labels across header and hero to `Magsimula` and `Sign In`, eliminating duplicate side-by-side English/Tagalog parentheticals.
