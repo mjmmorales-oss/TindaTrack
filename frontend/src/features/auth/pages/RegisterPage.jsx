@@ -102,7 +102,7 @@ export function RegisterPage() {
             <Input
               id="email"
               type="email"
-              placeholder="nena@tindatrack.test"
+              placeholder="you@email.com"
               autoComplete="email"
               {...register('email')}
             />

@@ -22,6 +22,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getErrorMessage, getFieldErrors } from '@/lib/errors'
 import { notify } from '@/lib/notify'
 import { loginSchema } from '@/features/auth/schemas'
+import { SHOW_DEMO_ACCOUNTS } from '@/config/app'
 
 export function LoginPage() {
   useDocumentTitle('Sign In')
@@ -71,8 +72,6 @@ export function LoginPage() {
     setValue('password', 'password')
   }
 
-  const showDemo = import.meta.env.VITE_SHOW_DEMO_ACCOUNTS === 'true'
-
   return (
     <Card className="border-border/80 shadow-md">
       <CardHeader className="space-y-1 pb-4">
@@ -98,7 +97,7 @@ export function LoginPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@tindatrack.test"
+              placeholder="you@email.com"
               autoComplete="email"
               {...register('email')}
             />
@@ -132,7 +131,7 @@ export function LoginPage() {
             )}
           </div>
 
-          {showDemo && (
+          {SHOW_DEMO_ACCOUNTS && (
             <div className="border-border/80 bg-muted/40 space-y-2 rounded-lg border border-dashed p-3 text-xs">
               <span className="text-foreground flex items-center gap-1.5 font-semibold">
                 <KeyRound className="text-primary h-3.5 w-3.5" />

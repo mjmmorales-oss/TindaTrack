@@ -104,7 +104,15 @@ Expand **Environment Variables** and add:
 |---|---|---|
 | `VITE_API_URL` | `https://<YOUR-RAILWAY-DOMAIN>/api` | Railway API endpoint (with `/api`) |
 | `VITE_DATA_SOURCE` | `api` | Connects directly to the Laravel backend |
-| `VITE_SHOW_DEMO_ACCOUNTS` | `true` | Displays demo account switcher on login screen |
+
+> **IMPORTANT**: Do **NOT** set `VITE_SHOW_DEMO_ACCOUNTS=true` on Vercel. The demo credentials switcher buttons are strictly development-only (`import.meta.env.DEV`), and production builds hide them automatically. On your deployed production site, log in by typing the credentials below directly.
+
+### Presentation Demo Accounts (Seeded)
+
+| Role | Email | Password | Access |
+|---|---|---|---|
+| **Store Owner** | `owner@tindatrack.test` | `password` | Complete access: Dashboard, POS, Sales, Products, Categories, Stock, Customers, Utang, Reports, Staff, Settings |
+| **Cashier** | `cashier@tindatrack.test` | `password` | Operational access: POS checkout, Customers, Utang payments, own sales |
 
 ### Step 4: Deploy
 1. Click **"Deploy"**.
@@ -132,8 +140,8 @@ Once both services are running:
 
 - [ ] **Health Endpoint**: Visit `https://<YOUR-RAILWAY-DOMAIN>/up` — returns HTTP 200.
 - [ ] **Root API Endpoint**: Visit `https://<YOUR-RAILWAY-DOMAIN>/` — returns `{"name":"TindaTrack","status":"ok"}`.
-- [ ] **Frontend Load**: Open your Vercel URL in a browser. The landing page and login modal should appear cleanly with no console errors.
-- [ ] **Login as Owner**: Log in using `owner@tindatrack.ph` / `password123`. Verify dashboard loads with real metrics.
+- [ ] **Frontend Load**: Open your Vercel URL in a browser. The landing page and login modal should appear cleanly with no console errors and no visible demo switcher buttons.
+- [ ] **Login as Owner**: Log in using `owner@tindatrack.test` / `password`. Verify dashboard loads with real metrics.
 - [ ] **Cash Sale**: Navigate to `/pos`, add 2 items to the cart, checkout with Cash, print thermal receipt preview, and check stock decremented.
 - [ ] **Utang Sale**: Create an utang sale for an existing suki customer. Verify customer balance increased and sale recorded.
 - [ ] **Void Sale**: Go to `/sales`, open the cash sale created above, click **"I-void ang Benta"**, provide a reason (≥ 5 chars), and confirm. Verify items returned to stock.

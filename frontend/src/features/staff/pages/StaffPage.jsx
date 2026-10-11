@@ -304,7 +304,7 @@ export function StaffPage() {
             control={control}
             label="Email Address"
             type="email"
-            placeholder="maria@tindatrack.test"
+            placeholder="cashier@email.com"
             required
             error={errors.email?.message}
           />
