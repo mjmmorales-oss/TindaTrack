@@ -284,7 +284,7 @@ export function CustomerDetailPage() {
       <div className="mt-6">
         <Tabs defaultValue="ledger" className="space-y-4">
           <div className="overflow-x-auto pb-1">
-            <TabsList className="h-10 w-full sm:w-auto inline-flex min-w-[320px]">
+            <TabsList className="h-10 w-full sm:w-auto inline-flex sm:min-w-[320px]">
               <TabsTrigger value="ledger" className="flex-1 sm:flex-none gap-2">
                 <ReceiptText className="h-4 w-4" />
                 Ledger ng Utang ({timelineItems.length})
@@ -351,8 +351,8 @@ export function CustomerDetailPage() {
                 ) : (
                   <>
                     {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full text-left text-xs">
+                    <div className="hidden md:block overflow-x-auto min-w-0 w-full">
+                      <table className="w-full min-w-max text-left text-xs">
                         <thead className="border-b border-border/80 text-muted-foreground font-medium">
                           <tr>
                             <th className="py-2.5">Resibo No.</th>

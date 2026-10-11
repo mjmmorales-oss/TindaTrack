@@ -131,7 +131,7 @@ export function DataTable({
   const rows = table.getRowModel().rows
 
   return (
-    <div className={cn('space-y-3.5', className)}>
+    <div className={cn('space-y-3.5 min-w-0 w-full', className)}>
       {toolbar}
 
       {/* --- MOBILE VIEW: Cards (< md) --- */}
@@ -194,7 +194,7 @@ export function DataTable({
       </div>
 
       {/* --- DESKTOP VIEW: Table (>= md) --- */}
-      <div className="bg-card hidden overflow-hidden rounded-xl border shadow-2xs md:block">
+      <div className="bg-card min-w-0 w-full hidden overflow-hidden rounded-xl border shadow-2xs md:block">
         <Table>
           <TableHeader className="bg-muted/40">
             {table.getHeaderGroups().map((headerGroup) => (

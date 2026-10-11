@@ -32,8 +32,8 @@ export function Topbar() {
     }))
 
   return (
-    <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-md md:px-6">
-      <div className="flex items-center gap-3">
+    <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-14 min-w-0 w-full shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-md md:px-6">
+      <div className="flex min-w-0 items-center gap-3">
         <SidebarTrigger className="text-muted-foreground hover:text-foreground -ml-1 hidden md:flex" />
         <Separator
           orientation="vertical"

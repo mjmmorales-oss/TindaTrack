@@ -8,7 +8,7 @@ export function PageContainer({ className, children, ...props }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className={cn(
-        'mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-6 md:py-8 lg:px-8',
+        'mx-auto w-full min-w-0 max-w-7xl space-y-6 px-4 py-6 md:px-6 md:py-8 lg:px-8',
         className,
       )}
       {...props}

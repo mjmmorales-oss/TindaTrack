@@ -125,7 +125,7 @@ export function SettingsPage() {
 
       <Tabs defaultValue="profile" className="space-y-6">
         <div className="overflow-x-auto pb-1">
-          <TabsList className="h-10 w-full sm:w-auto inline-flex min-w-[340px]">
+          <TabsList className="h-10 w-full sm:w-auto inline-flex sm:min-w-[340px]">
             <TabsTrigger value="profile" className="flex-1 sm:flex-none gap-2">
               <Store className="h-4 w-4" />
               Impormasyon ng Tindahan

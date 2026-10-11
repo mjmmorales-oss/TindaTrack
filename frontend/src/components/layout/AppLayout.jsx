@@ -25,9 +25,9 @@ export function AppLayout() {
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <SidebarInset className="flex min-h-screen flex-col">
+      <SidebarInset className="flex min-h-screen flex-col min-w-0 w-full overflow-x-hidden">
         <Topbar />
-        <main className="flex-1 pb-24 md:pb-8">
+        <main className="flex-1 min-w-0 w-full overflow-x-hidden pb-24 md:pb-8">
           <Outlet />
         </main>
         <MobileBottomNav />

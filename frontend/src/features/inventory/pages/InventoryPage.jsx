@@ -515,7 +515,7 @@ export function InventoryPage() {
             ) : (
               <>
                 {/* Desktop Table (md+) */}
-                <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
+                <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden min-w-0 w-full">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">

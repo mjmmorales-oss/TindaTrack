@@ -167,8 +167,8 @@ export function StaffPage() {
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="hidden md:block overflow-x-auto min-w-0 w-full">
+                <table className="w-full min-w-max text-left text-xs">
                   <thead className="border-b border-border/80 text-muted-foreground font-medium">
                     <tr>
                       <th className="py-2.5">Pangalan / User</th>
