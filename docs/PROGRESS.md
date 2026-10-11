@@ -82,7 +82,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 ## Final Polish (A1–A4)
 - [x] **A1 — Duplicate Navigation**: Eliminate duplicate header in LandingPage, ensure single layout chrome across all routes.
 - [x] **A2 — Demo Credentials**: Gate demo accounts behind `SHOW_DEMO_ACCOUNTS` (local dev only), update docs and tests.
-- [ ] **A3 — Duplication & Layout Guards**: Extend Vitest suite to assert single banner/nav/h1 and non-duplicated CTAs.
+- [x] **A3 — Duplication & Layout Guards**: Extend Vitest suite to assert single banner/nav/h1 and non-duplicated CTAs.
 - [ ] **A4 — Full Bug Sweep & Release**: Comprehensive audit, zero-warning sweep, merge to `main`, tag `v1.0.2`.
 
 ### A1 Log:
@@ -98,4 +98,12 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Updated `docs/DEPLOY.md` documenting that Vercel must not set `VITE_SHOW_DEMO_ACCOUNTS=true` and provided seeded demo account reference table directly in the deployment guide for presentation use.
 - Added Vitest test `src/test/auth.test.jsx` verifying that when `SHOW_DEMO_ACCOUNTS` is false, no demo credentials strings appear in the rendered login page.
 - Verified `grep -rn "tindatrack.test" src` returns only the gated UI/test/mock database files. ESLint and build passed.
+
+### A3 Log:
+- Extended `src/test/routes.test.jsx` with `assertLayoutIntegrity`:
+  - Enforces at most 1 element with role `banner` (`<header>`).
+  - Enforces at most 1 primary navigation element (`<nav>` filtering breadcrumbs and pagination).
+  - Enforces exactly 1 `<h1>` (or 0 for `/pos`, explicitly documented in `ROUTES_WITHOUT_H1`).
+  - Enforces no duplicated CTA button labels in top chrome.
+- Vitest suite (45 tests across 3 files) passed green.
 
