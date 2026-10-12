@@ -141,6 +141,14 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       expect(await screen.findByText(new RegExp(`I-adjust ang Stock: ${product.name}`, 'i'))).toBeInTheDocument()
     })
 
+    it('renders AdjustStockDialog without product and shows product picker', async () => {
+      renderWithProviders(
+        <AdjustStockDialog open={true} onOpenChange={() => {}} product={null} />,
+      )
+      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(await screen.findByRole('combobox', { name: /Pumili ng produkto para sa stock adjustment/i })).toBeInTheDocument()
+    })
+
     it('renders BulkRestockDialog with seeded products', async () => {
       const products = useMockDb.getState().products.slice(0, 3)
       renderWithProviders(

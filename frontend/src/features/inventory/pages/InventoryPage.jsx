@@ -196,11 +196,8 @@ export function InventoryPage() {
             <Button
               size="sm"
               onClick={() => {
-                const first = runningLowProducts[0]
-                if (first) {
-                  setSingleAdjustProduct(first)
-                  setSingleAdjustOpen(true)
-                }
+                setSingleAdjustProduct(null)
+                setSingleAdjustOpen(true)
               }}
               className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5 font-semibold shadow-xs"
             >
