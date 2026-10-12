@@ -2,6 +2,23 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.0.4] - Layout Containment & Dialog Entry Points (D1–D4)
+- **Resolved Shell Layout Overflow (Bug 1)**:
+  - Fixed flex/grid container blowout where wide tables expanded beyond the viewport, overlapping the sidebar, clipping PageHeader titles, and pushing action buttons off-screen.
+  - Root cause resolved in `AppLayout.jsx` by adding `min-w-0 w-full overflow-x-hidden` to `SidebarInset` and `<main>`, `min-w-0 w-full` to `Topbar.jsx`, and `min-w-0` to `PageContainer.jsx`.
+  - Added `min-w-0` and responsive `line-clamp-2 sm:truncate` to PageHeader title container, with `shrink-0` on action buttons to prevent headers from ever being pushed off-screen.
+  - Added horizontal scroll containment wrapper (`data-slot="table-container"`, `overflow-x-auto min-w-0`) and `min-w-max` on `<table>` in `src/components/ui/table.jsx` and `DataTable.jsx`.
+  - Applied structural containment across all pages rendering wide tables: Products, Sales, Customers, Utang, Inventory (all 4 tabs), Reports, Staff, Product Detail, and Customer Detail.
+- **Adjust Stock Searchable Product Picker (Bug 2)**:
+  - Fixed `/inventory` toolbar "I-adjust ang Stock" opening locked to a preselected product; toolbar button now opens dialog with `product={null}`.
+  - Enhanced `AdjustStockDialog.jsx`: When opened with no product, renders a searchable Command + Popover picker (searching by name, SKU, and barcode) showing current stock, disabling all form inputs and submit actions until a product is selected.
+  - Preserved read-only header card display when `product` is explicitly passed from table rows or detail pages.
+- **Dialog Entry Points Audit**:
+  - Audited all dialog entry points across `BulkRestockDialog`, `RecordPaymentDialog` (from `/utang` rows, `/customers` rows, customer profile, and toolbar), `ProductFormDialog`, `CustomerFormDialog`, `CategoryFormDialog`, POS `PaymentDialog`, `HeldCartsDialog`, and `ConfirmDialog` (void sale with reason enforcement).
+- **Automated Test Suite Expansion (Vitest expanded from 103 to 123 tests)**:
+  - Added `src/test/containment.test.jsx` (7 tests) enforcing PageHeader title visibility, table scroll wrappers, and no unprefixed fixed widths > 320px.
+  - Added `src/test/entrypoints.test.jsx` (12 tests) validating AdjustStockDialog picker flow, row preselection, stock adjustment execution, and all dialog entry point configurations.
+
 ## [v1.0.3] - Deep Audit & Interaction Resilience (C1–C7)
 - **Resolved Live Products Page Crash**: Fixed undefined dereferencing of `category_id` in `ProductsPage.jsx` mobile card renderer and table cell; provided full `DEFAULT_PRODUCT` entity in `ProductFormDialog.jsx` for create mode.
 - **Deep Automated Test Harness (Vitest expanded from 45 to 103 tests)**:

@@ -205,3 +205,32 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - `php artisan tindatrack:check`: 100% database reconciliation passed.
 - Documentation updated: `docs/CHANGELOG.md` and `docs/PROGRESS.md` tagged and released as v1.0.3.
 - Merged `audit/deep-sweep` into `main`, pushed to GitHub, tagged `v1.0.3`.
+
+---
+## UI Polish & Layout Containment (D1–D4)
+- [x] **D1 — Layout Containment**: Structurally contain shell and tables (AppLayout, Topbar, PageContainer, PageHeader, table.jsx, DataTable, and all table pages).
+- [x] **D2 — Adjust Stock Product Picker & Dialog Entry Points Audit**: Searchable Command + Popover product picker when opened without product; read-only card when passed; audit all dialog entry points.
+- [x] **D3 — Automated Test Coverage**: Lock in containment and dialog entry points with tests (`containment.test.jsx`, `entrypoints.test.jsx`).
+- [x] **D4 — Final Verification & Release**: Run full test suites across frontend and backend, update docs, merge to main, and tag `v1.0.4`.
+
+### D1 Log:
+- Shell containment: Added `min-w-0 w-full overflow-x-hidden` to `SidebarInset` and `<main>` in `AppLayout.jsx`.
+- Header & Topbar containment: Added `min-w-0 w-full` to `Topbar.jsx`. In `PageHeader.jsx`, added `min-w-0 flex-1 space-y-1` to title container, responsive `line-clamp-2 sm:truncate` on the title heading, and `shrink-0` on action buttons.
+- Table containment: Added `overflow-x-auto min-w-0` scroll container wrapper, `data-slot="table-container"`, and `min-w-max` on `<table>` in `src/components/ui/table.jsx`. Added `min-w-0 w-full` wrapper to `DataTable.jsx`.
+- Contained tables across `CustomerDetailPage.jsx`, `InventoryPage.jsx`, `ReportsPage.jsx`, `StaffPage.jsx`, and `SettingsPage.jsx`.
+
+### D2 Log:
+- Rewrote `AdjustStockDialog.jsx`: When `product` is null, renders Command + Popover product picker with name, SKU, barcode search and current stock badge; all form inputs remain disabled until a product is selected. When `product` is provided, displays read-only header card.
+- Wired `/inventory` toolbar button to open `AdjustStockDialog` with `product={null}`.
+- Audited all dialog entry points (`BulkRestockDialog`, `RecordPaymentDialog`, `ProductFormDialog`, `CustomerFormDialog`, `CategoryFormDialog`, `PaymentDialog`, `HeldCartsDialog`, `ConfirmDialog`, void sale) and verified props passed.
+
+### D3 Log:
+- Created `src/test/containment.test.jsx` (7 tests) validating PageHeader rendering, table scroll container presence, and no fixed widths > 320px without breakpoint prefix across all table pages.
+- Created `src/test/entrypoints.test.jsx` (12 tests) verifying AdjustStockDialog toolbar picker vs row modes, stock mutation correctness, and all dialog entry point configurations.
+- Full Vitest suite expanded from 103 to 123 tests across 9 test files (100% green).
+
+### D4 Log:
+- Ran full frontend test and verification suite: Vitest (123/123 tests green), ESLint (0 errors), build (clean), contract check (37/37 routes), service parity (10/10 matched), mock data check (₱0.0000 discrepancy).
+- Ran full backend test suite: Pest (41/41 tests green, 206 assertions), Pint (clean), `tindatrack:check` (100% reconciled).
+- Updated `docs/CHANGELOG.md` and `docs/PROGRESS.md`. Merged to `main` and tagged `v1.0.4`.
+
