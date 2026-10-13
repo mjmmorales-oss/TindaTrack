@@ -181,5 +181,14 @@
   "imageUploadSuccess": "Matagumpay na nai-upload ang larawan",
   "imageDeleteSuccess": "Naalis ang larawan",
   "imageFileTooLarge": "Masyadong malaki ang larawan. Pumili ng mas mababa sa 5MB.",
-  "dragOrClickPhoto": "Pumili ng larawan o kumuha ng litrato"
+  "dragOrClickPhoto": "Pumili ng larawan o kumuha ng litrato",
+  "quickAddByScan": "Mabilisang Pagdagdag gamit ang Scan",
+  "quickAddDesc": "Mabilisang magrehistro ng mga paninda sa pamamagitan ng pag-scan ng barcode at paglagay ng presyo.",
+  "scanNextItem": "I-save at I-scan ang Susunod",
+  "itemsAddedSession": "{{count}} na produkto ang naidagdag sa session na ito",
+  "alreadyInStock": "Nasa imbentaryo na ng tindahan",
+  "quickRestock": "Mabilisang Dagdag-Stock",
+  "restockAmount": "Dami na idaragdag:",
+  "scanNext": "I-scan ang Susunod",
+  "shelfStockingMode": "Tuloy-tuloy na Paglalagay sa Istante"
 }

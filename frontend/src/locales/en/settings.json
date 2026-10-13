@@ -93,5 +93,7 @@
   "themeDarkDesc": "Low light for nighttime",
   "themeSystemDesc": "Match your device settings",
   "signedOutSuccess": "You have signed out successfully.",
-  "today": "Today"
+  "today": "Today",
+  "autoBarcodeLookup": "Automatically look up scanned barcodes online",
+  "autoBarcodeLookupDesc": "When an unknown barcode is scanned or typed, search Open Food Facts to automatically fill in the product name, photo, and category."
 }

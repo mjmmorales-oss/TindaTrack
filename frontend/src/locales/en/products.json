@@ -181,5 +181,14 @@
   "imageUploadSuccess": "Photo uploaded successfully",
   "imageDeleteSuccess": "Photo removed",
   "imageFileTooLarge": "Image is too large. Please select a photo under 5MB.",
-  "dragOrClickPhoto": "Choose photo or take picture"
+  "dragOrClickPhoto": "Choose photo or take picture",
+  "quickAddByScan": "Quick Add by Scan",
+  "quickAddDesc": "Rapidly register shelf items by scanning barcodes and setting prices.",
+  "scanNextItem": "Save & Scan Next",
+  "itemsAddedSession": "{{count}} products added this session",
+  "alreadyInStock": "Already in store inventory",
+  "quickRestock": "Quick Restock",
+  "restockAmount": "Add quantity:",
+  "scanNext": "Scan Next Item",
+  "shelfStockingMode": "Continuous Shelf Stocking"
 }

@@ -93,5 +93,7 @@
   "themeDarkDesc": "Mababang liwanag para sa gabi",
   "themeSystemDesc": "Sumunod sa setting ng device",
   "signedOutSuccess": "Naka-sign out ka na.",
-  "today": "Ngayon"
+  "today": "Ngayon",
+  "autoBarcodeLookup": "Kusang hanapin sa internet ang na-scan na barcode",
+  "autoBarcodeLookupDesc": "Kapag may na-scan o nai-type na bagong barcode, hanapin sa Open Food Facts para kusang mapunan ang pangalan, litrato, at kategorya."
 }

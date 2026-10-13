@@ -42,6 +42,7 @@ import { lookupBarcode } from '@/services/barcode'
 import { notify } from '@/lib/notify'
 import { resolveImageUrl } from '@/lib/images'
 import { resizeImage } from '@/lib/imageResize'
+import { getAutoBarcodeLookup } from '@/lib/barcodeSettings'
 
 /**
  * Product Create & Edit modal form with Open Food Facts auto-fill,
@@ -331,10 +332,27 @@ export function ProductFormDialog({
     setIsScannerOpen(false)
 
     // Auto-run online lookup when a valid GTIN is scanned in create mode
-    if (!isEdit && Barcode.isValidGtin(normalized)) {
+    if (!isEdit && Barcode.isValidGtin(normalized) && getAutoBarcodeLookup()) {
       handleOnlineLookup(normalized, true)
     }
   }
+
+  // Debounced auto-lookup when a valid GTIN is entered via keyboard or pasted
+  const lastLookedUpRef = useRef('')
+  useEffect(() => {
+    if (isEdit || !watchedBarcode || !getAutoBarcodeLookup()) return
+    const normalized = Barcode.normalize(watchedBarcode)
+    if (!Barcode.isValidGtin(normalized) || lastLookedUpRef.current === normalized) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      lastLookedUpRef.current = normalized
+      handleOnlineLookup(normalized, true)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [watchedBarcode, isEdit, handleOnlineLookup])
 
   // Generate homemade internal barcode (EAN-13 starting with 20)
   const handleGenerateInternalBarcode = () => {

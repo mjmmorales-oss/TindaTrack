@@ -871,6 +871,32 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Secrets check (`npm run check:bundle`): 90 assets scanned, 0 leaks.
   - Contracts & services: 49/49 API contracts verified, 12/12 service facades matched.
 
-
-
-
+### H7 Log (One-Step Barcode Auto-Fill and Continuous Quick Add Flow):
+- **Continuous Quick Add Modal (`QuickAddScanDialog`)**:
+  - Authored `frontend/src/features/products/components/QuickAddScanDialog.jsx`:
+    - Rapid shelf-stocking workflow: scan/type barcode, instant lookup against local store DB and Open Food Facts catalog fixtures.
+    - Local duplicate detection (`res.local_product`): warns if item is already in inventory and provides one-click restock increment pills (`+5`, `+10`, `+20`, `+50`) and custom quantity adjust with stock movement reason.
+    - Online catalog match: auto-populates product name, brand, size, suggested category, and image thumbnail. Automatically focuses selling price input.
+    - Continuous stocking loop: "Save & Scan Next" registers product via `useCreateProduct` and immediately cycles back to the barcode input with session count badge (`1 products added this session`) without closing the modal.
+    - Integrated mobile camera barcode scanner via `ScannerSheet`.
+- **Debounced GTIN Auto-Lookup in `ProductFormDialog` (`UI-01`)**:
+  - Connected `getAutoBarcodeLookup()` switch from local preferences.
+  - Added 500ms debounced auto-lookup on manual barcode typing in create mode: when 8, 12, 13, or 14-digit GTIN or internal barcode is entered, automatically triggers lookup to prefill brand, name, category, and photo without overwriting user-entered data.
+- **Barcode Preferences & Settings**:
+  - Authored `frontend/src/lib/barcodeSettings.js` (`getAutoBarcodeLookup`, `setAutoBarcodeLookup` with `tt_auto_barcode_lookup` key).
+  - Added "Auto Online Barcode Lookup" switch to the Inventory Defaults tab in `SettingsPage.jsx`.
+  - Added "Quick Add by Scan" action button to `ProductsPage.jsx` header with `Zap` icon.
+- **Localization**:
+  - Expanded `en/products.json`, `fil/products.json`, `en/settings.json`, and `fil/settings.json` with 100% bilingual key parity.
+- **Testing & Verification**:
+  - Authored `frontend/src/test/quick-add.test.jsx` (6 tests passing):
+    - `barcodeSettings` defaults and localStorage persistence.
+    - `QuickAddScanDialog` rendering, local duplicate restock flow, and catalog hit save & scan next flow.
+    - `ProductFormDialog` debounced GTIN auto-lookup in create mode.
+  - Vitest: All 15 test files passing, 182/182 tests green.
+  - ESLint: 0 errors, 80 compiler warnings.
+  - Vite build: Clean production bundle built in 2.21s.
+  - Bundle security: 91 assets scanned, 0 secrets/credentials leaked.
+  - i18n validator: 18/18 namespaces verified, 1,213 `t(...)` calls verified, 0 missing keys.
+  - Contract checks: 49/49 Laravel route contracts passed, 12/12 service facades matched.
+  - Backend: 84/84 Pest tests passing (450 assertions), Pint clean.

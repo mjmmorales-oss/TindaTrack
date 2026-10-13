@@ -12,6 +12,7 @@ import {
   Scan,
   Trash2,
   X,
+  Zap,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,7 @@ import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { QuickAddScanDialog } from '@/features/products/components/QuickAddScanDialog'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
 import { ScannerSheet } from '@/components/scanner/ScannerSheet'
@@ -103,6 +105,7 @@ export function ProductsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingProduct, setDeletingProduct] = useState(null)
   const [scannerSheetOpen, setScannerSheetOpen] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [dismissedUnknownCard, setDismissedUnknownCard] = useState(false)
 
   // Unknown barcodes for owner
@@ -577,6 +580,14 @@ export function ProductsPage() {
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
+                onClick={() => setQuickAddOpen(true)}
+                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-primary/5 hover:bg-primary/10 text-primary border-primary/25 font-semibold"
+              >
+                <Zap className="h-4 w-4" />
+                {t('products:quickAddByScan')}
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setScannerSheetOpen(true)}
                 className="gap-1.5 shadow-xs h-11 sm:h-9"
               >
@@ -713,6 +724,14 @@ export function ProductsPage() {
         continuous={false}
         title={t('products:scanToAddSheetTitle', 'Scan Product to Add')}
         onDetected={handleScanDetected}
+      />
+
+      {/* Quick Add by Scan Continuous Modal */}
+      <QuickAddScanDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        categories={categories}
+        onSuccess={() => refetch()}
       />
     </PageContainer>
   )

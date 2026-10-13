@@ -32,6 +32,7 @@ import {
   useResetDemoData,
 } from '@/features/settings/hooks/useSettings'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { getAutoBarcodeLookup, setAutoBarcodeLookup } from '@/lib/barcodeSettings'
 
 export function SettingsPage() {
   const { t } = useTranslation(['settings', 'common'])
@@ -43,6 +44,7 @@ export function SettingsPage() {
   const resetMutation = useResetDemoData()
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [autoLookup, setAutoLookup] = useState(() => getAutoBarcodeLookup())
 
   // React Hook Form for settings
   const {
@@ -370,6 +372,28 @@ export function SettingsPage() {
                     <p className="text-[11px] text-muted-foreground">
                       {t('settings:runningLowDesc', { percent: watchedValues.low_stock_threshold_percent })}
                     </p>
+                  </div>
+
+                  {/* Auto Online Barcode Lookup Toggle */}
+                  <div className="md:col-span-2 rounded-xl border border-border/80 bg-muted/20 p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="auto-lookup-switch" className="text-sm font-semibold cursor-pointer">
+                          {t('settings:autoBarcodeLookup')}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings:autoBarcodeLookupDesc')}
+                        </p>
+                      </div>
+                      <Switch
+                        id="auto-lookup-switch"
+                        checked={autoLookup}
+                        onCheckedChange={(checked) => {
+                          setAutoLookup(checked)
+                          setAutoBarcodeLookup(checked)
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
