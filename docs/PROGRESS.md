@@ -723,3 +723,25 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Backend: Pest 74/74 tests green (393 assertions), Pint clean.
   - Frontend: `npm run lint` 0 errors, `npm run build` clean, `npm run check:bundle` (89 assets checked, 0 violations), Vitest 2/2 in `auth.test.jsx`.
 
+### H3 Log (i18n Infrastructure — English Default, Filipino/Taglish Optional):
+- **Dependencies & Setup**:
+  - Installed `i18next` and `react-i18next` in `frontend/`.
+  - Implemented `frontend/src/i18n/index.js` synchronously with bundled namespaces, `fallbackLng: 'en'`, `supportedLngs: ['en', 'fil']`, localStorage persistence via `tt_lang`, and automatic synchronization with `document.documentElement.lang`.
+  - Generated all 18 locale namespaces under `frontend/src/locales/en/` and `frontend/src/locales/fil/` (`common`, `nav`, `auth`, `landing`, `dashboard`, `pos`, `products`, `inventory`, `categories`, `sales`, `customers`, `utang`, `reports`, `users`, `settings`, `scanner`, `validation`, `errors`) with 100% key parity and zero empty values.
+- **Components & Language Switcher**:
+  - Authored `src/components/common/LanguageSwitcher.jsx` supporting card mode (used in Settings), compact dropdown mode (used in `PublicLayout`, `AuthLayout`, and `Topbar`), and menu item mode (used in `NavUser`).
+  - Integrated Language card in `SettingsPage.jsx`, compact switcher in `PublicLayout.jsx`, `AuthLayout.jsx`, and `Topbar.jsx`, and language toggle item in `NavUser.jsx`.
+- **Localization Formatting & Validation**:
+  - Extended `src/lib/format.js` to format dates according to active locale (`en-PH` vs `fil-PH`) via `Intl.DateTimeFormat` while strictly preserving `₱` (`PHP`) currency formatting in both languages.
+  - Updated `src/lib/errors.js` and form kit (`FormInput.jsx`, `FormTextarea.jsx`) with centralized `translateErrorMessage` mapping Zod error keys and backend machine-readable reason tags.
+- **Backend Response Translation**:
+  - Converted Taglish validation errors and success messages to clear, standard English across `CreateSaleAction`, `VoidSaleAction`, `RecordPaymentAction`, `AdjustStockAction`, `SaleController`, `SettingsController`, `AccountController`, `UtangPaymentController`, `BarcodeLookupController`, `ScannerDeviceController`, and `UserController`.
+  - Updated backend Pest test assertions to match English messages in `ScannerSessionAndDeviceTest.php`.
+- **Testing & Verification Script**:
+  - Authored Vitest suite `src/test/i18n.test.jsx` (7/7 tests passed) testing English default, live Taglish re-render, localStorage persistence, fallback handling, localized dates, and error translation.
+  - Authored `scripts/check-i18n.mjs` (and mirrored to `frontend/scripts/check-i18n.mjs`), validating 18/18 namespace key parities, non-empty dictionaries, code key invocations, and recording baseline untranslated candidate count: **385 strings**.
+  - Added `"check:i18n"` to root and frontend `package.json`.
+- **Gates passed**:
+  - Backend: Pest 74/74 tests green (393 assertions), Pint clean.
+  - Frontend: `npm run lint` 0 errors, `npm run build` clean, `npm run check:bundle` (90 assets checked, 0 violations), `npm run check:i18n` (18 namespaces verified), Vitest 9/9 passed (`i18n.test.jsx` + `auth.test.jsx`).
+

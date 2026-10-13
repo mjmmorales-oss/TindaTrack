@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { ReceiptView } from '@/features/pos/components/ReceiptView'
 import {
   useSettings,
@@ -219,6 +220,8 @@ export function SettingsPage() {
               </CardFooter>
             </form>
           </Card>
+
+          <LanguageSwitcher variant="card" className="mt-6" />
         </TabsContent>
 
         {/* TAB 2: Receipt Settings with Live Preview */}

@@ -22,9 +22,9 @@ class BarcodeLookupController extends Controller
     {
         if (! Barcode::isAcceptable($barcode)) {
             return response()->json([
-                'message' => 'Hindi wastong barcode format.',
+                'message' => 'Invalid barcode format.',
                 'errors' => [
-                    'barcode' => ['Hindi wastong barcode format.'],
+                    'barcode' => ['Invalid barcode format.'],
                 ],
             ], 422);
         }

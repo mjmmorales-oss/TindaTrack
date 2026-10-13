@@ -116,7 +116,7 @@ class SaleController extends Controller
 
         return response()->json([
             'data' => new SaleResource($voidedSale),
-            'message' => 'Na-void na ang benta at naibalik ang stock sa imbentaryo.',
+            'message' => 'Sale voided successfully and stock returned to inventory.',
         ]);
     }
 }

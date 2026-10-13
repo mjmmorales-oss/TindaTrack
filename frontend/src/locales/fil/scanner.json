@@ -1,0 +1,19 @@
+{
+  "pairTitle": "Ikonekta ang Phone bilang Scanner",
+  "pairSubtitle": "Gawing wireless barcode scanner ang iyong cellphone para sa POS na ito",
+  "step1": "1. I-scan ang QR code gamit ang camera ng phone",
+  "step2": "2. O buksan ang URL na ito sa iyong phone:",
+  "pairingCode": "Pairing Code",
+  "codeExpiresIn": "Mag-e-expire sa",
+  "waitingForDevice": "Hinihintay ang phone na kumonekta...",
+  "phoneConnected": "Konektado na ang Phone",
+  "disconnect": "I-disconnect",
+  "cameraScannerTitle": "Camera Barcode Scanner",
+  "pointingCamera": "Itapat ang camera sa barcode ng paninda",
+  "cameraPermissionDenied": "Hindi pinayagan ang camera. Pakibigyan ng pahintulot sa browser.",
+  "scanResult": "Na-scan na Barcode: {{code}}",
+  "scanModePos": "POS Checkout Mode",
+  "scanModeInventory": "Imbentaryo / Pagtanggap Mode",
+  "unknownBarcode": "Hindi Rehistradong Barcode: {{code}}",
+  "openQuickAdd": "Mabilisang Pagrehistro (Quick Add)"
+}

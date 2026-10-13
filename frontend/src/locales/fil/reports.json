@@ -1,0 +1,20 @@
+{
+  "title": "Mga Ulat at Pagsusuri",
+  "subtitle": "Pagsusuri sa benta, tinubuan, mabiling paninda, at oras ng bilihan",
+  "dateRange": "Saklaw ng Petsa",
+  "today": "Ngayong Araw",
+  "yesterday": "Kahapon",
+  "last7Days": "Huling 7 Araw",
+  "last30Days": "Huling 30 Araw",
+  "thisMonth": "Kasalukuyang Buwan",
+  "totalSalesCard": "Kabuuang Benta",
+  "totalProfitCard": "Tantyang Tubo",
+  "transactionCountCard": "Dami ng Benta",
+  "averageBasketCard": "Karaniwang Halaga bawat Benta",
+  "salesOverTimeTitle": "Takbo ng Benta sa Paglipas ng Panahon",
+  "bestSellersTitle": "Nangungunang Mabiling Produkto",
+  "categoryBreakdownTitle": "Benta ayon sa Kategorya",
+  "hourlySalesTitle": "Benta Bawat Oras sa Loob ng Araw",
+  "exportReportCsv": "I-export ang Ulat sa CSV",
+  "noDataForPeriod": "Walang naitalang benta sa napiling saklaw ng petsa."
+}

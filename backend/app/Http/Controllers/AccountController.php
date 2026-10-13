@@ -21,7 +21,7 @@ class AccountController extends Controller
 
         if (! Hash::check($validated['current_password'], $user->password)) {
             throw ValidationException::withMessages([
-                'current_password' => ['Hindi tumutugma ang kasalukuyang password.'],
+                'current_password' => ['The provided current password does not match.'],
             ]);
         }
 
@@ -30,7 +30,7 @@ class AccountController extends Controller
         ])->save();
 
         return response()->json([
-            'message' => 'Matagumpay na napalitan ang iyong password.',
+            'message' => 'Password updated successfully.',
         ]);
     }
 }

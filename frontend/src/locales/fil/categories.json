@@ -1,0 +1,19 @@
+{
+  "title": "Mga Kategorya",
+  "subtitle": "Ayusin ang mga paninda ayon sa tamang grupo o lalagyan",
+  "addCategory": "Magdagdag ng Kategorya",
+  "nameCol": "Pangalan ng Kategorya",
+  "productCountCol": "Dami ng Paninda",
+  "descriptionCol": "Deskripsyon",
+  "actionsCol": "Mga Aksyon",
+  "nameLabel": "Pangalan ng Kategorya",
+  "namePlaceholder": "Hal. Delata, Instant Noodles",
+  "descLabel": "Deskripsyon",
+  "descPlaceholder": "Maikling paliwanag ukol sa kategorya",
+  "saveCategory": "I-save ang Kategorya",
+  "editCategoryTitle": "I-edit ang Kategorya",
+  "createCategoryTitle": "Bagong Kategorya",
+  "deleteConfirmTitle": "Tanggalin ang Kategorya?",
+  "deleteConfirmMessage": "Sigurado ka bang nais mong tanggalin ang '{{name}}'?",
+  "deleteHasProductsWarning": "Hindi maaaring tanggalin ang kategoryang may nakatalagang mga produkto."
+}

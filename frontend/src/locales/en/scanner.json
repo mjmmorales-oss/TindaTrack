@@ -1,0 +1,19 @@
+{
+  "pairTitle": "Connect Phone as Scanner",
+  "pairSubtitle": "Turn your smartphone into a wireless barcode scanner for this terminal",
+  "step1": "1. Scan the QR code with your mobile camera",
+  "step2": "2. Or open this URL on your phone:",
+  "pairingCode": "Pairing Code",
+  "codeExpiresIn": "Code expires in",
+  "waitingForDevice": "Waiting for phone to connect...",
+  "phoneConnected": "Phone Connected Successfully",
+  "disconnect": "Disconnect",
+  "cameraScannerTitle": "Camera Barcode Scanner",
+  "pointingCamera": "Point your camera at a barcode",
+  "cameraPermissionDenied": "Camera access was denied. Please allow camera permissions.",
+  "scanResult": "Scanned Barcode: {{code}}",
+  "scanModePos": "POS Checkout Mode",
+  "scanModeInventory": "Inventory Receiving Mode",
+  "unknownBarcode": "Unregistered Barcode: {{code}}",
+  "openQuickAdd": "Quick Add Product"
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Talaan ng Utang (Credit Ledger)",
+  "subtitle": "Bantayan ang pautang sa mga suki, bayad, at mga dapat nang singilin",
+  "recordPayment": "Magtala ng Bayad",
+  "totalReceivables": "Kabuuang Pautang",
+  "activeDebtorsCount": "Mga May Utang",
+  "overdueCount": "Lagpas 30 Araw (Overdue)",
+  "customerName": "Pangalan ng Suki",
+  "currentDebt": "Kasalukuyang Utang",
+  "paymentAmountLabel": "Halaga ng Ibabayad (₱)",
+  "paymentDateLabel": "Petsa ng Pagbayad",
+  "paymentNotesLabel": "Mga Tala (Notes)",
+  "savePayment": "Itala ang Bayad",
+  "paymentSuccess": "Matagumpay na naitala ang bayad ng utang.",
+  "paymentHistoryTitle": "Mga Huling Naitalang Bayad",
+  "agingCurrent": "Kamakailan (0-7 araw)",
+  "agingWeek": "8-14 araw",
+  "agingMonth": "15-30 araw",
+  "agingOverdue": "Higit 30 araw",
+  "noDebtors": "Walang suki na may utang sa kasalukuyan."
+}

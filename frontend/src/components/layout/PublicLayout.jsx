@@ -2,6 +2,7 @@ import { Link, Outlet } from 'react-router'
 import { Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/common/ModeToggle'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { useAuth } from '@/hooks/useAuth'
 
 export function PublicLayout() {
@@ -23,7 +24,8 @@ export function PublicLayout() {
           </div>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher variant="compact" />
           <ModeToggle />
           {user ? (
             <Button asChild size="sm">

@@ -18,7 +18,7 @@ class AdjustStockAction
     {
         if ($quantity == 0) {
             throw ValidationException::withMessages([
-                'quantity' => ['Hindi maaaring maging zero ang bilang ng pagsasaayos.'],
+                'quantity' => ['Adjustment quantity cannot be zero.'],
             ]);
         }
 
@@ -47,7 +47,7 @@ class AdjustStockAction
                 throw ValidationException::withMessages([
                     'quantity' => [
                         sprintf(
-                            'Hindi maaaring maging negatibo ang stock. Kasalukuyang stock: %d, Bawas: %d.',
+                            'Stock cannot be negative. Current stock: %d, deduction: %d.',
                             $product->stock_quantity,
                             abs($delta)
                         ),
@@ -63,7 +63,7 @@ class AdjustStockAction
                 'quantity' => $delta,
                 'stock_after' => $newStock,
                 'reference' => 'ADJ-'.$product->id.'-'.date('His'),
-                'notes' => $notes ?: 'Pagsasaayos ng stock sa imbentaryo',
+                'notes' => $notes ?: 'Inventory stock adjustment',
                 'user_id' => $user->id,
             ]);
 
@@ -84,7 +84,7 @@ class AdjustStockAction
                 $prodId = (int) ($item['product_id'] ?? 0);
                 $qty = (int) ($item['quantity'] ?? 0);
                 if ($prodId > 0 && $qty > 0) {
-                    $updatedProducts[] = $this->execute($user, $prodId, 'restock', $qty, $notes ?: 'Bulk restock mula sa restock list');
+                    $updatedProducts[] = $this->execute($user, $prodId, 'restock', $qty, $notes ?: 'Bulk restock from restock list');
                 }
             }
 

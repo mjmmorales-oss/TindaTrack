@@ -85,3 +85,7 @@ if (!navigator.clipboard) {
     writeText: vi.fn().mockResolvedValue(),
   }
 }
+
+// i18n setup: ensure tests always default to English
+import i18n from '@/i18n'
+i18n.changeLanguage('en')

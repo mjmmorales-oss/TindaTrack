@@ -1,0 +1,15 @@
+{
+  "heroTitle": "Smart POS & Inventory for Sari-Sari Stores",
+  "heroSubtitle": "Track sales, manage utang credit ledgers, and scan shelf barcodes in real-time. Built specifically for Philippine neighborhood retail stores.",
+  "getStarted": "Get Started",
+  "signIn": "Sign In",
+  "featurePosTitle": "Ultra-Fast POS Terminal",
+  "featurePosDesc": "Ring up sales in seconds with webcam scanning, USB barcode readers, or your smartphone paired over Wi-Fi.",
+  "featureUtangTitle": "Accurate Utang Tracking",
+  "featureUtangDesc": "Never lose a single peso. Keep automated credit ledgers for suki customers with customizable credit limits.",
+  "featureInventoryTitle": "Live Stock Alerts",
+  "featureInventoryDesc": "Automated low stock warnings and restock recommendations so your shelves never run out of best sellers.",
+  "featureOfflineTitle": "Built for the Philippines",
+  "featureOfflineDesc": "Works smoothly even on unstable network connections. Bilingual English and Taglish interface.",
+  "footerTagline": "Made with passion for Philippine sari-sari store owners."
+}

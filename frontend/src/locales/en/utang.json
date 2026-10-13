@@ -1,0 +1,21 @@
+{
+  "title": "Credit Ledger (Utang)",
+  "subtitle": "Track neighborhood customer credit balances, payments, and aging debts",
+  "recordPayment": "Record Payment",
+  "totalReceivables": "Total Outstanding Utang",
+  "activeDebtorsCount": "Active Debtors",
+  "overdueCount": "Overdue (30+ Days)",
+  "customerName": "Customer Name",
+  "currentDebt": "Outstanding Balance",
+  "paymentAmountLabel": "Amount Paid (₱)",
+  "paymentDateLabel": "Payment Date",
+  "paymentNotesLabel": "Notes / Reference",
+  "savePayment": "Record Payment",
+  "paymentSuccess": "Payment recorded successfully.",
+  "paymentHistoryTitle": "Recent Payment History",
+  "agingCurrent": "Current (0-7 days)",
+  "agingWeek": "8-14 days",
+  "agingMonth": "15-30 days",
+  "agingOverdue": "Over 30 days",
+  "noDebtors": "No active debtors at this time."
+}

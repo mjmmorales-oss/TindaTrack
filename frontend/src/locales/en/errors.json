@@ -1,0 +1,13 @@
+{
+  "networkError": "Can't reach the server. Please check your internet connection.",
+  "serverError": "Something went wrong on the server. Please try again.",
+  "rateLimited": "Too many attempts. Please try again in a few moments.",
+  "unauthorized": "You must be signed in to perform this action.",
+  "forbidden": "You do not have permission to access this resource.",
+  "notFound": "The requested resource was not found.",
+  "invalidCredentials": "The provided email or password is incorrect.",
+  "sessionExpired": "Your session has expired. Please sign in again.",
+  "imageUploadFailed": "Failed to upload product image. Please try again.",
+  "imageImportFailed": "Failed to download online image. Keeping remote reference.",
+  "unexpected": "An unexpected error occurred."
+}

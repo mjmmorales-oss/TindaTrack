@@ -17,7 +17,7 @@ class RecordPaymentAction
     {
         if ($amount <= 0) {
             throw ValidationException::withMessages([
-                'amount' => ['Dapat mas mataas sa zero ang halaga ng ibabayad.'],
+                'amount' => ['Payment amount must be greater than zero.'],
             ]);
         }
 
@@ -29,7 +29,7 @@ class RecordPaymentAction
                 throw ValidationException::withMessages([
                     'amount' => [
                         sprintf(
-                            'Hindi maaaring lumampas ang bayad (₱%0.2f) sa kasalukuyang utang (₱%0.2f).',
+                            'Payment amount (₱%0.2f) cannot exceed current outstanding debt (₱%0.2f).',
                             $amount,
                             $customer->credit_balance
                         ),

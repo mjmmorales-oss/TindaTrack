@@ -123,7 +123,7 @@ class ProductController extends Controller
                     'quantity' => $initialStock,
                     'stock_after' => $initialStock,
                     'reference' => 'INIT-'.$prod->sku,
-                    'notes' => 'Panimulang imbentaryo (Initial stock)',
+                    'notes' => 'Initial inventory stock',
                     'user_id' => $request->user()->id,
                 ]);
             }

@@ -53,7 +53,7 @@ class SettingsController extends Controller
 
         return response()->json([
             'data' => new SettingResource($setting->fresh()),
-            'message' => 'Matagumpay na na-update ang mga setting ng tindahan.',
+            'message' => 'Store settings updated successfully.',
         ]);
     }
 }

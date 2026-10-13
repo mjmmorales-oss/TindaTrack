@@ -78,7 +78,7 @@ test('a pairing code cannot be reused once paired', function () {
     // Second pairing attempt with same code fails
     $this->postJson('/api/scanner/pair', ['pairing_code' => 'TEST-1234'])
         ->assertStatus(422)
-        ->assertJson(['message' => 'Nagamit na ang pairing code na ito. Humingi ng bago sa POS.']);
+        ->assertJson(['reason' => 'used', 'message' => 'This pairing code has already been used. Please request a new code from the POS.']);
 });
 
 test('an expired pairing code returns 422', function () {
@@ -92,7 +92,7 @@ test('an expired pairing code returns 422', function () {
 
     $this->postJson('/api/scanner/pair', ['pairing_code' => 'EXPR-9999'])
         ->assertStatus(422)
-        ->assertJson(['message' => 'Luma o paso na ang pairing code. Humingi ng bago sa POS.']);
+        ->assertJson(['reason' => 'expired', 'message' => 'Pairing code has expired. Please request a new code from the POS.']);
 });
 
 test('a wrong device token returns 401', function () {

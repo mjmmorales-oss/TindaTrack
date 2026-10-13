@@ -1,0 +1,21 @@
+{
+  "title": "Pamamahala ng Staff",
+  "subtitle": "Talaan ng mga kaha (cashier) at pahintulot sa pag-login",
+  "addStaff": "Magdagdag ng Cashier",
+  "nameCol": "Pangalan",
+  "emailCol": "Email Address",
+  "roleCol": "Tungkulin (Role)",
+  "statusCol": "Katayuan",
+  "actionsCol": "Mga Aksyon",
+  "nameLabel": "Buong Pangalan",
+  "emailLabel": "Email Address",
+  "passwordLabel": "Password",
+  "roleLabel": "Tungkulin",
+  "roleOwner": "May-ari ng Tindahan (Owner)",
+  "roleCashier": "Kaha (Cashier)",
+  "toggleStatus": "Palitan ang Katayuan",
+  "activatedSuccess": "Na-activate na ang staff account.",
+  "deactivatedSuccess": "Na-deactivate na ang staff account.",
+  "cannotDeactivateSelf": "Hindi mo maaaring i-deactivate ang iyong sariling account.",
+  "saveStaff": "I-save ang Cashier"
+}

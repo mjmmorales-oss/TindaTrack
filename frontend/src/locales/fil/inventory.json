@@ -1,0 +1,22 @@
+{
+  "title": "Imbentaryo at Stock",
+  "subtitle": "Subaybayan ang paggalaw ng mga paninda, restock, at sira",
+  "adjustStock": "Mag-ayos ng Stock",
+  "bulkRestock": "Bultuhang Restock",
+  "lowStockTitle": "Mga Paubos na Paninda",
+  "lowStockSubtitle": "Mga produktong umabot na sa kanilang reorder level",
+  "movementHistory": "Kasaysayan ng Paggalaw ng Stock",
+  "typeRestock": "Bagong Pasok / Restock (+)",
+  "typeDamage": "Sira / Paso / Expired (-)",
+  "typeCorrection": "Pagwawasto ng Bilang",
+  "typeSale": "Nabawas sa Benta",
+  "typeVoid": "Naibalik dahil sa Void (+)",
+  "selectProduct": "Pumili ng Produkto",
+  "quantityLabel": "Bilang (Quantity)",
+  "reasonNotes": "Dahilan o Tala (Notes)",
+  "stockAfter": "Stock Pagkatapos Ayusin",
+  "saveAdjustment": "Kumpirmahin ang Pagsasaayos",
+  "adjustStockSuccess": "Matagumpay na nabago ang bilang ng stock.",
+  "bulkRestockSuccess": "Matagumpay na naitala ang bultuhang restock.",
+  "noMovements": "Wala pang naitalang paggalaw ng imbentaryo."
+}

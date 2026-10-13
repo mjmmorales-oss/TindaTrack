@@ -77,8 +77,8 @@ class UserController extends Controller
         return response()->json([
             'data' => new UserResource($user),
             'message' => $user->is_active
-                ? "Na-activate na ang account ni {$user->name}."
-                : "Na-deactivate na ang account ni {$user->name} at pinawalang-bisa ang kanyang mga sesyon.",
+                ? "Account for {$user->name} has been activated."
+                : "Account for {$user->name} has been deactivated and all sessions revoked.",
         ]);
     }
 }

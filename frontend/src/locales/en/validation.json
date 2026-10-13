@@ -1,0 +1,12 @@
+{
+  "required": "This field is required.",
+  "invalidEmail": "Please enter a valid email address.",
+  "invalidNumber": "Please enter a valid number.",
+  "positiveNumber": "Must be greater than zero.",
+  "nonNegative": "Cannot be negative.",
+  "minLength": "Must be at least {{min}} characters.",
+  "maxLength": "Must not exceed {{max}} characters.",
+  "invalidPhone": "Please enter a valid Philippine mobile number (e.g. 0917-123-4567).",
+  "invalidBarcode": "Invalid barcode format. Expected 8, 12, 13, or 14 digits.",
+  "passwordMismatch": "Passwords do not match."
+}

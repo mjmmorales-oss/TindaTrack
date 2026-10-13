@@ -1,0 +1,18 @@
+{
+  "title": "Dashboard ng Tindahan",
+  "subtitle": "Pangkalahatang ulat ng benta, kita, at imbentaryo",
+  "todaySales": "Benta Ngayong Araw",
+  "todayTransactions": "Mga Transaksyon",
+  "netProfit": "Tantyang Tubo (Profit)",
+  "lowStockAlerts": "Paubos na Paninda",
+  "activeUtang": "Kabuuang Pautang",
+  "activeDebtors": "May Utang na Suki",
+  "topSellingTitle": "Mabiling Paninda Ngayong Araw",
+  "recentSalesTitle": "Mga Huling Benta",
+  "emptyRecentSales": "Wala pang naitalang benta ngayong araw.",
+  "emptyTopSelling": "Wala pang naibentang produkto ngayong araw.",
+  "viewAllSales": "Tingnan ang talaan ng benta",
+  "viewAllInventory": "Tingnan ang imbentaryo",
+  "cashSales": "Benta sa Cash",
+  "utangSales": "Benta sa Utang"
+}

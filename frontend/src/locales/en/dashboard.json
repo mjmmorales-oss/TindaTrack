@@ -1,0 +1,18 @@
+{
+  "title": "Store Dashboard",
+  "subtitle": "Overview of store performance, sales, and inventory status",
+  "todaySales": "Today's Sales",
+  "todayTransactions": "Transactions",
+  "netProfit": "Gross Profit",
+  "lowStockAlerts": "Low Stock Items",
+  "activeUtang": "Total Outstanding Utang",
+  "activeDebtors": "Active Debtors",
+  "topSellingTitle": "Top Selling Products Today",
+  "recentSalesTitle": "Recent Sales",
+  "emptyRecentSales": "No sales recorded yet today.",
+  "emptyTopSelling": "No items sold yet today.",
+  "viewAllSales": "View sales history",
+  "viewAllInventory": "Review stock levels",
+  "cashSales": "Cash Sales",
+  "utangSales": "Utang Sales"
+}

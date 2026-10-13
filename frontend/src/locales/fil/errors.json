@@ -1,0 +1,13 @@
+{
+  "networkError": "Hindi maabot ang server. Pakisuri ang iyong koneksyon sa internet.",
+  "serverError": "May nagkaproblema sa server. Pakisubukan muli.",
+  "rateLimited": "Masyadong maraming pagtatangka. Maghintay sandali bago sumubok muli.",
+  "unauthorized": "Kailangang mag-sign in bago gawin ang aksyong ito.",
+  "forbidden": "Wala kang sapat na pahintulot para sa aksyong ito.",
+  "notFound": "Hindi nahanap ang hinahanap na talaan.",
+  "invalidCredentials": "Maling email o password ang inilagay.",
+  "sessionExpired": "Paso na ang iyong sesyon. Mag-sign in muli.",
+  "imageUploadFailed": "Nabigong i-upload ang litrato ng produkto.",
+  "imageImportFailed": "Nabigong i-download ang litrato online.",
+  "unexpected": "May naganap na hindi inaasahang problema."
+}

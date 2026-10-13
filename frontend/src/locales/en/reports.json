@@ -1,0 +1,20 @@
+{
+  "title": "Reports & Analytics",
+  "subtitle": "Insights on revenue, profit, best sellers, and peak shopping hours",
+  "dateRange": "Date Range",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "last7Days": "Last 7 Days",
+  "last30Days": "Last 30 Days",
+  "thisMonth": "This Month",
+  "totalSalesCard": "Total Sales",
+  "totalProfitCard": "Estimated Profit",
+  "transactionCountCard": "Transactions",
+  "averageBasketCard": "Average Ticket",
+  "salesOverTimeTitle": "Sales Over Time",
+  "bestSellersTitle": "Best Selling Products",
+  "categoryBreakdownTitle": "Category Breakdown",
+  "hourlySalesTitle": "Sales by Hour of Day",
+  "exportReportCsv": "Export Report CSV",
+  "noDataForPeriod": "No sales recorded for the selected date range."
+}

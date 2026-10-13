@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "lint": "oxlint",
     "preview": "vite preview",
-    "check:bundle": "node ../scripts/check-prod-bundle.mjs"
+    "check:bundle": "node ../scripts/check-prod-bundle.mjs",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
@@ -56,6 +57,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "embla-carousel-react": "^8.6.0",
+    "i18next": "^26.4.4",
     "input-otp": "^1.5.0",
     "jsbarcode": "^3.12.3",
     "laravel-echo": "^2.6.1",
@@ -67,6 +69,7 @@
     "react-day-picker": "^10.0.2",
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.89.0",
+    "react-i18next": "^17.0.16",
     "react-resizable-panels": "^4.14.2",
     "react-router": "^8.4.0",
     "recharts": "^2.15.4",

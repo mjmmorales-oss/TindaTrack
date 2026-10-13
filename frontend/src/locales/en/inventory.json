@@ -1,0 +1,22 @@
+{
+  "title": "Inventory & Stock Management",
+  "subtitle": "Monitor stock movement history, record restocks, and log damaged goods",
+  "adjustStock": "Adjust Stock",
+  "bulkRestock": "Bulk Restock",
+  "lowStockTitle": "Low Stock Warnings",
+  "lowStockSubtitle": "Products at or below their reorder thresholds",
+  "movementHistory": "Stock Movement Ledger",
+  "typeRestock": "Restock (+)",
+  "typeDamage": "Damage / Expired (-)",
+  "typeCorrection": "Inventory Count Adjustment",
+  "typeSale": "Sale Deduction",
+  "typeVoid": "Void Return (+)",
+  "selectProduct": "Select Product",
+  "quantityLabel": "Quantity",
+  "reasonNotes": "Reason / Supplier Notes",
+  "stockAfter": "Stock After Adjustment",
+  "saveAdjustment": "Confirm Adjustment",
+  "adjustStockSuccess": "Stock quantity updated successfully.",
+  "bulkRestockSuccess": "Bulk restock recorded successfully.",
+  "noMovements": "No stock adjustments recorded yet."
+}

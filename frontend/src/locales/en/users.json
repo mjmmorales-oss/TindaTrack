@@ -1,0 +1,21 @@
+{
+  "title": "Staff Management",
+  "subtitle": "Manage cashier accounts and active login permissions",
+  "addStaff": "Add Cashier",
+  "nameCol": "Staff Name",
+  "emailCol": "Email Address",
+  "roleCol": "Role",
+  "statusCol": "Status",
+  "actionsCol": "Actions",
+  "nameLabel": "Full Name",
+  "emailLabel": "Email Address",
+  "passwordLabel": "Password",
+  "roleLabel": "Role",
+  "roleOwner": "Store Owner",
+  "roleCashier": "Cashier",
+  "toggleStatus": "Toggle Active Status",
+  "activatedSuccess": "Staff member activated.",
+  "deactivatedSuccess": "Staff member deactivated and sessions revoked.",
+  "cannotDeactivateSelf": "You cannot deactivate your own account.",
+  "saveStaff": "Save Cashier"
+}

@@ -7,6 +7,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { ModeToggle } from '@/components/common/ModeToggle'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 
 export function AuthLayout() {
   return (
@@ -89,7 +90,8 @@ export function AuthLayout() {
 
       {/* Auth Content Area */}
       <div className="bg-background relative flex w-full flex-col justify-center px-4 py-8 sm:px-6 lg:w-1/2 lg:px-12">
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          <LanguageSwitcher variant="compact" />
           <ModeToggle />
         </div>
 

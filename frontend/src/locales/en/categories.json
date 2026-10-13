@@ -1,0 +1,19 @@
+{
+  "title": "Categories",
+  "subtitle": "Organize your store items into clear departments and shelves",
+  "addCategory": "Add Category",
+  "nameCol": "Category Name",
+  "productCountCol": "Products",
+  "descriptionCol": "Description",
+  "actionsCol": "Actions",
+  "nameLabel": "Category Name",
+  "namePlaceholder": "e.g. Canned Goods, Instant Noodles",
+  "descLabel": "Description",
+  "descPlaceholder": "Optional description",
+  "saveCategory": "Save Category",
+  "editCategoryTitle": "Edit Category",
+  "createCategoryTitle": "Create Category",
+  "deleteConfirmTitle": "Delete Category?",
+  "deleteConfirmMessage": "Are you sure you want to delete category '{{name}}'?",
+  "deleteHasProductsWarning": "Cannot delete category that still contains products."
+}

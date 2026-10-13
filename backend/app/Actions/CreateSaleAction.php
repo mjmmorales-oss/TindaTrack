@@ -51,7 +51,7 @@ class CreateSaleAction
                 $qty = (int) ($item['quantity'] ?? 0);
 
                 if (! $prodId || ! isset($products[$prodId])) {
-                    $stockErrors["items.{$index}.product_id"] = ['Hindi mahanap ang produkto sa imbentaryo.'];
+                    $stockErrors["items.{$index}.product_id"] = ['Product not found in inventory.'];
 
                     continue;
                 }
@@ -59,20 +59,20 @@ class CreateSaleAction
                 $prod = $products[$prodId];
 
                 if (! $prod->is_active) {
-                    $stockErrors["items.{$index}.product_id"] = ["Hindi na aktibo ang produktong '{$prod->name}'."];
+                    $stockErrors["items.{$index}.product_id"] = ["Product '{$prod->name}' is inactive."];
 
                     continue;
                 }
 
                 if ($qty <= 0) {
-                    $stockErrors["items.{$index}.quantity"] = ['Kailangan ng wastong bilang ng produkto.'];
+                    $stockErrors["items.{$index}.quantity"] = ['Valid product quantity is required.'];
 
                     continue;
                 }
 
                 if ($qty > $prod->stock_quantity) {
                     $stockErrors["items.{$index}.quantity"] = [
-                        "Kulang ang stock para sa '{$prod->name}'. Kasalukuyang stock: {$prod->stock_quantity}.",
+                        "Insufficient stock for '{$prod->name}'. Current stock: {$prod->stock_quantity}.",
                     ];
 
                     continue;
@@ -105,7 +105,7 @@ class CreateSaleAction
                 if ($amountPaid < $totalAmount) {
                     throw ValidationException::withMessages([
                         'amount_paid' => [
-                            "Kulang ang bayad. Kabuuang halaga: ₱{$totalAmount}, binayad: ₱{$amountPaid}.",
+                            "Insufficient payment. Total amount: ₱{$totalAmount}, paid: ₱{$amountPaid}.",
                         ],
                     ]);
                 }
@@ -113,14 +113,14 @@ class CreateSaleAction
             } elseif ($paymentType === PaymentType::Utang) {
                 if (! $customerId) {
                     throw ValidationException::withMessages([
-                        'customer_id' => ['Kailangang pumili ng kustomer (suki) para sa utang.'],
+                        'customer_id' => ['A customer must be selected for credit (utang) sales.'],
                     ]);
                 }
 
                 $customer = Customer::where('id', $customerId)->lockForUpdate()->first();
                 if (! $customer) {
                     throw ValidationException::withMessages([
-                        'customer_id' => ['Hindi mahanap ang kustomer.'],
+                        'customer_id' => ['Customer not found.'],
                     ]);
                 }
 
@@ -134,7 +134,7 @@ class CreateSaleAction
                         throw ValidationException::withMessages([
                             'credit_limit' => [
                                 sprintf(
-                                    'Lalampas sa credit limit (₱%s) ni %s ang utang na ito. Kasalukuyang utang: ₱%s, Bagong balanse: ₱%s.',
+                                    'This sale exceeds the credit limit (₱%s) for %s. Current balance: ₱%s, New balance: ₱%s.',
                                     number_format($customer->credit_limit, 2),
                                     $customer->name,
                                     number_format($customer->credit_balance, 2),

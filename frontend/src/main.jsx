@@ -5,6 +5,7 @@ import { Providers } from '@/app/providers'
 import { router } from '@/app/router'
 import '@fontsource-variable/plus-jakarta-sans'
 import '@fontsource-variable/geist-mono'
+import '@/i18n'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
