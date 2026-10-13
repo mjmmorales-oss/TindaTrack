@@ -146,3 +146,47 @@ Use this script during class presentations or client walkthroughs:
 - **Action**: On the POS page, use a USB barcode scanner (or type a barcode rapidly on keyboard + Enter).
 - **Result**: The POS keyboard wedge catches rapid keystrokes without needing focus on any specific input, adding the item instantly.
 - **Narrative**: *"Likas ding sinusuportahan ng TindaTrack ang mga tradisyunal na handheld USB at Bluetooth barcode gun gamit ang aming keyboard wedge listener."*
+
+---
+
+## 6. Troubleshooting Pairing
+
+Kung nagkakaroon ng problema sa pag-pares ng smartphone camera scanner sa POS terminal, sundin ang checklist at gabay sa ibaba:
+
+### 1. Prerequisites & Services Check
+- **Backend API Running**: Siguraduhing tumatakbo ang Laravel server (`php artisan serve --host=127.0.0.1 --port=8000`).
+- **Database Up**: Siguraduhing accessible ang database at kumpleto ang migrations (`php artisan migrate`).
+- **LAN Server Running**: Patakbuhin ang frontend sa LAN mode (`npm run dev:lan`), na awtomatikong nagse-serve sa HTTPS gamit ang `@vitejs/plugin-basic-ssl` at nagpo-proxy ng `/api` papunta sa backend.
+
+### 2. Network & Origin Requirements
+- **Same Wi-Fi Network**: Dapat konektado ang laptop at smartphone sa iisang local Wi-Fi network o router.
+- **Gumamit ng LAN IP (Hindi `localhost`)**:
+  - Huwag i-load ang POS gamit ang `https://localhost:5173/pos` kapag magpe-pair ng phone. Sa halip, buksan ito gamit ang iyong LAN IP (hal. `https://192.168.1.15:5173/pos`).
+  - Kung `localhost` ang bubuksan sa laptop, ang mabubuong QR code ay maglalaman ng `localhost`, na magtuturo sa sariling device ng phone sa halip na sa iyong laptop.
+- **Tanggapin ang Self-Signed Certificate sa Phone**:
+  - Dahil gumagamit ang local Vite dev server ng self-signed dev SSL certificate, magpapakita ang mobile browser (Safari o Chrome) ng babala: *"Your connection is not private"* o *"Certificate is not trusted"*.
+  - I-tap ang **Advanced** (o *Show Details*) at piliin ang **Proceed to 192.168.x.x (unsafe)** / **Visit this website**.
+  - Kailangan ang HTTPS upang gumana ang `navigator.mediaDevices.getUserMedia` camera permission sa phone.
+
+### 3. Automated End-to-End Smoke Script
+Maaari mong subukan ang buong pairing pipeline gamit ang built-in smoke script sa repo root:
+```bash
+# Direktang testing laban sa Laravel API:
+npm run smoke:pairing
+
+# Testing laban sa parehong Direct API at Vite HTTPS Reverse Proxy:
+PROXY_BASE=https://127.0.0.1:5173 npm run smoke:pairing
+```
+Ang script na ito ay awtomatikong maglo-login bilang store owner, gagawa ng pairing session, magpapares gamit ang normalized code, magsu-submit ng scan para sa seeded product barcode, at magko-confirm ng broadcast event delivery.
+
+### 4. Pagpapakahulugan ng mga Error Message
+
+| Mensahe sa UI | Dahilan (`reason`) | Solusyon |
+|---|---|---|
+| **"Hindi makagawa ng code: {reason}"** (sa POS) | Hindi maabot ang backend API o database | Tiyaking tumatakbo ang `php artisan serve` sa port 8000 at nakakonekta ang database. I-click ang **Subukan ulit**. |
+| **"Walang pairing code sa URL"** (sa `/scan`) | Binuksan ang `/scan` nang walang `?code=` query param | I-scan ang QR code mula sa POS dialog, o i-type nang mano-mano ang 8-character pairing code sa kahon. |
+| **"Hindi nahanap ang pairing code"** | `not_found` (422) | Maling code ang nailagay o nabura na ang session. Tiyaking tama ang 8 letra/numero mula sa POS screen. |
+| **"Paso na ang pairing code"** | `expired` (422) | Lumagpas na sa 10 minutong pairing window ang code, o kaya ay nagbukas ng bagong dialog sa POS na nag-terminate sa lumang code. I-click ang **Bagong code** sa POS. |
+| **"Nagamit na ang pairing code na ito"** | `used` (422) | Na-redeem na ang code ng isa pang device. Single-use lamang ang pairing code para sa seguridad. Gumawa ng bagong session para sa ibang phone. |
+| **"Hindi maabot ang server o walang koneksyon sa Wi-Fi"** | Network timeout / connection refused | Tiyaking pareho ang Wi-Fi network ng phone at laptop, at walang client-isolation ang router o local firewall na humaharang sa port 5173. |
+| **"Naisara na ang sesyon ng scanner"** | `401 Unauthorized` | Idiskonekta o tinapos ng may-ari ang sesyon sa POS, o kaya ay nag-expire na ang 12-oras na device session. Muling mag-pair gamit ang bagong QR code. |

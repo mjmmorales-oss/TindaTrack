@@ -640,3 +640,21 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Frontend Build: compiled cleanly.
   - Backend: Pint clean, Pest 71/71 passed (380 assertions).
   - Smoke script: `npm run smoke:pairing` PASS on Direct API and Vite Reverse Proxy.
+
+### F4 Log (Final Gate, Merge & Tag):
+- **Final Verification**:
+  - Backend: `./vendor/bin/pint --test` clean, `php artisan test` passed 71/71 tests (380 assertions).
+  - Frontend: `npm run lint` 0 errors, `npm run build` clean production bundle.
+  - Mock data: `check-mockdata.mjs` passed with ₱0.0000 balance discrepancy.
+  - Smoke verification: `npm run smoke:pairing` (both Direct API and Vite HTTPS reverse proxy) passed all 6 steps cleanly.
+- **Documentation**:
+  - Updated `docs/BARCODE.md` with comprehensive Section 6: "Troubleshooting Pairing" covering prerequisites, local IP configuration, mobile self-signed SSL acceptance, smoke script usage, and failure message reference table.
+  - Updated `docs/CHANGELOG.md` with complete `[v1.1.1]` release notes.
+- **Root Causes Summary**:
+  1. *Primary Root Cause*: `apiClient` returns Axios `response.data` (`{ data: { ... } }`). `scannerService` was not unwrapping `.data`, so `res.pairing_code` evaluated to `undefined`. This caused `----` on screen, `?code=undefined` in QR code, 422 rejected pairing on phone, and fallback 9:59 countdown.
+  2. *Secondary Root Cause*: React StrictMode double-mounting in `PairPhoneDialog.jsx` created a second session that immediately ended session 1 in the database while session 1's code was on screen.
+  3. *Secondary Root Cause*: Lack of uppercase/dash-less code normalization in `ScannerDeviceController@pair` and missing machine-readable `reason` tags (`not_found`, `expired`, `used`).
+  4. *Secondary Root Cause*: API client base resolution for empty string `VITE_API_URL=""` and missing `changeOrigin: true` in Vite reverse proxy.
+- **Release**:
+  - Merged `fix/pairing` into `main` with `--no-ff`.
+  - Tagged `v1.1.1` and pushed to remote origin.

@@ -2,6 +2,30 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.1.1] - Fix Phone Pairing & End-to-End Live Sync Hardening
+- **Phone Pairing Response Unwrapping & API Base Fixes (F0–F1)**:
+  - Resolved primary root cause where `apiClient.js` returns Axios `response.data`, leaving nested `{ data: { ... } }` wrapped in `scannerService.js` and `barcodeService.js`. Unwrapped all response payloads so `pairing_code`, `id`, and `pairing_expires_at` evaluate properly.
+  - Eliminated "----" placeholder and `?code=undefined` QR links; QR codes now consistently encode valid session codes (`XXXX-XXXX`).
+  - Fixed API base resolution in `src/lib/api.js`: explicit empty string (`VITE_API_URL=""`) in `dev:lan` correctly maps to relative `/api` paths rather than falling back to `http://localhost:8000/api`.
+  - Updated `vite.config.js` proxy with `changeOrigin: true` and `secure: false` ensuring same-origin LAN requests from both laptop and mobile phones reach Laravel cleanly.
+  - Forced `VITE_DATA_SOURCE=api` in `frontend/package.json` `dev:lan` script.
+- **Session Lifecycle & StrictMode Protection (F1)**:
+  - Added ref locks (`hasCreatedForOpenRef`, `isCreatingRef`) to `PairPhoneDialog.jsx` preventing React StrictMode double-mounting from triggering duplicate `POST /api/scanner-sessions` calls that terminated active sessions.
+  - Added unmount/close cleanup that explicitly ends un-paired sessions via `endScannerSession()`.
+  - Replaced static countdown fallback with server-derived countdown based on `pairing_expires_at`, with automatic fresh code request upon reaching 0 seconds.
+  - Added skeleton loading state and error alert card with Taglish error description and "Subukan ulit" retry button; prevents rendering QR code or code display without a valid pairing code.
+  - Added localhost mismatch detection alerting users when POS is accessed via localhost while attempting to pair LAN mobile devices.
+- **Pairing Code Sanitization & Machine-Readable Error Reasons (F1)**:
+  - Updated backend `ScannerDeviceController@pair` and mock service to sanitize incoming codes (case-insensitive, dash-stripped, auto-hyphenated 8-char normalization).
+  - Added machine-readable `reason` fields (`not_found`, `expired`, `used`) on HTTP 422 responses.
+  - Updated `/scan` page to map all failure reasons to distinct Taglish messages, including network unreachable and missing code in URL.
+- **End-to-End Verification & Automated Test Suites (F2–F3)**:
+  - Added `backend/tests/Feature/ScannerEndToEndTest.php` (Pest) testing full HTTP route lifecycle: owner session creation, lowercase/dashless code pairing, product scan, event polling, session superseding, and machine-readable failure reasons.
+  - Added standalone Node smoke verification script `scripts/smoke-pairing.mjs` (`npm run smoke:pairing`) validating both Direct API (`http://127.0.0.1:8000`) and Vite HTTPS reverse proxy (`https://127.0.0.1:5173`).
+  - Expanded `frontend/src/test/scan-flows.test.jsx` (23 tests green) covering Laravel wrapped response fixtures, StrictMode single session invocation, fake-timer countdown auto-request, `/scan` failure reasons, and API client relative base resolution.
+- **Documentation (F4)**:
+  - Added "Troubleshooting Pairing" guide to `docs/BARCODE.md` covering prerequisites, local IP configuration, mobile self-signed SSL acceptance, smoke script usage, and failure message explanations.
+
 ## [v1.1.0] - Barcode Scanning, Open Food Facts Auto-Fill, and Phone-to-POS Live Sync
 - **Backend Schema & Architecture (B1–B4)**:
   - Migrated `products` table adding `image_url`, `brand`, `size`, `source`, `source_ref`, and unique indexed `barcode`.
