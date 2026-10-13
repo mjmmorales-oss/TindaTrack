@@ -239,7 +239,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 
 - [x] **B0 — Preflight**: Repository sanity, baseline test gates, branch creation `feat/barcode-scan`, barcode feature map.
 - [x] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
-- [ ] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
+- [x] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
 - [ ] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
 - [ ] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
 - [ ] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
@@ -300,4 +300,28 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Updated `ProductController` store/update validation and auto-resolved unknown scan events on product creation with barcode.
 - Updated `ProductFactory` and `ReferenceDataSeeder` with new catalog fields.
 - Gates: Pest (41/41 passing), Pint clean, contract check (37/37 passing).
+
+### B2 Log:
+- Implemented `App\Support\Barcode` helpers:
+  - `normalize`: trims, strips spaces and hyphens, automatically converts 12-digit UPC-A to 13-digit EAN-13 with '0' prefix.
+  - `computeCheckDigit` / `isValidGtin`: verifies standard GS1 modulo-10 check digits for EAN-8, EAN-13, and UPC-A.
+  - `isInternal`: detects restricted-circulation prefixes (20 to 29).
+  - `isAcceptable`: accepts valid GTINs, internal barcodes, and custom 4-32 alphanumeric codes.
+  - `makeInternal`: generates valid EAN-13 with "20" prefix + 10-digit zero-padded sequence + check digit.
+- Implemented `App\Support\CategoryGuesser` matching Open Food Facts tags and product names against store categories.
+- Configured `config/services.php` with `openfoodfacts` settings (base URLs for OFF, Open Products Facts, Open Beauty Facts, user agent, timeout). Updated `.env.example`.
+- Implemented `App\Services\ProductLookupService`:
+  - 1. Checks local active products (returns `{ local_product, catalog: null }`).
+  - 2. Checks `barcode_catalog` cache (30-day TTL for found, 1-day TTL for not-found).
+  - 3. Queries base URLs in sequence, mapping attributes (`name`, `brand`, `size`, `image_url`, `categories`), skipping internal/custom codes.
+  - 4. Caches hits in `barcode_catalog` with ODbL attribution.
+  - 5. Treats 429, timeouts, and 5xx errors as transient without poisoning cache.
+- Implemented `App\Http\Controllers\BarcodeLookupController` on `GET /api/barcode-lookup/{barcode}`:
+  - Protected with `auth:sanctum`, `active`, and `role:owner,cashier`.
+  - Rate limited with `throttle:30,1`.
+  - Rejects invalid barcode formats with 422.
+  - Cashiers receive only `local_product` with `catalog: null`.
+  - Owners receive full result.
+- Added comprehensive unit tests in `tests/Unit/BarcodeTest.php` (5 tests) and feature tests in `tests/Feature/BarcodeLookupTest.php` (10 tests with `Http::fake`).
+- Gates: Pest (56/56 passing, 267 assertions), Pint clean, contract check passing.
 

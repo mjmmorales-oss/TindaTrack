@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\BarcodeLookupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -45,6 +46,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/low-stock', [ProductController::class, 'lowStock']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
+    Route::get('/barcode-lookup/{barcode}', BarcodeLookupController::class)
+        ->middleware(['role:owner,cashier', 'throttle:30,1']);
 
     // Customers (cashiers can view, create suki, and edit details during transactions)
     Route::get('/customers', [CustomerController::class, 'index']);
