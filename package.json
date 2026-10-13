@@ -7,7 +7,8 @@
     "dev:api": "cd backend && php artisan serve",
     "dev:web": "npm --prefix frontend run dev",
     "dev:web:lan": "npm --prefix frontend run dev:lan",
-    "build:web": "npm --prefix frontend run build"
+    "build:web": "npm --prefix frontend run build",
+    "smoke:pairing": "node scripts/smoke-pairing.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

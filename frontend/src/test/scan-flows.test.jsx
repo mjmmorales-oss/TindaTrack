@@ -1,7 +1,9 @@
+import { StrictMode } from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router'
+import { getApiBaseUrl } from '@/lib/api'
 
 import { useCartStore } from '@/stores/cartStore'
 import { PairPhoneDialog } from '@/components/scanner/PairPhoneDialog'
@@ -188,6 +190,130 @@ describe('B10: PairPhoneDialog Component', () => {
       expect(screen.getByText('localhost')).toBeInTheDocument()
     }
   })
+
+  it('handles real wrapped response fixture from Laravel: renders code and QR', async () => {
+    // Exact response structure returned by Laravel ScannerSessionController@store
+    const fixture = {
+      data: {
+        id: '01m4v5t9h46vkepye2sveq9tfz',
+        pairing_code: 'AHAW-YD4S',
+        pairing_expires_at: new Date(Date.now() + 600000).toISOString(),
+        expires_at: new Date(Date.now() + 43200000).toISOString(),
+        mode: 'pos',
+      },
+    }
+
+    vi.spyOn(mockScannerService, 'createScannerSession').mockResolvedValue(fixture)
+    vi.spyOn(mockScannerService, 'getScannerSession').mockResolvedValue({
+      id: fixture.data.id,
+      paired: false,
+      online: false,
+    })
+
+    render(
+      <PairPhoneDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="pos"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('AHAW-YD4S')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText(/O ilagay ang code na ito sa \/scan/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Hindi makagawa ng code/i)).toBeNull()
+  })
+
+  it('shows error state and NO code/QR when createScannerSession rejects', async () => {
+    vi.spyOn(mockScannerService, 'createScannerSession').mockRejectedValue({
+      status: 500,
+      message: 'Network connection refused',
+    })
+
+    render(
+      <PairPhoneDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="pos"
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Hindi makagawa ng code: Network connection refused/i)).toBeInTheDocument()
+    })
+
+    // Assert that pairing code container and instructions are NOT rendered
+    expect(screen.queryByText(/O ilagay ang code na ito sa \/scan/i)).toBeNull()
+    expect(screen.getByRole('button', { name: /Subukan ulit/i })).toBeInTheDocument()
+  })
+
+  it('calls createScannerSession exactly once even under <React.StrictMode>', async () => {
+    const createSpy = vi.spyOn(mockScannerService, 'createScannerSession').mockResolvedValue({
+      id: 'session-strict-1',
+      pairing_code: 'STRC-9999',
+      pairing_expires_at: new Date(Date.now() + 600000).toISOString(),
+      expires_at: new Date(Date.now() + 43200000).toISOString(),
+      mode: 'pos',
+    })
+
+    render(
+      <StrictMode>
+        <PairPhoneDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          mode="pos"
+        />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('STRC-9999')).toBeInTheDocument()
+    })
+
+    // StrictMode mounts, unmounts, and remounts components in dev; guard ref must ensure only 1 API call
+    expect(createSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses server expiry for countdown and auto-requests a new code at 0 using fake timers', async () => {
+    vi.useFakeTimers()
+    const now = Date.now()
+    vi.setSystemTime(now)
+
+    // Expiring in 2 seconds
+    const expiry = new Date(now + 2000).toISOString()
+    const createSpy = vi.spyOn(mockScannerService, 'createScannerSession').mockResolvedValue({
+      id: 'session-countdown-1',
+      pairing_code: 'TIME-7777',
+      pairing_expires_at: expiry,
+      expires_at: new Date(now + 43200000).toISOString(),
+      mode: 'pos',
+    })
+
+    render(
+      <PairPhoneDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="pos"
+      />,
+    )
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50)
+    })
+
+    expect(screen.getByText('TIME-7777')).toBeInTheDocument()
+    expect(createSpy).toHaveBeenCalledTimes(1)
+
+    // Advance by 3 seconds (reaches 0 and triggers refresh)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000)
+    })
+
+    expect(createSpy).toHaveBeenCalledTimes(2)
+    vi.useRealTimers()
+  })
 })
 
 describe('B10: PhoneScannerPage (/scan)', () => {
@@ -308,6 +434,85 @@ describe('B10: PhoneScannerPage (/scan)', () => {
     await waitFor(() => {
       expect(
         screen.getByText(/Natapos na ang session\. Mag-scan ng bagong QR\./i),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('displays distinct error when pairing code is not_found', async () => {
+    const errorNotFound = new Error('Hindi nahanap')
+    errorNotFound.status = 422
+    errorNotFound.data = { reason: 'not_found' }
+    vi.spyOn(mockScannerService, 'pairScanner').mockRejectedValue(errorNotFound)
+
+    render(
+      <MemoryRouter initialEntries={['/scan?code=NONE-1234']}>
+        <Routes>
+          <Route path="/scan" element={<PhoneScannerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Hindi nahanap ang pairing code\. Tiyaking tama ang code mula sa POS\./i),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('displays distinct error when pairing code is expired', async () => {
+    const errorExpired = new Error('Paso na')
+    errorExpired.status = 422
+    errorExpired.data = { reason: 'expired' }
+    vi.spyOn(mockScannerService, 'pairScanner').mockRejectedValue(errorExpired)
+
+    render(
+      <MemoryRouter initialEntries={['/scan?code=EXPR-1234']}>
+        <Routes>
+          <Route path="/scan" element={<PhoneScannerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Paso na ang pairing code\. Humingi ng bagong code sa POS\./i),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('displays distinct error when pairing code is used', async () => {
+    const errorUsed = new Error('Nagamit na')
+    errorUsed.status = 422
+    errorUsed.data = { reason: 'used' }
+    vi.spyOn(mockScannerService, 'pairScanner').mockRejectedValue(errorUsed)
+
+    render(
+      <MemoryRouter initialEntries={['/scan?code=USED-1234']}>
+        <Routes>
+          <Route path="/scan" element={<PhoneScannerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Nagamit na ang pairing code na ito\. Humingi ng bagong code sa POS\./i),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('displays distinct error when code in URL is empty on auto-pair', async () => {
+    render(
+      <MemoryRouter initialEntries={['/scan?code=']}>
+        <Routes>
+          <Route path="/scan" element={<PhoneScannerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Walang pairing code sa URL/i),
       ).toBeInTheDocument()
     })
   })
@@ -467,3 +672,18 @@ describe('B10: ProductFormDialog Auto-Fill and Internal Barcode', () => {
     expect(submitBtn).toBeDisabled()
   })
 })
+
+describe('B10: API Client Base URL Resolution', () => {
+  it('resolves empty VITE_API_URL to relative /api path and not localhost:8000', () => {
+    const originalEnv = import.meta.env.VITE_API_URL
+    try {
+      import.meta.env.VITE_API_URL = ''
+      const base = getApiBaseUrl()
+      expect(base).toBe('/api')
+      expect(base).not.toContain('localhost:8000')
+    } finally {
+      import.meta.env.VITE_API_URL = originalEnv
+    }
+  })
+})
+

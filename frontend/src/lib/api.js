@@ -9,8 +9,13 @@ export const TOKEN_KEY = 'tindatrack_token'
  */
 export function getApiBaseUrl() {
   const envUrl = import.meta.env?.VITE_API_URL
-  if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
-    return envUrl
+  if (typeof envUrl === 'string') {
+    const trimmed = envUrl.trim()
+    if (trimmed.length > 0) {
+      return trimmed
+    }
+    // Explicitly empty string (e.g. VITE_API_URL= in dev:lan mode): use relative '/api'
+    return '/api'
   }
   if (import.meta.env?.VITE_DEV_HTTPS === 'true') {
     return '/api'

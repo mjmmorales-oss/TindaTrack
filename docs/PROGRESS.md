@@ -557,5 +557,104 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 5. Visit `http://localhost:5173/pos` → click **"I-scan"** to test laptop webcam scanning.
 6. Run `npm run dev:lan`, click **"Ikonekta ang Phone"** in POS, and scan the QR code with your mobile smartphone!
 
+---
 
+## Phase 3.1: Phone Pairing Investigation & Fixes (v1.1.1)
 
+### F0: Root Cause Investigation & Hypothesis Matrix
+
+1. **API Base URL (Partially True / Hardening Opportunity)**:
+   - In `src/lib/api.js`, `getApiBaseUrl()` checked `typeof envUrl === 'string' && envUrl.trim().length > 0`. If `VITE_API_URL` was explicitly empty (`""`), it relied on `VITE_DEV_HTTPS === 'true'` to return `'/api'`. If `VITE_DEV_HTTPS` was missing or falsy, it fell back to `'http://localhost:8000/api'`.
+   - Paths in `apiClient` (`/categories`, `/scanner-sessions`) and `scannerService` (`/scanner/pair`) are prepended with `/api`, resulting in `/api/...` calls.
+   - Vite proxy in `vite.config.js` was configured as `proxy: { '/api': 'http://127.0.0.1:8000' }`. Adding `changeOrigin: true` and `secure: false` is required to ensure consistent host header rewriting and TLS termination.
+2. **Data Source (True)**:
+   - `.env.development` sets `VITE_DATA_SOURCE=api`. However, the `dev:lan` script in `frontend/package.json` (`cross-env VITE_DEV_HTTPS=true VITE_API_URL= vite`) did not explicitly specify `VITE_DATA_SOURCE=api`. If an environment or developer had `VITE_DATA_SOURCE=mock`, mock mode would run, preventing external phone pairing.
+3. **Duplicate Session Creation in React StrictMode (True)**:
+   - In `PairPhoneDialog.jsx`, `useEffect` invoked `startNewSession()` on mount without a guard ref. In React StrictMode (active in development), effects run, unmount, and re-run.
+   - The second `POST /api/scanner-sessions` triggered `ScannerSessionController@store`'s cleanup query:
+     `ScannerSession::where('user_id', $user->id)->where('mode', $mode)->whereNull('ended_at')->update(['ended_at' => now()])`,
+     which instantly terminated Session 1.
+   - Additionally, closing the dialog before pairing did not clean up sessions, leaving orphaned active sessions in the database.
+4. **Response Shape Unwrapping (TRUE - PRIMARY ROOT CAUSE)**:
+   - `ScannerSessionController@store` returns:
+     `{ "data": { "id": "...", "pairing_code": "K7RM-92NP", "pairing_expires_at": "...", "expires_at": "...", "mode": "pos" } }`.
+   - `apiClient` in `frontend/src/services/api/apiClient.js` returns Axios `response.data`, which is `{ data: { ... } }`.
+   - `scannerService.createScannerSession` returned `apiClient.post(...)` directly without unwrapping `.data`.
+   - `PairPhoneDialog.jsx` read `res.pairing_code` directly from `res` (`res.pairing_code` === `undefined`).
+   - Consequently:
+     - `pairingCode` evaluated to `session?.pairing_code || '----'` -> displayed `----`.
+     - `scanUrl` was constructed as `${publicAppUrl}/scan?code=undefined`.
+     - The QR code encoded a URL with `?code=undefined`.
+     - Scanning the QR on a phone opened `/scan?code=undefined`, which submitted `"UNDEFINED"` to `/api/scanner/pair`.
+     - The backend could not find a session with pairing code `"UNDEFINED"` and returned HTTP 422: `"Luma o paso na ang pairing code"`.
+     - `res.pairing_expires_at` was `undefined`, triggering the fallback `setTimeLeft(600)` (9:59 countdown).
+   - The same issue affected `scannerService.pairScanner`, `getScannerSession`, `listScannerEvents`, and `barcodeService.lookupBarcode`.
+5. **Error & Loading State Handling (True)**:
+   - `PairPhoneDialog.jsx` rendered the `'----'` code container, QR box, and 9:59 countdown even when `session` was null or if `createScannerSession` failed with an error. It lacked a loading skeleton and a dedicated error view with retry capability.
+6. **Backend Code Normalization & Machine-Readable Reasons (True)**:
+   - Routes: Verified all 8 routes and middleware via `php artisan route:list --path=scanner -v`.
+   - In `ScannerDeviceController@pair`, the controller checked `where('pairing_code', $code)` strictly requiring the exact hyphenated format. Lowercase characters or codes entered without the hyphen failed.
+   - The 422 responses returned only generic human messages without machine-readable `reason` tags (`not_found`, `expired`, `used`).
+7. **CORS / Sanctum (True)**:
+   - With the Vite reverse proxy, all requests from the browser/phone on LAN go to `https://192.168.x.x:5173/api/...` (same-origin), avoiding CORS preflight. Adding `changeOrigin: true` to Vite's proxy ensures backend receives `127.0.0.1:8000` as Host.
+### F1 Log:
+- Minimal, surgical fixes applied across frontend and backend for phone scanner pairing:
+  - **Response unwrapping**: In `frontend/src/services/api/scannerService.js` and `barcodeService.js`, unwrapped `res?.data ?? res` on all methods (`createScannerSession`, `getScannerSession`, `listScannerEvents`, `endScannerSession`, `getUnknownBarcodes`, `pairScanner`, `sendScan`, `scannerHeartbeat`, `lookupBarcode`). Defensive unwrapping also added in `PhoneScannerPage.jsx` and `PairPhoneDialog.jsx`.
+  - **Pairing code normalization**: In `ScannerDeviceController@pair` and mock `scannerService.pairScanner`, sanitized incoming codes by stripping dashes and whitespace, auto-formatting 8-character inputs into uppercase `XXXX-XXXX`, and matching case-insensitively.
+  - **Machine-readable error reasons**: `ScannerDeviceController@pair` and mock service now return `{ reason: 'not_found' | 'expired' | 'used', message: '...' }` with HTTP 422. `PhoneScannerPage.jsx` maps each reason to distinct Taglish instructions (including network/Wi-Fi unreachable and missing code in URL).
+  - **Strict single-session lifecycle & StrictMode protection**: In `PairPhoneDialog.jsx`, added `hasCreatedForOpenRef` and `isCreatingRef` guards to ensure exactly ONE session is created per dialog open. Added cleanup that terminates un-paired sessions (`endScannerSession`) on close and unmount.
+  - **Server-driven countdown**: Countdown now strictly computes remaining seconds from `res.pairing_expires_at`. At 0 seconds, displays "Paso na ang code" and automatically requests a fresh session.
+  - **Loading skeleton & error handling**: `PairPhoneDialog.jsx` renders an animated skeleton while creating, displays an error alert with plain HTTP status reason and a "Subukan ulit" button on rejection, and never renders a QR code or code display without a valid server `pairing_code`.
+  - **Localhost origin and API mismatch warnings**: Alerts user if app origin is localhost (preventing LAN phone scanning) or if API base resolves to localhost while app origin is on LAN.
+  - **API base and Vite proxy**: In `frontend/src/lib/api.js`, added explicit check for empty string (`VITE_API_URL=""`) returning `'/api'`. In `vite.config.js`, added `changeOrigin: true` and `secure: false`. In `frontend/package.json`, forced `VITE_DATA_SOURCE=api` in `dev:lan`.
+- Gates passed: Backend Pint clean, Pest 70/70 passed (323 assertions); Frontend lint clean, build clean.
+
+### F2 Log:
+- Implemented real end-to-end smoke verification harness:
+  - **Pest feature test**: `backend/tests/Feature/ScannerEndToEndTest.php` exercises the full end-to-end HTTP route lifecycle with real Sanctum bearer authentication and SQLite/MySQL transactions:
+    1. Owner creates POS session -> returns 201 with `data.id`, `data.pairing_code` (validated against regex `/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/`), and `data.pairing_expires_at` in the future.
+    2. Phone pairs with dashless lowercase variant -> returns 200 with 40-character device token.
+    3. Device submits scan for seeded product -> returns 201 with `data.event_id`, `data.status === 'found'`, and product payload.
+    4. Laptop polls session events -> returns 200 with event array including the scan event.
+    5. Re-pairing with already paired code fails with 422 `reason === 'used'`.
+    6. Second session creation automatically ends the first session.
+    7. Pairing with non-existent code fails with 422 `reason === 'not_found'`.
+    8. Pairing with ended/superseded session code fails with 422 `reason === 'expired'`.
+  - **Smoke script**: `scripts/smoke-pairing.mjs` (Node 20+ built-in `fetch`, zero extra dependencies):
+    - Added root npm script `smoke:pairing`.
+    - Tests complete flow against direct API (`http://127.0.0.1:8000`) and Vite reverse proxy (`https://127.0.0.1:5173`).
+    - Both Direct API and Vite Proxy passed with 100% success against running servers.
+- Gates passed: Backend Pest (71/71 tests passed, 380 assertions), Pint clean; `smoke:pairing` PASS on both Direct API and Vite Reverse Proxy.
+
+### F3 Log:
+- Implemented comprehensive frontend automated tests catching this class of pairing bug:
+  - **Laravel wrapped response fixture test**: Added test in `src/test/scan-flows.test.jsx` providing the exact `{ data: { ... } }` payload returned by Laravel `ScannerSessionController@store`. Verifies `PairPhoneDialog` unwraps the payload, displays the code `AHAW-YD4S` and QR code, and does not show an error.
+  - **Error state verification**: Verified that when `createScannerSession` rejects (e.g. 500 Network connection refused), `PairPhoneDialog` displays "Hindi makagawa ng code: Network connection refused", renders a "Subukan ulit" button, and completely hides the code container and QR instructions.
+  - **StrictMode single session invocation**: Wrapped `PairPhoneDialog` in `<React.StrictMode>` and asserted `createScannerSession` is called exactly once despite React 19 dev double-invocation lifecycle.
+  - **Server expiry countdown & auto-refresh**: Using `vi.useFakeTimers()`, initialized session with server `pairing_expires_at` 2 seconds in the future. Verified initial single call, advanced time past 0, and asserted auto-request for a new code (`toHaveBeenCalledTimes(2)`).
+  - **PhoneScannerPage failure reason assertions**: Tested `/scan` with simulated API responses returning 422 with `reason: 'not_found'`, `reason: 'expired'`, `reason: 'used'`, and empty code in query params (`/scan?code=`). Verified distinct Taglish explanations for each scenario.
+  - **API client relative base resolution**: Added unit test verifying `getApiBaseUrl()` resolves to relative `/api` when `VITE_API_URL=""`, without falling back to `http://localhost:8000/api`.
+- Gates passed:
+  - Vitest: 23/23 tests green in `src/test/scan-flows.test.jsx`.
+  - Frontend Lint: 0 errors.
+  - Frontend Build: compiled cleanly.
+  - Backend: Pint clean, Pest 71/71 passed (380 assertions).
+  - Smoke script: `npm run smoke:pairing` PASS on Direct API and Vite Reverse Proxy.
+
+### F4 Log (Final Gate, Merge & Tag):
+- **Final Verification**:
+  - Backend: `./vendor/bin/pint --test` clean, `php artisan test` passed 71/71 tests (380 assertions).
+  - Frontend: `npm run lint` 0 errors, `npm run build` clean production bundle.
+  - Mock data: `check-mockdata.mjs` passed with ₱0.0000 balance discrepancy.
+  - Smoke verification: `npm run smoke:pairing` (both Direct API and Vite HTTPS reverse proxy) passed all 6 steps cleanly.
+- **Documentation**:
+  - Updated `docs/BARCODE.md` with comprehensive Section 6: "Troubleshooting Pairing" covering prerequisites, local IP configuration, mobile self-signed SSL acceptance, smoke script usage, and failure message reference table.
+  - Updated `docs/CHANGELOG.md` with complete `[v1.1.1]` release notes.
+- **Root Causes Summary**:
+  1. *Primary Root Cause*: `apiClient` returns Axios `response.data` (`{ data: { ... } }`). `scannerService` was not unwrapping `.data`, so `res.pairing_code` evaluated to `undefined`. This caused `----` on screen, `?code=undefined` in QR code, 422 rejected pairing on phone, and fallback 9:59 countdown.
+  2. *Secondary Root Cause*: React StrictMode double-mounting in `PairPhoneDialog.jsx` created a second session that immediately ended session 1 in the database while session 1's code was on screen.
+  3. *Secondary Root Cause*: Lack of uppercase/dash-less code normalization in `ScannerDeviceController@pair` and missing machine-readable `reason` tags (`not_found`, `expired`, `used`).
+  4. *Secondary Root Cause*: API client base resolution for empty string `VITE_API_URL=""` and missing `changeOrigin: true` in Vite reverse proxy.
+- **Release**:
+  - Merged `fix/pairing` into `main` with `--no-ff`.
+  - Tagged `v1.1.1` and pushed to remote origin.

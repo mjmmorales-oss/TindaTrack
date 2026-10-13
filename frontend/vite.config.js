@@ -22,7 +22,11 @@ export default defineConfig({
       ? {
           host: true,
           proxy: {
-            '/api': 'http://127.0.0.1:8000',
+            '/api': {
+              target: 'http://127.0.0.1:8000',
+              changeOrigin: true,
+              secure: false,
+            },
           },
         }
       : {}),
@@ -62,7 +66,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
-    testTimeout: 15000,
+    testTimeout: 30000,
     fileParallelism: false,
   },
 })

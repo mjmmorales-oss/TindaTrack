@@ -6,7 +6,8 @@ export const barcodeService = {
    * GET /api/barcode-lookup/{barcode}
    */
   async lookupBarcode(barcode) {
-    return apiClient.get(`/barcode-lookup/${encodeURIComponent(barcode)}`)
+    const res = await apiClient.get(`/barcode-lookup/${encodeURIComponent(barcode)}`)
+    return res?.data ?? res
   },
 }
 

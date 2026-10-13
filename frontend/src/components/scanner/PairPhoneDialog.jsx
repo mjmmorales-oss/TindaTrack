@@ -12,8 +12,13 @@ import {
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { createScannerSession, getScannerSession } from '@/services/scanner.js'
+import {
+  createScannerSession,
+  getScannerSession,
+  endScannerSession,
+} from '@/services/scanner.js'
 import { notify } from '@/lib/notify'
+import { getApiBaseUrl } from '@/lib/api'
 
 /**
  * PairPhoneDialog
@@ -29,64 +34,134 @@ export function PairPhoneDialog({
   const [session, setSession] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [timeLeft, setTimeLeft] = useState(600) // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(null)
   const [pairedDevice, setPairedDevice] = useState(null)
   const [copied, setCopied] = useState(false)
 
   const pollingRef = useRef(null)
   const timerRef = useRef(null)
+  const hasCreatedForOpenRef = useRef(false)
+  const activeSessionRef = useRef(null)
+  const isPairedRef = useRef(false)
+  const isCreatingRef = useRef(false)
 
   const publicAppUrl =
     (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PUBLIC_APP_URL) ||
     (typeof window !== 'undefined' ? window.location.origin : '')
 
-  const isLocalhost =
+  const isLocalhostOrigin =
     typeof publicAppUrl === 'string' &&
     /localhost|127\.0\.0\.1/.test(publicAppUrl)
 
-  const startNewSession = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    setPairedDevice(null)
-    try {
-      const res = await createScannerSession({ mode })
-      setSession(res)
-      if (res?.pairing_expires_at) {
-        const diff = Math.max(
-          0,
-          Math.floor((new Date(res.pairing_expires_at).getTime() - Date.now()) / 1000),
-        )
-        setTimeLeft(diff)
-      } else {
-        setTimeLeft(600)
-      }
-    } catch (err) {
-      setError(err?.message || 'Hindi nakagawa ng bagong session.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [mode])
+  const apiBase = getApiBaseUrl()
+  const isApiLocalhost =
+    typeof apiBase === 'string' && /localhost|127\.0\.0\.1/.test(apiBase)
+  const isApiMismatch = !isLocalhostOrigin && isApiLocalhost
 
-  // Create session on open
+  const startNewSession = useCallback(
+    async (isManualRefresh = false) => {
+      if (isCreatingRef.current) return
+      isCreatingRef.current = true
+      setIsLoading(true)
+      setError(null)
+      setPairedDevice(null)
+      isPairedRef.current = false
+
+      // If replacing an active un-paired session, end it on the server
+      if (activeSessionRef.current?.id) {
+        const oldId = activeSessionRef.current.id
+        activeSessionRef.current = null
+        endScannerSession(oldId).catch(() => {})
+      }
+
+      try {
+        const raw = await createScannerSession({ mode })
+        const res = raw?.data ?? raw
+
+        if (!res?.pairing_code || !res?.id) {
+          throw new Error('Walang pairing code na ibinalik ang server.')
+        }
+
+        setSession(res)
+        activeSessionRef.current = res
+
+        if (res?.pairing_expires_at) {
+          const diff = Math.max(
+            0,
+            Math.floor((new Date(res.pairing_expires_at).getTime() - Date.now()) / 1000),
+          )
+          setTimeLeft(diff)
+        } else {
+          setTimeLeft(null)
+        }
+      } catch (err) {
+        if (import.meta.env?.DEV) {
+          console.error(
+            '[PairPhoneDialog] createScannerSession error:',
+            err?.status,
+            err?.message,
+            err,
+          )
+        }
+        setSession(null)
+        setTimeLeft(null)
+        activeSessionRef.current = null
+        const statusText = err?.status ? ` (HTTP ${err.status})` : ''
+        setError(`Hindi makagawa ng code: ${err?.message || 'Network error'}${statusText}`)
+      } finally {
+        setIsLoading(false)
+        isCreatingRef.current = false
+      }
+    },
+    [mode],
+  )
+
+  // Single session creation per dialog open (StrictMode-safe)
   useEffect(() => {
     if (open) {
-      startNewSession()
+      if (!hasCreatedForOpenRef.current) {
+        hasCreatedForOpenRef.current = true
+        startNewSession()
+      }
     } else {
+      hasCreatedForOpenRef.current = false
+      if (activeSessionRef.current?.id && !isPairedRef.current) {
+        const toEnd = activeSessionRef.current
+        activeSessionRef.current = null
+        endScannerSession(toEnd.id).catch(() => {})
+      }
       setSession(null)
       setPairedDevice(null)
+      setTimeLeft(null)
+      setError(null)
+      setIsLoading(false)
+      isPairedRef.current = false
       if (pollingRef.current) clearInterval(pollingRef.current)
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [open, startNewSession])
 
-  // Countdown timer
+  // Cleanup on unmount
   useEffect(() => {
-    if (!open || !session || pairedDevice) return
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (activeSessionRef.current?.id && !isPairedRef.current) {
+        endScannerSession(activeSessionRef.current.id).catch(() => {})
+      }
+    }
+  }, [])
+
+  // Countdown timer derived strictly from server expiry
+  useEffect(() => {
+    if (!open || !session || pairedDevice || timeLeft === null) return
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
+        if (prev === null) return null
         if (prev <= 1) {
           clearInterval(timerRef.current)
+          startNewSession(true)
           return 0
         }
         return prev - 1
@@ -94,16 +169,19 @@ export function PairPhoneDialog({
     }, 1000)
 
     return () => clearInterval(timerRef.current)
-  }, [open, session, pairedDevice])
+  }, [open, session, pairedDevice, timeLeft, startNewSession])
 
   // Status polling every 2s
   useEffect(() => {
-    if (!open || !session?.id || pairedDevice) return
+    const sessionId = session?.id || session?.data?.id
+    if (!open || !sessionId || pairedDevice) return
 
     pollingRef.current = setInterval(async () => {
       try {
-        const status = await getScannerSession(session.id)
+        const res = await getScannerSession(sessionId)
+        const status = res?.data ?? res
         if (status?.paired) {
+          isPairedRef.current = true
           setPairedDevice(status.device_label || 'Phone')
           clearInterval(pollingRef.current)
           notify.success('Nakakonekta na!', `Phone: ${status.device_label || 'Phone'}`)
@@ -120,19 +198,20 @@ export function PairPhoneDialog({
     return () => clearInterval(pollingRef.current)
   }, [open, session, pairedDevice, onPaired])
 
-  const pairingCode = session?.pairing_code || '----'
-  const scanUrl = session
-    ? `${publicAppUrl}/scan?code=${encodeURIComponent(session.pairing_code)}`
-    : ''
+  const pairingCode = session?.pairing_code || session?.data?.pairing_code || ''
+  const scanUrl =
+    session && pairingCode
+      ? `${publicAppUrl}/scan?code=${encodeURIComponent(pairingCode)}`
+      : ''
 
-  const minutes = Math.floor(timeLeft / 60)
-  const seconds = timeLeft % 60
+  const minutes = timeLeft !== null ? Math.floor(timeLeft / 60) : 0
+  const seconds = timeLeft !== null ? timeLeft % 60 : 0
   const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 
   const handleCopyCode = async () => {
-    if (!session?.pairing_code) return
+    if (!pairingCode) return
     try {
-      await navigator.clipboard.writeText(session.pairing_code)
+      await navigator.clipboard.writeText(pairingCode)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -149,7 +228,7 @@ export function PairPhoneDialog({
       className="max-w-md"
     >
       <div className="space-y-4 py-2">
-        {isLocalhost && (
+        {isLocalhostOrigin && (
           <Alert variant="warning" className="border-warning/40 bg-warning/10 text-xs">
             <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
             <AlertDescription className="text-warning-foreground font-medium">
@@ -159,10 +238,46 @@ export function PairPhoneDialog({
           </Alert>
         )}
 
-        {error && (
+        {isApiMismatch && (
           <Alert variant="destructive" className="text-xs">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <AlertDescription className="font-medium">
+              Naka-set ang API base sa <strong>localhost</strong> habang binubuksan mo ang app sa LAN.
+              Hindi maaabot ng phone ang server kung localhost ang API. Patakbuhin ang{' '}
+              <code className="bg-muted px-1 py-0.5 rounded">npm run dev:lan</code>.
+            </AlertDescription>
           </Alert>
+        )}
+
+        {error && (
+          <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-xl space-y-3 text-center">
+            <div className="text-destructive font-semibold text-sm">
+              {error}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Hindi nagawa ang pairing code. Tiyaking bukas ang backend server.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => startNewSession(true)}
+              className="gap-2 mx-auto"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Subukan ulit
+            </Button>
+          </div>
+        )}
+
+        {isLoading && !session && !error && (
+          <div className="flex flex-col items-center justify-center p-8 bg-muted/40 rounded-xl border border-border/80 space-y-3">
+            <div className="h-40 w-40 bg-muted/80 rounded-lg animate-pulse flex items-center justify-center text-muted-foreground">
+              <QrCode className="h-10 w-10 animate-spin" />
+            </div>
+            <div className="h-6 w-36 bg-muted/80 rounded-md animate-pulse mt-2" />
+            <p className="text-xs text-muted-foreground">Gumagawa ng bagong session...</p>
+          </div>
         )}
 
         {pairedDevice ? (
@@ -187,24 +302,18 @@ export function PairPhoneDialog({
               Simulan ang Pagtitinda
             </Button>
           </div>
-        ) : (
+        ) : session && pairingCode ? (
           <>
             {/* QR Code Container */}
             <div className="flex flex-col items-center justify-center p-4 bg-muted/40 rounded-xl border border-border/80">
-              {session && scanUrl ? (
-                <div className="p-3 bg-white rounded-lg shadow-xs">
-                  <QRCodeSVG
-                    value={scanUrl}
-                    size={180}
-                    level="M"
-                    includeMargin={false}
-                  />
-                </div>
-              ) : (
-                <div className="h-44 w-44 flex items-center justify-center text-muted-foreground">
-                  <QrCode className="h-10 w-10 animate-pulse" />
-                </div>
-              )}
+              <div className="p-3 bg-white rounded-lg shadow-xs">
+                <QRCodeSVG
+                  value={scanUrl}
+                  size={180}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
 
               {/* Pairing Code Display */}
               <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
@@ -241,7 +350,7 @@ export function PairPhoneDialog({
             {/* Expiry & Refresh */}
             <div className="flex items-center justify-between pt-1">
               <span className="text-xs text-muted-foreground">
-                {timeLeft > 0 ? (
+                {timeLeft !== null && timeLeft > 0 ? (
                   <>
                     Mapapaso sa loob ng: <strong className="text-foreground font-mono">{formattedTime}</strong>
                   </>
@@ -254,7 +363,7 @@ export function PairPhoneDialog({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={startNewSession}
+                onClick={() => startNewSession(true)}
                 disabled={isLoading}
                 className="text-xs h-8 gap-1.5"
               >
@@ -263,7 +372,7 @@ export function PairPhoneDialog({
               </Button>
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </ResponsiveDialog>
   )
