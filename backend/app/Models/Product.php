@@ -24,6 +24,11 @@ class Product extends Model
         'reorder_level',
         'is_active',
         'description',
+        'image_url',
+        'brand',
+        'size',
+        'source',
+        'source_ref',
     ];
 
     protected function casts(): array
@@ -50,5 +55,10 @@ class Product extends Model
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public function scannerEvents(): HasMany
+    {
+        return $this->hasMany(ScannerEvent::class);
     }
 }

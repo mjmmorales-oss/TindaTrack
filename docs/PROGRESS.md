@@ -238,7 +238,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 ## TindaTrack v1.1.0: Barcode Scanning, Open Food Facts Auto-Fill, and Phone-to-POS Live Sync (B0–B12)
 
 - [x] **B0 — Preflight**: Repository sanity, baseline test gates, branch creation `feat/barcode-scan`, barcode feature map.
-- [ ] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
+- [x] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
 - [ ] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
 - [ ] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
 - [ ] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
@@ -288,4 +288,16 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Layouts: `PublicLayout`, `AuthLayout`, `PosLayout`, `AppLayout`, `MinimalLayout`.
   - Route guards: `ProtectedRoute`, `GuestRoute`, `RoleRoute` (with `usePermissions().can(ability)`).
   - Public route `/scan` will be placed in a minimal layout without landing or app chrome.
+
+### B1 Log:
+- Created migration `2026_10_13_000001_add_catalog_fields_to_products_table.php` adding `image_url` (nullable 2048), `brand` (nullable), `size` (nullable), `source` (default `manual`), and `source_ref` (nullable).
+- Created migration `2026_10_13_000002_create_barcode_catalog_table.php` caching online and local barcode lookups (`barcode` string 32 primary, `found`, `source`, `name`, `brand`, `size`, `image_url`, `categories`, `fetched_at`, timestamps).
+- Created migration `2026_10_13_000003_create_scanner_sessions_table.php` managing paired phone sessions (`id` ulid primary, `user_id` FK cascade, `mode`, `pairing_code` unique, `pairing_expires_at`, `device_token_hash`, `device_label`, `paired_at`, `last_seen_at`, `ended_at`, `expires_at`, index `[user_id, ended_at]`).
+- Created migration `2026_10_13_000004_create_scanner_events_table.php` tracking scanned barcode items (`id` bigint, `scanner_session_id` FK ulid cascade, `barcode` string 32, `status`, `product_id` FK null on delete, `quantity`, `payload` json, `resolved_at`, `created_at`, index `[scanner_session_id, id]`).
+- Created Eloquent models: `BarcodeCatalog`, `ScannerSession` (with `HasUlids`), and `ScannerEvent` (`const UPDATED_AT = null`).
+- Updated `Product` model `$fillable` and `scannerEvents()` relation; updated `User` model with `scannerSessions()` relation.
+- Updated `ProductResource` to expose new catalog fields.
+- Updated `ProductController` store/update validation and auto-resolved unknown scan events on product creation with barcode.
+- Updated `ProductFactory` and `ReferenceDataSeeder` with new catalog fields.
+- Gates: Pest (41/41 passing), Pint clean, contract check (37/37 passing).
 
