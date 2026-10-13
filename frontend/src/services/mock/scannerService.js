@@ -208,27 +208,33 @@ export const scannerService = {
     const code = (data?.pairing_code || '').trim().toUpperCase()
     const label = data?.device_label || 'Phone'
 
+    const clean = code.replace(/[-\s]/g, '').toUpperCase()
+    const normalizedCode = clean.length === 8 ? `${clean.slice(0, 4)}-${clean.slice(4, 8)}` : code
+
     const sessions = loadSessions()
-    const session = sessions.find((s) => s.pairing_code === code)
+    const session = sessions.find((s) => s.pairing_code === normalizedCode)
 
-    if (!session || session.ended_at) {
+    if (!session) {
       throw new ApiError(422, {
-        message: 'Di-wasto o tapos na ang pairing code.',
-        errors: { pairing_code: ['Di-wasto o tapos na ang pairing code.'] },
-      })
-    }
-
-    if (new Date() > new Date(session.pairing_expires_at)) {
-      throw new ApiError(422, {
-        message: 'Paso na ang pairing code. Humingi ng bago sa POS.',
-        errors: { pairing_code: ['Paso na ang pairing code.'] },
+        reason: 'not_found',
+        message: 'Hindi nahanap ang pairing code. Tiyaking tama ang code mula sa POS.',
+        errors: { pairing_code: ['Hindi nahanap ang pairing code.'] },
       })
     }
 
     if (session.paired_at) {
       throw new ApiError(422, {
-        message: 'Nagamit na ang pairing code na ito.',
+        reason: 'used',
+        message: 'Nagamit na ang pairing code na ito. Humingi ng bago sa POS.',
         errors: { pairing_code: ['Nagamit na ang pairing code na ito.'] },
+      })
+    }
+
+    if (session.ended_at || new Date() > new Date(session.pairing_expires_at)) {
+      throw new ApiError(422, {
+        reason: 'expired',
+        message: 'Paso na ang pairing code. Humingi ng bago sa POS.',
+        errors: { pairing_code: ['Paso na ang pairing code.'] },
       })
     }
 

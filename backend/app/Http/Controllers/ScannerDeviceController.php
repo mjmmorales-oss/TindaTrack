@@ -26,21 +26,32 @@ class ScannerDeviceController extends Controller
             'device_label' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $code = strtoupper(trim($validated['pairing_code']));
+        $raw = strtoupper(trim($validated['pairing_code']));
+        $clean = str_replace(['-', ' '], '', $raw);
+        $code = strlen($clean) === 8
+            ? substr($clean, 0, 4).'-'.substr($clean, 4, 4)
+            : $raw;
 
-        $session = ScannerSession::where('pairing_code', $code)
-            ->whereNull('ended_at')
-            ->first();
+        $session = ScannerSession::where('pairing_code', $code)->first();
 
-        if (! $session || $session->pairing_expires_at->isPast()) {
+        if (! $session) {
             return response()->json([
-                'message' => 'Luma o paso na ang pairing code. Humingi ng bago sa POS.',
+                'reason' => 'not_found',
+                'message' => 'Hindi nahanap ang pairing code. Tiyaking tama ang code mula sa POS.',
             ], 422);
         }
 
         if ($session->paired_at !== null || $session->device_token_hash !== null) {
             return response()->json([
+                'reason' => 'used',
                 'message' => 'Nagamit na ang pairing code na ito. Humingi ng bago sa POS.',
+            ], 422);
+        }
+
+        if ($session->ended_at !== null || $session->pairing_expires_at->isPast()) {
+            return response()->json([
+                'reason' => 'expired',
+                'message' => 'Luma o paso na ang pairing code. Humingi ng bago sa POS.',
             ], 422);
         }
 

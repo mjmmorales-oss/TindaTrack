@@ -42,35 +42,40 @@ export const scannerService = {
    * POST /api/scanner-sessions
    */
   async createScannerSession(data = { mode: 'pos' }) {
-    return apiClient.post('/scanner-sessions', data)
+    const res = await apiClient.post('/scanner-sessions', data)
+    return res?.data ?? res
   },
 
   /**
    * GET /api/scanner-sessions/{id}
    */
   async getScannerSession(id) {
-    return apiClient.get(`/scanner-sessions/${id}`)
+    const res = await apiClient.get(`/scanner-sessions/${id}`)
+    return res?.data ?? res
   },
 
   /**
    * GET /api/scanner-sessions/{id}/events
    */
   async listScannerEvents(id, after = 0) {
-    return apiClient.get(`/scanner-sessions/${id}/events`, { after: after || 0 })
+    const res = await apiClient.get(`/scanner-sessions/${id}/events`, { after: after || 0 })
+    return res?.data ?? res
   },
 
   /**
    * DELETE /api/scanner-sessions/{id}
    */
   async endScannerSession(id) {
-    return apiClient.delete(`/scanner-sessions/${id}`)
+    const res = await apiClient.delete(`/scanner-sessions/${id}`)
+    return res?.data ?? res
   },
 
   /**
    * GET /api/scanner/unknown-barcodes
    */
   async getUnknownBarcodes() {
-    return apiClient.get('/scanner/unknown-barcodes')
+    const res = await apiClient.get('/scanner/unknown-barcodes')
+    return res?.data ?? res
   },
 
   // Device endpoints (X-Scanner-Token)
@@ -78,25 +83,28 @@ export const scannerService = {
    * POST /api/scanner/pair
    */
   async pairScanner(data) {
-    const result = await handleDeviceRequest(deviceAxios.post('/scanner/pair', data))
-    if (result?.token && typeof window !== 'undefined') {
-      sessionStorage.setItem(SCANNER_TOKEN_KEY, result.token)
+    const res = await handleDeviceRequest(deviceAxios.post('/scanner/pair', data))
+    const payload = res?.data ?? res
+    if (payload?.token && typeof window !== 'undefined') {
+      sessionStorage.setItem(SCANNER_TOKEN_KEY, payload.token)
     }
-    return result
+    return payload
   },
 
   /**
    * POST /api/scanner/scans
    */
   async sendScan(data) {
-    return handleDeviceRequest(deviceAxios.post('/scanner/scans', data))
+    const res = await handleDeviceRequest(deviceAxios.post('/scanner/scans', data))
+    return res?.data ?? res
   },
 
   /**
    * POST /api/scanner/heartbeat
    */
   async scannerHeartbeat() {
-    return handleDeviceRequest(deviceAxios.post('/scanner/heartbeat'))
+    const res = await handleDeviceRequest(deviceAxios.post('/scanner/heartbeat'))
+    return res?.data ?? res
   },
 }
 

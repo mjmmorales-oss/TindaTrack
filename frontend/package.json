@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:lan": "cross-env VITE_DEV_HTTPS=true VITE_API_URL= vite",
+    "dev:lan": "cross-env VITE_DEV_HTTPS=true VITE_DATA_SOURCE=api VITE_API_URL= vite",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",

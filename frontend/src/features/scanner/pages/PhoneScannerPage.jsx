@@ -83,8 +83,17 @@ export function PhoneScannerPage() {
 
   // Handle pairing action
   const handlePair = useCallback(async (codeToPair) => {
-    const code = (codeToPair || '').trim().toUpperCase()
-    if (code.length < 4) {
+    const rawCode = (codeToPair || '').trim()
+    if (!rawCode) {
+      setPairError('Walang pairing code na ibinigay. I-scan ang QR sa POS o i-type ang code.')
+      return
+    }
+
+    const clean = rawCode.replace(/[-\s]/g, '').toUpperCase()
+    const formattedCode =
+      clean.length === 8 ? `${clean.slice(0, 4)}-${clean.slice(4)}` : rawCode.toUpperCase()
+
+    if (clean.length < 4) {
       setPairError('Ilagay ang wastong 8-character pairing code.')
       return
     }
@@ -95,16 +104,18 @@ export function PhoneScannerPage() {
 
     try {
       const res = await pairScanner({
-        pairing_code: code,
+        pairing_code: formattedCode,
         device_label: getDeviceLabel(),
       })
 
+      const payload = res?.data ?? res
+
       const info = {
-        store_name: res.store_name || 'Tindahan ni Aling Nena',
-        user_name: res.user_name || 'Aling Nena',
-        mode: res.session?.mode || 'pos',
-        expires_at: res.session?.expires_at,
-        sessionId: res.session?.id,
+        store_name: payload.store_name || 'Tindahan ni Aling Nena',
+        user_name: payload.user_name || 'Aling Nena',
+        mode: payload.session?.mode || 'pos',
+        expires_at: payload.session?.expires_at,
+        sessionId: payload.session?.id,
       }
 
       setSessionInfo(info)
@@ -112,7 +123,25 @@ export function PhoneScannerPage() {
         sessionStorage.setItem(SCANNER_INFO_KEY, JSON.stringify(info))
       }
     } catch (err) {
-      setPairError(err?.message || 'Hindi maikonekta. Suriin ang pairing code.')
+      const reason = err?.response?.data?.reason || err?.data?.reason
+      const status = err?.status ?? err?.response?.status
+
+      if (reason === 'not_found') {
+        setPairError('Hindi nahanap ang pairing code. Tiyaking tama ang code mula sa POS.')
+      } else if (reason === 'expired') {
+        setPairError('Paso na ang pairing code. Humingi ng bagong code sa POS.')
+      } else if (reason === 'used') {
+        setPairError('Nagamit na ang pairing code na ito. Humingi ng bagong code sa POS.')
+      } else if (
+        status === 0 ||
+        (typeof navigator !== 'undefined' && !navigator.onLine) ||
+        err?.message?.includes('Network Error') ||
+        err?.message?.includes('Failed to fetch')
+      ) {
+        setPairError('Hindi maabot ang scanner server. Tiyaking nasa parehong Wi-Fi ang phone at laptop.')
+      } else {
+        setPairError(err?.message || 'Hindi maikonekta. Suriin ang pairing code.')
+      }
     } finally {
       setIsPairing(false)
     }
@@ -126,6 +155,8 @@ export function PhoneScannerPage() {
       const formatted = formatCode(queryCode)
       setCodeInput(formatted)
       handlePair(formatted)
+    } else if (searchParams.has('code') && !searchParams.get('code')?.trim() && !sessionInfo) {
+      setPairError('Walang pairing code na ibinigay sa link. I-scan ang QR sa POS o i-type ang code.')
     }
   }, [searchParams, sessionInfo, handlePair])
 
@@ -196,7 +227,8 @@ export function PhoneScannerPage() {
     setIsSending(true)
 
     try {
-      const res = await sendScan({ barcode: code, quantity })
+      const raw = await sendScan({ barcode: code, quantity })
+      const res = raw?.data ?? raw
       beep()
       vibrate(60)
 
