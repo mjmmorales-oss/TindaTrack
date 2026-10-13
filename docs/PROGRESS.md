@@ -430,5 +430,25 @@ Tracking implementation of Phase 3 tasks (T0–T11).
     - Automatically cleans up session tokens on user logout in `AuthContext.jsx`.
 - Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), contract & mock data checks passing.
 
+### B8 Log:
+- Implemented standalone Phone Scanner page (`src/features/scanner/pages/PhoneScannerPage.jsx`):
+  - Registered public route `/scan` with lazy-loading outside `AppLayout` and `PublicLayout` in `router.jsx` (zero app sidebar or landing header duplication).
+  - Unpaired state:
+    - Auto-pairs when query param `?code=XXXX-XXXX` is present with client device label (e.g., iPhone / Android phone).
+    - Manual 8-character input field (`formatCode` with auto-hyphen and auto-uppercase).
+    - Friendly error alerts for invalid, used, or expired codes.
+  - Paired state:
+    - Top bar shows store name, "Konektado kay {user_name}", mode badge (POS / Inventory), dark mode toggle, and "Idiskonekta" button.
+    - Full-screen `CameraScanner` running in continuous detection mode.
+    - Screen Wake Lock (`navigator.wakeLock.request('screen')`, re-acquired on tab visibility changes).
+    - 10-second periodic heartbeat via `scannerHeartbeat()`; handles 401 session expiration cleanly.
+    - Quantity stepper (default 1, stepper `[-]` / `[+]`, 1–99) to scan and send multiplied quantities in one pass.
+    - Audio `beep()` and haptic `vibrate()` on every successful scan.
+    - Result card displaying product name, price, stock warnings, and online catalog suggestions for inventory mode.
+    - "Huling na-scan" reverse-chronological list showing the last 10 scans with timestamps and status.
+  - Fully responsive and touch-optimized down to 360px width with lightweight 11.8 kB bundle footprint.
+- Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), all check scripts passing.
+
+
 
 

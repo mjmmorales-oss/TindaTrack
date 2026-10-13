@@ -1,0 +1,539 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'react-router'
+import {
+  Smartphone,
+  CheckCircle2,
+  AlertTriangle,
+  HelpCircle,
+  LogOut,
+  Minus,
+  Plus,
+  Clock,
+  ScanLine,
+  RefreshCw,
+} from 'lucide-react'
+import { CameraScanner } from '@/components/scanner/CameraScanner'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ModeToggle } from '@/components/common/ModeToggle'
+import { pairScanner, sendScan, scannerHeartbeat } from '@/services/scanner.js'
+import { beep, vibrate } from '@/lib/feedback'
+import { toMoney } from '@/lib/format'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+
+const SCANNER_TOKEN_KEY = 'tt_scanner_token'
+const SCANNER_INFO_KEY = 'tt_scanner_info'
+
+function getDeviceLabel() {
+  if (typeof navigator === 'undefined') return 'Phone'
+  const ua = navigator.userAgent || ''
+  if (/iPhone/i.test(ua)) return 'iPhone'
+  if (/iPad/i.test(ua)) return 'iPad'
+  if (/Android/i.test(ua)) return 'Android phone'
+  if (/Macintosh/i.test(ua)) return 'Mac'
+  if (/Windows/i.test(ua)) return 'PC'
+  return 'Phone'
+}
+
+function formatCode(val) {
+  const cleaned = (val || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8)
+  if (cleaned.length > 4) {
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`
+  }
+  return cleaned
+}
+
+/**
+ * PhoneScannerPage
+ * Lightweight, standalone full-screen mobile scanner page (/scan).
+ * No login required — paired via short pairing code.
+ */
+export function PhoneScannerPage() {
+  useDocumentTitle('TindaTrack Phone Scanner')
+  const [searchParams] = useSearchParams()
+
+  // State: session info
+  const [sessionInfo, setSessionInfo] = useState(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem(SCANNER_INFO_KEY)
+        const token = sessionStorage.getItem(SCANNER_TOKEN_KEY)
+        if (raw && token) return JSON.parse(raw)
+      } catch {
+        // ignore
+      }
+    }
+    return null
+  })
+
+  // State: pairing input
+  const [codeInput, setCodeInput] = useState('')
+  const [isPairing, setIsPairing] = useState(false)
+  const [pairError, setPairError] = useState(null)
+  const [sessionEndedMessage, setSessionEndedMessage] = useState(null)
+
+  // Scanning state
+  const [quantity, setQuantity] = useState(1)
+  const [isSending, setIsSending] = useState(false)
+  const [lastScan, setLastScan] = useState(null)
+  const [scanHistory, setScanHistory] = useState([])
+
+  const hasAutoPaired = useRef(false)
+
+  // Handle pairing action
+  const handlePair = useCallback(async (codeToPair) => {
+    const code = (codeToPair || '').trim().toUpperCase()
+    if (code.length < 4) {
+      setPairError('Ilagay ang wastong 8-character pairing code.')
+      return
+    }
+
+    setIsPairing(true)
+    setPairError(null)
+    setSessionEndedMessage(null)
+
+    try {
+      const res = await pairScanner({
+        pairing_code: code,
+        device_label: getDeviceLabel(),
+      })
+
+      const info = {
+        store_name: res.store_name || 'Tindahan ni Aling Nena',
+        user_name: res.user_name || 'Aling Nena',
+        mode: res.session?.mode || 'pos',
+        expires_at: res.session?.expires_at,
+        sessionId: res.session?.id,
+      }
+
+      setSessionInfo(info)
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(SCANNER_INFO_KEY, JSON.stringify(info))
+      }
+    } catch (err) {
+      setPairError(err?.message || 'Hindi maikonekta. Suriin ang pairing code.')
+    } finally {
+      setIsPairing(false)
+    }
+  }, [])
+
+  // Auto-pair on mount if ?code= is present
+  useEffect(() => {
+    const queryCode = searchParams.get('code')
+    if (queryCode && !hasAutoPaired.current && !sessionInfo) {
+      hasAutoPaired.current = true
+      const formatted = formatCode(queryCode)
+      setCodeInput(formatted)
+      handlePair(formatted)
+    }
+  }, [searchParams, sessionInfo, handlePair])
+
+  // Screen Wake Lock (prevent screen from sleeping while scanning)
+  useEffect(() => {
+    if (!sessionInfo) return
+    let wakeLock = null
+
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen')
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    requestWakeLock()
+    const handleVis = () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVis)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVis)
+      wakeLock?.release().catch(() => {})
+    }
+  }, [sessionInfo])
+
+  // Heartbeat every 10s
+  useEffect(() => {
+    if (!sessionInfo) return
+
+    const timer = setInterval(async () => {
+      try {
+        await scannerHeartbeat()
+      } catch (err) {
+        const status = err?.status ?? err?.response?.status
+        if (status === 401) {
+          disconnect('Natapos na ang session. Mag-scan ng bagong QR.')
+        }
+      }
+    }, 10000)
+
+    return () => clearInterval(timer)
+  }, [sessionInfo])
+
+  // Disconnect function
+  const disconnect = (message = null) => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(SCANNER_TOKEN_KEY)
+      sessionStorage.removeItem(SCANNER_INFO_KEY)
+    }
+    setSessionInfo(null)
+    setLastScan(null)
+    setScanHistory([])
+    if (message) {
+      setSessionEndedMessage(message)
+    }
+  }
+
+  // Handle scanned code from CameraScanner
+  const handleDetected = async (code) => {
+    if (!sessionInfo || isSending) return
+    setIsSending(true)
+
+    try {
+      const res = await sendScan({ barcode: code, quantity })
+      beep()
+      vibrate(60)
+
+      const resultEntry = {
+        id: Date.now(),
+        barcode: code,
+        status: res.status,
+        product: res.product,
+        catalog: res.catalog,
+        quantity,
+        time: new Date().toLocaleTimeString('en-PH', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+      }
+
+      setLastScan(resultEntry)
+      setScanHistory((prev) => [resultEntry, ...prev].slice(0, 10))
+    } catch (err) {
+      const status = err?.status ?? err?.response?.status
+      if (status === 401) {
+        disconnect('Natapos na ang session. Mag-scan ng bagong QR.')
+      } else {
+        setLastScan({
+          id: Date.now(),
+          barcode: code,
+          status: 'error',
+          error: err?.message || 'Hindi naipadala ang scan.',
+          time: new Date().toLocaleTimeString('en-PH'),
+        })
+      }
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  return (
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground antialiased selection:bg-primary/20">
+      {/* Top Header */}
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-background/95 px-4 backdrop-blur-md">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shrink-0 shadow-xs">
+            <Smartphone className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold leading-tight truncate">
+              {sessionInfo?.store_name || 'TindaTrack Scanner'}
+            </h1>
+            <p className="text-[11px] text-muted-foreground leading-tight truncate">
+              {sessionInfo
+                ? `Konektado kay ${sessionInfo.user_name}`
+                : 'Wireless Phone Scanner'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {sessionInfo && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary uppercase tracking-wider border border-primary/20">
+              {sessionInfo.mode === 'inventory' ? 'Inventory' : 'POS'}
+            </span>
+          )}
+
+          {sessionInfo && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => disconnect()}
+              className="h-8 text-xs text-muted-foreground hover:text-destructive px-2"
+              title="Idiskonekta"
+            >
+              <LogOut className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Idiskonekta</span>
+            </Button>
+          )}
+
+          <ModeToggle />
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col p-4 max-w-lg mx-auto w-full">
+        {!sessionInfo ? (
+          /* UNPAIRED STATE */
+          <div className="flex-1 flex flex-col items-center justify-center py-8 space-y-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-xs">
+              <ScanLine className="h-8 w-8 animate-pulse" />
+            </div>
+
+            <div className="space-y-1.5 max-w-sm">
+              <h2 className="text-xl font-bold tracking-tight">Ikonekta ang Phone sa POS</h2>
+              <p className="text-xs text-muted-foreground">
+                I-type ang 8-character pairing code na makikita sa screen ng laptop o POS terminal.
+              </p>
+            </div>
+
+            {sessionEndedMessage && (
+              <Alert variant="warning" className="text-xs text-left max-w-sm border-warning/40 bg-warning/10">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-warning-foreground font-medium">
+                  {sessionEndedMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {pairError && (
+              <Alert variant="destructive" className="text-xs text-left max-w-sm">
+                <AlertDescription>{pairError}</AlertDescription>
+              </Alert>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handlePair(codeInput)
+              }}
+              className="w-full max-w-sm space-y-3"
+            >
+              <div className="space-y-1 text-left">
+                <label htmlFor="pairing-code-input" className="text-xs font-semibold text-muted-foreground">
+                  Pairing Code
+                </label>
+                <Input
+                  id="pairing-code-input"
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(formatCode(e.target.value))}
+                  placeholder="Hal. ABCD-EFGH"
+                  className="h-12 text-center text-xl font-mono font-bold tracking-widest uppercase bg-card border-border"
+                  maxLength={9}
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isPairing || codeInput.length < 4}
+                className="w-full h-12 text-sm font-bold gap-2"
+              >
+                {isPairing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Kumokonekta...
+                  </>
+                ) : (
+                  'Ikonekta ang Phone'
+                )}
+              </Button>
+            </form>
+
+            <div className="text-xs text-muted-foreground max-w-xs space-y-1 bg-muted/40 p-3 rounded-lg border border-border">
+              <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">Paano ikonekta?</p>
+              <p>Pumunta sa POS sa laptop, pindutin ang <strong>"Ikonekta ang Phone"</strong>, at i-scan ang QR o kopyahin ang code.</p>
+            </div>
+          </div>
+        ) : (
+          /* PAIRED STATE */
+          <div className="flex-1 flex flex-col space-y-4">
+            {/* Camera Viewfinder */}
+            <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm">
+              <CameraScanner
+                onDetected={handleDetected}
+                className="w-full aspect-[4/3] sm:aspect-video"
+              />
+            </div>
+
+            {/* Quantity Stepper Row */}
+            <div className="flex items-center justify-between bg-card p-3 rounded-xl border border-border/80 shadow-xs">
+              <div className="space-y-0.5">
+                <p className="text-xs font-semibold text-foreground">Dami (Quantity)</p>
+                <p className="text-[11px] text-muted-foreground">Dami na ipapadala kada scan</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 rounded-lg"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  aria-label="Bawasan ang dami"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+
+                <span className="font-mono text-base font-bold w-8 text-center tabular-nums">
+                  {quantity}
+                </span>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 rounded-lg"
+                  onClick={() => setQuantity((q) => Math.min(99, q + 1))}
+                  aria-label="Dagdagan ang dami"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Instant Scan Result Card */}
+            {lastScan && (
+              <div
+                className={`p-3.5 rounded-xl border transition-all ${
+                  lastScan.status === 'found'
+                    ? 'bg-success/10 border-success/30 text-success-foreground'
+                    : lastScan.status === 'out_of_stock'
+                    ? 'bg-warning/10 border-warning/30 text-warning-foreground'
+                    : 'bg-muted/60 border-border text-foreground'
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <div className="mt-0.5 shrink-0">
+                    {lastScan.status === 'found' && (
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                    )}
+                    {lastScan.status === 'out_of_stock' && (
+                      <AlertTriangle className="h-5 w-5 text-warning" />
+                    )}
+                    {lastScan.status === 'unknown' && (
+                      <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    {lastScan.status === 'found' && (
+                      <>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="text-sm font-bold leading-tight truncate">
+                            {lastScan.product?.name || 'Produkto'}
+                          </p>
+                          <span className="text-sm font-black font-mono shrink-0 text-success">
+                            {toMoney(lastScan.product?.price || 0)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Naipadala sa POS ✓ (x{lastScan.quantity})
+                        </p>
+                      </>
+                    )}
+
+                    {lastScan.status === 'out_of_stock' && (
+                      <>
+                        <p className="text-sm font-bold leading-tight">
+                          {lastScan.product?.name || 'Ubos na ang stock'}
+                        </p>
+                        <p className="text-xs text-warning-foreground">
+                          Babala: Walang stock ang produktong ito sa tindahan.
+                        </p>
+                      </>
+                    )}
+
+                    {lastScan.status === 'unknown' && (
+                      <>
+                        <p className="text-sm font-bold leading-tight">
+                          Hindi pa naka-rehistro ang barcode
+                        </p>
+                        <p className="text-xs font-mono text-muted-foreground">
+                          {lastScan.barcode}
+                        </p>
+                        {sessionInfo.mode === 'inventory' && lastScan.catalog?.name && (
+                          <p className="text-xs text-primary font-medium mt-1">
+                            Nakita online: {lastScan.catalog.name}
+                          </p>
+                        )}
+                      </>
+                    )}
+
+                    {lastScan.status === 'error' && (
+                      <p className="text-xs text-destructive font-medium">
+                        {lastScan.error}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Scans History (Last 10) */}
+            {scanHistory.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold px-1">
+                  <span>Huling na-scan ({scanHistory.length})</span>
+                  <span className="flex items-center gap-1 font-normal text-[11px]">
+                    <Clock className="h-3 w-3" />
+                    Real-time feed
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
+                  {scanHistory.map((scan) => (
+                    <div
+                      key={scan.id}
+                      className="flex items-center justify-between px-3 py-2 bg-card rounded-lg border border-border/70 text-xs"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <p className="font-semibold text-foreground truncate">
+                          {scan.product?.name || `Barcode: ${scan.barcode}`}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {scan.time} • x{scan.quantity}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        {scan.status === 'found' ? (
+                          <span className="text-[11px] font-bold text-success font-mono">
+                            {toMoney(scan.product?.price || 0)}
+                          </span>
+                        ) : scan.status === 'out_of_stock' ? (
+                          <span className="text-[10px] font-semibold text-warning">
+                            Out of stock
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">
+                            Hindi kilala
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+export default PhoneScannerPage

@@ -139,6 +139,11 @@ const NotFoundPage = lazy(() =>
     default: m.NotFoundPage,
   })),
 )
+const PhoneScannerPage = lazy(() =>
+  import('@/features/scanner/pages/PhoneScannerPage').then((m) => ({
+    default: m.PhoneScannerPage,
+  })),
+)
 
 function SuspenseWrap({ children }) {
   return (
@@ -170,6 +175,17 @@ export const routes = [
         ),
       },
     ],
+  },
+
+  // Standalone Phone Scanner route (public, no app chrome)
+  {
+    path: 'scan',
+    element: (
+      <SuspenseWrap>
+        <PhoneScannerPage />
+      </SuspenseWrap>
+    ),
+    errorElement: <RouteErrorBoundary />,
   },
 
   // Guest Auth routes
