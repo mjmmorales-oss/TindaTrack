@@ -343,3 +343,37 @@ test('unknown barcodes endpoint returns distinct barcodes and counts for owner',
     expect($barcodes['UNKNOWN-ABC'])->toBe(2);
     expect($barcodes['UNKNOWN-XYZ'])->toBe(1);
 });
+
+test('creating a product with a barcode marks matching unresolved scanner events as resolved', function () {
+    $session = ScannerSession::create([
+        'user_id' => $this->owner->id,
+        'mode' => 'pos',
+        'pairing_code' => 'UNKN-0009',
+        'pairing_expires_at' => now()->addMinutes(10),
+        'expires_at' => now()->addHours(12),
+    ]);
+
+    $event = ScannerEvent::create([
+        'scanner_session_id' => $session->id,
+        'barcode' => '4800016054111',
+        'status' => 'unknown',
+        'created_at' => now()->subMinutes(10),
+    ]);
+
+    $category = Category::factory()->create(['name' => 'Noodles']);
+
+    $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->postJson('/api/products', [
+            'name' => 'Pancit Canton Kalamansi',
+            'sku' => 'TEST-SKU-999',
+            'barcode' => '4800016054111',
+            'category_id' => $category->id,
+            'price' => 18,
+            'cost_price' => 15,
+        ])
+        ->assertStatus(201);
+
+    $event->refresh();
+    expect($event->resolved_at)->not->toBeNull();
+    expect($event->product_id)->not->toBeNull();
+});

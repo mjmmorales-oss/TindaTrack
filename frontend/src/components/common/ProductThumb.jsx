@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 const sizeStyles = {
@@ -22,11 +23,12 @@ function getProductInitials(name = '') {
 }
 
 /**
- * Fast, offline-friendly product thumbnail tile with category styling and initials.
+ * Fast, offline-friendly product thumbnail tile with image support and initials fallback.
  *
  * @component
  * @param {object} props
  * @param {string} props.name - Product name
+ * @param {string} [props.imageUrl] - Product image URL
  * @param {string} [props.categoryColor='bg-primary/15 text-primary'] - Category background/text classes
  * @param {React.ComponentType<{ className?: string }>} [props.categoryIcon] - Optional category icon
  * @param {string} [props.initials] - Custom initials override
@@ -36,14 +38,37 @@ function getProductInitials(name = '') {
  */
 export function ProductThumb({
   name = '',
+  imageUrl,
   categoryColor,
   categoryIcon: CategoryIcon,
   initials,
   size = 'md',
   className,
 }) {
+  const [imgError, setImgError] = useState(false)
   const letters = initials || getProductInitials(name)
   const defaultColors = 'bg-primary/10 text-primary border border-primary/20'
+
+  if (imageUrl && !imgError) {
+    return (
+      <div
+        className={cn(
+          'relative flex shrink-0 items-center justify-center overflow-hidden border border-border/80 bg-muted/40 select-none',
+          sizeStyles[size] || sizeStyles.md,
+          className,
+        )}
+        aria-hidden="true"
+      >
+        <img
+          src={imageUrl}
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={() => setImgError(true)}
+          loading="lazy"
+        />
+      </div>
+    )
+  }
 
   return (
     <div

@@ -243,10 +243,10 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
 - [x] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
 - [x] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
-- [ ] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
-- [ ] **B7 — POS Integration**: POS header actions ("I-scan", "Ikonekta ang Phone"), wedge support, `handleScannedCode`, `PairPhoneDialog`, phone scanner badge & subscription.
-- [ ] **B8 — Phone Scanner Page (`/scan`)**: Public minimal layout, pair flow, continuous camera scan, scan feedback, last scans list, wake lock, heartbeat.
-- [ ] **B9 — Owner Product Flows**: Product form auto-fill with OFF data & attribution, homemade internal barcode generator & print label, Products page quick scan & unknown barcodes panel, inventory restock scan.
+- [x] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
+- [x] **B7 — POS Integration**: POS header actions ("I-scan", "Ikonekta ang Phone"), wedge support, `handleScannedCode`, `PairPhoneDialog`, phone scanner badge & subscription.
+- [x] **B8 — Phone Scanner Page (`/scan`)**: Public minimal layout, pair flow, continuous camera scan, scan feedback, last scans list, wake lock, heartbeat.
+- [x] **B9 — Owner Product Flows**: Product form auto-fill with OFF data & attribution, homemade internal barcode generator & print label, Products page quick scan & unknown barcodes panel, inventory restock scan.
 - [ ] **B10 — Frontend Tests**: Parity fixtures, wedge tests, realtime polling driver, POS scan handler, PairPhoneDialog, /scan page, ProductForm, CameraScanner, layout integrity.
 - [ ] **B11 — Dev LAN/HTTPS Mode, Env & Docs**: `@vitejs/plugin-basic-ssl`, `npm run dev:lan`, `docs/BARCODE.md`, `docs/DEPLOY.md`, `README.md`, `CHANGELOG.md`.
 - [ ] **B12 — Final Gate, Merge, Tag**: All gates clean, runtime-safety scan, Tinker smoke test, merge `feat/barcode-scan` to `main`, tag `v1.1.0`.
@@ -449,6 +449,25 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Fully responsive and touch-optimized down to 360px width with lightweight 11.8 kB bundle footprint.
 - Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), all check scripts passing.
 
-
-
-
+### B9 Log:
+- Implemented owner product workflows:
+  - `ProductFormDialog.jsx`:
+    - Barcode field enhanced with "I-scan" (opens `ScannerSheet` in single mode) and "Hanapin online" (`lookupBarcode`).
+    - Auto-lookup triggered on camera scan of valid GTIN in create mode.
+    - Local duplicate detection: warns "Naka-rehistro na ito: {name}" with direct edit option and prevents saving duplicate barcode.
+    - Online catalog auto-fill: prefills name (formatted as `{brand} {name} {size}`), brand, size, image_url, and suggested category while preserving user-entered values; keeps price/cost/stock manual and auto-focuses price input.
+    - Open Food Facts ODbL attribution badge with outbound link.
+    - Image preview supporting pasted URLs with graceful fallback.
+    - "Gumawa ng sariling barcode": generates internal EAN-13 starting with `20` using `Barcode.makeInternal()`.
+    - "I-print ang label": opens `PrintLabelsDialog` using `JsBarcode` SVG in a printable grid (12 copies default, print CSS hiding app chrome).
+  - `ProductsPage.jsx`:
+    - Passed `imageUrl={p.image_url}` to `ProductThumb` in both desktop table and mobile cards.
+    - Added "I-scan para magdagdag" action button opening camera scanner -> online lookup -> prefilled product creation dialog.
+    - Added dismissible "Mga barcode na hindi pa naka-rehistro (N)" panel querying `/api/scanner/unknown-barcodes` with instant "Irehistro" CTA.
+  - `AdjustStockDialog.jsx`:
+    - Added camera scan button and `useBarcodeWedge` hardware scanner support to product picker.
+  - `InventoryPage.jsx`:
+    - Added "I-scan gamit ang Phone" action button launching `PairPhoneDialog` in `mode="inventory"`.
+    - Real-time subscription queues/opens `AdjustStockDialog` with scanned product preselected, or routes unknown barcodes to prefilled product create dialog.
+  - Backend: Added Pest test asserting `ScannerEvent` records with status `unknown` are automatically resolved (`resolved_at`) when a product with that barcode is created.
+- Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), Pest (70/70 tests passing, 323 assertions), Pint clean, all check scripts passing.

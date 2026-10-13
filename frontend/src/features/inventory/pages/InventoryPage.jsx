@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router'
 import {
   AlertTriangle,
@@ -9,6 +9,7 @@ import {
   PackagePlus,
   Printer,
   RotateCcw,
+  Smartphone,
   Warehouse,
 } from 'lucide-react'
 import {
@@ -45,6 +46,12 @@ import { useTableParams } from '@/components/data-table/useTableParams'
 import { BulkRestockDialog } from '@/features/inventory/components/BulkRestockDialog'
 import { PrintableRestockList } from '@/features/inventory/components/PrintableRestockList'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
+import { PairPhoneDialog } from '@/components/scanner/PairPhoneDialog'
+import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { DEFAULT_PRODUCT } from '@/features/products/schemas'
+import { subscribeToScanner } from '@/lib/realtime'
+import { barcodeService } from '@/services/barcodeService'
+import { notify } from '@/lib/notify'
 import {
   useInventoryOverview,
   useStockMovements,
@@ -112,6 +119,64 @@ export function InventoryPage() {
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
   const [singleAdjustProduct, setSingleAdjustProduct] = useState(null)
   const [singleAdjustOpen, setSingleAdjustOpen] = useState(false)
+  const [pairDialogOpen, setPairDialogOpen] = useState(false)
+  const [pairedSession, setPairedSession] = useState(null)
+  const [productFormOpen, setProductFormOpen] = useState(false)
+  const [createProductData, setCreateProductData] = useState(null)
+
+  // Realtime subscription for inventory mode phone scanning
+  useEffect(() => {
+    if (!pairedSession?.id) return
+    const unsubscribe = subscribeToScanner(pairedSession.id, {
+      onEvent: async (event) => {
+        if (!event) return
+        if (event.payload?.id) {
+          // Product found locally: open adjust stock dialog preselected
+          setSingleAdjustProduct(event.payload)
+          setSingleAdjustOpen(true)
+          notify.info(`Na-scan mula sa Phone: ${event.payload.name}`)
+        } else if (event.status === 'unknown' && event.barcode) {
+          // Unknown barcode: route to product create flow prefilled
+          try {
+            const res = await barcodeService.lookupBarcode(event.barcode)
+            const cat = res?.data?.catalog
+            if (cat?.found) {
+              const combinedName =
+                cat.brand && cat.name && !cat.name.toLowerCase().includes(cat.brand.toLowerCase())
+                  ? `${cat.brand} ${cat.name}${cat.size ? ' ' + cat.size : ''}`
+                  : `${cat.name || ''}${cat.size ? ' ' + cat.size : ''}`.trim()
+              setCreateProductData({
+                ...DEFAULT_PRODUCT,
+                barcode: event.barcode,
+                name: combinedName || cat.name || '',
+                brand: cat.brand || '',
+                size: cat.size || '',
+                image_url: cat.image_url || '',
+                category_id: cat.suggested_category_id ? String(cat.suggested_category_id) : '',
+                source: cat.source || 'openfoodfacts',
+                source_ref: event.barcode,
+              })
+            } else {
+              setCreateProductData({
+                ...DEFAULT_PRODUCT,
+                barcode: event.barcode,
+              })
+            }
+          } catch {
+            setCreateProductData({
+              ...DEFAULT_PRODUCT,
+              barcode: event.barcode,
+            })
+          }
+          setProductFormOpen(true)
+          notify.warning('Hindi kilalang produkto', `I-rehistro ang barcode ${event.barcode}`)
+        }
+      },
+    })
+    return () => {
+      unsubscribe()
+    }
+  }, [pairedSession?.id])
 
   const selectedProductsList = useMemo(() => {
     return runningLowProducts.filter((p) => selectedLowItems[p.id])
@@ -183,7 +248,16 @@ export function InventoryPage() {
         title="Pamamahala sa Imbentaryo (Stock Control)"
         description="Pagsusuri sa halaga ng mga paninda, pag-restock sa mga paubos na stock, at audit trail ng mga paggalaw."
         actions={
-          <div className="flex items-center gap-2 print:hidden w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 print:hidden w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPairDialogOpen(true)}
+              className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5"
+            >
+              <Smartphone className="h-4 w-4" />
+              {pairedSession ? '📱 Phone Aktibo' : 'I-scan gamit ang Phone'}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -624,6 +698,25 @@ export function InventoryPage() {
         product={singleAdjustProduct}
         open={singleAdjustOpen}
         onOpenChange={setSingleAdjustOpen}
+        onSuccess={handleRefreshAll}
+      />
+
+      {/* Pair Phone Dialog for Inventory Scanning */}
+      <PairPhoneDialog
+        open={pairDialogOpen}
+        onOpenChange={setPairDialogOpen}
+        mode="inventory"
+        onPaired={(sess) => {
+          setPairedSession(sess)
+        }}
+      />
+
+      {/* Product Create Dialog for Unknown Barcodes scanned from phone */}
+      <ProductFormDialog
+        open={productFormOpen}
+        onOpenChange={setProductFormOpen}
+        product={createProductData}
+        categories={categories}
         onSuccess={handleRefreshAll}
       />
     </PageContainer>
