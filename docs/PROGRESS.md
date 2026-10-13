@@ -234,3 +234,58 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Ran full backend test suite: Pest (41/41 tests green, 206 assertions), Pint (clean), `tindatrack:check` (100% reconciled).
 - Updated `docs/CHANGELOG.md` and `docs/PROGRESS.md`. Merged to `main` and tagged `v1.0.4`.
 
+---
+## TindaTrack v1.1.0: Barcode Scanning, Open Food Facts Auto-Fill, and Phone-to-POS Live Sync (B0–B12)
+
+- [x] **B0 — Preflight**: Repository sanity, baseline test gates, branch creation `feat/barcode-scan`, barcode feature map.
+- [ ] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
+- [ ] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
+- [ ] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
+- [ ] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
+- [ ] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
+- [ ] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
+- [ ] **B7 — POS Integration**: POS header actions ("I-scan", "Ikonekta ang Phone"), wedge support, `handleScannedCode`, `PairPhoneDialog`, phone scanner badge & subscription.
+- [ ] **B8 — Phone Scanner Page (`/scan`)**: Public minimal layout, pair flow, continuous camera scan, scan feedback, last scans list, wake lock, heartbeat.
+- [ ] **B9 — Owner Product Flows**: Product form auto-fill with OFF data & attribution, homemade internal barcode generator & print label, Products page quick scan & unknown barcodes panel, inventory restock scan.
+- [ ] **B10 — Frontend Tests**: Parity fixtures, wedge tests, realtime polling driver, POS scan handler, PairPhoneDialog, /scan page, ProductForm, CameraScanner, layout integrity.
+- [ ] **B11 — Dev LAN/HTTPS Mode, Env & Docs**: `@vitejs/plugin-basic-ssl`, `npm run dev:lan`, `docs/BARCODE.md`, `docs/DEPLOY.md`, `README.md`, `CHANGELOG.md`.
+- [ ] **B12 — Final Gate, Merge, Tag**: All gates clean, runtime-safety scan, Tinker smoke test, merge `feat/barcode-scan` to `main`, tag `v1.1.0`.
+
+### B0 Log:
+- Verified repository status: branch `fix/ui-polish` was already merged into `main`.
+- Created branch `feat/barcode-scan` from `main`.
+- Baseline test gates:
+  - Frontend: 9 test files, 123 tests passing (Vitest); ESLint 0 errors; build clean; contract checks 37/37 routes matching; mock services 10/10 matching; mock data ₱0.0000 discrepancy.
+  - Backend: 41 tests passing (Pest, 206 assertions); Pint clean.
+
+### Barcode feature map:
+- **Products table, model, resource, form requests**:
+  - `products` table has a `barcode` column (`nullable`, `unique`).
+  - Columns `image_url`, `brand`, `size`, `source`, `source_ref` are missing and will be added in B1.
+  - `Product` model has `$fillable` containing `barcode`, lacks the new columns.
+  - `ProductResource` returns `barcode`, needs `image_url`, `brand`, `size`, `source`, `source_ref`.
+  - `ProductController` validates `barcode` directly (`nullable`, `string`, `max:50`, `unique`).
+- **Categories in ReferenceDataSeeder**:
+  - Seeded from `database/data/categories.json` with 10 categories:
+    1: Drinks (`DRK`), 2: Coffee & Milk (`COF`), 3: Instant Noodles (`NOO`), 4: Canned Goods (`CAN`), 5: Snacks (`SNA`), 6: Bread (`BRD`), 7: Condiments (`CND`), 8: Rice & Cooking (`RCE`), 9: Personal Care (`PER`), 10: Household (`HOU`).
+- **POS Terminal**:
+  - `PosPage.jsx` has search input that already queries `name`, `sku`, and `barcode`.
+  - Adding to cart uses `useCartStore((state) => state.add)(product, quantity)`.
+  - Header is located in `PosLayout.jsx` with dashboard link, store title, clock, and user avatar.
+- **AdjustStockDialog**:
+  - Located in `src/features/products/components/AdjustStockDialog.jsx`.
+  - Implements Command + Popover product picker with SKU and barcode search when `product` is null, and read-only card when `product` is passed.
+- **ProductFormDialog & Zod Schema**:
+  - Form dialog in `src/features/products/components/ProductFormDialog.jsx`.
+  - Schema in `src/features/products/schemas.js` (`productSchema` and `DEFAULT_PRODUCT`).
+  - Currently validates barcode as optional regex `^\d{8,13}$`.
+- **API Client & Auth Tokens**:
+  - `src/lib/api.js` configures Axios with `VITE_API_URL || 'http://localhost:8000/api'`.
+  - Reads Sanctum bearer token from `localStorage.getItem('tindatrack_token')`.
+  - Services use `apiClient.js` wrapping `api` calls with standard `ApiError` normalization.
+- **Routes & Layouts**:
+  - Router in `src/app/router.jsx`.
+  - Layouts: `PublicLayout`, `AuthLayout`, `PosLayout`, `AppLayout`, `MinimalLayout`.
+  - Route guards: `ProtectedRoute`, `GuestRoute`, `RoleRoute` (with `usePermissions().can(ability)`).
+  - Public route `/scan` will be placed in a minimal layout without landing or app chrome.
+
