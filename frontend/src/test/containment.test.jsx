@@ -79,4 +79,18 @@ describe('Layout Containment and Responsive Shell Guard Tests', () => {
       })
     })
   })
+
+  it('ensures /scan does not render the app sidebar or landing header', async () => {
+    const { container } = renderRoute('/scan')
+
+    await waitFor(() => {
+      expect(screen.getByText(/Ikonekta ang Phone sa POS/i)).toBeInTheDocument()
+    })
+
+    const sidebar = container.querySelector('[data-slot="sidebar"]')
+    expect(sidebar).toBeNull()
+
+    const landingHeader = container.querySelector('header.landing-header')
+    expect(landingHeader).toBeNull()
+  })
 })

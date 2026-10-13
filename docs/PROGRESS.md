@@ -471,3 +471,15 @@ Tracking implementation of Phase 3 tasks (T0–T11).
     - Real-time subscription queues/opens `AdjustStockDialog` with scanned product preselected, or routes unknown barcodes to prefilled product create dialog.
   - Backend: Added Pest test asserting `ScannerEvent` records with status `unknown` are automatically resolved (`resolved_at`) when a product with that barcode is created.
 - Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), Pest (70/70 tests passing, 323 assertions), Pint clean, all check scripts passing.
+
+### B10 Log:
+- Implemented comprehensive frontend test suite covering all barcode, scanner, and pairing flows:
+  - Extended layout guard in `src/test/containment.test.jsx` ensuring `/scan` does not render app sidebar or landing header.
+  - Created `src/test/scan-flows.test.jsx` with 14 automated tests:
+    - POS scan handler: adds found item to cart, increments quantity on subsequent scans, blocks out-of-stock items, respects stock limits.
+    - `PairPhoneDialog`: renders pairing code and QR code, displays localhost warning when accessing via local hostname.
+    - `PhoneScannerPage`: auto-pairs from `?code=XXXX-XXXX` URL parameter, renders scan result cards with product info, handles 401 expired sessions with user-friendly alerts.
+    - `CameraScanner`: displays HTTPS requirement banner in insecure contexts, manual barcode entry properly invokes `onDetected`.
+    - `ProductFormDialog`: internal barcode generator creates valid EAN-13 starting with `20`, online catalog lookup auto-fills empty fields without overwriting user input, duplicate local barcode prevents submission, unknown barcode displays manual fallback notice.
+- Gates: ESLint clean, production build clean, Vitest (151/151 tests green across 12 test files), Pest (70/70 tests green), Pint clean, all check scripts passing.
+
