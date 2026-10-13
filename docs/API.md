@@ -30,6 +30,7 @@ Not found errors: 404 `{ message: 'Resource not found.' }`.
 | `productService.remove(id)` | DELETE | `/api/products/{id}` | `owner` | None | `{ message: string }` | Soft-deletes product. Past sales & stock movement history remain preserved. |
 | `productService.adjustStock(id, data)` | POST | `/api/products/{id}/adjust` | `owner` | `{ type: 'restock'\|'damage'\|'correction', quantity: int, notes?: string }` | `{ data: Product }` | Inside transaction with row lock. For damage/negative correction, new stock cannot be < 0 (422). Logs `StockMovement`. |
 | `productService.lowStock()` | GET | `/api/products/low-stock` | `owner,cashier` | None | `{ data: Product[] }` | Returns active products where `stock_quantity <= reorder_level`. Strips cost fields for cashiers. |
+| `barcodeService.lookup(barcode)` | GET | `/api/barcode-lookup/{barcode}` | `owner,cashier` | None | `{ data: { barcode: string, local_product: Product\|null, catalog: CatalogInfo\|null } }` | Throttled 30/min. Cashier gets only `local_product` (catalog is null). Owner gets full OFF catalog lookup cached in `barcode_catalog`. 422 on invalid format. |
 | `customerService.list(params)` | GET | `/api/customers` | `owner,cashier` | `q?: string, has_balance?: bool, sort?: string, page?: int, per_page?: int` | Paginator of `Customer` | Search by name, nickname, or contact_number. Filter `has_balance=true` for debtors. |
 | `customerService.get(id)` | GET | `/api/customers/{id}` | `owner,cashier` | None | `{ data: Customer }` | Customer detail. |
 | `customerService.create(data)` | POST | `/api/customers` | `owner,cashier` | `{ name: string, nickname?: string, contact_number?: string, address?: string, credit_limit?: number, notes?: string }` | `{ data: Customer }` | Initial `credit_balance = 0`. Default `credit_limit = 500`. |
@@ -57,3 +58,157 @@ Not found errors: 404 `{ message: 'Resource not found.' }`.
 | `settingsService.get()` | GET | `/api/settings` | `owner` | None | `{ data: Settings }` | Returns singleton store settings row (name, tagline, contact, address, receipt headers/footers, thresholds). |
 | `settingsService.update(data)` | PUT | `/api/settings` | `owner` | `{ store_name?: string, store_tagline?: string, phone?: string, address?: string, receipt_header?: string, receipt_footer?: string, default_reorder_level?: int, low_stock_threshold?: int }` | `{ data: Settings }` | Validates and updates singleton store configuration. |
 | `account.updatePassword(data)` | PUT | `/api/user/password` | `owner,cashier` | `{ current_password: string, password: string, password_confirmation: string }` | `{ message: string }` | Verifies current password; updates password hash. |
+| `scannerService.createSession(data)` | POST | `/api/scanner-sessions` | `owner,cashier` | `{ mode?: 'pos'\|'inventory' }` | `{ data: { id: string, pairing_code: string, pairing_expires_at: string, expires_at: string, mode: string } }` | Creates session, ends previous sessions of same mode, returns 9-char code (expires in 10m). Cashiers restricted to `pos` mode (403 for `inventory`). |
+| `scannerService.getSession(id)` | GET | `/api/scanner-sessions/{id}` | `owner,cashier` | None | `{ data: { id: string, paired: bool, device_label: string, last_seen_at: string\|null, online: bool, ended_at: string\|null, mode: string } }` | Session status and connection health. Accessible only by session owner. |
+| `scannerService.listEvents(id, after)` | GET | `/api/scanner-sessions/{id}/events` | `owner,cashier` | `after?: int` | `{ data: ScannerEvent[] }` | Polling feed for laptop terminal. Returns up to 50 events where `id > after`. |
+| `scannerService.endSession(id)` | DELETE | `/api/scanner-sessions/{id}` | `owner,cashier` | None | `{ message: string }` | Ends session (`ended_at = now()`). |
+| `scannerService.unknownBarcodes()` | GET | `/api/scanner/unknown-barcodes` | `owner` | None | `{ data: [{ barcode: string, scan_count: int, last_seen_at: string }] }` | Unresolved unknown barcodes from owner's store over last 14 days. |
+| `scannerService.pair(data)` | POST | `/api/scanner/pair` | Public | `{ pairing_code: string, device_label?: string }` | `{ data: { token: string, session: { id, mode, expires_at }, store_name: string, user_name: string } }` | Redeems unexpired pairing code for 40-char session device token. Throttled 10/min. Single-use. |
+| `scannerService.sendScan(data)` | POST | `/api/scanner/scans` | Device (`X-Scanner-Token`) | `{ barcode: string, quantity?: int }` | `{ data: { event_id: int, status: 'found'\|'out_of_stock'\|'unknown', product: ProductSnapshot\|null, catalog?: CatalogInfo } }` | Normalizes and logs scan event; broadcasts `scanner.scanned` live sync event. Throttled 120/min. |
+| `scannerService.heartbeat()` | POST | `/api/scanner/heartbeat` | Device (`X-Scanner-Token`) | None | `{ data: { ended: bool } }` | Touches device `last_seen_at`. 401 if session has ended or expired. |
+
+---
+
+## Barcode & Scanner Endpoints Detail
+
+### 1. `GET /api/barcode-lookup/{barcode}`
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Throttle**: 30 requests/min
+**Example Request**:
+```http
+GET /api/barcode-lookup/4800016644800 HTTP/1.1
+Authorization: Bearer <sanctum-token>
+```
+**Example Response (Owner)**:
+```json
+{
+  "data": {
+    "barcode": "4800016644800",
+    "local_product": null,
+    "catalog": {
+      "found": true,
+      "source": "openfoodfacts",
+      "name": "Lucky Me! Instant Pancit Canton Kalamansi",
+      "brand": "Lucky Me!",
+      "size": "60g",
+      "image_url": "https://images.openfoodfacts.org/images/products/480/001/664/4800/front_en.3.400.jpg",
+      "suggested_category_id": 4,
+      "attribution": "Data from Open Food Facts (ODbL)"
+    }
+  }
+}
+```
+
+### 2. `POST /api/scanner-sessions`
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Role**: `owner,cashier` (Note: `mode="inventory"` requires `role:owner`)
+**Request Body**:
+```json
+{
+  "mode": "pos"
+}
+```
+**Example Response**:
+```json
+{
+  "data": {
+    "id": "01JM7T4K8W2NZR5C3T99V0EF1G",
+    "mode": "pos",
+    "pairing_code": "K7RM-92NP",
+    "pairing_expires_at": "2026-10-14T00:15:00+08:00",
+    "expires_at": "2026-10-14T12:05:00+08:00"
+  }
+}
+```
+
+### 3. `POST /api/scanner/pair`
+**Auth**: Public, Throttle: 10/min
+**Request Body**:
+```json
+{
+  "pairing_code": "K7RM-92NP",
+  "device_label": "iPhone 15 Pro"
+}
+```
+**Example Response**:
+```json
+{
+  "data": {
+    "token": "40_character_random_hex_device_token",
+    "session": {
+      "id": "01JM7T4K8W2NZR5C3T99V0EF1G",
+      "mode": "pos",
+      "expires_at": "2026-10-14T12:05:00+08:00"
+    },
+    "store_name": "Tindahan ni Aling Nena",
+    "user_name": "Aling Nena"
+  }
+}
+```
+
+### 4. `POST /api/scanner/scans`
+**Auth**: Header `X-Scanner-Token: <device-token>`, Throttle: 120/min
+**Request Body**:
+```json
+{
+  "barcode": "4800016644800",
+  "quantity": 1
+}
+```
+**Example Response**:
+```json
+{
+  "data": {
+    "event_id": 142,
+    "status": "found",
+    "product": {
+      "id": 12,
+      "name": "Lucky Me Pancit Canton Kalamansi",
+      "price": 18.00,
+      "stock_quantity": 45,
+      "image_url": "https://images.openfoodfacts.org/images/products/.../front.jpg"
+    }
+  }
+}
+```
+
+### 5. `GET /api/scanner-sessions/{id}/events?after={lastId}`
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Example Response**:
+```json
+{
+  "data": [
+    {
+      "id": 142,
+      "scanner_session_id": "01JM7T4K8W2NZR5C3T99V0EF1G",
+      "barcode": "4800016644800",
+      "status": "found",
+      "quantity": 1,
+      "payload": {
+        "id": 12,
+        "name": "Lucky Me Pancit Canton Kalamansi",
+        "price": 18.00,
+        "stock_quantity": 45,
+        "image_url": "https://..."
+      },
+      "created_at": "2026-10-14T00:06:12+08:00"
+    }
+  ]
+}
+```
+
+### 6. `GET /api/scanner/unknown-barcodes`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Example Response**:
+```json
+{
+  "data": [
+    {
+      "barcode": "4800016644899",
+      "scan_count": 4,
+      "last_seen_at": "2026-10-13T23:54:10+08:00"
+    }
+  ]
+}
+```
+

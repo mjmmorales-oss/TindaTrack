@@ -79,4 +79,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(UtangPayment::class, 'recorded_by');
     }
+
+    public function scannerSessions(): HasMany
+    {
+        return $this->hasMany(ScannerSession::class);
+    }
 }

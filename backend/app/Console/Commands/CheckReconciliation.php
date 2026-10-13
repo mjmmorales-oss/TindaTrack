@@ -4,12 +4,15 @@ namespace App\Console\Commands;
 
 use App\Enums\PaymentType;
 use App\Enums\SaleStatus;
+use App\Models\BarcodeCatalog;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleCounter;
 use App\Models\SaleItem;
+use App\Models\ScannerEvent;
+use App\Models\ScannerSession;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -46,6 +49,9 @@ class CheckReconciliation extends Command
             'Settings' => Setting::count(),
             'Categories' => Category::count(),
             'Products' => Product::count(),
+            'Barcode Catalog' => BarcodeCatalog::count(),
+            'Scanner Sessions' => ScannerSession::count(),
+            'Scanner Events' => ScannerEvent::count(),
             'Customers' => Customer::count(),
             'Sales (Total)' => Sale::count(),
             'Sales (Completed)' => Sale::where('status', SaleStatus::Completed)->count(),

@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'openfoodfacts' => [
+        'enabled' => env('PRODUCT_LOOKUP_ENABLED', true),
+        'user_agent' => env('OFF_USER_AGENT', 'TindaTrack/1.1 (your-email@example.com)'),
+        'timeout' => env('OFF_TIMEOUT', 5),
+        'base_urls' => [
+            'openfoodfacts' => 'https://world.openfoodfacts.org',
+            'openproductsfacts' => 'https://world.openproductsfacts.org',
+            'openbeautyfacts' => 'https://world.openbeautyfacts.org',
+        ],
+    ],
+
 ];

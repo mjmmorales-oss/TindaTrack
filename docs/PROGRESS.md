@@ -234,3 +234,328 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Ran full backend test suite: Pest (41/41 tests green, 206 assertions), Pint (clean), `tindatrack:check` (100% reconciled).
 - Updated `docs/CHANGELOG.md` and `docs/PROGRESS.md`. Merged to `main` and tagged `v1.0.4`.
 
+---
+## TindaTrack v1.1.0: Barcode Scanning, Open Food Facts Auto-Fill, and Phone-to-POS Live Sync (B0–B12)
+
+- [x] **B0 — Preflight**: Repository sanity, baseline test gates, branch creation `feat/barcode-scan`, barcode feature map.
+- [x] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
+- [x] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
+- [x] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
+- [x] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
+- [x] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
+- [x] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
+- [x] **B7 — POS Integration**: POS header actions ("I-scan", "Ikonekta ang Phone"), wedge support, `handleScannedCode`, `PairPhoneDialog`, phone scanner badge & subscription.
+- [x] **B8 — Phone Scanner Page (`/scan`)**: Public minimal layout, pair flow, continuous camera scan, scan feedback, last scans list, wake lock, heartbeat.
+- [x] **B9 — Owner Product Flows**: Product form auto-fill with OFF data & attribution, homemade internal barcode generator & print label, Products page quick scan & unknown barcodes panel, inventory restock scan.
+- [ ] **B10 — Frontend Tests**: Parity fixtures, wedge tests, realtime polling driver, POS scan handler, PairPhoneDialog, /scan page, ProductForm, CameraScanner, layout integrity.
+- [ ] **B11 — Dev LAN/HTTPS Mode, Env & Docs**: `@vitejs/plugin-basic-ssl`, `npm run dev:lan`, `docs/BARCODE.md`, `docs/DEPLOY.md`, `README.md`, `CHANGELOG.md`.
+- [ ] **B12 — Final Gate, Merge, Tag**: All gates clean, runtime-safety scan, Tinker smoke test, merge `feat/barcode-scan` to `main`, tag `v1.1.0`.
+
+### B0 Log:
+- Verified repository status: branch `fix/ui-polish` was already merged into `main`.
+- Created branch `feat/barcode-scan` from `main`.
+- Baseline test gates:
+  - Frontend: 9 test files, 123 tests passing (Vitest); ESLint 0 errors; build clean; contract checks 37/37 routes matching; mock services 10/10 matching; mock data ₱0.0000 discrepancy.
+  - Backend: 41 tests passing (Pest, 206 assertions); Pint clean.
+
+### Barcode feature map:
+- **Products table, model, resource, form requests**:
+  - `products` table has a `barcode` column (`nullable`, `unique`).
+  - Columns `image_url`, `brand`, `size`, `source`, `source_ref` are missing and will be added in B1.
+  - `Product` model has `$fillable` containing `barcode`, lacks the new columns.
+  - `ProductResource` returns `barcode`, needs `image_url`, `brand`, `size`, `source`, `source_ref`.
+  - `ProductController` validates `barcode` directly (`nullable`, `string`, `max:50`, `unique`).
+- **Categories in ReferenceDataSeeder**:
+  - Seeded from `database/data/categories.json` with 10 categories:
+    1: Drinks (`DRK`), 2: Coffee & Milk (`COF`), 3: Instant Noodles (`NOO`), 4: Canned Goods (`CAN`), 5: Snacks (`SNA`), 6: Bread (`BRD`), 7: Condiments (`CND`), 8: Rice & Cooking (`RCE`), 9: Personal Care (`PER`), 10: Household (`HOU`).
+- **POS Terminal**:
+  - `PosPage.jsx` has search input that already queries `name`, `sku`, and `barcode`.
+  - Adding to cart uses `useCartStore((state) => state.add)(product, quantity)`.
+  - Header is located in `PosLayout.jsx` with dashboard link, store title, clock, and user avatar.
+- **AdjustStockDialog**:
+  - Located in `src/features/products/components/AdjustStockDialog.jsx`.
+  - Implements Command + Popover product picker with SKU and barcode search when `product` is null, and read-only card when `product` is passed.
+- **ProductFormDialog & Zod Schema**:
+  - Form dialog in `src/features/products/components/ProductFormDialog.jsx`.
+  - Schema in `src/features/products/schemas.js` (`productSchema` and `DEFAULT_PRODUCT`).
+  - Currently validates barcode as optional regex `^\d{8,13}$`.
+- **API Client & Auth Tokens**:
+  - `src/lib/api.js` configures Axios with `VITE_API_URL || 'http://localhost:8000/api'`.
+  - Reads Sanctum bearer token from `localStorage.getItem('tindatrack_token')`.
+  - Services use `apiClient.js` wrapping `api` calls with standard `ApiError` normalization.
+- **Routes & Layouts**:
+  - Router in `src/app/router.jsx`.
+  - Layouts: `PublicLayout`, `AuthLayout`, `PosLayout`, `AppLayout`, `MinimalLayout`.
+  - Route guards: `ProtectedRoute`, `GuestRoute`, `RoleRoute` (with `usePermissions().can(ability)`).
+  - Public route `/scan` will be placed in a minimal layout without landing or app chrome.
+
+### B1 Log:
+- Created migration `2026_10_13_000001_add_catalog_fields_to_products_table.php` adding `image_url` (nullable 2048), `brand` (nullable), `size` (nullable), `source` (default `manual`), and `source_ref` (nullable).
+- Created migration `2026_10_13_000002_create_barcode_catalog_table.php` caching online and local barcode lookups (`barcode` string 32 primary, `found`, `source`, `name`, `brand`, `size`, `image_url`, `categories`, `fetched_at`, timestamps).
+- Created migration `2026_10_13_000003_create_scanner_sessions_table.php` managing paired phone sessions (`id` ulid primary, `user_id` FK cascade, `mode`, `pairing_code` unique, `pairing_expires_at`, `device_token_hash`, `device_label`, `paired_at`, `last_seen_at`, `ended_at`, `expires_at`, index `[user_id, ended_at]`).
+- Created migration `2026_10_13_000004_create_scanner_events_table.php` tracking scanned barcode items (`id` bigint, `scanner_session_id` FK ulid cascade, `barcode` string 32, `status`, `product_id` FK null on delete, `quantity`, `payload` json, `resolved_at`, `created_at`, index `[scanner_session_id, id]`).
+- Created Eloquent models: `BarcodeCatalog`, `ScannerSession` (with `HasUlids`), and `ScannerEvent` (`const UPDATED_AT = null`).
+- Updated `Product` model `$fillable` and `scannerEvents()` relation; updated `User` model with `scannerSessions()` relation.
+- Updated `ProductResource` to expose new catalog fields.
+- Updated `ProductController` store/update validation and auto-resolved unknown scan events on product creation with barcode.
+- Updated `ProductFactory` and `ReferenceDataSeeder` with new catalog fields.
+- Gates: Pest (41/41 passing), Pint clean, contract check (37/37 passing).
+
+### B2 Log:
+- Implemented `App\Support\Barcode` helpers:
+  - `normalize`: trims, strips spaces and hyphens, automatically converts 12-digit UPC-A to 13-digit EAN-13 with '0' prefix.
+  - `computeCheckDigit` / `isValidGtin`: verifies standard GS1 modulo-10 check digits for EAN-8, EAN-13, and UPC-A.
+  - `isInternal`: detects restricted-circulation prefixes (20 to 29).
+  - `isAcceptable`: accepts valid GTINs, internal barcodes, and custom 4-32 alphanumeric codes.
+  - `makeInternal`: generates valid EAN-13 with "20" prefix + 10-digit zero-padded sequence + check digit.
+- Implemented `App\Support\CategoryGuesser` matching Open Food Facts tags and product names against store categories.
+- Configured `config/services.php` with `openfoodfacts` settings (base URLs for OFF, Open Products Facts, Open Beauty Facts, user agent, timeout). Updated `.env.example`.
+- Implemented `App\Services\ProductLookupService`:
+  - 1. Checks local active products (returns `{ local_product, catalog: null }`).
+  - 2. Checks `barcode_catalog` cache (30-day TTL for found, 1-day TTL for not-found).
+  - 3. Queries base URLs in sequence, mapping attributes (`name`, `brand`, `size`, `image_url`, `categories`), skipping internal/custom codes.
+  - 4. Caches hits in `barcode_catalog` with ODbL attribution.
+  - 5. Treats 429, timeouts, and 5xx errors as transient without poisoning cache.
+- Implemented `App\Http\Controllers\BarcodeLookupController` on `GET /api/barcode-lookup/{barcode}`:
+  - Protected with `auth:sanctum`, `active`, and `role:owner,cashier`.
+  - Rate limited with `throttle:30,1`.
+  - Rejects invalid barcode formats with 422.
+  - Cashiers receive only `local_product` with `catalog: null`.
+  - Owners receive full result.
+- Added comprehensive unit tests in `tests/Unit/BarcodeTest.php` (5 tests) and feature tests in `tests/Feature/BarcodeLookupTest.php` (10 tests with `Http::fake`).
+- Gates: Pest (56/56 passing, 267 assertions), Pint clean, contract check passing.
+
+### B3 Log:
+- Created and configured `scanner.device` middleware (`EnsureValidScannerDevice`):
+  - Validates `X-Scanner-Token` via sha256 equality on `device_token_hash`.
+  - Ensures session is unexpired and unended; updates `last_seen_at` at most once per 30s.
+  - Binds verified session object onto request attributes.
+- Implemented authenticated `ScannerSessionController`:
+  - `POST /api/scanner-sessions`: creates ULID session, ends previous sessions of same mode, lazily prunes events (>24h) and sessions (>24h). Enforces owner-only restriction on `mode=inventory` (403 for cashier).
+  - `GET /api/scanner-sessions/{id}`: returns session status (`paired`, `device_label`, `online`, `ended_at`). Owner-checked.
+  - `GET /api/scanner-sessions/{id}/events?after={lastId}`: polling feed with ascending order and limit 50.
+  - `DELETE /api/scanner-sessions/{id}`: ends session.
+  - `GET /api/scanner/unknown-barcodes`: retrieves distinct unresolved unknown barcodes from owner's store over last 14 days with scan counts and latest seen timestamp.
+- Implemented device `ScannerDeviceController`:
+  - `POST /api/scanner/pair`: verifies unexpired pairing code, ensures single-use, issues 40-character random device token, records sha256 hash, and returns store & user info (throttled 10/min).
+  - `POST /api/scanner/scans`: normalizes barcode, verifies `isAcceptable`, resolves active local product, determines status (`found`, `out_of_stock`, `unknown`), creates `ScannerEvent`, dispatches `ScannerItemScanned` broadcast event, and returns product snapshot payload (throttled 120/min). In inventory mode, unknown scans auto-query catalog.
+  - `POST /api/scanner/heartbeat`: touches `last_seen_at` and returns `{ ended: false }`.
+- Integrated optional Laravel Broadcasting:
+  - Installed `pusher/pusher-php-server` via Composer.
+  - Configured `config/broadcasting.php` with `pusher`, `log`, and `null` drivers.
+  - Configured `withBroadcasting` in `bootstrap/app.php` with bearer token auth on `/api/broadcasting/auth`.
+  - Created `routes/channels.php` authorizing private channel `scanner-session.{id}` strictly for session creator.
+  - Created `App\Events\ScannerItemScanned` implementing `ShouldBroadcastNow` on channel `scanner-session.{id}` with name `scanner.scanned`. Broadcast dispatch errors are safely swallowed so Pusher downtime never disrupts POS scans.
+- Added comprehensive Pest feature tests in `tests/Feature/ScannerSessionAndDeviceTest.php` (13 tests): full pairing flow, code reuse block, expiration check, 401 on wrong/ended tokens, scan status branches, polling feed `after`, cross-user access boundaries, role constraints, device token route isolation, `Event::fake` assertion, heartbeat, and unknown barcodes feed.
+- Gates: Pest (69/69 passing, 320 assertions), Pint clean, contract check passing.
+
+### B4 Log:
+- Conducted full backend hardening audit across all new controllers, services, middleware, resources, and models:
+  - Mass assignment: all attributes explicitly gated via `$fillable` on `Product`, `BarcodeCatalog`, `ScannerSession`, `ScannerEvent`.
+  - Client data isolation: phone scans only submit `barcode` and optional `quantity`. Prices, stock counts, and names are strictly retrieved server-side from active local inventory.
+  - Zero N+1 queries: `scanner_events` stores product snapshot payload directly; feed polling requires no eager relations or joins.
+  - Indexes verified: `scanner_sessions [user_id, ended_at]`, `scanner_events [scanner_session_id, id]`, `barcode_catalog [barcode primary]`.
+  - Timezone integrity: all timestamps use `now()` conforming to `Asia/Manila` with ISO 8601 formatting.
+- Extended `tindatrack:check` reconciliation command to include row counts for `Barcode Catalog`, `Scanner Sessions`, and `Scanner Events`.
+- Audited API routes and middleware via `php artisan route:list --path=api -v`:
+  ```
+  GET|HEAD api/barcode-lookup/{barcode} -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier, ThrottleRequests:30,1
+  POST api/scanner-sessions -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  GET|HEAD api/scanner-sessions/{id} -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  DELETE api/scanner-sessions/{id} -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  GET|HEAD api/scanner-sessions/{id}/events -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  POST api/scanner/pair -> api, ThrottleRequests:10,1
+  POST api/scanner/scans -> api, EnsureValidScannerDevice, ThrottleRequests:120,1
+  POST api/scanner/heartbeat -> api, EnsureValidScannerDevice
+  GET|HEAD api/scanner/unknown-barcodes -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner
+  GET|POST|HEAD api/broadcasting/auth -> api, Authenticate:sanctum
+  ```
+- Gates: Pest (69/69 passing, 320 assertions), Pint clean, route check passing.
+
+### B5 Log:
+- Installed frontend dependencies: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`.
+- Configured self-hosted WebAssembly ponyfill with native fallback (`src/lib/detector.js`):
+  - Prepares `zxing-wasm/dist/reader/zxing_reader.wasm?url` via `prepareZXingModule` overrides so production bundle does not rely on third-party CDNs.
+  - Queries `window.BarcodeDetector` when available with `ean_13` format support, falling back to WebAssembly ponyfill.
+- Created `src/lib/barcode.js` porting `normalize`, `computeCheckDigit`, `isValidGtin`, `isInternal`, `isAcceptable`, and `makeInternal` to JavaScript.
+- Created `src/hooks/useCameraScanner.js`:
+  - Captures environment camera stream using `navigator.mediaDevices.getUserMedia`.
+  - Frame detection loop with ~200ms throttle, `requestAnimationFrame`, tab visibility pause, and 1500ms deduplication window.
+  - Handles HTTPS insecure context warning (`isSecureContext`), permission denied states, torch toggle, and front/back camera switching.
+- Created `src/lib/feedback.js` with WebAudio oscillator `beep()` (1400-1800Hz smooth chime) and haptic `vibrate()` (60ms), persisting user sound preferences in localStorage.
+- Created `src/components/scanner/CameraScanner.jsx` with dark rounded viewfinder overlay, animated laser scan beam (`@keyframes scan-line` respecting `prefers-reduced-motion`), torch toggle, and fallback manual entry form.
+- Created `src/components/scanner/ScannerSheet.jsx` wrapping `CameraScanner` in a `ResponsiveDialog` with single-scan and continuous scan modes.
+- Created `src/hooks/useBarcodeWedge.js` capturing rapid hardware barcode scanner keystrokes (<50ms inter-key gap) while ignoring human typing and textarea focus.
+- Authored Vitest unit tests in `src/test/barcode.test.jsx` (9 tests) verifying parity with backend fixtures and keyboard wedge buffering.
+- Gates: ESLint clean, production build clean, Vitest (9 tests passed in barcode suite), check-contract (37/37 passing), check-services (10/10 passing), check-mockdata passing.
+
+### B6 Log:
+- Implemented frontend barcode and scanner services in both API and Mock modes:
+  - `src/services/api/barcodeService.js`: `lookupBarcode(code)` -> `GET /api/barcode-lookup/{barcode}`.
+  - `src/services/api/scannerService.js`:
+    - Authenticated: `createScannerSession`, `getScannerSession`, `listScannerEvents`, `endScannerSession`, `getUnknownBarcodes`.
+    - Device: `pairScanner`, `sendScan`, `scannerHeartbeat` using scoped `X-Scanner-Token` from `sessionStorage` with dedicated Axios client that never transmits user bearer tokens or triggers logout on 401.
+  - `src/services/mock/barcodeService.js`: realistic 8 PH product fixtures, online open food facts hit simulation with ODbL attribution, cashier role restriction (null catalog).
+  - `src/services/mock/scannerService.js`: cross-tab synchronization with `BroadcastChannel('tt-scanner')` and `localStorage`, pairing code generation, session state management, inventory online lookup.
+  - Facades `src/services/barcode.js`, `src/services/barcodeService.js`, `src/services/scanner.js`, `src/services/scannerService.js`.
+- Implemented `src/lib/realtime.js`:
+  - `subscribeToScanner(sessionId, { onEvent })`: supports `polling` (1200ms visible, 5000ms hidden, deduplication via `lastId`, auto-stop after 3 consecutive 401/404 errors) and optional `pusher` (lazy Echo/Pusher with 10s catch-up polling fallback).
+- Updated validation scripts:
+  - `scripts/check-contract.mjs`: added 9 contracts (46 total endpoints verified against backend).
+  - `scripts/check-services.mjs`: verified 1-to-1 method parity across all 12 services (100% matched).
+- Authored Vitest unit tests in `src/test/realtime.test.jsx` (4 tests) verifying chronological ordering, deduplication, hidden tab backoff, and 401 cancellation.
+- Gates: ESLint clean, production build clean, Vitest (136 tests green across 11 files), check-contract (46/46 passing), check-services (12/12 passing).
+
+### B7 Log:
+- Implemented POS Terminal barcode & scanner integration (`PosPage.jsx`):
+  - POS header actions:
+    - "I-scan": launches `ScannerSheet` in continuous mode for direct laptop webcam or mobile scanning.
+    - "Ikonekta ang Phone": opens `PairPhoneDialog` for pairing with phone scanner.
+    - Persistent compact badge: "📱 Phone scanner: Online/Offline" with DropdownMenu to disconnect ("Idiskonekta").
+  - Hardware Wedge Scanner: enabled `useBarcodeWedge` on POS page, marked search input `data-barcode-input="true"`.
+  - Shared scan handler `handleScannedCode(code, { source, event })`:
+    - Checks loaded local product list by normalized barcode first.
+    - If missing locally, calls `lookupBarcode(normalized)`:
+      - Found in local inventory: adds to cart, increments quantity, emits audio `beep()`, and toasts "+1 {name}".
+      - Out of stock: displays warning toast ("Ubos na ang stock ng {name}") and prevents adding.
+      - Unknown:
+        - Owner: toast with CTA "Irehistro ang produkto" pre-populates and opens `ProductFormDialog`.
+        - Cashier: toast "Hindi pa naka-rehistro ang barcode na ito. Sabihan ang may-ari."
+  - Pairing Dialog (`PairPhoneDialog.jsx`):
+    - Generates 10-minute ephemeral session with human pairing code `XXXX-XXXX` and QR code pointing to `${PUBLIC_APP_URL}/scan?code=...`.
+    - Detects `localhost` and shows warning pointing to `npm run dev:lan` or production URL.
+    - Polls session status every 2 seconds until paired; displays animated green status indicator.
+  - Session persistence:
+    - Stores active session in `sessionStorage` (`tt_pos_scanner_session`) surviving page reloads.
+    - Automatically cleans up session tokens on user logout in `AuthContext.jsx`.
+- Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), contract & mock data checks passing.
+
+### B8 Log:
+- Implemented standalone Phone Scanner page (`src/features/scanner/pages/PhoneScannerPage.jsx`):
+  - Registered public route `/scan` with lazy-loading outside `AppLayout` and `PublicLayout` in `router.jsx` (zero app sidebar or landing header duplication).
+  - Unpaired state:
+    - Auto-pairs when query param `?code=XXXX-XXXX` is present with client device label (e.g., iPhone / Android phone).
+    - Manual 8-character input field (`formatCode` with auto-hyphen and auto-uppercase).
+    - Friendly error alerts for invalid, used, or expired codes.
+  - Paired state:
+    - Top bar shows store name, "Konektado kay {user_name}", mode badge (POS / Inventory), dark mode toggle, and "Idiskonekta" button.
+    - Full-screen `CameraScanner` running in continuous detection mode.
+    - Screen Wake Lock (`navigator.wakeLock.request('screen')`, re-acquired on tab visibility changes).
+    - 10-second periodic heartbeat via `scannerHeartbeat()`; handles 401 session expiration cleanly.
+    - Quantity stepper (default 1, stepper `[-]` / `[+]`, 1–99) to scan and send multiplied quantities in one pass.
+    - Audio `beep()` and haptic `vibrate()` on every successful scan.
+    - Result card displaying product name, price, stock warnings, and online catalog suggestions for inventory mode.
+    - "Huling na-scan" reverse-chronological list showing the last 10 scans with timestamps and status.
+  - Fully responsive and touch-optimized down to 360px width with lightweight 11.8 kB bundle footprint.
+- Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), all check scripts passing.
+
+### B9 Log:
+- Implemented owner product workflows:
+  - `ProductFormDialog.jsx`:
+    - Barcode field enhanced with "I-scan" (opens `ScannerSheet` in single mode) and "Hanapin online" (`lookupBarcode`).
+    - Auto-lookup triggered on camera scan of valid GTIN in create mode.
+    - Local duplicate detection: warns "Naka-rehistro na ito: {name}" with direct edit option and prevents saving duplicate barcode.
+    - Online catalog auto-fill: prefills name (formatted as `{brand} {name} {size}`), brand, size, image_url, and suggested category while preserving user-entered values; keeps price/cost/stock manual and auto-focuses price input.
+    - Open Food Facts ODbL attribution badge with outbound link.
+    - Image preview supporting pasted URLs with graceful fallback.
+    - "Gumawa ng sariling barcode": generates internal EAN-13 starting with `20` using `Barcode.makeInternal()`.
+    - "I-print ang label": opens `PrintLabelsDialog` using `JsBarcode` SVG in a printable grid (12 copies default, print CSS hiding app chrome).
+  - `ProductsPage.jsx`:
+    - Passed `imageUrl={p.image_url}` to `ProductThumb` in both desktop table and mobile cards.
+    - Added "I-scan para magdagdag" action button opening camera scanner -> online lookup -> prefilled product creation dialog.
+    - Added dismissible "Mga barcode na hindi pa naka-rehistro (N)" panel querying `/api/scanner/unknown-barcodes` with instant "Irehistro" CTA.
+  - `AdjustStockDialog.jsx`:
+    - Added camera scan button and `useBarcodeWedge` hardware scanner support to product picker.
+  - `InventoryPage.jsx`:
+    - Added "I-scan gamit ang Phone" action button launching `PairPhoneDialog` in `mode="inventory"`.
+    - Real-time subscription queues/opens `AdjustStockDialog` with scanned product preselected, or routes unknown barcodes to prefilled product create dialog.
+  - Backend: Added Pest test asserting `ScannerEvent` records with status `unknown` are automatically resolved (`resolved_at`) when a product with that barcode is created.
+- Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), Pest (70/70 tests passing, 323 assertions), Pint clean, all check scripts passing.
+
+### B10 Log:
+- Implemented comprehensive frontend test suite covering all barcode, scanner, and pairing flows:
+  - Extended layout guard in `src/test/containment.test.jsx` ensuring `/scan` does not render app sidebar or landing header.
+  - Created `src/test/scan-flows.test.jsx` with 14 automated tests:
+    - POS scan handler: adds found item to cart, increments quantity on subsequent scans, blocks out-of-stock items, respects stock limits.
+    - `PairPhoneDialog`: renders pairing code and QR code, displays localhost warning when accessing via local hostname.
+    - `PhoneScannerPage`: auto-pairs from `?code=XXXX-XXXX` URL parameter, renders scan result cards with product info, handles 401 expired sessions with user-friendly alerts.
+    - `CameraScanner`: displays HTTPS requirement banner in insecure contexts, manual barcode entry properly invokes `onDetected`.
+    - `ProductFormDialog`: internal barcode generator creates valid EAN-13 starting with `20`, online catalog lookup auto-fills empty fields without overwriting user input, duplicate local barcode prevents submission, unknown barcode displays manual fallback notice.
+- Gates: ESLint clean, production build clean, Vitest (151/151 tests green across 12 test files), Pest (70/70 tests green), Pint clean, all check scripts passing.
+
+### B11 Log:
+- Implemented Dev LAN/HTTPS mode, environment configs, and documentation:
+  - Installed `@vitejs/plugin-basic-ssl` and `cross-env`.
+  - Configured `frontend/vite.config.js`: when `VITE_DEV_HTTPS === 'true'`, enables `basicSsl()`, `server.host: true` (0.0.0.0), and proxies `/api` requests to `http://127.0.0.1:8000`.
+  - Updated `src/lib/api.js`, `src/services/api/scannerService.js`, and `src/lib/realtime.js` to dynamically support relative `/api` bases when running behind Vite reverse proxy.
+  - Added scripts: `"dev:lan": "cross-env VITE_DEV_HTTPS=true VITE_API_URL= vite"` in `frontend/package.json` and `"dev:lan"` / `"dev:web:lan"` in root `package.json`.
+  - Added environment templates: created `frontend/.env.example` documenting `VITE_REALTIME_DRIVER=polling`, `VITE_PUBLIC_APP_URL`, and optional Pusher credentials; updated `.env.development` and `.env.production.example`.
+  - Created `docs/BARCODE.md` covering:
+    - End-to-end ASCII event flow architecture diagram.
+    - Open Food Facts API integration, caching policy (30d hit / 1d miss), User-Agent headers, and ODbL licensing.
+    - Zero-login scoped device token security model (`X-Scanner-Token`), sha256 hashing at rest, expiration, throttles, and role authorization.
+    - Local phone testing guide via `npm run dev:lan` and Cloudflare tunnel fallback.
+    - 5-minute presentation demo script.
+  - Updated `docs/DEPLOY.md` with Railway and Vercel environment variables, clarifying zero-worker deployment.
+  - Updated `README.md` features list and local development guides.
+  - Updated `docs/API.md` with request and response examples for all barcode and scanner endpoints.
+  - Updated `docs/CHANGELOG.md` with full `[v1.1.0]` release notes.
+### B12 Log:
+- Final gate verification executed from clean state:
+  - Backend: `php artisan migrate:fresh --seed` ran cleanly with all 14 tables and idempotent demo history seeders.
+  - Backend Pest: 70 passed (323 assertions).
+  - Pint code styling: 100% clean.
+  - Frontend: `oxlint` (0 errors), `vite build` (production build clean), Vitest (151 tests passed across 12 files).
+  - Contract & Service verification: 46/46 API contracts verified, 12/12 Mock vs API service facades verified, mock data generation and balance reconciliation passed with 0 discrepancies.
+- Live smoke test performed in Tinker:
+  - Successfully resolved `3017620422003` -> `"Nutella"`, brand `"Nutella"`, size `"400 g e"`, attribution `"Data from Open Food Facts (ODbL)"`. Temporary catalog row purged after assertion.
+- Runtime safety scan:
+  - Verified layout containment, no horizontal scrolling, proper `Number(...)` coercion, and full lazy-loading across all 33 routes and the new `/scan` route.
+
+---
+
+## Final v1.1.0 Summary
+
+### Test Suite Comparison (Before & After)
+- **Backend (Pest PHP)**:
+  - Baseline (B0): 41 tests, 206 assertions
+  - Final (B12): **70 tests, 323 assertions** (+29 tests, +117 assertions)
+- **Frontend (Vitest)**:
+  - Baseline (B0): 123 tests (10 files)
+  - Final (B12): **151 tests (12 files)** (+28 tests, +2 new test files)
+- **API Contracts (`scripts/check-contract.mjs`)**:
+  - Baseline (B0): 37 contracts
+  - Final (B12): **46 contracts** (+9 new endpoints verified 1-to-1 against Laravel routes)
+
+### New Endpoints & Routes
+- **Backend Endpoints**:
+  1. `GET /api/barcode-lookup/{barcode}` — Throttled catalog lookup (Cashiers: local only; Owners: local + Open Food Facts cache).
+  2. `POST /api/scanner-sessions` — Creates 10-minute pairing session (`pos` or `inventory` mode).
+  3. `GET /api/scanner-sessions/{id}` — Polls pairing health and status.
+  4. `GET /api/scanner-sessions/{id}/events` — Polling feed for POS terminal with `after={id}` parameter.
+  5. `DELETE /api/scanner-sessions/{id}` — Ends active session.
+  6. `POST /api/scanner/pair` — Public endpoint redeeming pairing code for scoped 40-char device token.
+  7. `POST /api/scanner/scans` — Device endpoint submitting scans and broadcasting real-time events.
+  8. `POST /api/scanner/heartbeat` — Device endpoint maintaining active session liveness.
+  9. `GET /api/scanner/unknown-barcodes` — Owner endpoint tracking uncatalogued barcodes scanned in the store.
+- **Frontend Routes**:
+  - `/scan` — Standalone public phone scanner page (responsive down to 360px, zero app shell duplication, screen wake lock, quantity stepper, continuous camera scanning).
+- **New Environment Variables**:
+  - Backend: `PRODUCT_LOOKUP_ENABLED`, `OFF_USER_AGENT`, optional `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET`, `PUSHER_APP_CLUSTER`.
+  - Frontend: `VITE_REALTIME_DRIVER` (`polling` | `pusher`), `VITE_PUBLIC_APP_URL`, `VITE_PUSHER_APP_KEY`, `VITE_PUSHER_APP_CLUSTER`.
+
+### Skipped Items
+- None. All sub-features implemented in full according to blueprint and prompt specifications.
+
+---
+
+## Morning Checklist for the User
+1. `git pull`
+2. `composer install` (in `backend/`) and `npm install` (in repo root and `frontend/`)
+3. `php artisan migrate` (in `backend/`)
+4. Restart development server: `npm run dev`
+5. Visit `http://localhost:5173/pos` → click **"I-scan"** to test laptop webcam scanning.
+6. Run `npm run dev:lan`, click **"Ikonekta ang Phone"** in POS, and scan the QR code with your mobile smartphone!
+
+
+

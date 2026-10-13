@@ -2,13 +2,31 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import basicSsl from '@vitejs/plugin-basic-ssl'
+
+const isDevHttps = process.env.VITE_DEV_HTTPS === 'true'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    ...(isDevHttps ? [basicSsl()] : []),
+  ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173,
+    strictPort: true,
+    ...(isDevHttps
+      ? {
+          host: true,
+          proxy: {
+            '/api': 'http://127.0.0.1:8000',
+          },
+        }
+      : {}),
+  },
   build: {
     rollupOptions: {
       output: {

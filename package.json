@@ -3,8 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:lan": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web:lan\"",
     "dev:api": "cd backend && php artisan serve",
     "dev:web": "npm --prefix frontend run dev",
+    "dev:web:lan": "npm --prefix frontend run dev:lan",
     "build:web": "npm --prefix frontend run build"
   },
   "devDependencies": {

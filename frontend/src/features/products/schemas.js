@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isAcceptable } from '@/lib/barcode'
 
 export const PRODUCT_UNITS = [
   { value: 'pc', label: 'Piraso (pc)' },
@@ -23,11 +24,16 @@ export const productSchema = z.object({
   sku: z.string().max(50, 'Hanggang 50 titik lamang ang SKU.').optional().or(z.literal('')),
   barcode: z
     .string()
-    .refine((val) => !val || /^\d{8,13}$/.test(val.trim()), {
-      message: 'Ang barcode ay dapat may 8 hanggang 13 tambilang (digits).',
+    .refine((val) => !val || isAcceptable(val.trim()), {
+      message: 'Hindi wastong barcode format.',
     })
     .optional()
     .or(z.literal('')),
+  brand: z.string().max(255, 'Hanggang 255 titik lamang ang brand.').optional().or(z.literal('')),
+  size: z.string().max(100, 'Hanggang 100 titik lamang ang sukat/size.').optional().or(z.literal('')),
+  image_url: z.string().max(2048, 'Masyadong mahaba ang URL ng larawan.').optional().or(z.literal('')),
+  source: z.enum(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts']).default('manual'),
+  source_ref: z.string().max(255).optional().or(z.literal('')),
   unit: z.enum(['pc', 'pack', 'sachet', 'bottle', 'can', 'cup', 'kg', 'L'], {
     errorMap: () => ({ message: 'Pumili ng wastong sukat (unit).' }),
   }),
@@ -59,5 +65,11 @@ export const DEFAULT_PRODUCT = {
   reorder_level: 10,
   is_active: true,
   description: '',
+  brand: '',
+  size: '',
+  image_url: '',
+  source: 'manual',
+  source_ref: '',
 }
+
 

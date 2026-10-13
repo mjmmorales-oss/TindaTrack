@@ -115,6 +115,19 @@ const CONTRACT = [
   { service: 'staffService', fn: 'list', method: 'GET', uri: 'api/users' },
   { service: 'staffService', fn: 'create', method: 'POST', uri: 'api/users' },
   { service: 'staffService', fn: 'toggleActive', method: 'PATCH', uri: 'api/users/{user}/toggle-active' },
+
+  // barcodeService
+  { service: 'barcodeService', fn: 'lookupBarcode', method: 'GET', uri: 'api/barcode-lookup/{barcode}' },
+
+  // scannerService
+  { service: 'scannerService', fn: 'createScannerSession', method: 'POST', uri: 'api/scanner-sessions' },
+  { service: 'scannerService', fn: 'getScannerSession', method: 'GET', uri: 'api/scanner-sessions/{id}' },
+  { service: 'scannerService', fn: 'listScannerEvents', method: 'GET', uri: 'api/scanner-sessions/{id}/events' },
+  { service: 'scannerService', fn: 'endScannerSession', method: 'DELETE', uri: 'api/scanner-sessions/{id}' },
+  { service: 'scannerService', fn: 'getUnknownBarcodes', method: 'GET', uri: 'api/scanner/unknown-barcodes' },
+  { service: 'scannerService', fn: 'pairScanner', method: 'POST', uri: 'api/scanner/pair' },
+  { service: 'scannerService', fn: 'sendScan', method: 'POST', uri: 'api/scanner/scans' },
+  { service: 'scannerService', fn: 'scannerHeartbeat', method: 'POST', uri: 'api/scanner/heartbeat' },
 ]
 
 // 2. Validate all functions in src/services/api/* exist and match contract

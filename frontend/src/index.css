@@ -220,3 +220,30 @@
     background: #fff !important;
   }
 }
+
+@keyframes scan-line {
+  0% {
+    top: 6%;
+    opacity: 0.75;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 6%;
+    opacity: 0.75;
+  }
+}
+
+.animate-scan-line {
+  position: absolute;
+  animation: scan-line 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-line {
+    animation: none !important;
+    top: 50% !important;
+  }
+}

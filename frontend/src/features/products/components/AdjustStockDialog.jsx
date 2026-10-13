@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, Check, ChevronsUpDown, Loader2, PackageCheck } from 'lucide-react'
+import { AlertTriangle, Check, ChevronsUpDown, Loader2, PackageCheck, ScanBarcode } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { Button } from '@/components/ui/button'
@@ -27,8 +27,13 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ScannerSheet } from '@/components/scanner/ScannerSheet'
 import { useAdjustStock } from '@/features/inventory/hooks/useInventory'
 import { useProducts } from '@/features/products/hooks/useProducts'
+import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
+import { Barcode } from '@/lib/barcode'
+import { beep } from '@/lib/feedback'
+import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 
 /**
@@ -51,6 +56,7 @@ export function AdjustStockDialog({
 }) {
   const [chosenProduct, setChosenProduct] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [type, setType] = useState('restock')
   const [quantity, setQuantity] = useState('1')
   const [notes, setNotes] = useState('')
@@ -62,6 +68,29 @@ export function AdjustStockDialog({
     { enabled: open && !product },
   )
   const productList = productsRes?.data || []
+
+  const handleBarcodeScanned = (code) => {
+    setIsScannerOpen(false)
+    const normalized = Barcode.normalize(code)
+    const matched = productList.find(
+      (p) => p.barcode && Barcode.normalize(p.barcode) === normalized,
+    )
+    if (matched) {
+      setChosenProduct(matched)
+      beep()
+      notify.success('Napili ang produkto', matched.name)
+    } else {
+      notify.warning('Hindi nahanap', 'Walang produktong may barcode na ito.')
+    }
+  }
+
+  useBarcodeWedge({
+    onBarcode: (code) => {
+      if (!open || product) return
+      handleBarcodeScanned(code)
+    },
+    enabled: open && !product,
+  })
 
   const activeProduct = product || chosenProduct
 
@@ -144,7 +173,8 @@ export function AdjustStockDialog({
   }
 
   return (
-    <ResponsiveDialog
+    <>
+      <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
       title={
@@ -213,88 +243,104 @@ export function AdjustStockDialog({
         ) : (
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Pumili ng Produkto</Label>
-            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={pickerOpen}
-                  aria-label="Pumili ng produkto para sa stock adjustment"
-                  className="w-full justify-between h-10 text-xs font-normal"
-                >
-                  {chosenProduct ? (
-                    <span className="truncate font-medium text-foreground">
-                      {chosenProduct.name} ({chosenProduct.stock_quantity ?? 0}{' '}
-                      {chosenProduct.unit || 'pcs'})
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      Pumili ng produkto (Maghanap ayon sa pangalan, SKU)...
-                    </span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[320px] sm:w-[400px] p-0" align="start">
-                <Command>
-                  <CommandInput
-                    placeholder="Maghanap ng pangalan, SKU, barcode..."
-                    className="text-xs"
-                  />
-                  <CommandList className="max-h-60">
-                    <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">
-                      {isProductsLoading
-                        ? 'Kinukuha ang mga paninda...'
-                        : 'Walang nahanap na produkto.'}
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {productList.map((p) => {
-                        const isSelected = activeProduct?.id === p.id
-                        return (
-                          <CommandItem
-                            key={p.id}
-                            value={`${p.name} ${p.sku || ''} ${p.barcode || ''} ${p.id}`}
-                            onSelect={() => {
-                              setChosenProduct(p)
-                              setPickerOpen(false)
-                            }}
-                            className="flex items-center justify-between py-2 text-xs cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2 min-w-0 pr-2">
-                              <Check
-                                className={cn(
-                                  'h-4 w-4 shrink-0',
-                                  isSelected ? 'opacity-100 text-primary' : 'opacity-0',
-                                )}
-                              />
-                              <div className="min-w-0">
-                                <span className="font-semibold block truncate">
-                                  {p.name}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground font-mono">
-                                  {p.sku || 'Walang SKU'}
-                                  {p.barcode ? ` · ${p.barcode}` : ''}
-                                </span>
-                              </div>
-                            </div>
-                            <Badge
-                              variant={
-                                p.stock_quantity <= (p.reorder_level || 5)
-                                  ? 'warning'
-                                  : 'outline'
-                              }
-                              className="font-mono text-[10px] shrink-0"
-                            >
-                              {p.stock_quantity} {p.unit || 'pcs'}
-                            </Badge>
-                          </CommandItem>
-                        )
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <div className="flex items-center gap-1.5">
+              <div className="flex-1 min-w-0">
+                <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={pickerOpen}
+                      aria-label="Pumili ng produkto para sa stock adjustment"
+                      className="w-full justify-between h-10 text-xs font-normal"
+                    >
+                      {chosenProduct ? (
+                        <span className="truncate font-medium text-foreground">
+                          {chosenProduct.name} ({chosenProduct.stock_quantity ?? 0}{' '}
+                          {chosenProduct.unit || 'pcs'})
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Pumili ng produkto (Maghanap ayon sa pangalan, SKU)...
+                        </span>
+                      )}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] sm:w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        placeholder="Maghanap ng pangalan, SKU, barcode..."
+                        className="text-xs"
+                      />
+                      <CommandList className="max-h-60">
+                        <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">
+                          {isProductsLoading
+                            ? 'Kinukuha ang mga paninda...'
+                            : 'Walang nahanap na produkto.'}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {productList.map((p) => {
+                            const isSelected = activeProduct?.id === p.id
+                            return (
+                              <CommandItem
+                                key={p.id}
+                                value={`${p.name} ${p.sku || ''} ${p.barcode || ''} ${p.id}`}
+                                onSelect={() => {
+                                  setChosenProduct(p)
+                                  setPickerOpen(false)
+                                }}
+                                className="flex items-center justify-between py-2 text-xs cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2 min-w-0 pr-2">
+                                  <Check
+                                    className={cn(
+                                      'h-4 w-4 shrink-0',
+                                      isSelected ? 'opacity-100 text-primary' : 'opacity-0',
+                                    )}
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="font-semibold block truncate">
+                                      {p.name}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground font-mono">
+                                      {p.sku || 'Walang SKU'}
+                                      {p.barcode ? ` · ${p.barcode}` : ''}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Badge
+                                  variant={
+                                    p.stock_quantity <= (p.reorder_level || 5)
+                                      ? 'warning'
+                                      : 'outline'
+                                  }
+                                  className="font-mono text-[10px] shrink-0"
+                                >
+                                  {p.stock_quantity} {p.unit || 'pcs'}
+                                </Badge>
+                              </CommandItem>
+                            )
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsScannerOpen(true)}
+                className="h-10 text-xs px-2.5 gap-1 shrink-0"
+                title="I-scan ang barcode ng produkto"
+              >
+                <ScanBarcode className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">I-scan</span>
+              </Button>
+            </div>
           </div>
         )}
 
@@ -400,7 +446,16 @@ export function AdjustStockDialog({
         </div>
       </form>
     </ResponsiveDialog>
-  )
+
+    <ScannerSheet
+      open={isScannerOpen}
+      onOpenChange={setIsScannerOpen}
+      continuous={false}
+      title="I-scan ang Barcode para Piliin ang Produkto"
+      onDetected={handleBarcodeScanned}
+    />
+  </>
+)
 }
 
 export default AdjustStockDialog

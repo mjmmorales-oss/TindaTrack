@@ -30,6 +30,11 @@ class ProductFactory extends Factory
             'reorder_level' => 10,
             'is_active' => true,
             'description' => fake()->sentence(),
+            'image_url' => null,
+            'brand' => fake()->company(),
+            'size' => '1 pc',
+            'source' => 'manual',
+            'source_ref' => null,
         ];
     }
 }

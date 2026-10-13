@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\BarcodeLookupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -8,6 +9,8 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\ScannerDeviceController;
+use App\Http\Controllers\ScannerSessionController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UtangController;
@@ -21,6 +24,16 @@ Route::get('/ping', fn () => response()->json([
     'app' => config('app.name'),
     'time' => now()->toIso8601String(),
 ]));
+
+// Device-scoped scanner endpoints (phone client)
+Route::prefix('scanner')->group(function () {
+    Route::post('/pair', [ScannerDeviceController::class, 'pair'])
+        ->middleware('throttle:10,1');
+    Route::post('/scans', [ScannerDeviceController::class, 'scan'])
+        ->middleware(['scanner.device', 'throttle:120,1']);
+    Route::post('/heartbeat', [ScannerDeviceController::class, 'heartbeat'])
+        ->middleware('scanner.device');
+});
 
 require __DIR__.'/auth.php';
 
@@ -45,6 +58,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/low-stock', [ProductController::class, 'lowStock']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
+    Route::get('/barcode-lookup/{barcode}', BarcodeLookupController::class)
+        ->middleware(['role:owner,cashier', 'throttle:30,1']);
 
     // Customers (cashiers can view, create suki, and edit details during transactions)
     Route::get('/customers', [CustomerController::class, 'index']);
@@ -63,10 +78,23 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/utang/debtors', [UtangController::class, 'debtors']);
     Route::post('/utang-payments', [UtangPaymentController::class, 'store']);
 
+    // Scanner sessions (phone pairing for POS and Inventory)
+    Route::post('/scanner-sessions', [ScannerSessionController::class, 'store'])
+        ->middleware('role:owner,cashier');
+    Route::get('/scanner-sessions/{id}', [ScannerSessionController::class, 'show'])
+        ->middleware('role:owner,cashier');
+    Route::get('/scanner-sessions/{id}/events', [ScannerSessionController::class, 'events'])
+        ->middleware('role:owner,cashier');
+    Route::delete('/scanner-sessions/{id}', [ScannerSessionController::class, 'destroy'])
+        ->middleware('role:owner,cashier');
+
     // ==========================================
     // OWNER-ONLY PROTECTED ROUTES
     // ==========================================
     Route::middleware('role:owner')->group(function () {
+        // Unknown barcodes
+        Route::get('/scanner/unknown-barcodes', [ScannerSessionController::class, 'unknownBarcodes']);
+
         // Reports
         Route::get('/reports/sales', [ReportController::class, 'sales']);
         Route::get('/reports/best-sellers', [ReportController::class, 'bestSellers']);

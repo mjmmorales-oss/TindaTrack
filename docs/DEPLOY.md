@@ -62,7 +62,20 @@ SESSION_DRIVER=database
 MAIL_MAILER=log
 LOG_CHANNEL=stderr
 DEMO_HISTORY_DAYS=60
+
+# Barcode Scanning & Open Food Facts Lookup
+PRODUCT_LOOKUP_ENABLED=true
+OFF_USER_AGENT="TindaTrack/1.1 (your-email@example.com)"
+
+# Optional Realtime Broadcasting (no worker required; polling is used by default)
+# BROADCAST_CONNECTION=pusher
+# PUSHER_APP_ID=
+# PUSHER_APP_KEY=
+# PUSHER_APP_SECRET=
+# PUSHER_APP_CLUSTER=mt1
 ```
+
+> **Note on Broadcasting**: No extra Railway background worker or Redis container is required. TindaTrack uses synchronous HTTP polling out of the box with zero external dependencies. If you opt into Pusher WebSockets, `ScannerItemScanned` implements `ShouldBroadcastNow`, which broadcasts synchronously during the HTTP request without a queue worker.
 
 > **Tip for `APP_KEY`**: If you need a fresh key, run `php artisan key:generate --show` locally and paste the output.
 >
@@ -104,6 +117,10 @@ Expand **Environment Variables** and add:
 |---|---|---|
 | `VITE_API_URL` | `https://<YOUR-RAILWAY-DOMAIN>/api` | Railway API endpoint (with `/api`) |
 | `VITE_DATA_SOURCE` | `api` | Connects directly to the Laravel backend |
+| `VITE_REALTIME_DRIVER` | `polling` | Realtime driver (`polling` default, or `pusher`) |
+| `VITE_PUBLIC_APP_URL` | `https://your-tindatrack.vercel.app` | Public origin used in phone pairing QR codes |
+| `VITE_PUSHER_APP_KEY` | *(optional)* | Only needed if `VITE_REALTIME_DRIVER=pusher` |
+| `VITE_PUSHER_APP_CLUSTER` | *(optional)* | Pusher cluster (e.g. `ap1` or `mt1`) |
 
 > **IMPORTANT**: Do **NOT** set `VITE_SHOW_DEMO_ACCOUNTS=true` on Vercel. The demo credentials switcher buttons are strictly development-only (`import.meta.env.DEV`), and production builds hide them automatically. On your deployed production site, log in by typing the credentials below directly.
 

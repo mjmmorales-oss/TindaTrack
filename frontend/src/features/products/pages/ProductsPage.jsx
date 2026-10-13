@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
+  AlertCircle,
   ArrowDownUp,
   Copy,
   Eye,
@@ -8,7 +9,9 @@ import {
   Package,
   Pencil,
   Plus,
+  Scan,
   Trash2,
+  X,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -35,11 +38,18 @@ import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
-import { useProducts, useDeleteProduct } from '@/features/products/hooks/useProducts'
+import { ScannerSheet } from '@/components/scanner/ScannerSheet'
+import { barcodeService } from '@/services/barcodeService'
+import {
+  useProducts,
+  useDeleteProduct,
+  useUnknownBarcodes,
+} from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePermissions } from '@/hooks/usePermissions'
 import { formatRelative } from '@/lib/format'
+import { notify } from '@/lib/notify'
 
 /**
  * Product catalog management page with server-filtered data table,
@@ -90,10 +100,62 @@ export function ProductsPage() {
   const [adjustingProduct, setAdjustingProduct] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingProduct, setDeletingProduct] = useState(null)
+  const [scannerSheetOpen, setScannerSheetOpen] = useState(false)
+  const [dismissedUnknownCard, setDismissedUnknownCard] = useState(false)
+
+  // Unknown barcodes for owner
+  const { data: unknownBarcodesRes } = useUnknownBarcodes()
+  const unknownBarcodes = useMemo(() => unknownBarcodesRes?.data || [], [unknownBarcodesRes?.data])
 
   const handleCreate = () => {
     setEditingProduct(DEFAULT_PRODUCT)
     setFormDialogOpen(true)
+  }
+
+  const handleRegisterBarcode = async (barcode) => {
+    try {
+      const res = await barcodeService.lookupBarcode(barcode)
+      if (res?.data?.local_product) {
+        notify.info(`Naka-rehistro na: ${res.data.local_product.name}`)
+        setEditingProduct(res.data.local_product)
+        setFormDialogOpen(true)
+      } else if (res?.data?.catalog?.found) {
+        const cat = res.data.catalog
+        const combinedName =
+          cat.brand && cat.name && !cat.name.toLowerCase().includes(cat.brand.toLowerCase())
+            ? `${cat.brand} ${cat.name}${cat.size ? ' ' + cat.size : ''}`
+            : `${cat.name || ''}${cat.size ? ' ' + cat.size : ''}`.trim()
+        setEditingProduct({
+          ...DEFAULT_PRODUCT,
+          barcode,
+          name: combinedName || cat.name || '',
+          brand: cat.brand || '',
+          size: cat.size || '',
+          image_url: cat.image_url || '',
+          category_id: cat.suggested_category_id ? String(cat.suggested_category_id) : '',
+          source: cat.source || 'openfoodfacts',
+          source_ref: barcode,
+        })
+        setFormDialogOpen(true)
+      } else {
+        setEditingProduct({
+          ...DEFAULT_PRODUCT,
+          barcode,
+        })
+        setFormDialogOpen(true)
+      }
+    } catch {
+      setEditingProduct({
+        ...DEFAULT_PRODUCT,
+        barcode,
+      })
+      setFormDialogOpen(true)
+    }
+  }
+
+  const handleScanDetected = async (code) => {
+    setScannerSheetOpen(false)
+    await handleRegisterBarcode(code)
   }
 
   const handleEdit = (prod) => {
@@ -194,7 +256,12 @@ export function ProductsPage() {
           const p = row.original
           return (
             <div className="flex items-center gap-3 py-1">
-              <ProductThumb name={p.name} size="md" className="shrink-0" />
+              <ProductThumb
+                name={p.name}
+                imageUrl={p.image_url}
+                size="md"
+                className="shrink-0"
+              />
               <div className="min-w-0">
                 <Link
                   to={`/products/${p.id}`}
@@ -375,7 +442,12 @@ export function ProductsPage() {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <ProductThumb name={p.name} size="md" className="shrink-0" />
+            <ProductThumb
+              name={p.name}
+              imageUrl={p.image_url}
+              size="md"
+              className="shrink-0"
+            />
             <div className="min-w-0">
               <Link
                 to={`/products/${p.id}`}
@@ -500,13 +572,72 @@ export function ProductsPage() {
         description="Pamamahala ng mga produkto, presyo ng benta, puhunan, at dami ng stock"
         actions={
           canManage && (
-            <Button onClick={handleCreate} className="gap-1.5 shadow-xs w-full sm:w-auto h-11 sm:h-9">
-              <Plus className="h-4 w-4" />
-              Magdagdag ng Produkto
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setScannerSheetOpen(true)}
+                className="gap-1.5 shadow-xs h-11 sm:h-9"
+              >
+                <Scan className="h-4 w-4" />
+                I-scan para magdagdag
+              </Button>
+              <Button onClick={handleCreate} className="gap-1.5 shadow-xs h-11 sm:h-9">
+                <Plus className="h-4 w-4" />
+                Magdagdag ng Produkto
+              </Button>
+            </div>
           )
         }
       />
+
+      {/* Unknown Barcodes Panel for Owner */}
+      {canManage && unknownBarcodes.length > 0 && !dismissedUnknownCard && (
+        <div className="rounded-xl border border-warning/40 bg-warning/5 p-4 mb-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+              <h3 className="font-semibold text-sm">
+                Mga barcode na hindi pa naka-rehistro ({unknownBarcodes.length})
+              </h3>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setDismissedUnknownCard(true)}
+              aria-label="Isara ang babala"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            May mga na-scan na barcode sa POS na wala pa sa iyong imbentaryo. Pindutin ang &quot;Irehistro&quot; para mabilis itong maipasok.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 pt-1">
+            {unknownBarcodes.map((item) => (
+              <div
+                key={item.barcode}
+                className="flex items-center justify-between p-2.5 rounded-lg border bg-background/80 text-xs"
+              >
+                <div className="min-w-0 pr-2">
+                  <span className="font-mono font-bold block truncate">{item.barcode}</span>
+                  <span className="text-[11px] text-muted-foreground block truncate">
+                    Na-scan nang {item.scan_count}× · {formatRelative(item.last_seen_at)}
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs shrink-0"
+                  onClick={() => handleRegisterBarcode(item.barcode)}
+                >
+                  Irehistro
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <DataTable
         columns={columns}
@@ -571,6 +702,15 @@ export function ProductsPage() {
         tone="destructive"
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Scan to Add Modal */}
+      <ScannerSheet
+        open={scannerSheetOpen}
+        onOpenChange={setScannerSheetOpen}
+        continuous={false}
+        title="I-scan ang Produkto para Idagdag"
+        onDetected={handleScanDetected}
       />
     </PageContainer>
   )

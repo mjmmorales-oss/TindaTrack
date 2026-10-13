@@ -92,6 +92,11 @@ class ReferenceDataSeeder extends Seeder
                         'reorder_level' => $p['reorder_level'] ?? 10,
                         'is_active' => $p['is_active'] ?? true,
                         'description' => $p['description'] ?? null,
+                        'image_url' => $p['image_url'] ?? null,
+                        'brand' => $p['brand'] ?? null,
+                        'size' => $p['size'] ?? null,
+                        'source' => $p['source'] ?? 'manual',
+                        'source_ref' => $p['source_ref'] ?? null,
                     ]
                 );
             }

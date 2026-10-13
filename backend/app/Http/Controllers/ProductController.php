@@ -6,6 +6,7 @@ use App\Actions\AdjustStockAction;
 use App\Enums\StockMovementType;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Models\ScannerEvent;
 use App\Models\StockMovement;
 use App\Support\ListQuery;
 use Illuminate\Database\Eloquent\Builder;
@@ -86,6 +87,11 @@ class ProductController extends Controller
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'image_url' => ['nullable', 'string', 'max:2048'],
+            'brand' => ['nullable', 'string', 'max:255'],
+            'size' => ['nullable', 'string', 'max:100'],
+            'source' => ['nullable', 'string', Rule::in(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts'])],
+            'source_ref' => ['nullable', 'string', 'max:255'],
         ]);
 
         $initialStock = (int) ($validated['stock_quantity'] ?? 0);
@@ -103,6 +109,11 @@ class ProductController extends Controller
                 'reorder_level' => (int) ($validated['reorder_level'] ?? 10),
                 'is_active' => $validated['is_active'] ?? true,
                 'description' => $validated['description'] ?? null,
+                'image_url' => $validated['image_url'] ?? null,
+                'brand' => ! empty($validated['brand']) ? trim($validated['brand']) : null,
+                'size' => ! empty($validated['size']) ? trim($validated['size']) : null,
+                'source' => $validated['source'] ?? 'manual',
+                'source_ref' => ! empty($validated['source_ref']) ? trim($validated['source_ref']) : null,
             ]);
 
             if ($initialStock > 0) {
@@ -115,6 +126,15 @@ class ProductController extends Controller
                     'notes' => 'Panimulang imbentaryo (Initial stock)',
                     'user_id' => $request->user()->id,
                 ]);
+            }
+
+            if (! empty($prod->barcode)) {
+                ScannerEvent::where('barcode', $prod->barcode)
+                    ->whereNull('resolved_at')
+                    ->update([
+                        'resolved_at' => now(),
+                        'product_id' => $prod->id,
+                    ]);
             }
 
             return $prod;
@@ -138,6 +158,11 @@ class ProductController extends Controller
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'image_url' => ['nullable', 'string', 'max:2048'],
+            'brand' => ['nullable', 'string', 'max:255'],
+            'size' => ['nullable', 'string', 'max:100'],
+            'source' => ['nullable', 'string', Rule::in(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts'])],
+            'source_ref' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (isset($validated['name'])) {
@@ -148,6 +173,15 @@ class ProductController extends Controller
         }
         if (isset($validated['barcode'])) {
             $validated['barcode'] = ! empty($validated['barcode']) ? trim($validated['barcode']) : null;
+        }
+        if (isset($validated['brand'])) {
+            $validated['brand'] = ! empty($validated['brand']) ? trim($validated['brand']) : null;
+        }
+        if (isset($validated['size'])) {
+            $validated['size'] = ! empty($validated['size']) ? trim($validated['size']) : null;
+        }
+        if (isset($validated['source_ref'])) {
+            $validated['source_ref'] = ! empty($validated['source_ref']) ? trim($validated['source_ref']) : null;
         }
 
         $product->update($validated);

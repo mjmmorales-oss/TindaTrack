@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { productService } from '@/services/productService'
+import { scannerService } from '@/services/scannerService'
 import { notify } from '@/lib/notify'
 
 export const productKeys = {
@@ -9,6 +10,13 @@ export const productKeys = {
   details: () => [...productKeys.all, 'detail'],
   detail: (id) => [...productKeys.details(), id],
   lowStock: () => [...productKeys.all, 'low-stock'],
+}
+
+export function useUnknownBarcodes() {
+  return useQuery({
+    queryKey: ['scanner', 'unknown-barcodes'],
+    queryFn: () => scannerService.getUnknownBarcodes(),
+  })
 }
 
 export function useProducts(params = {}) {
@@ -43,6 +51,7 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
+      queryClient.invalidateQueries({ queryKey: ['scanner', 'unknown-barcodes'] })
       notify.success('Nai-save ang produkto!', `${res.data.name} has been added.`)
     },
     onError: (err) => {
