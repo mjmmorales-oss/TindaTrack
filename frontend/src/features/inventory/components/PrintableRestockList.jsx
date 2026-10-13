@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Printer, CheckSquare, Square, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,6 +14,7 @@ import { formatDate } from '@/lib/format'
  * @param {object} [props.settings] - Store settings
  */
 export function PrintableRestockList({ restockData, settings }) {
+  const { t } = useTranslation(['inventory', 'common'])
   const [checkedItems, setCheckedItems] = useState({})
   const grouped = restockData?.grouped || {}
   const totalItems = restockData?.total_items || 0
@@ -38,10 +40,10 @@ export function PrintableRestockList({ restockData, settings }) {
         <CardContent className="space-y-2">
           <ShoppingBag className="mx-auto h-8 w-8 opacity-40" />
           <p className="font-semibold text-foreground text-sm">
-            Walang panindang kailangang i-restock!
+            {t('inventory:emptyChecklistTitle')}
           </p>
           <p className="text-xs text-muted-foreground">
-            Lahat ng mga aktibong paninda ay may sapat na bilang ng stock.
+            {t('inventory:emptyChecklistDesc')}
           </p>
         </CardContent>
       </Card>
@@ -54,15 +56,15 @@ export function PrintableRestockList({ restockData, settings }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div>
           <h3 className="text-base font-bold text-foreground">
-            Listahan ng Pamimili sa Palengke / Grocery ({totalItems} Paninda)
+            {t('inventory:checklistHeaderTitle', { count: totalItems })}
           </h3>
           <p className="text-xs text-muted-foreground">
-            Kusang kinakalkula ang iminumungkahing bibilhin base sa minimum stock level.
+            {t('inventory:checklistHeaderDesc')}
           </p>
         </div>
         <Button onClick={handlePrint} className="gap-2 shadow-xs h-11 sm:h-9 font-semibold">
           <Printer className="h-4 w-4" />
-          I-print ang Checklist
+          {t('inventory:printChecklist')}
         </Button>
       </div>
 
@@ -75,14 +77,14 @@ export function PrintableRestockList({ restockData, settings }) {
         <div className="border-b border-border/80 pb-4 text-center sm:text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h2 className="text-xl font-bold uppercase tracking-tight text-foreground">
-              {storeName} — Restock Checklist
+              {t('inventory:restockChecklistTitle', { store: storeName })}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Petsa ng Listahan: <span className="font-mono text-foreground font-semibold">{todayDate}</span>
+              {t('inventory:listDate', { date: todayDate })}
             </p>
           </div>
           <Badge variant="outline" className="self-center sm:self-auto font-mono text-xs">
-            {totalItems} Kabuuang Paninda
+            {t('inventory:totalItemsCount', { count: totalItems })}
           </Badge>
         </div>
 
@@ -118,7 +120,7 @@ export function PrintableRestockList({ restockData, settings }) {
                           <button
                             type="button"
                             className="text-primary mt-0.5 shrink-0"
-                            aria-label={`Markahan ang ${item.name}`}
+                            aria-label={`Mark ${item.name}`}
                           >
                             {isChecked ? (
                               <CheckSquare className="h-4 w-4" />
@@ -131,14 +133,14 @@ export function PrintableRestockList({ restockData, settings }) {
                               {item.name}
                             </p>
                             <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                              Stock ngayon: {item.stock_quantity} · Min: {item.reorder_level}
+                              {t('inventory:currentStockShort', { stock: item.stock_quantity, reorder: item.reorder_level })}
                             </p>
                           </div>
                         </div>
 
                         <div className="text-right shrink-0">
                           <span className="inline-block rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-bold text-primary">
-                            Bilihin: {item.suggested_quantity} {item.unit || 'pcs'}
+                            {t('inventory:buyQuantity', { qty: item.suggested_quantity, unit: item.unit || 'pcs' })}
                           </span>
                         </div>
                       </div>
@@ -152,7 +154,7 @@ export function PrintableRestockList({ restockData, settings }) {
 
         {/* Printable Footer */}
         <div className="border-t border-dashed border-border pt-4 text-center text-[11px] text-muted-foreground">
-          <p>TindaTrack Inventory Checklist · Nilikha para sa maayos na pamimili sa palengke</p>
+          <p>{t('inventory:checklistFooterNote')}</p>
         </div>
       </div>
     </div>

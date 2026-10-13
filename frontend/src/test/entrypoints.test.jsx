@@ -54,12 +54,12 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
 
       // Assert product picker combobox is present
       const picker = await screen.findByRole('combobox', {
-        name: /Pumili ng produkto para sa stock adjustment/i,
+        name: /Pumili ng Produkto|Select Product/i,
       })
       expect(picker).toBeInTheDocument()
 
       // Submit button is disabled before a product is selected
-      const submitBtn = screen.getByRole('button', { name: /Pumili ng Produkto/i })
+      const submitBtn = screen.getByRole('button', { name: /Pumili (muna )?ng Produkto|Select a? Product/i })
       expect(submitBtn).toBeDisabled()
 
       // Click picker to open command list
@@ -71,15 +71,15 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       await user.click(productOption)
 
       // Picker closes, dialog title updates to chosen product
-      expect(await screen.findByText(new RegExp(`I-adjust ang Stock: ${targetProduct.name}`, 'i'))).toBeInTheDocument()
+      expect(await screen.findByText(new RegExp(`(I-adjust ang Stock|Adjust Stock): ${targetProduct.name}`, 'i'))).toBeInTheDocument()
 
       // Submit button is now enabled
       const initialStock = targetProduct.stock_quantity
-      const enabledSubmitBtn = screen.getByRole('button', { name: /Kumpirmahin ang Stock/i })
+      const enabledSubmitBtn = screen.getByRole('button', { name: /Kumpirmahin ang Stock|Confirm Stock|Confirm Adjustment|Confirm Stock Adjustment/i })
       expect(enabledSubmitBtn).not.toBeDisabled()
 
       // Set quantity to 10
-      const qtyInput = screen.getByLabelText(/Dami \(Quantity\)/i)
+      const qtyInput = screen.getByLabelText(/Dami \(Quantity\)|Quantity \(Dami\)|^Quantity$|^Dami$/i)
       await user.clear(qtyInput)
       await user.type(qtyInput, '10')
 
@@ -104,19 +104,19 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
 
       // Combobox picker must NOT be present
       expect(
-        screen.queryByRole('combobox', { name: /Pumili ng produkto para sa stock adjustment/i }),
+        screen.queryByRole('combobox', { name: /Pumili ng Produkto|Select Product/i }),
       ).toBeNull()
 
       // Read-only header row showing product name and current stock badge
-      expect(await screen.findByText(new RegExp(`I-adjust ang Stock: ${product.name}`, 'i'))).toBeInTheDocument()
-      expect(screen.getByText(new RegExp(`^Stock: ${initialStock}`, 'i'))).toBeInTheDocument()
+      expect(await screen.findByText(new RegExp(`(I-adjust ang Stock|Adjust Stock): ${product.name}`, 'i'))).toBeInTheDocument()
+      expect(screen.getByText(new RegExp(`^(Stock|Current):?\\s*${initialStock}`, 'i'))).toBeInTheDocument()
 
       // Type restock quantity 5 and submit
-      const qtyInput = screen.getByLabelText(/Dami \(Quantity\)/i)
+      const qtyInput = screen.getByLabelText(/Dami \(Quantity\)|Quantity \(Dami\)|^Quantity$|^Dami$/i)
       await user.clear(qtyInput)
       await user.type(qtyInput, '5')
 
-      const submitBtn = screen.getByRole('button', { name: /Kumpirmahin ang Stock/i })
+      const submitBtn = screen.getByRole('button', { name: /Kumpirmahin ang Stock|Confirm Stock|Confirm Adjustment|Confirm Stock Adjustment/i })
       await user.click(submitBtn)
 
       await waitFor(() => {
@@ -130,15 +130,15 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       renderRoute('/inventory', { role: 'owner' })
 
       // Wait for page header to mount
-      await screen.findByRole('heading', { level: 1, name: /Pamamahala sa Imbentaryo/i }, { timeout: 10000 })
+      await screen.findByRole('heading', { level: 1, name: /Pamamahala sa Imbentaryo|Inventory & Stock Management/i }, { timeout: 10000 })
 
       // Click toolbar button
-      const toolbarAdjustBtn = await screen.findByRole('button', { name: /I-adjust ang Stock/i })
+      const toolbarAdjustBtn = await screen.findByRole('button', { name: /I-adjust ang Stock|Adjust Stock/i })
       await user.click(toolbarAdjustBtn)
 
       // Assert picker is displayed
       expect(
-        await screen.findByRole('combobox', { name: /Pumili ng produkto para sa stock adjustment/i }),
+        await screen.findByRole('combobox', { name: /Pumili ng Produkto|Select Product/i }),
       ).toBeInTheDocument()
     })
   })
@@ -149,7 +149,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       renderWithProviders(
         <BulkRestockDialog open={true} onOpenChange={() => {}} items={items} />,
       )
-      expect(await screen.findByText(/Maramihang Pag-restock/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
       expect(screen.getByText(new RegExp(items[0].name, 'i'))).toBeInTheDocument()
     })
 
@@ -158,7 +158,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       renderWithProviders(
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={debtor} />,
       )
-      expect(await screen.findByText(/Kolektahin ang Bayad/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Kolektahin ang Bayad|Record Payment/i)).toBeInTheDocument()
       expect(screen.getByText(new RegExp(debtor.name, 'i'))).toBeInTheDocument()
       expect(screen.getByDisplayValue(Number(debtor.credit_balance).toFixed(0))).toBeInTheDocument()
     })
@@ -168,7 +168,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       renderWithProviders(
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
-      expect(await screen.findByText(/Kolektahin ang Bayad/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Kolektahin ang Bayad|Record Payment/i)).toBeInTheDocument()
       expect(screen.getByText(new RegExp(customer.name, 'i'))).toBeInTheDocument()
     })
 
@@ -180,14 +180,14 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       const { unmount } = renderWithProviders(
         <ProductFormDialog open={true} onOpenChange={() => {}} categories={categories} product={null} />,
       )
-      expect(await screen.findByText(/Magdagdag ng Bagong Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
       unmount()
 
       // 2. Edit mode
       renderWithProviders(
         <ProductFormDialog open={true} onOpenChange={() => {}} categories={categories} product={product} />,
       )
-      expect(await screen.findByText(/I-edit ang Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Produkto|Edit Product/i)).toBeInTheDocument()
       expect(screen.getByDisplayValue(product.name)).toBeInTheDocument()
     })
 
@@ -198,14 +198,14 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       const { unmount } = renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki/i)).toBeInTheDocument()
       unmount()
 
       // 2. Edit mode
       renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
-      expect(await screen.findByText(/I-edit ang Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Suki|Edit Customer/i)).toBeInTheDocument()
       expect(screen.getByDisplayValue(customer.name)).toBeInTheDocument()
     })
 
@@ -216,14 +216,14 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       const { unmount } = renderWithProviders(
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={null} />,
       )
-      expect(await screen.findByRole('heading', { name: /Bagong Kategorya/i })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Bagong Kategorya|New Category/i })).toBeInTheDocument()
       unmount()
 
       // 2. Edit mode
       renderWithProviders(
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={category} />,
       )
-      expect(await screen.findByRole('heading', { name: new RegExp(`I-edit ang Kategorya: ${category.name}`, 'i') })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: new RegExp(`(I-edit ang Kategorya|Edit Category): ${category.name}`, 'i') })).toBeInTheDocument()
       expect(screen.getByDisplayValue(category.name)).toBeInTheDocument()
     })
 

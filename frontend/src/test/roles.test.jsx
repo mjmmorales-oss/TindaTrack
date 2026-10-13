@@ -61,11 +61,11 @@ describe('Role-Based Access Control and Action Visibility Tests', () => {
   describe('Allowed Routes for Cashier', () => {
     const allowedCashierPaths = [
       { path: '/pos', text: /Kasalukuyang Benta|Dashboard|POS/i },
-      { path: '/products', text: /Mga Paninda at Imbentaryo/i },
-      { path: '/sales', text: /Kasaysayan ng Benta/i },
-      { path: '/customers', text: /Direktoryo ng Suki/i },
-      { path: '/utang', text: /Talaan ng Utang/i },
-      { path: '/account', text: /Aking Account/i },
+      { path: '/products', text: /Mga Paninda at Imbentaryo|Products & Inventory/i },
+      { path: '/sales', text: /Kasaysayan ng Benta|Sales History|Recent Sales/i },
+      { path: '/customers', text: /Direktoryo ng Suki|Customer Directory|Customers/i },
+      { path: '/utang', text: /Talaan ng Utang|Credit Ledger|Utang/i },
+      { path: '/account', text: /Aking Account|My Account/i },
     ]
 
     allowedCashierPaths.forEach(({ path, text }) => {
@@ -82,44 +82,44 @@ describe('Role-Based Access Control and Action Visibility Tests', () => {
     it('shows Void button on /sales/1 for owner, but hides it for cashier', async () => {
       // 1. As Cashier
       const { unmount } = renderRoute('/sales/1', { role: 'cashier' })
-      expect(await screen.findByText(/Resibo TT-/i, {}, { timeout: 12000 })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /I-void ang Benta/i })).toBeNull()
+      expect(await screen.findByText(/Resibo TT-|Receipt TT-/i, {}, { timeout: 12000 })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /I-void ang Benta|Void Sale/i })).toBeNull()
       unmount()
 
       // 2. As Owner
       renderRoute('/sales/1', { role: 'owner' })
-      expect(await screen.findByText(/Resibo TT-/i, {}, { timeout: 12000 })).toBeInTheDocument()
+      expect(await screen.findByText(/Resibo TT-|Receipt TT-/i, {}, { timeout: 12000 })).toBeInTheDocument()
       expect(
-        await screen.findByRole('button', { name: /I-void ang Benta/i }, {}, { timeout: 12000 }),
+        await screen.findByRole('button', { name: /I-void ang Benta|Void Sale/i }, {}, { timeout: 12000 }),
       ).toBeInTheDocument()
     })
 
     it('shows "Magdagdag ng Produkto" on /products for owner, but hides it for cashier', async () => {
       // 1. As Cashier
       const { unmount } = renderRoute('/products', { role: 'cashier' })
-      expect(await screen.findByText(/Mga Paninda at Imbentaryo/i, {}, { timeout: 12000 })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /Magdagdag ng Produkto/i })).toBeNull()
+      expect(await screen.findByText(/Mga Paninda at Imbentaryo|Products & Inventory/i, {}, { timeout: 12000 })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Magdagdag ng Produkto|Add Product/i })).toBeNull()
       unmount()
 
       // 2. As Owner
       renderRoute('/products', { role: 'owner' })
-      expect(await screen.findByText(/Mga Paninda at Imbentaryo/i, {}, { timeout: 12000 })).toBeInTheDocument()
+      expect(await screen.findByText(/Mga Paninda at Imbentaryo|Products & Inventory/i, {}, { timeout: 12000 })).toBeInTheDocument()
       expect(
-        await screen.findByRole('button', { name: /Magdagdag ng Produkto/i }, {}, { timeout: 12000 }),
+        await screen.findByRole('button', { name: /Magdagdag ng Produkto|Add Product/i }, {}, { timeout: 12000 }),
       ).toBeInTheDocument()
     })
 
     it('shows Cost Price column on /products for owner, but hides it for cashier', async () => {
       // 1. As Cashier
       const { unmount } = renderRoute('/products', { role: 'cashier' })
-      await screen.findByText(/Mga Paninda at Imbentaryo/i, {}, { timeout: 12000 })
-      expect(screen.queryByText(/Puhunan \(Cost\)/i)).toBeNull()
+      await screen.findByText(/Mga Paninda at Imbentaryo|Products & Inventory/i, {}, { timeout: 12000 })
+      expect(screen.queryByText(/Puhunan \(Cost\)|Cost \(Puhunan\)|^Cost$|^Puhunan$/i)).toBeNull()
       unmount()
 
       // 2. As Owner
       renderRoute('/products', { role: 'owner' })
-      await screen.findByText(/Mga Paninda at Imbentaryo/i, {}, { timeout: 12000 })
-      const costMatches = await screen.findAllByText(/Puhunan \(Cost\)/i, {}, { timeout: 12000 })
+      await screen.findByText(/Mga Paninda at Imbentaryo|Products & Inventory/i, {}, { timeout: 12000 })
+      const costMatches = await screen.findAllByText(/Puhunan \(Cost\)|Cost \(Puhunan\)|^Cost$|^Puhunan$/i, {}, { timeout: 12000 })
       expect(costMatches.length).toBeGreaterThan(0)
     })
   })

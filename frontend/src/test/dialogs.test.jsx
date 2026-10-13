@@ -60,7 +60,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
     })
 
     it('renders in create mode with complete DEFAULT_PRODUCT', async () => {
@@ -74,7 +74,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode with seeded product', async () => {
@@ -89,7 +89,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Produkto|Edit Product/i)).toBeInTheDocument()
     })
   })
 
@@ -99,7 +99,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Bagong Kategorya/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Bagong Kategorya|New Category/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode (seeded category)', async () => {
@@ -108,7 +108,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={category} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Kategorya/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Kategorya|Edit Category/i)).toBeInTheDocument()
     })
   })
 
@@ -118,7 +118,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode (seeded customer)', async () => {
@@ -127,7 +127,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Suki|Edit Customer/i)).toBeInTheDocument()
     })
   })
 
@@ -138,7 +138,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={product} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(new RegExp(`I-adjust ang Stock: ${product.name}`, 'i'))).toBeInTheDocument()
+      expect(await screen.findByText(new RegExp(`(I-adjust ang Stock|Adjust Stock): ${product.name}`, 'i'))).toBeInTheDocument()
     })
 
     it('renders AdjustStockDialog without product and shows product picker', async () => {
@@ -146,7 +146,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByRole('combobox', { name: /Pumili ng produkto para sa stock adjustment/i })).toBeInTheDocument()
+      expect(await screen.findByRole('combobox', { name: /Pumili ng Produkto|Select Product/i })).toBeInTheDocument()
     })
 
     it('renders BulkRestockDialog with seeded products', async () => {
@@ -159,7 +159,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Maramihang Pag-restock/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
     })
 
     it('renders BulkRestockDialog with empty items array without crashing', async () => {
@@ -171,7 +171,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Maramihang Pag-restock/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
     })
   })
 

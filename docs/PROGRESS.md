@@ -759,4 +759,24 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Vite build: Production bundle built cleanly.
   - Backend: Pest 74/74 tests green, Pint clean.
 
+### H4c Log (Products, Inventory, and Categories Feature Localization):
+- **Feature Component Translation**:
+  - Fully translated all 9 target files with standard English default and rich Taglish/Filipino translation:
+    - Products: `ProductsPage.jsx`, `ProductDetailPage.jsx`, `ProductFormDialog.jsx`.
+    - Inventory: `InventoryPage.jsx`, `AdjustStockDialog.jsx`, `BulkRestockDialog.jsx`, `PrintableRestockList.jsx`.
+    - Categories: `CategoriesPage.jsx`, `CategoryFormDialog.jsx`.
+- **Locale Dictionary Alignment**:
+  - Expanded `en/products.json` & `fil/products.json` (72 keys each, 100% key parity).
+  - Expanded `en/inventory.json` & `fil/inventory.json` (124 keys each, 100% key parity).
+  - Expanded `en/categories.json` & `fil/categories.json` (34 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `routes.test.jsx`, `roles.test.jsx`, `edge-states.test.jsx`, `interactions.test.jsx`, `scan-flows.test.jsx`, `dialogs.test.jsx`, and `entrypoints.test.jsx` for bilingual assertions (handling both English default and Filipino language modes).
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, 701 validated `t(...)` calls, untranslated candidate count reduced from 321 to 242.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+  - Backend: Pest 74/74 tests green, Pint clean.
+
+
 

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   ArrowRight,
@@ -40,7 +41,8 @@ import { cn } from '@/lib/utils'
  * Displays category cards with custom icons, color chips, product counts, and delete guards.
  */
 export function CategoriesPage() {
-  useDocumentTitle('Categories')
+  const { t } = useTranslation(['categories', 'common'])
+  useDocumentTitle(t('categories:pageTitle'))
 
   const { data: categoriesRes, isLoading, isError, error, refetch } = useCategories()
   const categories = useMemo(() => categoriesRes?.data || [], [categoriesRes?.data])
@@ -88,12 +90,12 @@ export function CategoriesPage() {
   return (
     <PageContainer className="pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8 space-y-6">
       <PageHeader
-        title="Mga Kategorya ng Paninda"
-        description="Ayusin ang mga paninda sa malinaw at madaling hanaping mga grupo na may sariling kulay at icon."
+        title={t('categories:pageTitle')}
+        description={t('categories:pageSubtitle')}
         actions={
           <Button onClick={handleCreate} className="h-11 sm:h-9 w-full sm:w-auto gap-1.5 shadow-xs font-semibold">
             <Plus className="h-4 w-4" />
-            Magdagdag ng Kategorya
+            {t('categories:addCategory')}
           </Button>
         }
       />
@@ -118,16 +120,16 @@ export function CategoriesPage() {
         </div>
       ) : isError ? (
         <ErrorState
-          title="Hindi ma-load ang mga kategorya"
-          description={error?.message || 'Nagkaroon ng problema habang kinukuha ang talaan ng kategorya.'}
+          title={t('categories:loadErrorTitle')}
+          description={error?.message || t('categories:loadErrorDesc')}
           onRetry={refetch}
         />
       ) : categories.length === 0 ? (
         <EmptyState
           icon={Tags}
-          title="Walang nakatalang kategorya"
-          description="Gumawa ng unang kategorya (hal. Drinks, Snacks) upang maayos na maipangkat ang iyong mga paninda."
-          actionText="Magdagdag ng Kategorya"
+          title={t('categories:emptyTitle')}
+          description={t('categories:emptyDesc')}
+          actionText={t('categories:addCategory')}
           onAction={handleCreate}
         />
       ) : (
@@ -160,7 +162,7 @@ export function CategoriesPage() {
                         variant="ghost"
                         size="icon"
                         className="h-11 w-11 p-0 text-muted-foreground hover:text-foreground"
-                        aria-label={`Aksyon sa kategoryang ${cat.name}`}
+                        aria-label={t('categories:categoryActionAria', { name: cat.name })}
                       >
                         <MoreHorizontal className="h-5 w-5" />
                       </Button>
@@ -171,14 +173,14 @@ export function CategoriesPage() {
                         className="gap-2 text-xs"
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                        I-edit
+                        {t('categories:edit')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDeleteClick(cat)}
                         className="gap-2 text-xs text-destructive focus:text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Burahin
+                        {t('categories:delete')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -190,7 +192,7 @@ export function CategoriesPage() {
                       {cat.name}
                     </h3>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1 min-h-[2rem]">
-                      {cat.description || 'Walang karagdagang deskripsyon.'}
+                      {cat.description || t('categories:noDesc')}
                     </p>
                   </div>
 
@@ -200,7 +202,9 @@ export function CategoriesPage() {
                       <strong className="text-foreground font-semibold">
                         {cat.product_count}
                       </strong>{' '}
-                      {cat.product_count === 1 ? 'produkto' : 'mga produkto'}
+                      {cat.product_count === 1
+                        ? t('categories:productCountSingle', { count: cat.product_count })
+                        : t('categories:productCountPlural', { count: cat.product_count })}
                     </span>
                     <Button
                       variant="ghost"
@@ -209,7 +213,7 @@ export function CategoriesPage() {
                       className="h-7 px-2 text-xs text-primary hover:text-primary gap-1"
                     >
                       <Link to={`/products?category_id=${cat.id}`}>
-                        Tingnan
+                        {t('categories:view')}
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     </Button>
@@ -233,10 +237,10 @@ export function CategoriesPage() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(val) => !val && setDeleteTarget(null)}
-        title={`Burahin ang Kategoryang "${deleteTarget?.name}"?`}
-        description="Permanente itong mawawala sa sistema. Dahil walang nakatalagang produkto rito, ligtas itong burahin."
-        confirmText="Oo, Burahin"
-        cancelText="Kanselahin"
+        title={t('categories:deleteConfirmTitleNamed', { name: deleteTarget?.name })}
+        description={t('categories:deleteConfirmSafeDesc')}
+        confirmText={t('categories:confirmDelete')}
+        cancelText={t('common:cancel')}
         tone="destructive"
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
@@ -246,8 +250,8 @@ export function CategoriesPage() {
       <ResponsiveDialog
         open={!!blockedTarget}
         onOpenChange={(val) => !val && setBlockedTarget(null)}
-        title="Hindi Maaaring Burahin ang Kategorya"
-        description={`Ang "${blockedTarget?.name}" ay may nakatalagang mga produkto.`}
+        title={t('categories:cannotDeleteTitle')}
+        description={t('categories:cannotDeleteDescNamed', { name: blockedTarget?.name })}
         className="sm:max-w-md"
         footer={
           <div className="flex w-full items-center justify-end gap-2">
@@ -256,7 +260,7 @@ export function CategoriesPage() {
               variant="outline"
               onClick={() => setBlockedTarget(null)}
             >
-              Naiintindihan Ko
+              {t('categories:understood')}
             </Button>
             <Button
               asChild
@@ -264,7 +268,7 @@ export function CategoriesPage() {
               className="gap-1.5"
             >
               <Link to={`/products?category_id=${blockedTarget?.id}`}>
-                Ilipat ang mga Produkto
+                {t('categories:moveProducts')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -275,15 +279,15 @@ export function CategoriesPage() {
           <Alert variant="destructive" className="py-3">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle className="text-xs font-bold">
-              Proteksyon sa Datos (Integrity Guard)
+              {t('categories:integrityGuardTitle')}
             </AlertTitle>
             <AlertDescription className="text-xs mt-1">
-              Mayroong <strong>{blockedTarget?.product_count}</strong> produkto na kasalukuyang nakapaloob sa kategoryang ito. Upang maiwasan ang pagkawala ng datos, kailangan mo munang ilipat o burahin ang mga panindang ito bago mag-delete.
+              {t('categories:integrityGuardDesc', { count: blockedTarget?.product_count })}
             </AlertDescription>
           </Alert>
 
           <p className="text-xs text-muted-foreground">
-            Pindutin ang buton sa ibaba upang buksan ang listahan ng mga apektadong paninda sa Products page.
+            {t('categories:integrityGuardPrompt')}
           </p>
         </div>
       </ResponsiveDialog>

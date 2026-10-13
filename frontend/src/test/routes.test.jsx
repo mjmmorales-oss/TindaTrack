@@ -98,14 +98,14 @@ function assertLayoutIntegrity(path) {
 
   describe('Owner routes', () => {
     const ownerRoutes = [
-      { path: '/dashboard', expected: /Good (morning|afternoon|evening)|Magandang/i },
+      { path: '/dashboard', expected: /Good (morning|day|afternoon|evening)|Magandang/i },
       { path: '/pos', expected: /Point of Sale Terminal|Kasalukuyang Benta|Connect Phone|Ikonekta ang Phone/i },
       { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta/i },
       { path: '/sales/1', expected: /Resibo TT-|Receipt TT-/i },
       { path: '/products', expected: /Mga Paninda at Imbentaryo|Products & Inventory/i },
       { path: '/products/1', expected: /Coca-Cola|SKU:/i },
-      { path: '/categories', expected: /Mga Kategorya ng Paninda|Product Categories|Magdagdag ng Kategorya/i },
-      { path: '/inventory', expected: /Pamamahala sa Imbentaryo|Inventory Management/i },
+      { path: '/categories', expected: /Mga Kategorya ng Paninda|Product Categories|Magdagdag ng Kategorya|Add Category/i },
+      { path: '/inventory', expected: /Pamamahala sa Imbentaryo|Inventory & Stock Management/i },
       { path: '/customers', expected: /Direktoryo ng Suki|Customer Directory/i },
       { path: '/customers/1', expected: /Kasalukuyang Utang|Current Credit|Bumalik sa mga Suki|Back to Customers/i },
       { path: '/utang', expected: /Talaan ng Utang|Credit Ledger/i },
@@ -128,7 +128,7 @@ function assertLayoutIntegrity(path) {
 
   describe('Cashier routes', () => {
     const cashierRoutes = [
-      { path: '/dashboard', expected: /Good (morning|afternoon|evening)|Magandang/i },
+      { path: '/dashboard', expected: /Good (morning|day|afternoon|evening)|Magandang/i },
       { path: '/pos', expected: /Point of Sale Terminal|Kasalukuyang Benta|Connect Phone|Ikonekta ang Phone/i },
       { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta/i },
       { path: '/sales/1', expected: /Resibo TT-|Receipt TT-/i },
