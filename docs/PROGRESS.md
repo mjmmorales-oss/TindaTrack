@@ -678,3 +678,26 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Frontend Vitest: 23/23 tests green in `src/test/scan-flows.test.jsx`.
   - Contract & Service check: 46/46 API contracts verified, 12/12 service facades matched, ₱0.0000 mock data discrepancy.
   - Smoke script: `smoke:pairing` passed on both Direct API (`http://127.0.0.1:8000`) and Vite Reverse Proxy (`https://127.0.0.1:5173`).
+
+### H1 Log (Full Audit):
+- Conducted exhaustive pre-deployment audit across security, authentication, data integrity, frontend runtime, deployment readiness, and localization.
+- Documented findings in `docs/AUDIT-v1.2.md` with structured severity ratings (7 High, 6 Medium, 2 Low):
+  - **High**:
+    - `SEC-01`: Missing route throttle on `POST /api/login`.
+    - `SEC-02`: Demo credentials bundled directly into frontend JavaScript bundle.
+    - `SEC-03`: Production seeders create demo accounts with default passwords (`password`).
+    - `SEC-04`: Missing product image uploads and SSRF risks on external image imports.
+    - `SEC-05`: Persisted cart and scanner session not cleared on logout / user switch.
+    - `DEP-01`: `nixpacks.toml` pins PHP 8.3 while `composer.lock` requires PHP >= 8.4.1.
+    - `DEP-02`: `vercel.json` rewrites asset paths and lacks long-term caching.
+  - **Medium**:
+    - `SEC-06`: Sanctum expiration env naming (`SANCTUM_EXPIRATION` vs `SANCTUM_TOKEN_EXPIRATION`).
+    - `DEP-03`: Missing `URL::forceScheme('https')` in production `AppServiceProvider`.
+    - `DEP-04`: Direct `env()` calls in seeders evaluate to null under `config:cache`.
+    - `UI-01`: No debounced auto-lookup on typed valid GTIN; no Quick Add by Scan shelf flow.
+    - `UI-02`: `imageError` state does not reset on URL change; no camera capture/upload for homemade items.
+    - `I18N-01`: Hardcoded Taglish without English default or localization system.
+  - **Low**:
+    - `UI-03`: Hotkey listener firing during text typing when `metaOrCtrl` is false.
+    - `DEP-05`: Production deployment script missing config/route caching.
+- Gates verified: Backend Pest 71/71 passing, Pint clean, frontend lint clean, build clean.
