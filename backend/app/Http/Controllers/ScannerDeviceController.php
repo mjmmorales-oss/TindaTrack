@@ -95,7 +95,7 @@ class ScannerDeviceController extends Controller
         $session = $request->attributes->get('scanner_session');
 
         $barcode = Barcode::normalize($validated['barcode']);
-        if (! Barcode::isAcceptable($barcode)) {
+        if (! Barcode::isAcceptable($barcode) && ! Product::where('barcode', $barcode)->exists()) {
             return response()->json([
                 'message' => 'Hindi wastong barcode format.',
             ], 422);

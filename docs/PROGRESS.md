@@ -609,3 +609,19 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - **API base and Vite proxy**: In `frontend/src/lib/api.js`, added explicit check for empty string (`VITE_API_URL=""`) returning `'/api'`. In `vite.config.js`, added `changeOrigin: true` and `secure: false`. In `frontend/package.json`, forced `VITE_DATA_SOURCE=api` in `dev:lan`.
 - Gates passed: Backend Pint clean, Pest 70/70 passed (323 assertions); Frontend lint clean, build clean.
 
+### F2 Log:
+- Implemented real end-to-end smoke verification harness:
+  - **Pest feature test**: `backend/tests/Feature/ScannerEndToEndTest.php` exercises the full end-to-end HTTP route lifecycle with real Sanctum bearer authentication and SQLite/MySQL transactions:
+    1. Owner creates POS session -> returns 201 with `data.id`, `data.pairing_code` (validated against regex `/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/`), and `data.pairing_expires_at` in the future.
+    2. Phone pairs with dashless lowercase variant -> returns 200 with 40-character device token.
+    3. Device submits scan for seeded product -> returns 201 with `data.event_id`, `data.status === 'found'`, and product payload.
+    4. Laptop polls session events -> returns 200 with event array including the scan event.
+    5. Re-pairing with already paired code fails with 422 `reason === 'used'`.
+    6. Second session creation automatically ends the first session.
+    7. Pairing with non-existent code fails with 422 `reason === 'not_found'`.
+    8. Pairing with ended/superseded session code fails with 422 `reason === 'expired'`.
+  - **Smoke script**: `scripts/smoke-pairing.mjs` (Node 20+ built-in `fetch`, zero extra dependencies):
+    - Added root npm script `smoke:pairing`.
+    - Tests complete flow against direct API (`http://127.0.0.1:8000`) and Vite reverse proxy (`https://127.0.0.1:5173`).
+    - Both Direct API and Vite Proxy passed with 100% success against running servers.
+- Gates passed: Backend Pest (71/71 tests passed, 380 assertions), Pint clean; `smoke:pairing` PASS on both Direct API and Vite Reverse Proxy.
