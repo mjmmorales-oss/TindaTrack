@@ -57,6 +57,7 @@ export function ProductTile({ product, onAddToCart, onViewProduct }) {
           <div className="flex items-start justify-between gap-2 w-full">
             <ProductThumb
               name={product.name}
+              imageUrl={product.image_url}
               size="md"
               className="shrink-0 transition-transform group-hover:scale-105"
             />

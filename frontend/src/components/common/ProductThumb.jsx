@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { resolveImageUrl } from '@/lib/images'
 
 const sizeStyles = {
   sm: 'h-8 w-8 text-[10px] rounded-md',
@@ -46,10 +47,16 @@ export function ProductThumb({
   className,
 }) {
   const [imgError, setImgError] = useState(false)
+  const resolvedUrl = resolveImageUrl(imageUrl)
+
+  useEffect(() => {
+    setImgError(false)
+  }, [resolvedUrl])
+
   const letters = initials || getProductInitials(name)
   const defaultColors = 'bg-primary/10 text-primary border border-primary/20'
 
-  if (imageUrl && !imgError) {
+  if (resolvedUrl && !imgError) {
     return (
       <div
         className={cn(
@@ -60,7 +67,7 @@ export function ProductThumb({
         aria-hidden="true"
       >
         <img
-          src={imageUrl}
+          src={resolvedUrl}
           alt={name}
           className="h-full w-full object-cover"
           onError={() => setImgError(true)}

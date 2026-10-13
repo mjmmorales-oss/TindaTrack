@@ -11,6 +11,10 @@ import {
   ExternalLink,
   Printer,
   CheckCircle2,
+  Camera,
+  Upload,
+  Trash2,
+  Image as ImageIcon,
 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -25,11 +29,19 @@ import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { ScannerSheet } from '@/components/scanner/ScannerSheet'
 import { PrintLabelsDialog } from '@/components/scanner/PrintLabelsDialog'
 import { productSchema, PRODUCT_UNITS, DEFAULT_PRODUCT } from '@/features/products/schemas'
-import { useCreateProduct, useUpdateProduct, useProducts } from '@/features/products/hooks/useProducts'
+import {
+  useCreateProduct,
+  useUpdateProduct,
+  useProducts,
+  useUploadProductImage,
+  useDeleteProductImage,
+} from '@/features/products/hooks/useProducts'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Barcode } from '@/lib/barcode'
 import { lookupBarcode } from '@/services/barcode'
 import { notify } from '@/lib/notify'
+import { resolveImageUrl } from '@/lib/images'
+import { resizeImage } from '@/lib/imageResize'
 
 /**
  * Product Create & Edit modal form with Open Food Facts auto-fill,
@@ -50,7 +62,8 @@ export function ProductFormDialog({
 
   const createMutation = useCreateProduct()
   const updateMutation = useUpdateProduct()
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const uploadImageMutation = useUploadProductImage()
+  const deleteImageMutation = useDeleteProductImage()
 
   // Existing products to calculate sequence and check duplicate
   const { data: allProductsRes } = useProducts({ per_page: 200 })
@@ -64,8 +77,21 @@ export function ProductFormDialog({
   const [localDuplicate, setLocalDuplicate] = useState(null)
   const [isPrintLabelsOpen, setIsPrintLabelsOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [pendingImage, setPendingImage] = useState(null)
+  const [isOptimizingImage, setIsOptimizingImage] = useState(false)
+  const [imageRemoved, setImageRemoved] = useState(false)
+  const [showUrlInput, setShowUrlInput] = useState(false)
+
+  const isPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    uploadImageMutation.isPending ||
+    deleteImageMutation.isPending ||
+    isOptimizingImage
 
   const priceInputRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const cameraInputRef = useRef(null)
 
   const categoryOptions = (categories || []).map((c) => ({
     value: String(c.id),
@@ -136,8 +162,48 @@ export function ProductFormDialog({
       setLookupNotFound(false)
       setLocalDuplicate(null)
       setImageError(false)
+      setPendingImage(null)
+      setImageRemoved(false)
+      setIsOptimizingImage(false)
+      setShowUrlInput(false)
     }
   }, [open, product, reset])
+
+  const handleImageFile = async (file, source = 'upload') => {
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      notify.error(t('products:imageFileTooLarge'))
+      return
+    }
+    setIsOptimizingImage(true)
+    try {
+      const resized = await resizeImage(file)
+      setPendingImage({
+        file: resized.file,
+        dataUrl: resized.dataUrl,
+        sizeBytes: resized.sizeBytes,
+        source,
+      })
+      setValue('image_url', resized.dataUrl, { shouldValidate: true })
+      setImageRemoved(false)
+      setImageError(false)
+    } catch (err) {
+      notify.error('Failed to process image: ' + err.message)
+    } finally {
+      setIsOptimizingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setPendingImage(null)
+    setValue('image_url', '', { shouldValidate: true })
+    setImageRemoved(true)
+    setImageError(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+  }
 
   // Reset image error state when URL changes
   useEffect(() => {
@@ -309,16 +375,39 @@ export function ProductFormDialog({
         barcode: values.barcode ? Barcode.normalize(values.barcode) : null,
         brand: values.brand?.trim() || null,
         size: values.size?.trim() || null,
-        image_url: values.image_url?.trim() || null,
+        image_url: pendingImage ? null : (values.image_url?.trim() || null),
         source: values.source || 'manual',
         source_ref: values.source_ref || null,
       }
 
+      if (imageRemoved) {
+        payload.image_url = null
+      }
+
+      let savedProduct
       if (isEdit) {
         delete payload.stock_quantity
-        await updateMutation.mutateAsync({ id: product.id, data: payload })
+        const res = await updateMutation.mutateAsync({ id: product.id, data: payload })
+        savedProduct = res.data
+        if (imageRemoved && product.image_url) {
+          try {
+            await deleteImageMutation.mutateAsync(product.id)
+          } catch {
+            // Ignore if image was already deleted
+          }
+        }
       } else {
-        await createMutation.mutateAsync(payload)
+        const res = await createMutation.mutateAsync(payload)
+        savedProduct = res.data
+      }
+
+      // If user selected a new photo, upload it as a binary file to the database
+      if (pendingImage && savedProduct?.id) {
+        await uploadImageMutation.mutateAsync({
+          id: savedProduct.id,
+          file: pendingImage.file,
+          source: pendingImage.source || 'upload',
+        })
       }
 
       onSuccess?.()
@@ -518,10 +607,134 @@ export function ProductFormDialog({
             />
           </div>
 
-          {/* Image URL & Image Preview */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
+          {/* Product Photo Upload, Camera, & Preview */}
+          <div className="space-y-2 p-3 rounded-xl border border-border/80 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-foreground">
+                {t('products:uploadImage')}
+              </label>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isOptimizingImage || isPending}
+                  className="h-7 text-[11px] px-2 gap-1"
+                >
+                  <Upload className="h-3 w-3" />
+                  {t('products:uploadImage')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isOptimizingImage || isPending}
+                  className="h-7 text-[11px] px-2 gap-1"
+                >
+                  <Camera className="h-3 w-3" />
+                  {t('products:takePhoto')}
+                </Button>
+                {(pendingImage || (watchedImageUrl && !imageRemoved)) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                    disabled={isPending}
+                    className="h-7 text-[11px] px-2 gap-1 text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    {t('products:removeImage')}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Hidden file and camera inputs */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageFile(e.target.files?.[0], 'upload')}
+            />
+            <input
+              type="file"
+              ref={cameraInputRef}
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleImageFile(e.target.files?.[0], 'camera')}
+            />
+
+            {/* Thumbnail preview and status card */}
+            <div className="flex items-center gap-3 bg-card p-2.5 rounded-lg border border-border/60">
+              <div className="relative h-16 w-16 rounded-lg border border-border overflow-hidden shrink-0 bg-muted/40 flex items-center justify-center">
+                {isOptimizingImage ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (pendingImage?.dataUrl || resolveImageUrl(watchedImageUrl)) && !imageError ? (
+                  <img
+                    src={pendingImage?.dataUrl || resolveImageUrl(watchedImageUrl)}
+                    alt={t('products:uploadImage')}
+                    className="h-full w-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-1">
+                {isOptimizingImage ? (
+                  <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t('products:optimizingImage')}
+                  </p>
+                ) : pendingImage ? (
+                  <div>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {t('products:imageSourcePending')} ({Math.round(pendingImage.sizeBytes / 1024)} KB)
+                    </span>
+                  </div>
+                ) : watchedImageUrl && watchedImageUrl.includes('openfoodfacts') ? (
+                  <div>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-highlight/15 px-2 py-0.5 text-[11px] font-semibold text-highlight">
+                      <Sparkles className="h-3 w-3" />
+                      {t('products:imageSourceOff')}
+                    </span>
+                  </div>
+                ) : watchedImageUrl && watchedImageUrl.includes('/api/product-images/') ? (
+                  <div>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
+                      <CheckCircle2 className="h-3 w-3 text-success" />
+                      {t('products:imageSourceLocal')}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t('products:dragOrClickPhoto')}
+                  </p>
+                )}
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlInput(!showUrlInput)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+                  >
+                    {showUrlInput ? 'Hide photo URL' : 'Or paste photo URL'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Optional manual URL input */}
+            {showUrlInput && (
+              <div className="pt-1">
                 <FormInput
                   name="image_url"
                   control={control}
@@ -530,18 +743,7 @@ export function ProductFormDialog({
                   description={t('products:imageUrlDesc')}
                 />
               </div>
-
-              {watchedImageUrl && !imageError && (
-                <div className="h-16 w-16 rounded-lg border border-border overflow-hidden shrink-0 bg-muted/40 self-end mb-1">
-                  <img
-                    src={watchedImageUrl}
-                    alt="Preview"
-                    className="h-full w-full object-cover"
-                    onError={() => setImageError(true)}
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Category & Unit */}

@@ -844,5 +844,33 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Backend Pest: 84/84 tests passing (450 assertions).
   - Pint: Clean PSR-12 code style.
 
+### H6 Log (Frontend Product Image Upload, Client-Side Resize, and Image Rendering):
+- **Core Image Utilities**:
+  - Authored `frontend/src/lib/images.js`: `resolveImageUrl(url)` handling null/undefined/empty input, absolute external URLs (`http`, `https`), inline data/blob URLs, and local relative API paths (`/api/product-images/{ulid}`) prepending the API origin when needed.
+  - Authored `frontend/src/lib/imageResize.js`: Client-side HTML5 canvas image resize and compression downscaling photos to max 800px width/height and compressing to WebP (with JPEG fallback) ≤ 300KB. Guarded against jsdom and headless environments with immediate safe fallback.
+- **Service Layer Parity (`api` and `mock`)**:
+  - Added `uploadImage(id, file, source)`, `importImage(id, url)`, and `deleteImage(id)` across `api/productService.js` and `mock/productService.js` with 100% contract alignment.
+  - Updated `scripts/check-contract.mjs` and `frontend/scripts/check-contract.mjs` registering all 49 API endpoint contracts against Laravel routes.
+  - Added TanStack Query mutation hooks in `useProducts.js`: `useUploadProductImage`, `useImportProductImage`, and `useDeleteProductImage`.
+- **UI & Component Image Support**:
+  - Updated `ProductThumb.jsx` to resolve URLs via `resolveImageUrl` and dynamically reset `imgError` state on URL change (`UI-02`).
+  - Updated `ProductTile.jsx` and `ProductDetailDialog.jsx` to pass `imageUrl={product.image_url}` to `ProductThumb`.
+  - Redesigned `ProductFormDialog.jsx`:
+    - File upload and camera capture buttons (`accept="image/*"`, `capture="environment"`).
+    - Client-side automatic optimization and preview with size badge (`Ready to save`).
+    - Open Food Facts auto-fill preview with "Will be saved to store" indicator.
+    - Remove image button with automatic cleanup and server deletion.
+    - Expandable manual photo URL input.
+- **Localization**:
+  - Expanded `en/products.json` and `fil/products.json` with 11 image-specific keys with 100% key parity.
+- **Testing & Verification**:
+  - Authored Vitest suite `src/test/images.test.jsx` (8 tests passing in 51ms) covering `resolveImageUrl`, `resizeImage`, and mock `uploadImage`/`importImage`/`deleteImage`.
+  - Vitest: All 14 test files passing, 176/176 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Clean production bundle compiled in 3.23s.
+  - Secrets check (`npm run check:bundle`): 90 assets scanned, 0 leaks.
+  - Contracts & services: 49/49 API contracts verified, 12/12 service facades matched.
+
+
 
 

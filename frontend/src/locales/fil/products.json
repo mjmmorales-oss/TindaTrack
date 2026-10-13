@@ -170,5 +170,16 @@
   "duplicateBarcodeTitle": "Duplicate Barcode",
   "duplicateBarcodeDesc": "Naka-rehistro na ang barcode na ito sa ibang produkto.",
   "invalidBarcodeFormat": "Hindi wastong barcode format.",
-  "lookupError": "Hindi ma-lookup ang barcode."
+  "lookupError": "Hindi ma-lookup ang barcode.",
+  "uploadImage": "Mag-upload ng Larawan",
+  "takePhoto": "Kumuha ng Larawan",
+  "removeImage": "Alisin ang Larawan",
+  "imageSourceOff": "Larawan mula sa Open Food Facts (ise-save sa tindahan)",
+  "imageSourceLocal": "Naka-save sa database ng tindahan",
+  "imageSourcePending": "Handa nang i-save ang larawan",
+  "optimizingImage": "Pinapaliit ang sukat ng larawan...",
+  "imageUploadSuccess": "Matagumpay na nai-upload ang larawan",
+  "imageDeleteSuccess": "Naalis ang larawan",
+  "imageFileTooLarge": "Masyadong malaki ang larawan. Pumili ng mas mababa sa 5MB.",
+  "dragOrClickPhoto": "Pumili ng larawan o kumuha ng litrato"
 }

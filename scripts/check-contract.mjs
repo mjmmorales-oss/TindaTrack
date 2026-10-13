@@ -73,6 +73,9 @@ const CONTRACT = [
   { service: 'productService', fn: 'remove', method: 'DELETE', uri: 'api/products/{product}' },
   { service: 'productService', fn: 'adjustStock', method: 'POST', uri: 'api/products/{product}/adjust' },
   { service: 'productService', fn: 'lowStock', method: 'GET', uri: 'api/products/low-stock' },
+  { service: 'productService', fn: 'uploadImage', method: 'POST', uri: 'api/products/{product}/image' },
+  { service: 'productService', fn: 'importImage', method: 'POST', uri: 'api/products/{product}/image/import' },
+  { service: 'productService', fn: 'deleteImage', method: 'DELETE', uri: 'api/products/{product}/image' },
 
   // customerService
   { service: 'customerService', fn: 'list', method: 'GET', uri: 'api/customers' },

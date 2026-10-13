@@ -170,5 +170,16 @@
   "duplicateBarcodeTitle": "Duplicate Barcode",
   "duplicateBarcodeDesc": "This barcode is already registered to another product.",
   "invalidBarcodeFormat": "Invalid barcode format.",
-  "lookupError": "Barcode lookup error."
+  "lookupError": "Barcode lookup error.",
+  "uploadImage": "Upload Photo",
+  "takePhoto": "Take Photo",
+  "removeImage": "Remove Photo",
+  "imageSourceOff": "Open Food Facts photo (will be saved to store)",
+  "imageSourceLocal": "Saved in store database",
+  "imageSourcePending": "Photo ready to save",
+  "optimizingImage": "Optimizing photo...",
+  "imageUploadSuccess": "Photo uploaded successfully",
+  "imageDeleteSuccess": "Photo removed",
+  "imageFileTooLarge": "Image is too large. Please select a photo under 5MB.",
+  "dragOrClickPhoto": "Choose photo or take picture"
 }

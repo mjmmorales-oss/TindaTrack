@@ -64,7 +64,7 @@ export function ProductDetailDialog({
     >
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <ProductThumb name={product.name} size="lg" />
+          <ProductThumb name={product.name} imageUrl={product.image_url} size="lg" />
           <div className="space-y-1">
             <h4 className="font-semibold text-sm text-foreground">
               {product.name}

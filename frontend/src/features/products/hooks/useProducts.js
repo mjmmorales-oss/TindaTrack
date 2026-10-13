@@ -109,3 +109,46 @@ export function useAdjustStock() {
     },
   })
 }
+
+export function useUploadProductImage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file, source }) => productService.uploadImage(id, file, source),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all })
+      notify.success('Nai-upload ang larawan!', `${res.data.name} image updated.`)
+    },
+    onError: (err) => {
+      notify.error(err.message || 'Nabigong i-upload ang larawan.')
+    },
+  })
+}
+
+export function useImportProductImage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, url }) => productService.importImage(id, url),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all })
+      notify.success('Na-import ang larawan!', `${res.data.name} image imported.`)
+    },
+    onError: (err) => {
+      notify.error(err.message || 'Nabigong i-import ang larawan.')
+    },
+  })
+}
+
+export function useDeleteProductImage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productService.deleteImage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all })
+      notify.success('Nabura ang larawan.')
+    },
+    onError: (err) => {
+      notify.error(err.message || 'Nabigong burahin ang larawan.')
+    },
+  })
+}
+

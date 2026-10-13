@@ -337,6 +337,100 @@ export const productService = {
       .products.filter((p) => p.is_active && p.stock_quantity <= p.reorder_level)
     return { data: items }
   },
+
+  /**
+   * Uploads an image file for a product (owner only).
+   * Future: POST /api/products/{id}/image
+   */
+  async uploadImage(id, file, source = 'upload') {
+    await delay()
+    const prodId = Number(id)
+    const state = useMockDb.getState()
+    const product = state.products.find((p) => p.id === prodId)
+    if (!product) {
+      throw new ApiError(404, 'Product not found.')
+    }
+
+    let mockUrl = ''
+    if (typeof file === 'string' && file.startsWith('data:')) {
+      mockUrl = file
+    } else if (file && typeof URL !== 'undefined' && URL.createObjectURL && file instanceof Blob) {
+      try {
+        mockUrl = URL.createObjectURL(file)
+      } catch {
+        mockUrl = `/api/product-images/mock_${prodId}_${Date.now()}`
+      }
+    } else {
+      mockUrl = `/api/product-images/mock_${prodId}_${Date.now()}`
+    }
+
+    const now = new Date().toISOString()
+    const updated = {
+      ...product,
+      image_url: mockUrl,
+      updated_at: now,
+    }
+
+    state.setProducts((prev) =>
+      prev.map((p) => (p.id === prodId ? updated : p)),
+    )
+
+    return { data: updated }
+  },
+
+  /**
+   * Imports an image from an external Open Food Facts URL (owner only).
+   * Future: POST /api/products/{id}/image/import
+   */
+  async importImage(id, url) {
+    await delay()
+    const prodId = Number(id)
+    const state = useMockDb.getState()
+    const product = state.products.find((p) => p.id === prodId)
+    if (!product) {
+      throw new ApiError(404, 'Product not found.')
+    }
+
+    const now = new Date().toISOString()
+    const updated = {
+      ...product,
+      image_url: url,
+      updated_at: now,
+    }
+
+    state.setProducts((prev) =>
+      prev.map((p) => (p.id === prodId ? updated : p)),
+    )
+
+    return { data: updated }
+  },
+
+  /**
+   * Deletes a product's stored image and sets image_url to null (owner only).
+   * Future: DELETE /api/products/{id}/image
+   */
+  async deleteImage(id) {
+    await delay()
+    const prodId = Number(id)
+    const state = useMockDb.getState()
+    const product = state.products.find((p) => p.id === prodId)
+    if (!product) {
+      throw new ApiError(404, 'Product not found.')
+    }
+
+    const now = new Date().toISOString()
+    const updated = {
+      ...product,
+      image_url: null,
+      updated_at: now,
+    }
+
+    state.setProducts((prev) =>
+      prev.map((p) => (p.id === prodId ? updated : p)),
+    )
+
+    return { data: updated }
+  },
 }
 
 export default productService
