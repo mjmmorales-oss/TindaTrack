@@ -817,4 +817,32 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - ESLint: 0 errors, 0 warnings.
   - Vite build: Production bundle built cleanly.
 
+### H5 Log (Backend In-DB Product Images, ULID Binary Storage, and SSRF Import):
+- **Database Schema & Models**:
+  - Migration `2026_10_13_000005_create_product_images_table.php`:
+    - ULID primary `id`; `product_id` nullable FK cascade; `mime` string; `size_bytes` unsigned int; `width`/`height` nullable; `sha256` string(64) indexed; `source` string/enum; `source_url` nullable; `data` binary (`MEDIUMBLOB` up to 16MB on MySQL, binary on SQLite); timestamps.
+  - Model `App\Models\ProductImage`:
+    - Uses `HasUlids`, casts for dimensions and byte size, `belongsTo(Product::class)`.
+  - Model `App\Models\Product`:
+    - Added `image(): HasOne` relationship.
+- **Service Layer (`ProductImageService`)**:
+  - Validates image MIME (`image/jpeg`, `image/png`, `image/webp`, `image/gif`) via `finfo` buffer inspection.
+  - Computes `sha256` checksum and extracts dimensions via `getimagesizefromstring`.
+  - Atomically stores image in `product_images` and updates `products.image_url` to `/api/product-images/{ulid}`.
+  - SSRF-safe URL import:
+    - Host allowlist (`*.openfoodfacts.org`, `*.openfoodfacts.net`).
+    - Resolves IPs and rejects loopback (`127.0.0.1`, `::1`), link-local / cloud metadata (`169.254.169.254`), and private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
+    - 8-second timeout, 2MB max download limit.
+  - Auto-import triggered on `ProductController` `store` and `update` when receiving external Open Food Facts image URLs.
+- **Endpoints & Controller (`ProductImageController`)**:
+  - `GET /api/product-images/{ulid}`: Public streaming with `Content-Type`, `Content-Length`, `ETag: "{sha256}"`, `304 Not Modified`, and `Cache-Control: public, max-age=31536000, immutable`.
+  - `POST /api/products/{id}/image`: Owner-only file upload up to 1MB.
+  - `POST /api/products/{id}/image/import`: Owner-only Open Food Facts URL import.
+  - `DELETE /api/products/{id}/image`: Owner-only deletion, clears `image_url`.
+- **Testing & Verification**:
+  - Authored `backend/tests/Feature/ProductImageTest.php` with 10 comprehensive tests (57 assertions) covering streaming, 304 ETag caching, 404 handling, owner upload, cashier/guest 403 blocks, file size limits & MIME checking, Open Food Facts import, SSRF rejection, image deletion, and automatic store/update import.
+  - Backend Pest: 84/84 tests passing (450 assertions).
+  - Pint: Clean PSR-12 code style.
+
+
 

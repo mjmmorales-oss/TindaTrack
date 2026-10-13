@@ -8,6 +8,7 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\ScannerEvent;
 use App\Models\StockMovement;
+use App\Services\ProductImageService;
 use App\Support\ListQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -140,8 +141,16 @@ class ProductController extends Controller
             return $prod;
         });
 
+        if (! empty($validated['image_url']) && ProductImageService::isOffUrl($validated['image_url'])) {
+            try {
+                app(ProductImageService::class)->importFromUrl($product, $validated['image_url']);
+            } catch (\Throwable) {
+                // Keep remote reference if auto-import fails
+            }
+        }
+
         return response()->json([
-            'data' => new ProductResource($product->load('category')),
+            'data' => new ProductResource($product->fresh(['category'])),
         ], 201);
     }
 
@@ -185,6 +194,14 @@ class ProductController extends Controller
         }
 
         $product->update($validated);
+
+        if (isset($validated['image_url']) && ! empty($validated['image_url']) && ProductImageService::isOffUrl($validated['image_url'])) {
+            try {
+                app(ProductImageService::class)->importFromUrl($product, $validated['image_url']);
+            } catch (\Throwable) {
+                // Keep remote reference if auto-import fails
+            }
+        }
 
         return response()->json([
             'data' => new ProductResource($product->fresh(['category'])),
