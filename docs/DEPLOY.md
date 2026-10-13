@@ -63,9 +63,20 @@ MAIL_MAILER=log
 LOG_CHANNEL=stderr
 DEMO_HISTORY_DAYS=60
 
+# Production Seed Credentials (Required if you want demo accounts in production)
+DEMO_OWNER_PASSWORD=your-secure-production-owner-password
+DEMO_CASHIER_PASSWORD=your-secure-production-cashier-password
+# Optional overrides (defaults to owner@tindatrack.test / cashier@tindatrack.test):
+# DEMO_OWNER_EMAIL=owner@yourdomain.com
+# DEMO_CASHIER_EMAIL=cashier@yourdomain.com
+# DEMO_RESET_PASSWORDS=false
+
+# Sanctum Token Expiration (minutes, 10080 = 7 days)
+SANCTUM_EXPIRATION=10080
+
 # Barcode Scanning & Open Food Facts Lookup
 PRODUCT_LOOKUP_ENABLED=true
-OFF_USER_AGENT="TindaTrack/1.1 (your-email@example.com)"
+OFF_USER_AGENT="TindaTrack/1.2 (your-email@example.com)"
 
 # Optional Realtime Broadcasting (no worker required; polling is used by default)
 # BROADCAST_CONNECTION=pusher
@@ -122,9 +133,11 @@ Expand **Environment Variables** and add:
 | `VITE_PUSHER_APP_KEY` | *(optional)* | Only needed if `VITE_REALTIME_DRIVER=pusher` |
 | `VITE_PUSHER_APP_CLUSTER` | *(optional)* | Pusher cluster (e.g. `ap1` or `mt1`) |
 
-> **IMPORTANT**: Do **NOT** set `VITE_SHOW_DEMO_ACCOUNTS=true` on Vercel. The demo credentials switcher buttons are strictly development-only (`import.meta.env.DEV`), and production builds hide them automatically. On your deployed production site, log in by typing the credentials below directly.
+> **IMPORTANT**: In production, the demo credentials switcher buttons are completely stripped from the built JavaScript bundle (`scripts/check-prod-bundle.mjs` verifies this).
+>
+> On Railway, set `DEMO_OWNER_PASSWORD` and `DEMO_CASHIER_PASSWORD` in the environment variables, and share them privately with your instructor. If these variables are not set in production, demo accounts will NOT be created and a warning will be logged.
 
-### Presentation Demo Accounts (Seeded)
+### Local Development Credentials (Seeded locally only)
 
 | Role | Email | Password | Access |
 |---|---|---|---|

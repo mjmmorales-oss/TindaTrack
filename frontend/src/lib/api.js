@@ -20,7 +20,10 @@ export function getApiBaseUrl() {
   if (import.meta.env?.VITE_DEV_HTTPS === 'true') {
     return '/api'
   }
-  return 'http://localhost:8000/api'
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8000/api'
+  }
+  return '/api'
 }
 
 export const API_BASE = getApiBaseUrl()

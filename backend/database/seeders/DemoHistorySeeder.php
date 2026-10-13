@@ -31,8 +31,8 @@ class DemoHistorySeeder extends Seeder
         // Seed RNG for deterministic, repeatable demo generation
         mt_srand(20261007);
 
-        $days = (int) env('DEMO_HISTORY_DAYS', 60);
-        $baseDate = Carbon::parse(env('DEMO_BASE_DATE', '2026-10-07 18:00:00'));
+        $days = (int) config('app.demo_history_days', 60);
+        $baseDate = Carbon::parse(config('app.demo_base_date', '2026-10-07 18:00:00'));
 
         $products = Product::all();
         $customers = Customer::all();

@@ -701,3 +701,25 @@ Tracking implementation of Phase 3 tasks (T0–T11).
     - `UI-03`: Hotkey listener firing during text typing when `metaOrCtrl` is false.
     - `DEP-05`: Production deployment script missing config/route caching.
 - Gates verified: Backend Pest 71/71 passing, Pint clean, frontend lint clean, build clean.
+
+### H2 Log (Demo Credentials Local-Only & Production Safety):
+- **Backend**:
+  - Wired `throttle:10,1` rate limiting to `POST /api/login` in `backend/routes/auth.php` (`SEC-01`).
+  - Added support for `SANCTUM_EXPIRATION` and `SANCTUM_TOKEN_EXPIRATION` in `backend/config/sanctum.php` (`SEC-06`).
+  - Added `demo_password`, `demo_owner_password`, `demo_cashier_password`, `demo_owner_email`, `demo_cashier_email`, `demo_reset_passwords`, `demo_history_days`, and `demo_base_date` in `backend/config/app.php`.
+  - Replaced direct `env()` calls with `config('app.demo_...')` in `DemoHistorySeeder.php` so seeders remain functional when `php artisan config:cache` is active (`DEP-04`).
+  - Updated `ReferenceDataSeeder.php`: in production (`app()->environment('production')`), creates demo owner/cashier only if `DEMO_OWNER_PASSWORD` and `DEMO_CASHIER_PASSWORD` are defined. Warns and skips otherwise; never seeds well-known default passwords (`SEC-03`). Idempotent unless `DEMO_RESET_PASSWORDS=true`.
+  - Authored `backend/tests/Feature/ProductionSeederTest.php` testing production seeder execution with and without demo env vars, plus idempotency.
+- **Frontend**:
+  - Extracted demo credentials and quick-login switcher to `src/features/auth/dev/demoAccounts.js` and `src/features/auth/dev/DemoAccountsPanel.jsx` (`SEC-02`).
+  - Updated `src/features/auth/pages/LoginPage.jsx` to load `DemoAccountsPanel` lazily strictly within `if (import.meta.env.DEV && SHOW_DEMO_ACCOUNTS)`, allowing Vite/Rollup tree-shaking to eliminate all demo strings and UI from production bundles.
+  - Guarded `http://localhost:8000/api` in `src/lib/api.js` with `import.meta.env.DEV`.
+  - Sanitized `src/lib/authBridge.js` and `src/mocks/data/staff.js` to avoid `tindatrack.test` demo email leaks in production bundle.
+  - Implemented `scripts/check-prod-bundle.mjs` verifying that `dist/**` contains zero demo emails, passwords, `DemoAccounts` references, or `localhost:8000` URLs. Wired as `npm run check:bundle` in root and frontend `package.json`.
+  - Updated `src/test/auth.test.jsx` verifying login page rendering with demo accounts enabled and disabled.
+- **Documentation**:
+  - Updated `docs/DEPLOY.md` to document Railway production credentials (`DEMO_OWNER_PASSWORD`, `DEMO_CASHIER_PASSWORD`, `SANCTUM_EXPIRATION`) and isolated local development credentials.
+- **Gates passed**:
+  - Backend: Pest 74/74 tests green (393 assertions), Pint clean.
+  - Frontend: `npm run lint` 0 errors, `npm run build` clean, `npm run check:bundle` (89 assets checked, 0 violations), Vitest 2/2 in `auth.test.jsx`.
+

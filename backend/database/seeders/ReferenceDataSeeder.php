@@ -19,18 +19,53 @@ class ReferenceDataSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Demo Users
-        $users = [
-            ['name' => 'Nena Dela Cruz', 'email' => 'owner@tindatrack.test', 'role' => UserRole::Owner, 'is_active' => true],
-            ['name' => 'Juan Dela Cruz', 'email' => 'cashier@tindatrack.test', 'role' => UserRole::Cashier, 'is_active' => true],
-            ['name' => 'Bea Santos', 'email' => 'inactive@tindatrack.test', 'role' => UserRole::Cashier, 'is_active' => false],
-        ];
+        // 1. Users
+        if (app()->environment('production')) {
+            $ownerPassword = config('app.demo_owner_password');
+            $cashierPassword = config('app.demo_cashier_password');
+            $ownerEmail = config('app.demo_owner_email', 'owner@tindatrack.test');
+            $cashierEmail = config('app.demo_cashier_email', 'cashier@tindatrack.test');
+            $resetPasswords = (bool) config('app.demo_reset_passwords', false);
 
-        foreach ($users as $data) {
-            User::updateOrCreate(
-                ['email' => $data['email']],
-                $data + ['password' => Hash::make(env('DEMO_PASSWORD', 'password'))]
-            );
+            if (! $ownerPassword || ! $cashierPassword) {
+                $this->command?->warn('⚠️ Production seed notice: DEMO_OWNER_PASSWORD and DEMO_CASHIER_PASSWORD are not set. Skipping demo users creation.');
+            }
+
+            if ($ownerPassword) {
+                $owner = User::firstOrNew(['email' => $ownerEmail]);
+                $owner->name = 'Nena Dela Cruz';
+                $owner->role = UserRole::Owner;
+                $owner->is_active = true;
+                if (! $owner->exists || $resetPasswords) {
+                    $owner->password = Hash::make($ownerPassword);
+                }
+                $owner->save();
+            }
+
+            if ($cashierPassword) {
+                $cashier = User::firstOrNew(['email' => $cashierEmail]);
+                $cashier->name = 'Juan Dela Cruz';
+                $cashier->role = UserRole::Cashier;
+                $cashier->is_active = true;
+                if (! $cashier->exists || $resetPasswords) {
+                    $cashier->password = Hash::make($cashierPassword);
+                }
+                $cashier->save();
+            }
+        } else {
+            // Local / Testing environment: keep today's demo users and passwords unchanged
+            $users = [
+                ['name' => 'Nena Dela Cruz', 'email' => 'owner@tindatrack.test', 'role' => UserRole::Owner, 'is_active' => true],
+                ['name' => 'Juan Dela Cruz', 'email' => 'cashier@tindatrack.test', 'role' => UserRole::Cashier, 'is_active' => true],
+                ['name' => 'Bea Santos', 'email' => 'inactive@tindatrack.test', 'role' => UserRole::Cashier, 'is_active' => false],
+            ];
+
+            foreach ($users as $data) {
+                User::updateOrCreate(
+                    ['email' => $data['email']],
+                    $data + ['password' => Hash::make(config('app.demo_password', 'password'))]
+                );
+            }
         }
 
         // 2. Settings (Singleton row)

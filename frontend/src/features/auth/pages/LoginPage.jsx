@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, KeyRound, Loader2, UserCheck } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +23,10 @@ import { getErrorMessage, getFieldErrors } from '@/lib/errors'
 import { notify } from '@/lib/notify'
 import { loginSchema } from '@/features/auth/schemas'
 import { SHOW_DEMO_ACCOUNTS } from '@/config/app'
+
+const DemoAccountsPanel = import.meta.env.DEV
+  ? lazy(() => import('@/features/auth/dev/DemoAccountsPanel'))
+  : () => null
 
 export function LoginPage() {
   useDocumentTitle('Sign In')
@@ -67,10 +71,6 @@ export function LoginPage() {
     }
   }
 
-  const fillDemo = (email) => {
-    setValue('email', email)
-    setValue('password', 'password')
-  }
 
   return (
     <Card className="border-border/80 shadow-md">
@@ -132,34 +132,15 @@ export function LoginPage() {
           </div>
 
           {SHOW_DEMO_ACCOUNTS && (
-            <div className="border-border/80 bg-muted/40 space-y-2 rounded-lg border border-dashed p-3 text-xs">
-              <span className="text-foreground flex items-center gap-1.5 font-semibold">
-                <KeyRound className="text-primary h-3.5 w-3.5" />
-                Demo Credentials:
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 flex-1 gap-1 text-xs"
-                  onClick={() => fillDemo('owner@tindatrack.test')}
-                >
-                  <UserCheck className="text-primary h-3 w-3" />
-                  Owner Demo
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 flex-1 gap-1 text-xs"
-                  onClick={() => fillDemo('cashier@tindatrack.test')}
-                >
-                  <UserCheck className="text-muted-foreground h-3 w-3" />
-                  Cashier Demo
-                </Button>
-              </div>
-            </div>
+            <Suspense fallback={null}>
+              <DemoAccountsPanel
+                onSelectAccount={({ email, password }) => {
+                  setValue('email', email, { shouldValidate: true })
+                  setValue('password', password, { shouldValidate: true })
+                  setServerError(null)
+                }}
+              />
+            </Suspense>
           )}
         </CardContent>
 
