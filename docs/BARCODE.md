@@ -190,3 +190,34 @@ Ang script na ito ay awtomatikong maglo-login bilang store owner, gagawa ng pair
 | **"Nagamit na ang pairing code na ito"** | `used` (422) | Na-redeem na ang code ng isa pang device. Single-use lamang ang pairing code para sa seguridad. Gumawa ng bagong session para sa ibang phone. |
 | **"Hindi maabot ang server o walang koneksyon sa Wi-Fi"** | Network timeout / connection refused | Tiyaking pareho ang Wi-Fi network ng phone at laptop, at walang client-isolation ang router o local firewall na humaharang sa port 5173. |
 | **"Naisara na ang sesyon ng scanner"** | `401 Unauthorized` | Idiskonekta o tinapos ng may-ari ang sesyon sa POS, o kaya ay nag-expire na ang 12-oras na device session. Muling mag-pair gamit ang bagong QR code. |
+
+---
+
+## 7. Continuous Quick Add by Scan Flow
+
+Para sa mabilisang pagpapasok ng bagong stocks sa tindahan (*shelf-stocking intake*):
+1. **Buksan ang Mabilisang Pagdagdag (`QuickAddScanDialog`)**:
+   - I-click ang **Quick Add by Scan** button (may kidlat / `Zap` icon) sa header ng Pahina ng mga Produkto (`/products`).
+2. **Mag-scan o Mag-type ng Barcode**:
+   - Maaaring mag-scan gamit ang mobile phone, USB hardware wedge, o webcam camera.
+   - Awtomatikong tinitingnan kung may umiiral nang produkto sa tindahan:
+     - **Kung nasa imbentaryo na**: Magpapakita ng notification at instant restock shortcut pills (`+5`, `+10`, `+20`, `+50`) upang mabilisang maidagdag ang dami nang hindi muling gumagawa ng duplicate item.
+     - **Kung bago**: Awtomatikong kukunin ang pangalan, tatak, laki, at imahe mula sa Open Food Facts catalog, at awtomatikong ifo-focus ang input ng presyo ng benta.
+3. **Save & Scan Next (Enter)**:
+   - Sa pag-pindot ng `Enter` o pag-click sa **Save & Scan Next**, naitatala ang produkto at awtomatikong lumilipat sa susunod na item nang hindi sumasara ang modal. May session counter badge na nagpapakita ng bilang ng mga produktong naipasok sa sesyon.
+
+---
+
+## 8. In-Database Product Images & SSRF Protection
+
+1. **Storage Mechanism (`product_images` table)**:
+   - Lahat ng mga imahe ng produkto ay iniimbak nang ligtas sa database gamit ang MySQL `MEDIUMBLOB` (hanggang 16MB) na may primary key na ULID (`HasUlids`).
+   - May indexed `sha256` checksum upang maiwasan ang redundancy.
+2. **SSRF Guard sa URL Import**:
+   - Kapag nag-aangkat ng imahe mula sa external catalog URL, mahigpit na sinusuri ang hostname gamit ang allowlist (`*.openfoodfacts.org`, `*.openfoodfacts.net`).
+   - Hinaharangan ang mga pribadong IP ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), localhost/loopback (`127.0.0.1`, `::1`), at cloud metadata endpoints (`169.254.169.254`).
+3. **Client-Side Canvas Downscaling**:
+   - Bago i-upload ang larawan, awtomatikong pinapaliit ito ng client-side HTML5 canvas sa maximum 800px at kino-compress sa WebP/JPEG na mas mababa sa 300KB upang mapanatili ang bilis ng mobile connection.
+4. **Public Caching & Revalidation**:
+   - Ang public streaming endpoint `GET /api/product-images/{ulid}` ay nagbabalik ng `Cache-Control: public, max-age=31536000, immutable` at sumusuporta sa HTTP `ETag` (304 Not Modified).
+

@@ -9,6 +9,7 @@
     "dev:web:lan": "npm --prefix frontend run dev:lan",
     "build:web": "npm --prefix frontend run build",
     "smoke:pairing": "node scripts/smoke-pairing.mjs",
+    "smoke:prod": "node scripts/smoke-prod-like.mjs",
     "check:bundle": "node scripts/check-prod-bundle.mjs",
     "check:i18n": "node scripts/check-i18n.mjs"
   },

@@ -12,20 +12,23 @@ TindaTrack digitizes traditional pen-and-paper sari-sari store operations (*list
 - **📷 Barcode Scanning & Hardware Wedge**: Scan via webcam/phone camera (`barcode-detector` WASM), USB/Bluetooth hardware scanner wedge, or manual entry with duplicate deduplication.
 - **📱 Phone-to-POS Live Sync**: Turn any mobile phone into a wireless scanner via zero-login QR code pairing (`/scan`) syncing instantly with laptop POS or inventory.
 - **🌐 Open Food Facts Auto-Fill**: Auto-detects product names, brands, package sizes, categories, and images from Open Food Facts open-data catalog (ODbL).
+- **⚡ One-Step Barcode Auto-Fill & Quick Add**: 500ms debounced auto-lookup on typed GTIN, dedicated continuous "Quick Add by Scan" modal with auto price focus and local duplicate restock shortcuts (`+5`, `+10`, `+20`, `+50`).
+- **🖼️ In-DB Product Images**: MySQL `MEDIUMBLOB` and ULID binary storage, client-side canvas downscaling (WebP/JPEG <= 300KB), mobile camera photo capture (`capture="environment"`), and SSRF-safe URL import.
+- **🌏 Bilingual Internationalization**: English-first default with Taglish/Filipino toggle in Settings, 18 complete namespaces, and automated dictionary parity verification.
 - **🏷️ Homemade Barcode Generator & Labels**: Generate internal EAN-13 barcodes (`20xxxx...`) for home-cooked goods (ice candy, turon) and print 12-per-page thermal/sticker labels.
 - **📒 Digital Utang Ledger**: Track credit balances per suki, payment recordings, 30-day aging alerts, and credit limit enforcement with owner overrides.
 - **📦 Inventory & Stock Movements**: Real-time stock counts, low/out-of-stock badges, atomic stock deductions, and audit movement logs.
 - **📊 Analytics & Reports**: Gross profit, sales over time (daily/weekly/monthly), best-selling products, category distribution, and peak hours.
 - **🖨️ Thermal Receipts**: 58mm and 80mm printable receipts with custom store headers, footers, and void audit trails.
 - **👥 Role-Based Access Control**: Separate permissions for Store Owner (full access, staff management, void sales, cost prices) and Cashiers.
-- **⌨️ Keyboard & Power Tools**: ⌘K / Ctrl+K Command Palette, keyboard shortcuts (`F2`, `F9`, `Esc`, `?`), and offline indicator.
+- **⌨️ Keyboard & Power Tools**: ⌘K / Ctrl+K Command Palette, keyboard shortcuts (`F2`, `F9`, `Esc`, `?`), hotkey input suppression, and offline indicator.
 
 ---
 
 ## Tech Stack
 
 - **Frontend**: React 19 SPA, Vite 8, Tailwind CSS v4, shadcn/ui (Radix primitives), TanStack Query v5, Zustand, React Hook Form + Zod, `motion/react`, `lucide-react`.
-- **Backend**: Laravel 13, PHP 8.3+, Laravel Sanctum (Bearer token authentication), Form Requests, API Resources, Pest PHP test suite.
+- **Backend**: Laravel 13, PHP 8.4+, Laravel Sanctum (Bearer token authentication), Form Requests, API Resources, Pest PHP test suite.
 - **Database**: MySQL 8.x with strict decimal arithmetic, transactions, and row-level locking (`lockForUpdate`).
 - **Deployments**: Railway (Laravel API + MySQL) & Vercel (React Vite SPA).
 
@@ -47,7 +50,7 @@ The database comes pre-seeded with 3 demo accounts:
 
 ### Prerequisites
 
-- **PHP 8.3+** with extensions: `pdo_mysql`, `bcmath`, `mbstring`, `intl`
+- **PHP 8.4+** with extensions: `pdo_mysql`, `bcmath`, `mbstring`, `intl`, `fileinfo`
 - **Composer** (v2.x)
 - **Node.js** (v20+ recommended) & **npm**
 - **MySQL 8.x** (or via XAMPP / MariaDB)
@@ -164,6 +167,10 @@ The database comes pre-seeded with 3 demo accounts:
 | `node scripts/check-contract.mjs` | `frontend/` | Verifies frontend API service contracts match Laravel routes |
 | `node scripts/check-services.mjs` | `frontend/` | Verifies mock and API service methods match 1-to-1 |
 | `node scripts/check-mockdata.mjs` | `frontend/` | Validates in-memory mock datasets and generator |
+| `npm run check:i18n` | Root / `frontend/` | Verifies 100% dictionary key parity across all 18 namespaces between `en` and `fil` |
+| `npm run check:bundle` | Root / `frontend/` | Verifies production bundle size and ensures zero memory/bundle leaks |
+| `npm run smoke:pairing` | Root | Headless WebSocket pairing smoke test between POS station and phone scanner |
+| `npm run smoke:prod` | Root | Production-like pre-flight smoke test verifying build assets, Vercel SPA rewrites, and Railway deployment configs |
 
 > **Note on Frontend Quality Checks:** Always run `npm run test` (Vitest) in `frontend/` when verifying changes. `npm run build` and `npx eslint src` validate syntax and static imports, but **only Vitest renders components in jsdom**, catching runtime errors such as missing Radix/UI imports or null form controls.
 

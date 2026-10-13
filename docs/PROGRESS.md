@@ -922,3 +922,18 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Contract & service checks: 49/49 route contracts passed, 12/12 facades matched.
   - Backend: 84/84 Pest tests passing (450 assertions), Pint clean.
 
+### H9 Log (Deployment Hardening, Production Smoke Tests, and Documentation):
+- **Deployment Configurations (`DEP-01`, `DEP-05`, `DEP-02`)**:
+  - `backend/nixpacks.toml`: Pinned PHP 8.4 runtime (`php84`) and required extensions (`pdo_mysql`, `bcmath`, `mbstring`, `fileinfo`) ensuring Railway builds resolve Composer dependencies requiring PHP >= 8.4 without runtime mismatch.
+  - `backend/railway.toml`: Optimized `preDeployCommand` adding `php artisan config:cache`, `php artisan route:cache`, and `php artisan view:cache` alongside migrations and idempotent seeders for fast, cold-start-optimized Railway deployments.
+  - `frontend/vercel.json`: Hardened SPA routing rewrites (ensuring `/index.html` catches client-side routes without masking static files) and added 1-year immutable caching (`public, max-age=31536000, immutable`) for all `/assets/*` bundles.
+- **Production Pre-Flight Smoke Verification**:
+  - Authored executable `scripts/smoke-prod-like.mjs` checking:
+    - Built SPA artifacts (`frontend/dist/index.html` and assets) for valid entry points and zero dev artifacts.
+    - `vercel.json` SPA rewrite rules and immutable cache headers.
+    - `railway.toml` and `nixpacks.toml` deployment directives, caching commands, and PHP 8.4 runtime specification.
+  - Registered `smoke:prod` in root `package.json`.
+- **Documentation & Release Notes**:
+  - `docs/BARCODE.md`: Added Section 7 ("Continuous Quick Add by Scan Flow") and Section 8 ("In-DB Product Images: `MEDIUMBLOB` + ULID Binary Storage").
+  - `README.md`: Updated tech stack and prerequisites to PHP 8.4+ with `fileinfo`, highlighted all v1.2.0 features, and updated the helpful commands table with `check:i18n`, `check:bundle`, `smoke:pairing`, and `smoke:prod`.
+  - `docs/CHANGELOG.md`: Added comprehensive `[v1.2.0]` release notes covering pre-deployment hardening, English-first i18n, in-DB product images, one-step barcode auto-fill, and deployment configurations.

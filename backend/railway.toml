@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 
 [deploy]
 startCommand = "php artisan serve --host=0.0.0.0 --port=$PORT"
-preDeployCommand = "php artisan migrate --force && php artisan db:seed --force"
+preDeployCommand = "php artisan migrate --force && php artisan db:seed --force && php artisan config:cache && php artisan route:cache && php artisan view:cache"
 healthcheckPath = "/up"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
