@@ -900,3 +900,25 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - i18n validator: 18/18 namespaces verified, 1,213 `t(...)` calls verified, 0 missing keys.
   - Contract checks: 49/49 Laravel route contracts passed, 12/12 service facades matched.
   - Backend: 84/84 Pest tests passing (450 assertions), Pint clean.
+
+### H8 Log (Audit Fixes: Cart Isolation, HTTPS Scheme, and Hotkey Input Guards):
+- **Session & Cart Isolation on Logout (`SEC-05`)**:
+  - Updated `frontend/src/stores/cartStore.js`: added `reset()` clearing both active items and all parked carts (`heldCarts`).
+  - Updated `frontend/src/context/AuthContext.jsx`:
+    - `clearSession()` purges `tindatrack-cart-v1`, `tt_pos_cart`, `tindatrack_user`, and `TOKEN_KEY` from `localStorage`.
+    - Resets `useCartStore` in-memory state and triggers `useCartStore.persist.clearStorage()`.
+    - Clears active POS scanner sessions and scanner tokens in `sessionStorage`.
+    - Wipes TanStack `queryClient` cache.
+- **Production HTTPS Scheme Enforcement (`DEP-03`)**:
+  - Updated `backend/app/Providers/AppServiceProvider.php`: added `URL::forceScheme('https')` inside `app()->environment('production')` guard to prevent mixed-content asset generation behind Railway reverse proxies.
+- **Hotkey Input Typing Suppression (`UI-03`)**:
+  - Updated `frontend/src/hooks/useHotkey.js`: added `ignoreInputs: true` option (default `true`) suppressing keystrokes when the active focused element is an `<input>`, `<textarea>`, `<select>`, or contenteditable unless explicit `metaOrCtrl` key is pressed.
+- **Testing & Verification**:
+  - Updated `frontend/src/test/auth.test.jsx`: added tests for `SEC-05` (cart and scanner session purge on logout) and `UI-03` (`useHotkey` input typing suppression).
+  - Vitest: All 15 test files passing, 184/184 tests green (+2 new tests).
+  - ESLint: 0 errors, 81 compiler warnings.
+  - Vite build: Clean production bundle built in 3.25s.
+  - Secrets check: 92 assets scanned, 0 leaks.
+  - Contract & service checks: 49/49 route contracts passed, 12/12 facades matched.
+  - Backend: 84/84 Pest tests passing (450 assertions), Pint clean.
+
