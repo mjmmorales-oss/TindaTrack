@@ -76,13 +76,13 @@ function assertLayoutIntegrity(path) {
 
   describe('Guest / Public routes', () => {
     const guestRoutes = [
-      { path: '/', expected: /Benta, stock, at utang/i },
+      { path: '/', expected: /Sales, stock, and credit|Benta, stock, at utang/i },
       { path: '/login', expected: /Enter your tindahan account/i },
       { path: '/register', expected: /Register Store/i },
-      { path: '/forgot-password', expected: /Forgot Password/i },
-      { path: '/password-reset/test-token', expected: /Reset Password/i },
-      { path: '/403', expected: /Bawal ang Aksyon|Access Denied|403/i },
-      { path: '/non-existent-page', expected: /Hindi Nahanap|Not Found|404/i },
+      { path: '/forgot-password', expected: /Forgot Password|Nakalimutan ang Password/i },
+      { path: '/password-reset/test-token', expected: /Reset Password|I-reset ang Password/i },
+      { path: '/403', expected: /Bawal ang Aksyon|Access Denied|Forbidden|403/i },
+      { path: '/non-existent-page', expected: /Hindi Nahanap|Not Found|Page Not Found|404/i },
     ]
 
     guestRoutes.forEach(({ path, expected }) => {

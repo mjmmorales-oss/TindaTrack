@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -14,6 +15,7 @@ import { useUtangSummary } from '@/features/utang/hooks/useUtang'
 
 export function NavMain() {
   const { can } = usePermissions()
+  const { t } = useTranslation()
 
   const { data: lowStockRes } = useLowStockProducts()
   const { data: utangSummaryRes } = useUtangSummary()
@@ -25,6 +27,34 @@ export function NavMain() {
     if (key === 'lowStock') return lowStockCount
     if (key === 'overdueUtang') return overdueUtangCount
     return 0
+  }
+
+  const getGroupTitle = (group) => {
+    const keyMap = {
+      Overview: t('nav:overviewGroup', 'Overview'),
+      Inventory: t('nav:inventoryGroup', 'Inventory'),
+      Customers: t('nav:customersGroup', 'Customers'),
+      Insights: t('nav:insightsGroup', 'Insights'),
+      Admin: t('nav:adminGroup', 'Admin'),
+    }
+    return keyMap[group.title] || group.title
+  }
+
+  const getItemTitle = (item) => {
+    const keyMap = {
+      '/dashboard': t('nav:dashboard', 'Dashboard'),
+      '/pos': t('nav:pos', 'Point of Sale'),
+      '/sales': t('nav:sales', 'Sales History'),
+      '/products': t('nav:products', 'Products'),
+      '/categories': t('nav:categories', 'Categories'),
+      '/inventory': t('nav:inventory', 'Inventory'),
+      '/customers': t('nav:customers', 'Customers'),
+      '/utang': t('nav:utang', 'Utang / Credit'),
+      '/reports': t('nav:reports', 'Reports'),
+      '/staff': t('nav:staff', 'Staff Management'),
+      '/settings': t('nav:settings', 'Settings'),
+    }
+    return keyMap[item.path] || item.title
   }
 
   // Filter groups and items based on abilities
@@ -43,13 +73,14 @@ export function NavMain() {
     <>
       {accessibleGroups.map((group) => (
         <SidebarGroup key={group.title}>
-          <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+          <SidebarGroupLabel>{getGroupTitle(group)}</SidebarGroupLabel>
           <SidebarMenu>
             {group.items.map((item) => {
               const Icon = item.icon
+              const translatedTitle = getItemTitle(item)
               return (
                 <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton asChild tooltip={translatedTitle}>
                     <NavLink
                       to={item.path}
                       className={({ isActive }) =>
@@ -59,7 +90,7 @@ export function NavMain() {
                       }
                     >
                       {Icon && <Icon className="h-4 w-4 shrink-0" />}
-                      <span>{item.title}</span>
+                      <span>{translatedTitle}</span>
                     </NavLink>
                   </SidebarMenuButton>
                   {item.badgeKey && getBadgeValue(item.badgeKey) > 0 && (

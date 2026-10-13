@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/common/ModeToggle'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { useAuth } from '@/hooks/useAuth'
+import { useTranslation } from 'react-i18next'
 
 export function PublicLayout() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const homePath = user?.role === 'cashier' ? '/pos' : '/dashboard'
 
   return (
@@ -29,15 +31,15 @@ export function PublicLayout() {
           <ModeToggle />
           {user ? (
             <Button asChild size="sm">
-              <Link to={homePath}>Go to App</Link>
+              <Link to={homePath}>{t('common:goToApp', 'Go to App')}</Link>
             </Button>
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/login">Sign In</Link>
+                <Link to="/login">{t('landing:signIn', 'Sign In')}</Link>
               </Button>
               <Button asChild size="sm">
-                <Link to="/register">Magsimula</Link>
+                <Link to="/register">{t('landing:getStarted', 'Get Started')}</Link>
               </Button>
             </>
           )}

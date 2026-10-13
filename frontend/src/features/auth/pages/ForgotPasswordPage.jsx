@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -22,7 +23,8 @@ import { getErrorMessage, getFieldErrors } from '@/lib/errors'
 import { forgotPasswordSchema } from '@/features/auth/schemas'
 
 export function ForgotPasswordPage() {
-  useDocumentTitle('Forgot Password')
+  const { t } = useTranslation(['auth', 'common'])
+  useDocumentTitle(t('auth:forgotTitle', 'Forgot Password'))
   const { forgotPassword } = useAuth()
   const [serverError, setServerError] = useState(null)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -61,25 +63,20 @@ export function ForgotPasswordPage() {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">
-            Check your email
+            {t('auth:checkEmailTitle', 'Check your email')}
           </CardTitle>
           <CardDescription>
-            We have sent password reset instructions to your email address.
+            {t('auth:checkEmailSubtitle', 'We have sent password reset instructions to your email address.')}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-3 text-center text-xs">
           <p>
-            In the local development environment, the password reset email is
-            logged to{' '}
-            <code className="bg-muted rounded px-1.5 py-0.5 font-mono">
-              backend/storage/logs/laravel.log
-            </code>
-            .
+            {t('auth:checkEmailHint', 'In the local development environment, the password reset email is logged to backend/storage/logs/laravel.log.')}
           </p>
         </CardContent>
         <CardFooter className="pt-2">
           <Button variant="outline" asChild className="w-full">
-            <Link to="/login">Back to Sign In</Link>
+            <Link to="/login">{t('auth:backToLogin', 'Back to Sign In')}</Link>
           </Button>
         </CardFooter>
       </Card>
@@ -90,10 +87,10 @@ export function ForgotPasswordPage() {
     <Card className="border-border/80 shadow-md">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="text-2xl font-bold tracking-tight">
-          Forgot Password
+          {t('auth:forgotTitle', 'Forgot Password')}
         </CardTitle>
         <CardDescription>
-          Enter your registered email address to receive a password reset link
+          {t('auth:forgotSubtitle', 'Enter your registered email address to receive a password reset link')}
         </CardDescription>
       </CardHeader>
 
@@ -107,12 +104,12 @@ export function ForgotPasswordPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{t('auth:emailLabel', 'Email address')}</Label>
             <div className="relative">
               <Input
                 id="email"
                 type="email"
-                placeholder="you@email.com"
+                placeholder={t('auth:emailPlaceholder', 'you@email.com')}
                 autoComplete="email"
                 {...register('email')}
               />
@@ -132,16 +129,16 @@ export function ForgotPasswordPage() {
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Sending instructions...' : 'Send Reset Link'}
+            {isSubmitting ? t('auth:sendingInstructions', 'Sending instructions...') : t('auth:sendResetLink', 'Send Reset Link')}
           </Button>
 
           <p className="text-muted-foreground text-center text-xs">
-            Remembered your password?{' '}
+            {t('auth:rememberedPassword', 'Remembered your password?')}{' '}
             <Link
               to="/login"
               className="text-primary font-semibold hover:underline"
             >
-              Back to Sign In
+              {t('auth:backToLogin', 'Back to Sign In')}
             </Link>
           </p>
         </CardFooter>

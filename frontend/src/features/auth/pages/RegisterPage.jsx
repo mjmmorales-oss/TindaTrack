@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +25,8 @@ import { notify } from '@/lib/notify'
 import { registerSchema } from '@/features/auth/schemas'
 
 export function RegisterPage() {
-  useDocumentTitle('Register Store Owner')
+  const { t } = useTranslation(['auth', 'common'])
+  useDocumentTitle(t('auth:registerHeading', 'Register Store Owner'))
   const { register: registerUser } = useAuth()
   const navigate = useNavigate()
   const [serverError, setServerError] = useState(null)
@@ -49,7 +51,7 @@ export function RegisterPage() {
     setServerError(null)
     try {
       const user = await registerUser(data)
-      notify.success(`Store owner account created! Welcome, ${user.name}!`)
+      notify.success(t('auth:accountCreated', { name: user.name, defaultValue: `Store owner account created! Welcome, ${user.name}!` }))
       navigate('/dashboard', { replace: true })
     } catch (err) {
       const fieldErrors = getFieldErrors(err)
@@ -66,10 +68,10 @@ export function RegisterPage() {
     <Card className="border-border/80 shadow-md">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="text-2xl font-bold tracking-tight">
-          Register Store
+          {t('auth:registerHeading', 'Register Store')}
         </CardTitle>
         <CardDescription>
-          Create your store owner account to manage your sari-sari store
+          {t('auth:registerSubtitle', 'Create your store owner account to manage your sari-sari store')}
         </CardDescription>
       </CardHeader>
 
@@ -83,10 +85,10 @@ export function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Store Owner Name</Label>
+            <Label htmlFor="name">{t('auth:storeOwnerName', 'Store Owner Name')}</Label>
             <Input
               id="name"
-              placeholder="e.g. Aling Nena Dela Cruz"
+              placeholder={t('auth:storeOwnerPlaceholder', 'e.g. Aling Nena Dela Cruz')}
               autoComplete="name"
               {...register('name')}
             />
@@ -98,11 +100,11 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{t('auth:emailLabel', 'Email address')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@email.com"
+              placeholder={t('auth:emailPlaceholder', 'you@email.com')}
               autoComplete="email"
               {...register('email')}
             />
@@ -114,10 +116,10 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth:passwordLabel', 'Password')}</Label>
             <PasswordInput
               id="password"
-              placeholder="At least 8 characters"
+              placeholder={t('auth:passwordMinLength', 'At least 8 characters')}
               autoComplete="new-password"
               {...register('password')}
             />
@@ -129,10 +131,10 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password_confirmation">Confirm Password</Label>
+            <Label htmlFor="password_confirmation">{t('auth:confirmPasswordLabel', 'Confirm Password')}</Label>
             <PasswordInput
               id="password_confirmation"
-              placeholder="Re-type password"
+              placeholder={t('auth:confirmPasswordPlaceholder', 'Re-type password')}
               autoComplete="new-password"
               {...register('password_confirmation')}
             />
@@ -154,8 +156,7 @@ export function RegisterPage() {
               htmlFor="terms"
               className="text-muted-foreground cursor-pointer text-xs leading-tight font-normal"
             >
-              I agree to the TindaTrack terms and acknowledge this is an
-              educational prototype.
+              {t('auth:termsAgreement', 'I agree to the TindaTrack terms and acknowledge this is an educational prototype.')}
             </Label>
           </div>
           {errors.terms && (
@@ -173,17 +174,17 @@ export function RegisterPage() {
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {isSubmitting
-              ? 'Creating account...'
-              : 'Create Store Owner Account'}
+              ? t('auth:registering', 'Creating account...')
+              : t('auth:createOwnerButton', 'Create Store Owner Account')}
           </Button>
 
           <p className="text-muted-foreground text-center text-xs">
-            Already have an account?{' '}
+            {t('auth:alreadyHaveAccount', 'Already have an account?')}{' '}
             <Link
               to="/login"
               className="text-primary font-semibold hover:underline"
             >
-              Sign In
+              {t('auth:signInButton', 'Sign In')}
             </Link>
           </p>
         </CardFooter>

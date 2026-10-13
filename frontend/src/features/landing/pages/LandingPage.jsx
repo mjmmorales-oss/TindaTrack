@@ -8,6 +8,7 @@ import {
   Search,
   ShoppingCart,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,7 +17,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export function LandingPage() {
-  useDocumentTitle('TindaTrack — Benta, stock, at utang sa isang app')
+  const { t } = useTranslation(['landing', 'common'])
+  useDocumentTitle(t('landing:metaTitle', 'TindaTrack — Sales, inventory, and utang credit tracking'))
   const { user } = useAuth()
 
   // Logged-in users visiting / redirect to their home
@@ -32,18 +34,16 @@ export function LandingPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5 text-highlight" />
-            <span>School Project · Integrative Programming (React + Laravel)</span>
+            <span>{t('landing:badgeSchoolProject', 'School Project · Integrative Programming (React + Laravel)')}</span>
           </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl leading-tight">
-            Benta, stock, at utang — <br />
-            <span className="text-primary">sa isang app.</span>
+            {t('landing:heroHeadingMain', 'Sales, stock, and credit —')} <br />
+            <span className="text-primary">{t('landing:heroHeadingHighlight', 'all in one app.')}</span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Ang modernong POS at Inventory Tracker na partikular na idinisenyo para sa
-            mga sari-sari store sa Pilipinas. Mabilis magbenta, malinaw ang lista ng utang,
-            at hindi nauubusan ng stock.
+            {t('landing:heroLead', 'A modern POS and Inventory Tracker tailored for Philippine neighborhood retail stores. Fast checkout, transparent customer credit ledgers, and live shelf stock alerts.')}
           </p>
 
           {/* CTA Buttons: Full width on phones, side by side from sm */}
@@ -54,7 +54,7 @@ export function LandingPage() {
               className="w-full sm:w-auto h-12 px-7 text-base shadow-md gap-2"
             >
               <Link to="/register">
-                Magsimula
+                {t('landing:getStarted', 'Get Started')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -64,7 +64,7 @@ export function LandingPage() {
               asChild
               className="w-full sm:w-auto h-12 px-7 text-base border-border"
             >
-              <Link to="/login">Sign In</Link>
+              <Link to="/login">{t('landing:signIn', 'Sign In')}</Link>
             </Button>
           </div>
 
@@ -78,7 +78,7 @@ export function LandingPage() {
                   <div className="flex h-3 w-3 rounded-full bg-highlight/80" />
                   <div className="flex h-3 w-3 rounded-full bg-success/80" />
                   <span className="font-bold text-foreground ml-2 font-mono">
-                    Tindahan ni Aling Nena · POS Terminal
+                    {t('landing:previewStoreTitle', 'Tindahan ni Aling Nena · POS Terminal')}
                   </span>
                 </div>
                 <Badge variant="outline" className="text-[10px] text-success border-success/30 font-semibold">
@@ -90,17 +90,17 @@ export function LandingPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
                   <Search className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  <span>Hanapin ang produkto o i-scan ang barcode...</span>
+                  <span>{t('landing:previewSearchPlaceholder', 'Search products or scan barcode...')}</span>
                 </div>
                 <div className="flex gap-1.5 overflow-x-auto text-[11px] pb-1">
                   <span className="rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 font-medium shrink-0">
-                    Lahat
+                    {t('common:all', 'All')}
                   </span>
                   <span className="rounded-full bg-muted text-muted-foreground px-2.5 py-0.5 shrink-0">
-                    Mga Inumin
+                    Beverages
                   </span>
                   <span className="rounded-full bg-muted text-muted-foreground px-2.5 py-0.5 shrink-0">
-                    Papak & Snacks
+                    Snacks
                   </span>
                   <span className="rounded-full bg-muted text-muted-foreground px-2.5 py-0.5 shrink-0">
                     Canned Goods
@@ -145,11 +145,11 @@ export function LandingPage() {
               <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4 text-primary" />
-                  <span className="font-bold text-foreground">3 items sa Cart</span>
+                  <span className="font-bold text-foreground">{t('landing:previewCartItems', '3 items in Cart')}</span>
                   <span className="font-mono font-extrabold text-primary text-sm">₱61.00</span>
                 </div>
                 <div className="rounded-md bg-primary text-primary-foreground px-3 py-1 font-semibold text-xs flex items-center gap-1">
-                  <span>Magbayad</span>
+                  <span>{t('landing:previewPay', 'Pay')}</span>
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
@@ -163,10 +163,10 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Mga Tampok na Dinisenyo para sa Tindahan
+              {t('landing:featuresSectionTitle', 'Features Tailored for Community Retail Stores')}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
-              Simpleng gamitin sa cellphone o tablet, walang komplikasyon.
+              {t('landing:featuresSectionSubtitle', 'Simple and intuitive on phones, tablets, or laptops.')}
             </p>
           </div>
 
@@ -176,10 +176,9 @@ export function LandingPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Clock className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-foreground">Mabilis na POS Terminal</h3>
+                <h3 className="text-base font-bold text-foreground">{t('landing:featurePosTitle', 'Ultra-Fast POS Terminal')}</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Pindot lang para sa bawat order, automated computation ng sukli,
-                  at agarang thermal receipt printing para sa walk-in at suki.
+                  {t('landing:featurePosDesc', 'Ring up sales in seconds with automated change calculation and thermal receipt printing.')}
                 </p>
               </CardContent>
             </Card>
@@ -189,10 +188,9 @@ export function LandingPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-utang/15 text-utang">
                   <BookOpen className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-foreground">Digital Utang Ledger</h3>
+                <h3 className="text-base font-bold text-foreground">{t('landing:featureUtangTitle', 'Digital Utang Ledger')}</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Iwasan ang nawawalang notebook. May running balance timeline,
-                  credit limits bawat suki, at 1-click polite Taglish SMS payment reminders.
+                  {t('landing:featureUtangDesc', 'Eliminate lost paper notebooks. Running balance timeline and suki credit limits.')}
                 </p>
               </CardContent>
             </Card>
@@ -202,10 +200,9 @@ export function LandingPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-success/15 text-success">
                   <PackageCheck className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-foreground">Matalinong Imbentaryo</h3>
+                <h3 className="text-base font-bold text-foreground">{t('landing:featureInventoryTitle', 'Live Stock Alerts')}</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Awtomatikong nababawas ang stock sa bawat benta, live warning kapag paubos na,
-                  at mabilisang printable restock list kapag mamamalengke.
+                  {t('landing:featureInventoryDesc', 'Stock is automatically deducted on every sale with live low stock warnings and printable restock lists.')}
                 </p>
               </CardContent>
             </Card>
@@ -241,7 +238,7 @@ export function LandingPage() {
                     <span className="font-semibold text-xs text-foreground">No Poverty</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Protektahan ang kabuhayan ng maliliit na sari-sari store owners laban sa pagkalugi dulot ng hindi nasisingil na pautang.
+                    {t('landing:sdg1Desc', 'Protect neighborhood sari-sari store owners against bad debts and business failure.')}
                   </p>
                 </div>
 
@@ -253,7 +250,7 @@ export function LandingPage() {
                     <span className="font-semibold text-xs text-foreground">Decent Work & Growth</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Pagpapasigla sa lokal na micro-commerce sa pamamagitan ng modernong digital financial literacy at inventory efficiency.
+                    {t('landing:sdg8Desc', 'Energize local micro-commerce through digital bookkeeping and inventory efficiency.')}
                   </p>
                 </div>
               </div>
