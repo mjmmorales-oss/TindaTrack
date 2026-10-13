@@ -500,6 +500,62 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Updated `README.md` features list and local development guides.
   - Updated `docs/API.md` with request and response examples for all barcode and scanner endpoints.
   - Updated `docs/CHANGELOG.md` with full `[v1.1.0]` release notes.
-- Gates: ESLint clean, production build clean, Vitest (151/151 tests green across 12 test files), Pest (70/70 tests green), Pint clean, all check scripts passing.
+### B12 Log:
+- Final gate verification executed from clean state:
+  - Backend: `php artisan migrate:fresh --seed` ran cleanly with all 14 tables and idempotent demo history seeders.
+  - Backend Pest: 70 passed (323 assertions).
+  - Pint code styling: 100% clean.
+  - Frontend: `oxlint` (0 errors), `vite build` (production build clean), Vitest (151 tests passed across 12 files).
+  - Contract & Service verification: 46/46 API contracts verified, 12/12 Mock vs API service facades verified, mock data generation and balance reconciliation passed with 0 discrepancies.
+- Live smoke test performed in Tinker:
+  - Successfully resolved `3017620422003` -> `"Nutella"`, brand `"Nutella"`, size `"400 g e"`, attribution `"Data from Open Food Facts (ODbL)"`. Temporary catalog row purged after assertion.
+- Runtime safety scan:
+  - Verified layout containment, no horizontal scrolling, proper `Number(...)` coercion, and full lazy-loading across all 33 routes and the new `/scan` route.
+
+---
+
+## Final v1.1.0 Summary
+
+### Test Suite Comparison (Before & After)
+- **Backend (Pest PHP)**:
+  - Baseline (B0): 41 tests, 206 assertions
+  - Final (B12): **70 tests, 323 assertions** (+29 tests, +117 assertions)
+- **Frontend (Vitest)**:
+  - Baseline (B0): 123 tests (10 files)
+  - Final (B12): **151 tests (12 files)** (+28 tests, +2 new test files)
+- **API Contracts (`scripts/check-contract.mjs`)**:
+  - Baseline (B0): 37 contracts
+  - Final (B12): **46 contracts** (+9 new endpoints verified 1-to-1 against Laravel routes)
+
+### New Endpoints & Routes
+- **Backend Endpoints**:
+  1. `GET /api/barcode-lookup/{barcode}` — Throttled catalog lookup (Cashiers: local only; Owners: local + Open Food Facts cache).
+  2. `POST /api/scanner-sessions` — Creates 10-minute pairing session (`pos` or `inventory` mode).
+  3. `GET /api/scanner-sessions/{id}` — Polls pairing health and status.
+  4. `GET /api/scanner-sessions/{id}/events` — Polling feed for POS terminal with `after={id}` parameter.
+  5. `DELETE /api/scanner-sessions/{id}` — Ends active session.
+  6. `POST /api/scanner/pair` — Public endpoint redeeming pairing code for scoped 40-char device token.
+  7. `POST /api/scanner/scans` — Device endpoint submitting scans and broadcasting real-time events.
+  8. `POST /api/scanner/heartbeat` — Device endpoint maintaining active session liveness.
+  9. `GET /api/scanner/unknown-barcodes` — Owner endpoint tracking uncatalogued barcodes scanned in the store.
+- **Frontend Routes**:
+  - `/scan` — Standalone public phone scanner page (responsive down to 360px, zero app shell duplication, screen wake lock, quantity stepper, continuous camera scanning).
+- **New Environment Variables**:
+  - Backend: `PRODUCT_LOOKUP_ENABLED`, `OFF_USER_AGENT`, optional `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET`, `PUSHER_APP_CLUSTER`.
+  - Frontend: `VITE_REALTIME_DRIVER` (`polling` | `pusher`), `VITE_PUBLIC_APP_URL`, `VITE_PUSHER_APP_KEY`, `VITE_PUSHER_APP_CLUSTER`.
+
+### Skipped Items
+- None. All sub-features implemented in full according to blueprint and prompt specifications.
+
+---
+
+## Morning Checklist for the User
+1. `git pull`
+2. `composer install` (in `backend/`) and `npm install` (in repo root and `frontend/`)
+3. `php artisan migrate` (in `backend/`)
+4. Restart development server: `npm run dev`
+5. Visit `http://localhost:5173/pos` → click **"I-scan"** to test laptop webcam scanning.
+6. Run `npm run dev:lan`, click **"Ikonekta ang Phone"** in POS, and scan the QR code with your mobile smartphone!
+
 
 
