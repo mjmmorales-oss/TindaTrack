@@ -41,6 +41,8 @@
   "price": "Price",
   "amount": "Amount",
   "date": "Date",
+  "cashier": "Cashier",
+  "paymentMethod": "Method",
   "notes": "Notes",
   "optional": "Optional",
   "required": "Required",

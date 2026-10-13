@@ -237,7 +237,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
           subtotal={product.price * 2}
         />,
       )
-      expect(await screen.findByText(/Bayaran ang Benta \(Checkout\)/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Checkout & Payment|Bayaran ang Benta/i)).toBeInTheDocument()
     })
 
     it('HeldCartsDialog: renders parked sales dialog', async () => {
@@ -247,7 +247,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
           onOpenChange={() => {}}
         />,
       )
-      expect(await screen.findByText(/Mga Naka-hold na Benta/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Parked Sales|Naka-hold/i })).toBeInTheDocument()
     })
 
     it('ConfirmDialog: void sale requireReason mode enforces reason', async () => {

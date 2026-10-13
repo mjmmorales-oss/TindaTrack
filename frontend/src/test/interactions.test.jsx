@@ -136,12 +136,12 @@ describe('Interaction and Dialog Smoke Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Cash \(Bayad\)/i)).toBeInTheDocument()
+      expect(await screen.findByRole('tab', { name: /Cash/i })).toBeInTheDocument()
 
       // Switch to Utang tab
       const utangTab = screen.getByRole('tab', { name: /Utang/i })
       await user.click(utangTab)
-      expect(await screen.findByText(/Pangalan ng Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Pangalan ng Suki|Customer Name/i)).toBeInTheDocument()
     })
 
     it('opens Add Cashier dialog on /staff', async () => {

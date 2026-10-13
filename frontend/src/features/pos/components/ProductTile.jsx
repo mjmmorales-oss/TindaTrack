@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Eye, Plus, ShoppingCart } from 'lucide-react'
 import {
   ContextMenu,
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils'
  * @param {(product: object) => void} [props.onViewProduct] - View details handler
  */
 export function ProductTile({ product, onAddToCart, onViewProduct }) {
+  const { t } = useTranslation(['pos', 'common'])
   const [isPressed, setIsPressed] = useState(false)
   const isOutOfStock = (product.stock_quantity ?? 0) <= 0
   const isLowStock =
@@ -111,14 +113,14 @@ export function ProductTile({ product, onAddToCart, onViewProduct }) {
           className="gap-2 text-xs"
         >
           <ShoppingCart className="h-3.5 w-3.5" />
-          Idagdag sa cart
+          {t('pos:addToCart', 'Add to cart')}
         </ContextMenuItem>
         <ContextMenuItem
           onClick={() => onViewProduct?.(product)}
           className="gap-2 text-xs"
         >
           <Eye className="h-3.5 w-3.5" />
-          Tingnan ang detalye
+          {t('pos:viewDetails', 'View details')}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

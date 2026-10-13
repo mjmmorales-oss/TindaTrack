@@ -741,7 +741,22 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Authored Vitest suite `src/test/i18n.test.jsx` (7/7 tests passed) testing English default, live Taglish re-render, localStorage persistence, fallback handling, localized dates, and error translation.
   - Authored `scripts/check-i18n.mjs` (and mirrored to `frontend/scripts/check-i18n.mjs`), validating 18/18 namespace key parities, non-empty dictionaries, code key invocations, and recording baseline untranslated candidate count: **385 strings**.
   - Added `"check:i18n"` to root and frontend `package.json`.
-- **Gates passed**:
-  - Backend: Pest 74/74 tests green (393 assertions), Pint clean.
-  - Frontend: `npm run lint` 0 errors, `npm run build` clean, `npm run check:bundle` (90 assets checked, 0 violations), `npm run check:i18n` (18 namespaces verified), Vitest 9/9 passed (`i18n.test.jsx` + `auth.test.jsx`).
+### H4b Log (Dashboard, POS, and Scanner Feature Localization):
+- **POS & Scanner Localization**:
+  - Translated all POS and Scanner components with full i18n support:
+    - POS: `PosPage.jsx`, `CartPanel.jsx`, `CartDrawer.jsx`, `MobileCartBar.jsx`, `CartItemRow.jsx`, `CartSummary.jsx`, `ProductGrid.jsx`, `ProductTile.jsx`, `ProductDetailDialog.jsx`, `PaymentDialog.jsx`, `HeldCartsDialog.jsx`, `ReceiptView.jsx`, `NewCustomerMiniForm.jsx`.
+    - Dashboard: `DashboardPage.jsx`, `OwnerDashboard.jsx`, `CashierDashboard.jsx`.
+    - Scanner: `PairPhoneDialog.jsx`, `ScannerSheet.jsx`, `PhoneScannerPage.jsx`, `CameraScanner.jsx`.
+  - Expanded `en/pos.json` & `fil/pos.json` (114 keys each, 100% key parity).
+  - Expanded `en/scanner.json` & `fil/scanner.json` (80 keys each, 100% key parity).
+  - Expanded `en/dashboard.json` & `fil/dashboard.json` (45 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `routes.test.jsx`, `scan-flows.test.jsx`, `entrypoints.test.jsx`, `interactions.test.jsx`, `dialogs.test.jsx`, `containment.test.jsx`, and `flows.test.jsx` to support bilingual assertions (matching both English default and Taglish).
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, untranslated candidate strings decreased from 385 to 321.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+  - Backend: Pest 74/74 tests green, Pint clean.
+
 

@@ -4,6 +4,7 @@ import {
   ScanBarcode,
   Smartphone,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -48,7 +49,8 @@ const POS_SCANNER_SESSION_KEY = 'tt_pos_scanner_session'
  * and live barcode scanning (Webcam, USB Wedge, Phone sync).
  */
 export function PosPage() {
-  useDocumentTitle('POS Terminal')
+  const { t } = useTranslation(['pos', 'common', 'scanner'])
+  useDocumentTitle(t('pos:title', 'POS Terminal'))
 
   const { user } = useAuth()
   const searchInputRef = useRef(null)
@@ -133,9 +135,9 @@ export function PosPage() {
           } else {
             // Unknown product
             if (user?.role === 'owner') {
-              notify.info('Hindi pa naka-rehistro', `Barcode: ${normalized}`, {
+              notify.info(t('pos:notRegistered', 'Not registered yet'), t('pos:notRegisteredBarcode', { barcode: normalized, defaultValue: `Barcode: ${normalized}` }), {
                 action: {
-                  label: 'Irehistro ang produkto',
+                  label: t('pos:registerProduct', 'Register product'),
                   onClick: () => {
                     setRegisterBarcodeProduct({
                       barcode: normalized,
@@ -152,14 +154,14 @@ export function PosPage() {
               })
             } else {
               notify.warning(
-                'Hindi pa naka-rehistro',
-                'Hindi pa naka-rehistro ang barcode na ito. Sabihan ang may-ari.',
+                t('pos:notRegistered', 'Not registered yet'),
+                t('pos:notRegisteredDescCashier', 'This barcode is not registered yet. Please inform the store owner.'),
               )
             }
             return
           }
         } catch (err) {
-          notify.error('Hindi ma-lookup ang barcode', err?.message)
+          notify.error(t('pos:lookupFailed', 'Barcode lookup failed'), err?.message)
           return
         }
       }
@@ -167,7 +169,7 @@ export function PosPage() {
       // Check stock
       const stock = Number(product.stock_quantity ?? product.stock ?? 0)
       if (stock <= 0) {
-        notify.warning('Out of Stock', `Ubos na ang stock ng "${product.name}".`)
+        notify.warning(t('pos:outOfStock', 'Out of Stock'), t('pos:stockEmptyWarning', { name: product.name, defaultValue: `Out of stock for "${product.name}".` }))
         return
       }
 
@@ -175,9 +177,9 @@ export function PosPage() {
       const qty = Number(options?.quantity || options?.event?.quantity) || 1
       addToCart(product, qty)
       beep()
-      notify.success(`+${qty} ${product.name}`, `Naidagdag: ${product.name}`)
+      notify.success(`+${qty} ${product.name}`, t('pos:addedToCart', { name: product.name, defaultValue: `Added: ${product.name}` }))
     },
-    [allProducts, user?.role, addToCart],
+    [allProducts, user, addToCart, t],
   )
 
   // Hardware scanner wedge support
@@ -209,7 +211,7 @@ export function PosPage() {
           setPairedSession(null)
           setIsScannerOnline(false)
           sessionStorage.removeItem(POS_SCANNER_SESSION_KEY)
-          notify.info('Session Ended', 'Natapos na ang phone scanner session.')
+          notify.info(t('scanner:sessionExpired', 'Session Expired'), t('pos:sessionEnded', 'Phone scanner session has ended.'))
         } else {
           setIsScannerOnline(Boolean(status?.online))
         }
@@ -222,7 +224,7 @@ export function PosPage() {
       unsub()
       clearInterval(timer)
     }
-  }, [pairedSession?.id, handleScannedCode])
+  }, [pairedSession?.id, handleScannedCode, t])
 
   const handleDisconnectScanner = async () => {
     if (!pairedSession?.id) return
@@ -234,7 +236,7 @@ export function PosPage() {
     setPairedSession(null)
     setIsScannerOnline(false)
     sessionStorage.removeItem(POS_SCANNER_SESSION_KEY)
-    notify.info('Naidiskonekta', 'Naidiskonekta ang phone scanner.')
+    notify.info(t('scanner:disconnect', 'Disconnect'), t('pos:phoneDisconnected', 'Phone scanner disconnected.'))
   }
 
   // Filtered products list
@@ -275,7 +277,7 @@ export function PosPage() {
     if (items.length > 0) {
       setIsPaymentOpen(true)
     } else {
-      notify.warning('Walang laman ang cart', 'Pumili muna ng mga paninda bago magbayad.')
+      notify.warning(t('pos:cartEmptyTitle', 'Your cart is empty'), t('pos:cartEmptyDesc', 'Scan a barcode or click a product to add it to this sale.'))
     }
   })
 
@@ -317,10 +319,10 @@ export function PosPage() {
       if (match) {
         e.preventDefault()
         if (match.stock_quantity <= 0) {
-          notify.error('Out of Stock', `Ubos na ang stock ng "${match.name}".`)
+          notify.error(t('pos:outOfStock', 'Out of Stock'), t('pos:stockEmptyWarning', { name: match.name, defaultValue: `Out of stock for "${match.name}".` }))
         } else {
           addToCart(match, 1)
-          notify.success(`+1 ${match.name}`, 'Idinagdag sa cart.')
+          notify.success(`+1 ${match.name}`, t('pos:addedToCart', { name: match.name, defaultValue: `Added: ${match.name}` }))
           setSearchQuery('')
         }
       }
@@ -359,7 +361,7 @@ export function PosPage() {
                 onChange={setSearchQuery}
                 onKeyDown={handleSearchKeyDown}
                 onClear={() => setSearchQuery('')}
-                placeholder="Maghanap ng pangalan, SKU, o i-scan ang barcode (F2)..."
+                placeholder={t('pos:searchPlaceholder', 'Search products (name, barcode, SKU)...')}
                 showKbdHint={true}
                 data-barcode-input="true"
                 className="w-full h-10 text-sm"
@@ -376,7 +378,7 @@ export function PosPage() {
                 className="h-10 text-xs font-semibold px-3 gap-1.5"
               >
                 <ScanBarcode className="h-4 w-4 text-primary" />
-                I-scan
+                {t('pos:scanWithCamera', 'Scan')}
               </Button>
 
               <Button
@@ -387,7 +389,7 @@ export function PosPage() {
                 className="h-10 text-xs font-semibold px-3 gap-1.5"
               >
                 <Smartphone className="h-4 w-4 text-primary" />
-                Ikonekta ang Phone
+                {t('pos:connectPhone', 'Connect Phone')}
               </Button>
 
               {pairedSession && (
@@ -400,7 +402,7 @@ export function PosPage() {
                       className="h-10 text-xs font-medium px-3 gap-2 border border-border"
                     >
                       <Smartphone className="h-4 w-4" />
-                      <span className="hidden md:inline">Phone scanner:</span>
+                      <span className="hidden md:inline">Phone:</span>
                       <span
                         className={`flex items-center gap-1.5 font-semibold ${
                           isScannerOnline ? 'text-success' : 'text-muted-foreground'
@@ -420,7 +422,7 @@ export function PosPage() {
                       onClick={handleDisconnectScanner}
                       className="text-destructive focus:text-destructive cursor-pointer"
                     >
-                      Idiskonekta
+                      {t('pos:disconnectPhone', 'Disconnect Phone')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -435,7 +437,7 @@ export function PosPage() {
                   className="h-10 text-xs px-2.5 shrink-0 sm:hidden"
                 >
                   <X className="h-4 w-4 mr-1" />
-                  Linisin
+                  {t('pos:clearCart', 'Clear')}
                 </Button>
               )}
             </div>
@@ -457,7 +459,7 @@ export function PosPage() {
                 value="all"
                 className="h-8 shrink-0 snap-start text-xs font-semibold px-3 rounded-full data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
               >
-                Lahat (All)
+                {t('common:all', 'All')}
               </ToggleGroupItem>
               {categories.map((cat) => (
                 <ToggleGroupItem
@@ -546,7 +548,7 @@ export function PosPage() {
         open={isScannerSheetOpen}
         onOpenChange={setIsScannerSheetOpen}
         continuous={true}
-        title="Mag-scan ng Barcode sa POS"
+        title={t('pos:scanSheetTitle', 'Scan Barcode in POS')}
         onDetected={(code) => handleScannedCode(code, { source: 'camera' })}
       />
 

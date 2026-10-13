@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Smartphone,
   CheckCircle2,
@@ -50,7 +51,8 @@ function formatCode(val) {
  * No login required — paired via short pairing code.
  */
 export function PhoneScannerPage() {
-  useDocumentTitle('TindaTrack Phone Scanner')
+  const { t } = useTranslation(['scanner', 'pos', 'common'])
+  useDocumentTitle(t('scanner:pageTitle', 'TindaTrack Phone Scanner'))
   const [searchParams] = useSearchParams()
 
   // State: session info
@@ -85,7 +87,7 @@ export function PhoneScannerPage() {
   const handlePair = useCallback(async (codeToPair) => {
     const rawCode = (codeToPair || '').trim()
     if (!rawCode) {
-      setPairError('Walang pairing code na ibinigay. I-scan ang QR sa POS o i-type ang code.')
+      setPairError(t('scanner:noCodeError', 'No pairing code provided. Scan the QR on POS or enter the code.'))
       return
     }
 
@@ -94,7 +96,7 @@ export function PhoneScannerPage() {
       clean.length === 8 ? `${clean.slice(0, 4)}-${clean.slice(4)}` : rawCode.toUpperCase()
 
     if (clean.length < 4) {
-      setPairError('Ilagay ang wastong 8-character pairing code.')
+      setPairError(t('scanner:invalidCodeError', 'Enter a valid 8-character pairing code.'))
       return
     }
 
@@ -127,25 +129,25 @@ export function PhoneScannerPage() {
       const status = err?.status ?? err?.response?.status
 
       if (reason === 'not_found') {
-        setPairError('Hindi nahanap ang pairing code. Tiyaking tama ang code mula sa POS.')
+        setPairError(t('scanner:notFoundError', 'Pairing code not found. Make sure the code from POS is correct.'))
       } else if (reason === 'expired') {
-        setPairError('Paso na ang pairing code. Humingi ng bagong code sa POS.')
+        setPairError(t('scanner:expiredError', 'Pairing code expired. Request a new code on POS.'))
       } else if (reason === 'used') {
-        setPairError('Nagamit na ang pairing code na ito. Humingi ng bagong code sa POS.')
+        setPairError(t('scanner:usedError', 'This pairing code was already used. Request a new code on POS.'))
       } else if (
         status === 0 ||
         (typeof navigator !== 'undefined' && !navigator.onLine) ||
         err?.message?.includes('Network Error') ||
         err?.message?.includes('Failed to fetch')
       ) {
-        setPairError('Hindi maabot ang scanner server. Tiyaking nasa parehong Wi-Fi ang phone at laptop.')
+        setPairError(t('scanner:networkError', 'Cannot reach scanner server. Ensure phone and laptop are on the same Wi-Fi.'))
       } else {
-        setPairError(err?.message || 'Hindi maikonekta. Suriin ang pairing code.')
+        setPairError(err?.message || t('scanner:generalPairError', 'Could not connect. Please check the pairing code.'))
       }
     } finally {
       setIsPairing(false)
     }
-  }, [])
+  }, [t])
 
   // Auto-pair on mount if ?code= is present
   useEffect(() => {
@@ -156,9 +158,9 @@ export function PhoneScannerPage() {
       setCodeInput(formatted)
       handlePair(formatted)
     } else if (searchParams.has('code') && !searchParams.get('code')?.trim() && !sessionInfo) {
-      setPairError('Walang pairing code sa URL. I-scan ang QR sa POS o i-type ang code.')
+      setPairError(t('scanner:noCodeError', 'No pairing code provided. Scan the QR on POS or enter the code.'))
     }
-  }, [searchParams, sessionInfo, handlePair])
+  }, [searchParams, sessionInfo, handlePair, t])
 
   // Screen Wake Lock (prevent screen from sleeping while scanning)
   useEffect(() => {
@@ -199,13 +201,13 @@ export function PhoneScannerPage() {
       } catch (err) {
         const status = err?.status ?? err?.response?.status
         if (status === 401) {
-          disconnect('Natapos na ang session. Mag-scan ng bagong QR.')
+          disconnect(t('scanner:sessionEndedRescan', 'Session ended. Please scan a new QR code.'))
         }
       }
     }, 10000)
 
     return () => clearInterval(timer)
-  }, [sessionInfo])
+  }, [sessionInfo, t])
 
   // Disconnect function
   const disconnect = (message = null) => {
@@ -251,13 +253,13 @@ export function PhoneScannerPage() {
     } catch (err) {
       const status = err?.status ?? err?.response?.status
       if (status === 401) {
-        disconnect('Natapos na ang session. Mag-scan ng bagong QR.')
+        disconnect(t('scanner:sessionEndedRescan', 'Session ended. Please scan a new QR code.'))
       } else {
         setLastScan({
           id: Date.now(),
           barcode: code,
           status: 'error',
-          error: err?.message || 'Hindi naipadala ang scan.',
+          error: err?.message || t('scanner:scanSendFailed', 'Failed to send scan.'),
           time: new Date().toLocaleTimeString('en-PH'),
         })
       }
@@ -280,8 +282,8 @@ export function PhoneScannerPage() {
             </h1>
             <p className="text-[11px] text-muted-foreground leading-tight truncate">
               {sessionInfo
-                ? `Konektado kay ${sessionInfo.user_name}`
-                : 'Wireless Phone Scanner'}
+                ? t('scanner:connectedToUser', { name: sessionInfo.user_name, defaultValue: `Connected to ${sessionInfo.user_name}` })
+                : t('scanner:phoneScannerHeader', 'Wireless Phone Scanner')}
             </p>
           </div>
         </div>
@@ -300,10 +302,10 @@ export function PhoneScannerPage() {
               size="sm"
               onClick={() => disconnect()}
               className="h-8 text-xs text-muted-foreground hover:text-destructive px-2"
-              title="Idiskonekta"
+              title={t('scanner:disconnect', 'Disconnect')}
             >
               <LogOut className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Idiskonekta</span>
+              <span className="hidden sm:inline">{t('scanner:disconnect', 'Disconnect')}</span>
             </Button>
           )}
 
@@ -321,9 +323,11 @@ export function PhoneScannerPage() {
             </div>
 
             <div className="space-y-1.5 max-w-sm">
-              <h2 className="text-xl font-bold tracking-tight">Ikonekta ang Phone sa POS</h2>
+              <h2 className="text-xl font-bold tracking-tight">
+                {t('scanner:connectPhoneTitle', 'Connect Phone as Barcode Scanner')}
+              </h2>
               <p className="text-xs text-muted-foreground">
-                I-type ang 8-character pairing code na makikita sa screen ng laptop o POS terminal.
+                {t('scanner:pairInstructions', 'Type the 8-character pairing code shown on your laptop or POS terminal.')}
               </p>
             </div>
 
@@ -351,13 +355,13 @@ export function PhoneScannerPage() {
             >
               <div className="space-y-1 text-left">
                 <label htmlFor="pairing-code-input" className="text-xs font-semibold text-muted-foreground">
-                  Pairing Code
+                  {t('scanner:pairingCode', 'Pairing Code')}
                 </label>
                 <Input
                   id="pairing-code-input"
                   value={codeInput}
                   onChange={(e) => setCodeInput(formatCode(e.target.value))}
-                  placeholder="Hal. ABCD-EFGH"
+                  placeholder="ABCD-EFGH"
                   className="h-12 text-center text-xl font-mono font-bold tracking-widest uppercase bg-card border-border"
                   maxLength={9}
                   autoCapitalize="characters"
@@ -376,17 +380,21 @@ export function PhoneScannerPage() {
                 {isPairing ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    Kumokonekta...
+                    {t('scanner:connecting', 'Connecting...')}
                   </>
                 ) : (
-                  'Ikonekta ang Phone'
+                  t('scanner:pairPhoneButton', 'Connect Phone')
                 )}
               </Button>
             </form>
 
             <div className="text-xs text-muted-foreground max-w-xs space-y-1 bg-muted/40 p-3 rounded-lg border border-border">
-              <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">Paano ikonekta?</p>
-              <p>Pumunta sa POS sa laptop, pindutin ang <strong>"Ikonekta ang Phone"</strong>, at i-scan ang QR o kopyahin ang code.</p>
+              <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">
+                {t('scanner:howToConnect', 'How to connect?')}
+              </p>
+              <p>
+                {t('scanner:howToConnectDesc', 'Open POS on your laptop, click "Connect Phone", and scan the QR or copy the code.')}
+              </p>
             </div>
           </div>
         ) : (
@@ -403,8 +411,12 @@ export function PhoneScannerPage() {
             {/* Quantity Stepper Row */}
             <div className="flex items-center justify-between bg-card p-3 rounded-xl border border-border/80 shadow-xs">
               <div className="space-y-0.5">
-                <p className="text-xs font-semibold text-foreground">Dami (Quantity)</p>
-                <p className="text-[11px] text-muted-foreground">Dami na ipapadala kada scan</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {t('scanner:quantityLabel', 'Quantity:')}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {t('scanner:quantitySentPerScan', 'Quantity sent per scan')}
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -415,7 +427,7 @@ export function PhoneScannerPage() {
                   className="h-9 w-9 rounded-lg"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
-                  aria-label="Bawasan ang dami"
+                  aria-label={t('scanner:decreaseQuantity', 'Decrease quantity')}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -430,7 +442,7 @@ export function PhoneScannerPage() {
                   size="icon"
                   className="h-9 w-9 rounded-lg"
                   onClick={() => setQuantity((q) => Math.min(99, q + 1))}
-                  aria-label="Dagdagan ang dami"
+                  aria-label={t('scanner:increaseQuantity', 'Increase quantity')}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -466,14 +478,14 @@ export function PhoneScannerPage() {
                       <>
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="text-sm font-bold leading-tight truncate">
-                            {lastScan.product?.name || 'Produkto'}
+                            {lastScan.product?.name || 'Product'}
                           </p>
                           <span className="text-sm font-black font-mono shrink-0 text-success">
                             {toMoney(lastScan.product?.price || 0)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Naipadala sa POS ✓ (x{lastScan.quantity})
+                          {t('scanner:sentToPos', { quantity: lastScan.quantity, defaultValue: `Sent to POS ✓ (x${lastScan.quantity})` })}
                         </p>
                       </>
                     )}
@@ -481,10 +493,10 @@ export function PhoneScannerPage() {
                     {lastScan.status === 'out_of_stock' && (
                       <>
                         <p className="text-sm font-bold leading-tight">
-                          {lastScan.product?.name || 'Ubos na ang stock'}
+                          {lastScan.product?.name || t('pos:outOfStock', 'Out of Stock')}
                         </p>
                         <p className="text-xs text-warning-foreground">
-                          Babala: Walang stock ang produktong ito sa tindahan.
+                          {t('scanner:outOfStockWarning', 'Warning: This product is out of stock in store.')}
                         </p>
                       </>
                     )}
@@ -492,14 +504,14 @@ export function PhoneScannerPage() {
                     {lastScan.status === 'unknown' && (
                       <>
                         <p className="text-sm font-bold leading-tight">
-                          Hindi pa naka-rehistro ang barcode
+                          {t('scanner:barcodeNotRegistered', 'Barcode not registered yet')}
                         </p>
                         <p className="text-xs font-mono text-muted-foreground">
                           {lastScan.barcode}
                         </p>
                         {sessionInfo.mode === 'inventory' && lastScan.catalog?.name && (
                           <p className="text-xs text-primary font-medium mt-1">
-                            Nakita online: {lastScan.catalog.name}
+                            {t('scanner:foundOnline', { name: lastScan.catalog.name, defaultValue: `Found online: ${lastScan.catalog.name}` })}
                           </p>
                         )}
                       </>
@@ -519,10 +531,12 @@ export function PhoneScannerPage() {
             {scanHistory.length > 0 && (
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold px-1">
-                  <span>Huling na-scan ({scanHistory.length})</span>
+                  <span>
+                    {t('scanner:recentScans', { count: scanHistory.length, defaultValue: `Recent Scans (${scanHistory.length})` })}
+                  </span>
                   <span className="flex items-center gap-1 font-normal text-[11px]">
                     <Clock className="h-3 w-3" />
-                    Real-time feed
+                    {t('scanner:realtimeFeed', 'Real-time feed')}
                   </span>
                 </div>
 
@@ -548,11 +562,11 @@ export function PhoneScannerPage() {
                           </span>
                         ) : scan.status === 'out_of_stock' ? (
                           <span className="text-[10px] font-semibold text-warning">
-                            Out of stock
+                            {t('pos:outOfStock', 'Out of Stock')}
                           </span>
                         ) : (
                           <span className="text-[10px] text-muted-foreground">
-                            Hindi kilala
+                            {t('scanner:unknown', 'Unknown')}
                           </span>
                         )}
                       </div>

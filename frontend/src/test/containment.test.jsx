@@ -84,7 +84,7 @@ describe('Layout Containment and Responsive Shell Guard Tests', () => {
     const { container } = renderRoute('/scan')
 
     await waitFor(() => {
-      expect(screen.getByText(/Ikonekta ang Phone sa POS/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /Connect Phone|Ikonekta/i })).toBeInTheDocument()
     })
 
     const sidebar = container.querySelector('[data-slot="sidebar"]')

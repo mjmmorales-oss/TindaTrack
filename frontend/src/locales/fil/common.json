@@ -41,6 +41,8 @@
   "price": "Presyo",
   "amount": "Halaga",
   "date": "Petsa",
+  "cashier": "Kahera",
+  "paymentMethod": "Paraan",
   "notes": "Mga Tala (Notes)",
   "optional": "Opsyonal",
   "required": "Kailangan",

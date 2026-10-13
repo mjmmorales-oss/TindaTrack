@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import NumberFlow from '@number-flow/react'
 import { Money } from '@/components/common/Money'
 
@@ -9,18 +10,20 @@ import { Money } from '@/components/common/Money'
  * @param {number} props.total - Total currency amount
  */
 export function CartSummary({ itemCount, total }) {
+  const { t } = useTranslation(['pos', 'common'])
+
   return (
     <div className="space-y-3">
       {/* Subtotal & Items breakdown */}
       <div className="space-y-1.5 text-xs text-muted-foreground">
         <div className="flex items-center justify-between">
-          <span>Bilang ng Paninda (Items)</span>
+          <span>{t('pos:itemsCount', { count: itemCount })}</span>
           <span className="font-mono font-medium text-foreground tabular-nums">
-            {itemCount} {itemCount === 1 ? 'piraso' : 'piraso'}
+            {itemCount} {itemCount === 1 ? t('pos:pieces', 'item') : t('pos:piecesPlural', 'items')}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span>Subtotal</span>
+          <span>{t('pos:subtotal', 'Subtotal')}</span>
           <Money amount={total} size="sm" tone="muted" />
         </div>
       </div>
@@ -29,10 +32,10 @@ export function CartSummary({ itemCount, total }) {
       <div className="border-t border-border/80 pt-2 flex items-baseline justify-between">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            KABUUANG HALAGA
+            {t('pos:totalAmount', 'TOTAL AMOUNT')}
           </span>
           <span className="text-[11px] text-muted-foreground font-medium">
-            (Total Due)
+            {t('pos:totalDue', '(Total Due)')}
           </span>
         </div>
         <div className="flex items-baseline font-mono text-2xl sm:text-3xl font-extrabold tracking-tight text-primary tabular-nums">

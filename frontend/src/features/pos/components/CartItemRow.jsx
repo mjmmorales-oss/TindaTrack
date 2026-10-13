@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
@@ -13,8 +14,15 @@ import { Money } from '@/components/common/Money'
  * @param {(productId: number) => void} props.onRemove - Remove item callback
  */
 export function CartItemRow({ item, onQuantityChange, onRemove }) {
+  const { t } = useTranslation(['pos', 'common'])
   const isAtMaxStock = item.quantity >= item.stock
-  const stockHint = isAtMaxStock ? `Natira: ${item.stock} ${item.unit || 'pc'}` : undefined
+  const stockHint = isAtMaxStock
+    ? t('pos:stockRemaining', {
+        count: item.stock,
+        unit: item.unit || 'pc',
+        defaultValue: `Remaining: ${item.stock} ${item.unit || 'pc'}`,
+      })
+    : undefined
 
   return (
     <motion.div
@@ -58,7 +66,10 @@ export function CartItemRow({ item, onQuantityChange, onRemove }) {
           variant="ghost"
           size="icon"
           onClick={() => onRemove(item.product_id)}
-          aria-label={`Tanggalin ang ${item.name} sa cart`}
+          aria-label={t('pos:removeFromCartAria', {
+            name: item.name,
+            defaultValue: `Remove ${item.name} from cart`,
+          })}
           className="text-muted-foreground hover:text-destructive h-7 w-7 rounded-md p-0"
         >
           <Trash2 className="h-3.5 w-3.5" />

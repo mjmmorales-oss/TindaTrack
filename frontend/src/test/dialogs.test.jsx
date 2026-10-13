@@ -206,8 +206,8 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Bayaran ang Benta/i)).toBeInTheDocument()
-      expect(screen.getByText(/Cash \(Bayad\)/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Checkout & Payment|Bayaran ang Benta/i)).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: /Cash/i })).toBeInTheDocument()
     })
 
     it('renders PaymentDialog on utang tab and selects customer', async () => {
@@ -230,7 +230,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           customers={useMockDb.getState().customers}
         />,
       )
-      expect(screen.getByText(/Utang \(Lista\)/i)).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: /Utang/i })).toBeInTheDocument()
     })
 
     it('renders NewCustomerMiniForm standalone', async () => {
@@ -238,7 +238,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <NewCustomerMiniForm onSuccess={() => {}} onCancel={() => {}} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magrehistro ng Bagong Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Register New Customer|Magrehistro ng Bagong Suki/i)).toBeInTheDocument()
     })
   })
 
@@ -264,7 +264,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <HeldCartsDialog open={true} onOpenChange={() => {}} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Mga Naka-hold na Benta/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Parked Sales|Mga Naka-hold na Benta/i })).toBeInTheDocument()
     })
   })
 
@@ -306,7 +306,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
 
   describe('Staff Add Cashier Dialog', () => {
     it('opens add cashier modal on /staff', async () => {
-      renderRoute('/staff')
+      renderRoute('/staff', { role: 'owner' })
       const addBtn = await screen.findByRole('button', { name: /Magdagdag ng Kahera/i }, {}, { timeout: 8000 })
       addBtn.click()
       expect(await screen.findByText(/Magdagdag ng Bagong Kahera/i)).toBeInTheDocument()

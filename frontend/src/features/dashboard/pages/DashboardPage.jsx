@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { ErrorState } from '@/components/common/ErrorState'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -15,7 +16,8 @@ import { CashierDashboard } from '@/features/dashboard/components/CashierDashboa
  * Implements all four required states: loading skeleton, error with retry, empty state, and data view.
  */
 export function DashboardPage() {
-  useDocumentTitle('Dashboard')
+  const { t } = useTranslation(['dashboard', 'common'])
+  useDocumentTitle(t('dashboard:title', 'Store Dashboard'))
   const { user } = useAuth()
   const [range, setRange] = useState('today')
 
@@ -32,16 +34,16 @@ export function DashboardPage() {
         <DashboardSkeleton isOwner={isOwner} />
       ) : isError ? (
         <ErrorState
-          title="Hindi ma-load ang Dashboard"
-          description={error?.message || 'Nagkaroon ng problema habang kinukuha ang datos ng tindahan.'}
+          title={t('dashboard:errorLoading', 'Unable to load Dashboard')}
+          description={error?.message || t('dashboard:errorDesc', 'A problem occurred while retrieving store data.')}
           onRetry={() => refetch()}
           className="my-8"
         />
       ) : !dashboardData ? (
         <EmptyState
-          title="Walang datos na maipakita"
-          description="Wala pang sapat na datos para buuin ang dashboard analytics."
-          actionText="I-refresh"
+          title={t('dashboard:emptyTitle', 'No data to display')}
+          description={t('dashboard:emptyDesc', 'Not enough data yet to generate dashboard analytics.')}
+          actionText={t('dashboard:refresh', 'Refresh')}
           onAction={() => refetch()}
           className="my-8"
         />

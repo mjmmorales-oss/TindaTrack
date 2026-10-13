@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   ArrowRight,
@@ -19,14 +20,14 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { formatRelative } from '@/lib/format'
 
 /**
- * Returns a warm time-of-day greeting in Filipino.
+ * Returns a warm time-of-day greeting.
  */
-function getGreeting() {
+function getGreeting(t) {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Magandang umaga'
-  if (hour < 13) return 'Magandang tanghali'
-  if (hour < 18) return 'Magandang hapon'
-  return 'Magandang gabi'
+  if (hour < 12) return t('dashboard:greetingMorning', 'Good morning')
+  if (hour < 13) return t('dashboard:greetingNoon', 'Good day')
+  if (hour < 18) return t('dashboard:greetingAfternoon', 'Good afternoon')
+  return t('dashboard:greetingEvening', 'Good evening')
 }
 
 /**
@@ -38,10 +39,11 @@ function getGreeting() {
  * @param {object} [props.settings] - Store settings
  */
 export function CashierDashboard({ dashboardData, user, settings }) {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { cashier_shift, running_low } = dashboardData
   const storeName = settings?.store_name || 'Tindahan ni Aling Nena'
   const userName = user?.name || 'Kahera'
-  const greeting = `${getGreeting()}, ${userName}!`
+  const greeting = `${getGreeting(t)}, ${userName}!`
 
   return (
     <div className="space-y-6">
@@ -54,27 +56,27 @@ export function CashierDashboard({ dashboardData, user, settings }) {
           <Store className="h-4 w-4 shrink-0 text-primary" />
           <span className="font-medium text-foreground">{storeName}</span>
           <span className="text-muted-foreground/60">·</span>
-          <span>Aking Shift Ngayong Araw (My Shift Today)</span>
+          <span>{t('dashboard:myShiftToday', 'My Shift Today')}</span>
         </p>
       </div>
 
       {/* 2. My Shift Today KPIs & Large "Start Selling" Button */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Aking Benta Ngayon (My Sales)"
+          label={t('dashboard:mySales', 'My Sales Today')}
           value={cashier_shift?.my_sales_total ?? 0}
           format="currency"
           tone="success"
           icon={DollarSign}
-          description="Kabuuang nasingil sa iyong shift"
+          description={t('dashboard:mySalesDesc', 'Total collected during your shift')}
         />
         <StatCard
-          label="Mga Transaksyon Ko"
+          label={t('dashboard:myTransactions', 'My Transactions')}
           value={cashier_shift?.my_transactions_count ?? 0}
           format="number"
           tone="default"
           icon={Receipt}
-          description="Bilang ng naiprosesong resibo"
+          description={t('dashboard:myTransactionsDesc', 'Number of receipts processed')}
         />
 
         {/* Large "Start Selling" Action Card */}
@@ -83,11 +85,11 @@ export function CashierDashboard({ dashboardData, user, settings }) {
             <div className="flex items-center gap-2 text-primary">
               <ScanBarcode className="h-5 w-5" />
               <span className="text-sm font-bold uppercase tracking-wide">
-                POS Terminal
+                {t('dashboard:posTerminal', 'POS Terminal')}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Buksan ang POS upang magsimulang mag-scan ng barcode at magbenta.
+              {t('dashboard:openPosDesc', 'Open the POS to start scanning barcodes and ringing up sales.')}
             </p>
           </div>
           <div className="pt-4">
@@ -98,7 +100,7 @@ export function CashierDashboard({ dashboardData, user, settings }) {
             >
               <Link to="/pos">
                 <ScanBarcode className="h-5 w-5" />
-                Magsimulang Magbenta (Start Selling)
+                {t('dashboard:startSelling', 'Start Selling (POS)')}
               </Link>
             </Button>
           </div>
@@ -112,15 +114,15 @@ export function CashierDashboard({ dashboardData, user, settings }) {
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="text-base font-semibold">
-                Aking mga Huling Benta (My Recent Sales)
+                {t('dashboard:myRecentSales', 'My Recent Sales')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Mga transaksyong naitala sa iyong shift
+                {t('dashboard:myRecentSalesDesc', 'Transactions recorded during your shift')}
               </CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
               <Link to="/sales">
-                Lahat
+                {t('dashboard:viewAll', 'All')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -150,7 +152,7 @@ export function CashierDashboard({ dashboardData, user, settings }) {
             ) : (
               <div className="flex h-36 flex-col items-center justify-center text-center text-xs text-muted-foreground">
                 <ShoppingCart className="mb-1.5 h-6 w-6 opacity-40" />
-                Wala ka pang naitalang benta ngayong araw. Pindutin ang "Start Selling" sa itaas!
+                {t('dashboard:noSalesCashier', 'No sales recorded yet today. Click \'Start Selling\' above!')}
               </div>
             )}
           </CardContent>
@@ -161,10 +163,10 @@ export function CashierDashboard({ dashboardData, user, settings }) {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-warning" />
-              Kulang na Paninda (Running Low)
+              {t('dashboard:runningLowTitle', 'Running Low')}
             </CardTitle>
             <CardDescription className="text-xs">
-              Mga panindang kakaunti na lamang ang natitirang stock
+              {t('dashboard:runningLowReadOnlyDesc', 'Items with low remaining inventory')}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 space-y-3 pt-1">
@@ -186,14 +188,14 @@ export function CashierDashboard({ dashboardData, user, settings }) {
                     variant={item.stock_quantity <= 0 ? 'destructive' : 'outline'}
                     className="shrink-0 text-xs font-mono tabular-nums"
                   >
-                    {item.stock_quantity} {item.unit || 'pcs'} natira
+                    {t('dashboard:itemsRemaining', { count: item.stock_quantity, defaultValue: `${item.stock_quantity} ${item.unit || 'pcs'} remaining` })}
                   </Badge>
                 </div>
               ))
             ) : (
               <div className="flex h-36 flex-col items-center justify-center text-center text-xs text-muted-foreground">
                 <Package className="mb-1.5 h-6 w-6 opacity-40" />
-                Lahat ng paninda ay may sapat na stock.
+                {t('dashboard:allStockAdequate', 'All items have adequate stock.')}
               </div>
             )}
           </CardContent>

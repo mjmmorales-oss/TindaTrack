@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Banknote,
   BookOpen,
@@ -49,6 +50,7 @@ export function PaymentDialog({
   currentUser,
   onSuccessNewSale,
 }) {
+  const { t } = useTranslation(['pos', 'common', 'errors'])
   const [activeTab, setActiveTab] = useState('cash')
   const [tenderedAmount, setTenderedAmount] = useState('')
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
@@ -134,7 +136,7 @@ export function PaymentDialog({
       setApiError(
         err.response?.data?.message ||
           err.message ||
-          'Hindi maiproseso ang transaksyon.',
+          t('pos:defaultTransactionError', 'Could not process transaction.'),
       )
     }
   }
@@ -149,12 +151,12 @@ export function PaymentDialog({
         onOpenChange(val)
       }}
       title={
-        completedSale ? 'Resibo ng Transaksyon' : 'Bayaran ang Benta (Checkout)'
+        completedSale ? t('pos:receiptTitle', 'Transaction Receipt') : t('pos:checkoutTitle', 'Checkout & Payment')
       }
       description={
         completedSale
-          ? 'Nai-record na ang transaksyon sa system.'
-          : `Kabuuang Babayaran: ₱${Number(total || 0).toFixed(2)}`
+          ? t('pos:receiptDesc', 'Transaction recorded in system.')
+          : `${t('pos:amountDue', 'Amount Due')}: ₱${Number(total || 0).toFixed(2)}`
       }
       className="sm:max-w-md"
     >
@@ -177,7 +179,7 @@ export function PaymentDialog({
             <Alert variant="destructive" className="py-2.5">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle className="text-xs font-semibold">
-                May problema sa checkout
+                {t('pos:checkoutIssue', 'Problem with checkout')}
               </AlertTitle>
               <AlertDescription className="text-xs mt-0.5">
                 {apiError}
@@ -197,11 +199,11 @@ export function PaymentDialog({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="cash" className="gap-2 text-xs font-bold">
                 <Banknote className="h-4 w-4" />
-                Cash (Bayad)
+                {t('pos:cash', 'Cash')}
               </TabsTrigger>
               <TabsTrigger value="utang" className="gap-2 text-xs font-bold">
                 <BookOpen className="h-4 w-4" />
-                Utang (Lista)
+                {t('pos:utang', 'Credit (Utang)')}
               </TabsTrigger>
             </TabsList>
 
@@ -211,7 +213,7 @@ export function PaymentDialog({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="tendered-cash" className="text-xs font-semibold">
-                    Halagang Ibinayad (Tendered)
+                    {t('pos:cashReceived', 'Cash Received (Tendered)')}
                   </Label>
                   <Button
                     type="button"
@@ -220,7 +222,7 @@ export function PaymentDialog({
                     onClick={handleExactCash}
                     className="h-auto p-0 text-xs text-primary font-bold"
                   >
-                    Eksaktong Halaga (₱{Number(total || 0).toFixed(2)})
+                    {t('pos:exactAmount', 'Exact Amount')} (₱{Number(total || 0).toFixed(2)})
                   </Button>
                 </div>
                 <MoneyInput
@@ -238,7 +240,7 @@ export function PaymentDialog({
               {/* Quick Cash Buttons */}
               <div className="space-y-1.5">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Mabilisang Pindot (Quick Cash):
+                  {t('pos:quickCash', 'Quick Cash:')}
                 </span>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                   <Button
@@ -248,7 +250,7 @@ export function PaymentDialog({
                     onClick={handleExactCash}
                     className="h-9 text-xs font-bold"
                   >
-                    Exact
+                    {t('pos:exactAmount', 'Exact')}
                   </Button>
                   {QUICK_AMOUNTS.map((amt) => (
                     <Button
@@ -268,7 +270,7 @@ export function PaymentDialog({
               {/* Big Sukli / Change Display */}
               <div className="rounded-xl border border-border/80 bg-muted/40 p-3.5 text-center transition-colors">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                  SUKLI (Change)
+                  {t('pos:change', 'Sukli (Change)')}
                 </span>
                 <div className="flex items-baseline justify-center font-mono text-3xl sm:text-4xl font-extrabold tracking-tight mt-1 text-success tabular-nums">
                   <span className="mr-0.5">₱</span>
@@ -279,7 +281,7 @@ export function PaymentDialog({
                 </div>
                 {!isTenderedSufficient && tenderedNum > 0 && (
                   <p className="text-[11px] text-destructive font-medium mt-1">
-                    Kulang pa ng ₱{Math.max(0, Number(total || 0) - tenderedNum).toFixed(2)}
+                    {t('pos:insufficientCash', { amount: Math.max(0, Number(total || 0) - tenderedNum).toFixed(2) })}
                   </p>
                 )}
               </div>
@@ -295,12 +297,12 @@ export function PaymentDialog({
                 {createSaleMutation.isPending ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Itinatala ang Benta...
+                    {t('pos:recordingSale', 'Recording Sale...')}
                   </>
                 ) : (
                   <>
                     <Receipt className="h-5 w-5" />
-                    Kumpirmahin ang Cash (Sukli: ₱{Number(changeAmount || 0).toFixed(2)})
+                    {t('pos:confirmCash', { change: Number(changeAmount || 0).toFixed(2) })}
                   </>
                 )}
               </Button>
@@ -314,7 +316,7 @@ export function PaymentDialog({
                     setSelectedCustomerId(String(newCust.id))
                     setSelectedCustomer(newCust)
                     setShowNewCustomerForm(false)
-                    notify.success(`Napili si ${newCust.name} para sa utang.`)
+                    notify.success(t('pos:customerSelectedForUtang', { name: newCust.name, defaultValue: `Selected ${newCust.name} for credit.` }))
                   }}
                   onCancel={() => setShowNewCustomerForm(false)}
                 />
@@ -322,7 +324,7 @@ export function PaymentDialog({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">
-                      Pangalan ng Suki <span className="text-destructive">*</span>
+                      {t('pos:selectCustomer', 'Select Customer (Suki)')} <span className="text-destructive">*</span>
                     </Label>
                     <Button
                       type="button"
@@ -332,7 +334,7 @@ export function PaymentDialog({
                       className="h-auto p-0 text-xs text-primary font-medium gap-1"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
-                      + Bagong Suki
+                      {t('pos:newCustomer', '+ New Suki')}
                     </Button>
                   </div>
                   <CustomerCombobox
@@ -344,7 +346,7 @@ export function PaymentDialog({
                       setApiError(null)
                     }}
                     onAddNew={() => setShowNewCustomerForm(true)}
-                    placeholder="Pumili ng suki na magpapalista..."
+                    placeholder={t('pos:selectCustomerPlaceholder', 'Search customer name...')}
                   />
                 </div>
               )}
@@ -353,15 +355,15 @@ export function PaymentDialog({
               {selectedCustomer && (
                 <div className="rounded-xl border border-border/80 bg-card p-3 space-y-2 text-xs">
                   <div className="flex justify-between items-center text-muted-foreground">
-                    <span>Kasalukuyang Utang (Current):</span>
+                    <span>{t('pos:currentUtang', 'Current Credit (Utang):')}</span>
                     <Money amount={currentCreditBalance} size="sm" tone="utang" />
                   </div>
                   <div className="flex justify-between items-center text-muted-foreground">
-                    <span>Credit Limit:</span>
+                    <span>{t('pos:creditLimit', 'Credit Limit:')}</span>
                     <Money amount={creditLimit} size="sm" tone="muted" />
                   </div>
                   <div className="border-t border-border/60 pt-2 flex justify-between items-center font-bold">
-                    <span>Bagong Balanse (New Balance):</span>
+                    <span>{t('pos:newBalance', 'New Balance:')}</span>
                     <Money
                       amount={projectedCreditBalance}
                       size="sm"
@@ -379,12 +381,12 @@ export function PaymentDialog({
                 >
                   <AlertTriangle className="h-4 w-4 text-warning" />
                   <AlertTitle className="text-xs font-bold text-warning-foreground">
-                    Lampas sa Credit Limit
+                    {t('pos:creditLimitWarning', 'Credit Limit Exceeded')}
                   </AlertTitle>
                   <AlertDescription className="text-xs mt-0.5">
                     {isOwner
-                      ? 'Ang bagong balanse ay lalampas sa limitasyon ng suki. Bilang Store Owner, maaari mong pahintulutan ito.'
-                      : 'Lalampas ang utang sa pinapayagang limit. Hindi ito mapoproseso ng kahera nang walang pahintulot ng may-ari.'}
+                      ? t('pos:limitExceededOwner', 'The new balance will exceed the customer\'s credit limit. As Store Owner, you may authorize this.')
+                      : t('pos:limitExceededCashier', 'Credit limit exceeded. A cashier cannot process this without owner approval.')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -392,7 +394,7 @@ export function PaymentDialog({
               {/* Optional Partial Payment (Paid Now) */}
               <div className="space-y-1">
                 <Label htmlFor="utang-paid-now" className="text-xs font-semibold">
-                  Halagang Ibinayad Ngayon (Opsyonal na Paunang Bayad)
+                  {t('pos:paidNowLabel', 'Amount Paid Now (Optional Down Payment)')}
                 </Label>
                 <MoneyInput
                   id="utang-paid-now"
@@ -406,11 +408,11 @@ export function PaymentDialog({
               {/* Optional Notes */}
               <div className="space-y-1">
                 <Label htmlFor="utang-notes" className="text-xs font-semibold">
-                  Tala / Paalala (Opsyonal)
+                  {t('pos:notesLabel', 'Notes / Reminder (Optional)')}
                 </Label>
                 <Input
                   id="utang-notes"
-                  placeholder="hal. Babayaran sa darating na kinsena"
+                  placeholder={t('pos:notesPlaceholder', 'e.g. Will pay on payday')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="h-10 text-xs"
@@ -428,12 +430,12 @@ export function PaymentDialog({
                 {createSaleMutation.isPending ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Itinatala ang Utang...
+                    {t('pos:recordingUtang', 'Recording Credit...')}
                   </>
                 ) : (
                   <>
                     <BookOpen className="h-5 w-5" />
-                    Ilista sa Utang ni {selectedCustomer?.name || 'Suki'}
+                    {t('pos:chargeToCustomer', { name: selectedCustomer?.name || 'Suki' })}
                   </>
                 )}
               </Button>

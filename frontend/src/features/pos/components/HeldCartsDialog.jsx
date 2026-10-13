@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pause, Play, Trash2, Clock } from 'lucide-react'
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { formatTime } from '@/lib/format'
 import { notify } from '@/lib/notify'
 
 export function HeldCartsDialog({ open, onOpenChange }) {
+  const { t } = useTranslation(['pos', 'common'])
   const heldCarts = useCartStore((state) => state.heldCarts)
   const restoreHeldCart = useCartStore((state) => state.restoreHeldCart)
   const discardHeldCart = useCartStore((state) => state.discardHeldCart)
@@ -25,14 +27,14 @@ export function HeldCartsDialog({ open, onOpenChange }) {
   const handleResume = (id) => {
     restoreHeldCart(id)
     onOpenChange(false)
-    notify.success('Naibalik ang naka-hold na benta sa cart.')
+    notify.success(t('pos:cartResumedSuccess', 'Parked sale resumed.'))
   }
 
   const handleConfirmDiscard = () => {
     if (discardTarget) {
       discardHeldCart(discardTarget.id)
       setDiscardTarget(null)
-      notify.info('Tinapon ang naka-hold na benta.')
+      notify.info(t('pos:discardedSale', 'Parked sale discarded.'))
     }
   }
 
@@ -43,17 +45,17 @@ export function HeldCartsDialog({ open, onOpenChange }) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Pause className="h-4 w-4 text-warning" />
-              Mga Naka-hold na Benta (Parked Sales)
+              {t('pos:parkSalesTitle', 'Parked Sales (Held)')}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Maaaring mag-hold ng hanggang 3 benta habang naghihintay ang kustomer.
+              {t('pos:parkSalesDesc', 'You can hold up to 3 sales while a customer is waiting.')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
             {heldCarts.length === 0 ? (
               <div className="py-8 text-center text-muted-foreground text-xs">
-                Walang kasalukuyang naka-hold na benta.
+                {t('pos:noParkedSales', 'No currently parked sales.')}
               </div>
             ) : (
               heldCarts.map((cart, index) => (
@@ -87,7 +89,7 @@ export function HeldCartsDialog({ open, onOpenChange }) {
                       className="text-muted-foreground hover:text-destructive h-8 px-2.5 text-xs gap-1"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Itapon
+                      {t('pos:discard', 'Discard')}
                     </Button>
                     <Button
                       type="button"
@@ -96,7 +98,7 @@ export function HeldCartsDialog({ open, onOpenChange }) {
                       className="h-8 px-3 text-xs gap-1.5"
                     >
                       <Play className="h-3.5 w-3.5 fill-current" />
-                      Ibalik sa Cart
+                      {t('pos:resumeSale', 'Resume to Cart')}
                     </Button>
                   </div>
                 </div>
@@ -109,10 +111,10 @@ export function HeldCartsDialog({ open, onOpenChange }) {
       <ConfirmDialog
         open={!!discardTarget}
         onOpenChange={(isOpen) => !isOpen && setDiscardTarget(null)}
-        title="Itapon ang Naka-hold na Benta?"
-        description="Mawawala ang mga inilistang paninda sa slot na ito. Hindi na ito maibabalik."
-        confirmText="Oo, Itapon"
-        cancelText="Kanselahin"
+        title={t('pos:discardParkedTitle', 'Discard Parked Sale?')}
+        description={t('pos:discardParkedDesc', 'Items listed in this slot will be lost. This cannot be undone.')}
+        confirmText={t('pos:discardParkedConfirm', 'Yes, Discard')}
+        cancelText={t('pos:discardParkedCancel', 'Cancel')}
         tone="destructive"
         onConfirm={handleConfirmDiscard}
       />

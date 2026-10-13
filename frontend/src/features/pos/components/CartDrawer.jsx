@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ShoppingCart, Trash2, ArrowRight, Pause } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import {
@@ -42,6 +43,7 @@ export function CartDrawer({
   onClear,
   onOpenPayment,
 }) {
+  const { t } = useTranslation(['pos', 'common'])
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
   const [heldDialogOpen, setHeldDialogOpen] = useState(false)
   const isEmpty = items.length === 0
@@ -51,12 +53,12 @@ export function CartDrawer({
 
   const handleHoldCart = () => {
     if (heldCarts.length >= 3) {
-      notify.warning('Puno na ang hold slots', 'Hanggang 3 benta lamang ang maaaring i-hold.')
+      notify.warning(t('pos:heldSlotsFull', 'Hold slots are full. Up to 3 sales can be parked.'))
       return
     }
     const success = holdCurrentCart()
     if (success) {
-      notify.success('Naka-hold na ang benta.')
+      notify.success(t('pos:cartHeldSuccess', 'Sale held successfully.'))
       onOpenChange(false)
     }
   }
@@ -70,7 +72,7 @@ export function CartDrawer({
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-primary" />
               <DrawerTitle className="text-base font-bold text-foreground">
-                Talaan ng Benta (Cart)
+                {t('pos:cartTitle', 'Cart')}
               </DrawerTitle>
               <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">
                 {itemCount}
@@ -85,7 +87,7 @@ export function CartDrawer({
                   size="sm"
                   onClick={() => setHeldDialogOpen(true)}
                   className="h-8 px-2 text-xs gap-1 border-warning/40 text-warning hover:bg-warning/10"
-                  aria-label={`Tingnan ang ${heldCarts.length} naka-hold na benta`}
+                  aria-label={t('pos:heldCarts', 'Parked Sales')}
                 >
                   <Pause className="h-3.5 w-3.5" />
                   <Badge variant="secondary" className="bg-warning/20 text-warning px-1 py-0 text-[10px]">
@@ -103,10 +105,10 @@ export function CartDrawer({
                     onClick={handleHoldCart}
                     disabled={heldCarts.length >= 3}
                     className="text-muted-foreground hover:text-foreground h-8 px-2 text-xs gap-1"
-                    aria-label="I-hold ang benta"
+                    aria-label={t('pos:holdCart', 'Hold')}
                   >
                     <Pause className="h-3.5 w-3.5" />
-                    Hold
+                    {t('pos:holdCart', 'Hold')}
                   </Button>
 
                   <Button
@@ -115,10 +117,10 @@ export function CartDrawer({
                     size="sm"
                     onClick={() => setClearDialogOpen(true)}
                     className="text-muted-foreground hover:text-destructive h-8 px-2 text-xs gap-1"
-                    aria-label="Linisin ang cart"
+                    aria-label={t('pos:clearCart', 'Clear')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Linisin
+                    {t('pos:clearCart', 'Clear')}
                   </Button>
                 </>
               )}
@@ -129,7 +131,7 @@ export function CartDrawer({
           <div className="flex-1 overflow-y-auto px-4 py-2">
             {isEmpty ? (
               <div className="py-12 text-center text-muted-foreground text-xs">
-                Walang laman ang cart.
+                {t('pos:cartEmptyTitle', 'Your cart is empty')}
               </div>
             ) : (
               <AnimatePresence initial={false}>
@@ -159,7 +161,7 @@ export function CartDrawer({
               }}
               className="h-12 w-full text-base font-bold gap-2 shadow-md"
             >
-              <span>Bayaran (Proceed to Pay)</span>
+              <span>{t('pos:payButton', 'Pay')}</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </DrawerFooter>
@@ -170,10 +172,10 @@ export function CartDrawer({
       <ConfirmDialog
         open={clearDialogOpen}
         onOpenChange={setClearDialogOpen}
-        title="I-clear ang cart?"
-        description="Mawawala ang lahat ng paninda na kasalukuyang nakalista sa cart."
-        confirmText="Oo, Linisin"
-        cancelText="Huwag"
+        title={t('pos:clearCartTitle', 'Clear Current Cart?')}
+        description={t('pos:clearCartMessage', 'All items currently in the cart will be removed.')}
+        confirmText={t('pos:clearConfirm', 'Yes, Clear')}
+        cancelText={t('pos:clearCancel', 'Cancel')}
         tone="destructive"
         onConfirm={() => {
           onClear?.()
