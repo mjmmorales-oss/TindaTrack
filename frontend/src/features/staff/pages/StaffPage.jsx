@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -34,15 +35,16 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatRelative } from '@/lib/format'
 
 const createCashierSchema = z.object({
-  name: z.string().min(1, 'Kailangan ang buong pangalan ng cashier.'),
-  email: z.string().email('Wastong email address ang kailangan.'),
+  name: z.string().min(1, 'Cashier full name is required.'),
+  email: z.string().email('A valid email address is required.'),
   password: z
     .string()
-    .min(8, 'Kailangan ng hindi bababa sa 8 karakter ang pansamantalang password.'),
+    .min(8, 'Temporary password must be at least 8 characters.'),
 })
 
 export function StaffPage() {
-  useDocumentTitle('Staff & Cashier Accounts')
+  const { t } = useTranslation(['users', 'common'])
+  useDocumentTitle(t('users:title'))
 
   const { data: staffRes, isLoading, isError, refetch } = useStaff()
   const staffList = staffRes?.data || []
@@ -109,12 +111,12 @@ export function StaffPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Mga Account ng Staff at Kahera"
-        description="Pamahalaan ang mga account ng kahera, pahintulot, at aktibong katayuan"
+        title={t('users:pageTitle')}
+        description={t('users:pageSubtitle')}
         actions={
           <Button size="sm" onClick={handleOpenAdd} className="gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            Magdagdag ng Kahera (Add Cashier)
+            {t('users:addStaff')}
           </Button>
         }
       />
@@ -124,9 +126,8 @@ export function StaffPage() {
         <div className="rounded-xl border border-warning/30 bg-warning/10 p-3.5 text-xs text-warning-foreground flex items-start gap-2.5 shadow-xs">
           <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            <strong>Paalala sa Prototayp:</strong> Ang mga pagbabago sa staff dito ay
-            pansamantalang nakatala sa local prototype database. Ang mga tunay na multi-user
-            accounts ay pamamahalaan ng central API sa susunod na release.
+            <strong>{t('users:prototypeNoticeTitle')}</strong>{' '}
+            {t('users:prototypeNoticeDesc')}
           </p>
         </div>
       )}
@@ -135,9 +136,9 @@ export function StaffPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center justify-between">
-            <span>Listahan ng mga Gumagamit (Staff Directory)</span>
+            <span>{t('users:directoryTitle')}</span>
             <span className="text-xs font-normal text-muted-foreground">
-              {staffList.length} miyembro
+              {t('users:members', { count: staffList.length })}
             </span>
           </CardTitle>
         </CardHeader>
@@ -150,17 +151,17 @@ export function StaffPage() {
             </div>
           ) : isError ? (
             <ErrorState
-              title="Nabigong kunin ang listahan ng staff"
+              title={t('common:somethingWentWrong')}
               onRetry={refetch}
             />
           ) : staffList.length === 0 ? (
             <EmptyState
               icon={UserCog}
-              title="Walang naitalang staff"
-              description="Magdagdag ng cashier upang magkaroon ng sariling login."
+              title={t('users:emptyTitle')}
+              description={t('users:emptyDesc')}
               action={
                 <Button size="sm" onClick={handleOpenAdd}>
-                  Magdagdag ng Kahera
+                  {t('users:addStaff')}
                 </Button>
               }
             />
@@ -171,11 +172,11 @@ export function StaffPage() {
                 <table className="w-full min-w-max text-left text-xs">
                   <thead className="border-b border-border/80 text-muted-foreground font-medium">
                     <tr>
-                      <th className="py-2.5">Pangalan / User</th>
-                      <th className="py-2.5">Email</th>
-                      <th className="py-2.5">Tungkulin (Role)</th>
-                      <th className="py-2.5">Huling Login</th>
-                      <th className="py-2.5 text-right">Katayuan (Active)</th>
+                      <th className="py-2.5">{t('users:userCol')}</th>
+                      <th className="py-2.5">{t('users:emailCol')}</th>
+                      <th className="py-2.5">{t('users:roleCol')}</th>
+                      <th className="py-2.5">{t('users:lastLoginCol')}</th>
+                      <th className="py-2.5 text-right">{t('users:statusCol')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -198,24 +199,24 @@ export function StaffPage() {
                             variant={member.role === 'owner' ? 'default' : 'secondary'}
                             className="capitalize text-[10px]"
                           >
-                            {member.role === 'owner' ? 'Store Owner' : 'Cashier'}
+                            {member.role === 'owner' ? t('users:roleOwner') : t('users:roleCashier')}
                           </Badge>
                         </td>
                         <td className="py-3 text-muted-foreground">
                           {member.last_login_at
                             ? formatRelative(member.last_login_at)
-                            : 'Wala pang naitala'}
+                            : t('users:neverLoggedIn')}
                         </td>
                         <td className="py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <span className="text-[11px] text-muted-foreground">
-                              {member.is_active ? 'Aktibo' : 'Hindi Aktibo'}
+                              {member.is_active ? t('users:activeBadge') : t('users:inactiveBadge')}
                             </span>
                             <Switch
                               checked={member.is_active}
                               onCheckedChange={() => handleToggleClick(member)}
                               disabled={member.role === 'owner'}
-                              aria-label={`I-toggle ang active status para kay ${member.name}`}
+                              aria-label={t('users:toggleStatusAria', { name: member.name })}
                             />
                           </div>
                         </td>
@@ -249,7 +250,7 @@ export function StaffPage() {
                         variant={member.role === 'owner' ? 'default' : 'secondary'}
                         className="text-[10px] shrink-0"
                       >
-                        {member.role === 'owner' ? 'Owner' : 'Cashier'}
+                        {member.role === 'owner' ? t('users:roleOwner') : t('users:roleCashier')}
                       </Badge>
                     </div>
 
@@ -257,19 +258,19 @@ export function StaffPage() {
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5 text-primary" />
                         {member.last_login_at
-                          ? `Login: ${formatRelative(member.last_login_at)}`
-                          : 'Walang login'}
+                          ? t('users:lastActive', { time: formatRelative(member.last_login_at) })
+                          : t('users:neverLoggedIn')}
                       </span>
 
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-medium">
-                          {member.is_active ? 'Aktibo' : 'Di-aktibo'}
+                          {member.is_active ? t('users:activeBadge') : t('users:inactiveBadge')}
                         </span>
                         <Switch
                           checked={member.is_active}
                           onCheckedChange={() => handleToggleClick(member)}
                           disabled={member.role === 'owner'}
-                          aria-label={`Toggle active for ${member.name}`}
+                          aria-label={t('users:toggleStatusAria', { name: member.name })}
                         />
                       </div>
                     </div>
@@ -285,16 +286,16 @@ export function StaffPage() {
       <ResponsiveDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        title="Magdagdag ng Bagong Kahera (Add Cashier)"
-        description="Lumikha ng account para sa kawani na gagamit ng POS terminal."
+        title={t('users:createCashierModalTitle')}
+        description={t('users:createCashierModalDesc')}
         className="sm:max-w-md"
       >
         <form onSubmit={handleSubmit(onSubmitAdd)} className="space-y-4">
           <FormInput
             name="name"
             control={control}
-            label="Buong Pangalan ng Kahera"
-            placeholder="Hal. Maria Clara"
+            label={t('users:nameLabel')}
+            placeholder={t('users:namePlaceholder')}
             required
             error={errors.name?.message}
           />
@@ -302,18 +303,18 @@ export function StaffPage() {
           <FormInput
             name="email"
             control={control}
-            label="Email Address"
+            label={t('users:emailLabel')}
             type="email"
-            placeholder="cashier@email.com"
+            placeholder={t('users:emailPlaceholder')}
             required
             error={errors.email?.message}
           />
 
           <Field error={errors.password?.message}>
-            <FieldLabel htmlFor="temp-password">Pansamantalang Password *</FieldLabel>
+            <FieldLabel htmlFor="temp-password">{t('users:passwordLabel')} *</FieldLabel>
             <PasswordInput
               id="temp-password"
-              placeholder="Minimum 8 characters"
+              placeholder={t('users:passwordPlaceholder')}
               hasError={!!errors.password}
               {...register('password')}
             />
@@ -328,16 +329,16 @@ export function StaffPage() {
               onClick={() => setAddDialogOpen(false)}
               disabled={isSubmitting}
             >
-              Kanselahin
+              {t('users:cancelButton')}
             </Button>
             <Button type="submit" disabled={isSubmitting} className="gap-2">
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Inililikha...
+                  {t('users:savingStaff')}
                 </>
               ) : (
-                'I-save ang Kahera'
+                t('users:saveStaff')
               )}
             </Button>
           </div>
@@ -350,16 +351,16 @@ export function StaffPage() {
         onOpenChange={setToggleDialogOpen}
         title={
           targetStaff?.is_active
-            ? 'I-deactivate ang Account ng Kahera?'
-            : 'I-activate ang Account ng Kahera?'
+            ? t('users:deactivateTitle')
+            : t('users:activateTitle')
         }
         description={
           targetStaff?.is_active
-            ? `Hindi na makakapag-sign in sa POS si ${targetStaff?.name} kapag na-deactivate ang kanyang account.`
-            : `Maaari nang gamitin muli ni ${targetStaff?.name} ang kanyang account para mag-log in sa POS.`
+            ? t('users:deactivateDesc', { name: targetStaff?.name })
+            : t('users:activateDesc', { name: targetStaff?.name })
         }
-        confirmText={targetStaff?.is_active ? 'Oo, I-deactivate' : 'Oo, I-activate'}
-        cancelText="Huwag Ituloy"
+        confirmText={targetStaff?.is_active ? t('users:confirmDeactivate') : t('users:confirmActivate')}
+        cancelText={t('users:dontProceed')}
         tone={targetStaff?.is_active ? 'destructive' : 'default'}
         onConfirm={handleConfirmToggle}
         isLoading={toggleMutation.isPending}

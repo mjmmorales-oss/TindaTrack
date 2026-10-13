@@ -34,24 +34,26 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/context/ThemeProvider'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useTranslation } from 'react-i18next'
 import { notify } from '@/lib/notify'
 import { formatDate } from '@/lib/format'
 
 const passwordChangeSchema = z
   .object({
-    current_password: z.string().min(1, 'Kailangan ang kasalukuyang password.'),
+    current_password: z.string().min(1, 'Current password is required.'),
     new_password: z
       .string()
-      .min(8, 'Kailangan ng hindi bababa sa 8 karakter ang bagong password.'),
-    confirm_password: z.string().min(1, 'Kailangan kumpirmahin ang bagong password.'),
+      .min(8, 'New password must be at least 8 characters.'),
+    confirm_password: z.string().min(1, 'Please confirm your new password.'),
   })
   .refine((data) => data.new_password === data.confirm_password, {
-    message: 'Hindi tumutugma ang kumpirmasyon ng password.',
+    message: 'New password confirmation does not match.',
     path: ['confirm_password'],
   })
 
 export function AccountPage() {
-  useDocumentTitle('Aking Account (My Account)')
+  const { t } = useTranslation(['settings', 'common', 'users'])
+  useDocumentTitle(t('settings:accountPageTitle'))
   const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
 
@@ -75,8 +77,8 @@ export function AccountPage() {
   const onSubmitPassword = async (data) => {
     if (import.meta.env.VITE_DATA_SOURCE === 'mock') {
       notify.info(
-        'Naka-mock mode',
-        'Nasa mock data mode ka ngayon. Matagumpay na naitala ang pagpalit ng password.',
+        t('settings:mockModeNoticeTitle'),
+        t('settings:mockModeNoticeDesc'),
       )
       reset()
       return
@@ -89,7 +91,7 @@ export function AccountPage() {
         password: data.new_password,
         password_confirmation: data.confirm_password,
       })
-      notify.success('Matagumpay na napalitan ang iyong password.')
+      notify.success(t('settings:passwordChangedSuccess'))
       reset()
     } catch (err) {
       if (err.response?.status === 422 && err.response.data?.errors) {
@@ -112,7 +114,7 @@ export function AccountPage() {
   const handleSignOut = async () => {
     try {
       await logout()
-      notify.success('Naka-sign out ka na.')
+      notify.success(t('settings:signedOutSuccess'))
     } catch {
       // already cleared
     }
@@ -121,8 +123,8 @@ export function AccountPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Aking Account at Setting"
-        description="Pamahalaan ang profile, seguridad ng password, tema ng aplikasyon, at sesyon"
+        title={t('settings:accountPageTitle')}
+        description={t('settings:accountPageSubtitle')}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -147,31 +149,31 @@ export function AccountPage() {
                   variant={user?.role === 'owner' ? 'default' : 'secondary'}
                   className="text-[10px] uppercase font-semibold"
                 >
-                  {user?.role === 'owner' ? 'Store Owner' : 'Cashier'}
+                  {user?.role === 'owner' ? t('users:roleOwner') : t('users:roleCashier')}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="border-t border-border/70 mt-2 pt-4 text-xs space-y-2.5 text-left">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Katayuan (Status):</span>
+                <span className="text-muted-foreground">{t('settings:accountStatusLabel')}</span>
                 <span className="text-success font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> Aktibo
+                  <CheckCircle2 className="h-3 w-3" /> {t('settings:activeStatus')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Tungkulin:</span>
+                <span className="text-muted-foreground">{t('settings:accountRoleLabel')}</span>
                 <span className="font-medium text-foreground capitalize">
-                  {user?.role_label || user?.role}
+                  {user?.role === 'owner' ? t('users:roleOwner') : (user?.role_label || t('users:roleCashier'))}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Kabilang Simula:</span>
+                <span className="text-muted-foreground">{t('settings:memberSinceLabel')}</span>
                 <span className="font-mono text-muted-foreground">
-                  {user?.created_at ? formatDate(user.created_at) : 'Ngayon'}
+                  {user?.created_at ? formatDate(user.created_at) : t('settings:today')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Auth Provider:</span>
+                <span className="text-muted-foreground">{t('settings:authProviderLabel')}</span>
                 <span className="text-xs font-mono text-muted-foreground">
                   Sanctum Bearer Token
                 </span>
@@ -184,7 +186,7 @@ export function AccountPage() {
                 className="w-full gap-2 h-10"
               >
                 <LogOut className="h-4 w-4" />
-                Mag-sign Out (Sign Out)
+                {t('settings:logoutButton')}
               </Button>
             </CardFooter>
           </Card>
@@ -197,16 +199,16 @@ export function AccountPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <KeyRound className="h-4 w-4 text-primary" />
-                Palitan ang Password (Security)
+                {t('settings:passwordTitle')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Siguraduhing malakas at ligtas ang password para maprotektahan ang tindahan
+                {t('settings:passwordDesc')}
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit(onSubmitPassword)}>
               <CardContent className="space-y-4">
                 <Field error={errors.current_password?.message}>
-                  <FieldLabel htmlFor="curr-password">Kasalukuyang Password</FieldLabel>
+                  <FieldLabel htmlFor="curr-password">{t('settings:currentPasswordLabel')}</FieldLabel>
                   <PasswordInput
                     id="curr-password"
                     placeholder="••••••••"
@@ -220,7 +222,7 @@ export function AccountPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field error={errors.new_password?.message}>
-                    <FieldLabel htmlFor="new-password">Bagong Password</FieldLabel>
+                    <FieldLabel htmlFor="new-password">{t('settings:newPasswordLabel')}</FieldLabel>
                     <PasswordInput
                       id="new-password"
                       placeholder="Minimum 8 characters"
@@ -234,11 +236,11 @@ export function AccountPage() {
 
                   <Field error={errors.confirm_password?.message}>
                     <FieldLabel htmlFor="confirm-new-password">
-                      Kumpirmahin ang Bagong Password
+                      {t('settings:confirmPasswordLabel')}
                     </FieldLabel>
                     <PasswordInput
                       id="confirm-new-password"
-                      placeholder="Ulitin ang password"
+                      placeholder="••••••••"
                       hasError={!!errors.confirm_password}
                       {...register('confirm_password')}
                     />
@@ -255,7 +257,7 @@ export function AccountPage() {
                   className="w-full sm:w-auto gap-2"
                 >
                   {isSubmittingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
-                  I-save ang Bagong Password
+                  {isSubmittingPassword ? t('settings:changingPassword') : t('settings:changePasswordButton')}
                 </Button>
               </CardFooter>
             </form>
@@ -266,10 +268,10 @@ export function AccountPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
-                Tema at Anyo ng App (Appearance)
+                {t('settings:themeTitle')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Pumili ng kulay o ayos ng tema na komportable sa iyong mga mata
+                {t('settings:themeDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -290,9 +292,9 @@ export function AccountPage() {
                   >
                     <Sun className="h-6 w-6 text-warning" />
                     <div>
-                      <p className="font-semibold text-sm">Liwanag (Light)</p>
+                      <p className="font-semibold text-sm">{t('settings:themeLight')}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Maliwanag na visual para sa umaga
+                        {t('settings:themeLightDesc')}
                       </p>
                     </div>
                   </Label>
@@ -310,9 +312,9 @@ export function AccountPage() {
                   >
                     <Moon className="h-6 w-6 text-primary" />
                     <div>
-                      <p className="font-semibold text-sm">Dilim (Dark)</p>
+                      <p className="font-semibold text-sm">{t('settings:themeDark')}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Mababang liwanag para sa gabi
+                        {t('settings:themeDarkDesc')}
                       </p>
                     </div>
                   </Label>
@@ -330,9 +332,9 @@ export function AccountPage() {
                   >
                     <Monitor className="h-6 w-6 text-muted-foreground" />
                     <div>
-                      <p className="font-semibold text-sm">Awtomatiko (System)</p>
+                      <p className="font-semibold text-sm">{t('settings:themeSystem')}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Sumunod sa setting ng device
+                        {t('settings:themeSystemDesc')}
                       </p>
                     </div>
                   </Label>

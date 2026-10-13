@@ -477,7 +477,7 @@ describe('End-to-End User Flows Against Mock Database', () => {
 
     // 3. Render /staff and assert owner switch is disabled
     renderRoute('/staff')
-    expect(await screen.findByText(/Mga Account ng Staff at Kahera/i, {}, { timeout: 12000 })).toBeInTheDocument()
+    expect(await screen.findByText(/Mga Account ng Staff at Kahera|Staff & Cashier Accounts/i, {}, { timeout: 12000 })).toBeInTheDocument()
     const switches = await screen.findAllByRole('switch', {}, { timeout: 12000 })
     const disabledSwitches = switches.filter((s) => s.hasAttribute('disabled'))
     expect(disabledSwitches.length).toBeGreaterThan(0)

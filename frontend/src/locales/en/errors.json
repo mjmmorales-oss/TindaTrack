@@ -9,5 +9,16 @@
   "sessionExpired": "Your session has expired. Please sign in again.",
   "imageUploadFailed": "Failed to upload product image. Please try again.",
   "imageImportFailed": "Failed to download online image. Keeping remote reference.",
-  "unexpected": "An unexpected error occurred."
+  "unexpected": "An unexpected error occurred.",
+  "pageNotFoundTitle": "Page Not Found",
+  "pageNotFoundBadge": "404 · Not Found",
+  "pageNotFoundDesc": "Sorry, the page you are looking for could not be found. It may have been moved or deleted.",
+  "backToApp": "Back to App",
+  "backToHome": "Back to Home",
+  "accessDeniedTitle": "Store Owner Access Only",
+  "accessDeniedBadge": "403 · Access Denied",
+  "accessDeniedCashierDesc": "This page is restricted to store owners. Cashier accounts have limited access to protect financial reports and settings.",
+  "accessDeniedGeneralDesc": "You do not have permission to view or manage this module.",
+  "goToPos": "Go to POS Terminal",
+  "backToDashboard": "Back to Dashboard"
 }

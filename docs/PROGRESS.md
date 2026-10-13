@@ -795,3 +795,26 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - ESLint: 0 errors, 0 warnings.
   - Vite build: Production bundle built cleanly.
 
+### H4e Log (Reports, Users/Staff, Settings, Errors Feature Localization):
+- **Feature Component Translation**:
+  - Fully translated all remaining feature pages with standard English default and Taglish/Filipino translation:
+    - Reports: `ReportsPage.jsx` (charts, stat cards, time-of-day heatmap, export actions, date filters).
+    - Staff: `StaffPage.jsx` (directory, cashier status toggling, permissions, add cashier dialog, confirm toggle dialog).
+    - Settings: `SettingsPage.jsx` (store profile, receipt customizer and live receipt preview, stock defaults, data reset dialog).
+    - Account: `AccountPage.jsx` (user profile, auth info, theme switcher, change password modal and form).
+    - System: `NotFoundPage.jsx` (404), `ForbiddenPage.jsx` (403).
+- **Locale Dictionary Alignment**:
+  - Expanded `en/reports.json` & `fil/reports.json` (75 keys each, 100% key parity).
+  - Expanded `en/users.json` & `fil/users.json` (53 keys each, 100% key parity).
+  - Expanded `en/settings.json` & `fil/settings.json` (97 keys each, 100% key parity).
+  - Expanded `en/errors.json` & `fil/errors.json` (23 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `interactions.test.jsx` for bilingual tab matchers (`Receipt & Preview`, `Stock Defaults`, `Data & Reset`, `Store Profile`).
+  - Updated `flows.test.jsx` for bilingual assertions on `/staff`.
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, 1,175 validated `t(...)` calls (+196 calls verified), untranslated candidate count reduced from 187 to 137.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+
+

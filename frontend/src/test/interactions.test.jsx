@@ -186,13 +186,13 @@ describe('Interaction and Dialog Smoke Tests', () => {
       const user = userEvent.setup()
       renderRoute('/settings', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Mga Setting ng Tindahan/i, {}, { timeout: 8000 })
+      await screen.findByText(/Mga Setting ng Tindahan|Store Settings/i, {}, { timeout: 8000 })
 
       const tabs = [
-        { name: /Resibo & Preview/i, textMatch: /Format ng POS Resibo/i },
-        { name: /Mga Default sa Stock/i, textMatch: /Mga Default ng Imbentaryo/i },
-        { name: /Datos & Reset/i, textMatch: /Pamamahala ng Datos/i },
-        { name: /Impormasyon ng Tindahan/i, textMatch: /Profile ng Sari-Sari Store/i },
+        { name: /Resibo & Preview|Receipt & Preview/i, textMatch: /Format ng POS Resibo|POS Receipt Format/i },
+        { name: /Mga Default sa Stock|Stock Defaults/i, textMatch: /Mga Default ng Imbentaryo|Inventory Defaults/i },
+        { name: /Datos & Reset|Data & Reset/i, textMatch: /Pamamahala ng Datos|Data Management/i },
+        { name: /Impormasyon ng Tindahan|Store Profile/i, textMatch: /Profile ng Sari-Sari Store|Store Profile/i },
       ]
 
       for (const tab of tabs) {
