@@ -9,6 +9,10 @@ TindaTrack digitizes traditional pen-and-paper sari-sari store operations (*list
 ## Features
 
 - **⚡ Fast POS**: Barcode and SKU search, quick categories, numeric keypad, cash change calculation (*sukli*), and cart parking (up to 3 held carts).
+- **📷 Barcode Scanning & Hardware Wedge**: Scan via webcam/phone camera (`barcode-detector` WASM), USB/Bluetooth hardware scanner wedge, or manual entry with duplicate deduplication.
+- **📱 Phone-to-POS Live Sync**: Turn any mobile phone into a wireless scanner via zero-login QR code pairing (`/scan`) syncing instantly with laptop POS or inventory.
+- **🌐 Open Food Facts Auto-Fill**: Auto-detects product names, brands, package sizes, categories, and images from Open Food Facts open-data catalog (ODbL).
+- **🏷️ Homemade Barcode Generator & Labels**: Generate internal EAN-13 barcodes (`20xxxx...`) for home-cooked goods (ice candy, turon) and print 12-per-page thermal/sticker labels.
 - **📒 Digital Utang Ledger**: Track credit balances per suki, payment recordings, 30-day aging alerts, and credit limit enforcement with owner overrides.
 - **📦 Inventory & Stock Movements**: Real-time stock counts, low/out-of-stock badges, atomic stock deductions, and audit movement logs.
 - **📊 Analytics & Reports**: Gross profit, sales over time (daily/weekly/monthly), best-selling products, category distribution, and peak hours.
@@ -92,6 +96,13 @@ The database comes pre-seeded with 3 demo accounts:
    npm run dev
    ```
    This concurrently runs the Laravel API (`http://localhost:8000`) and the Vite frontend (`http://localhost:5173`).
+
+7. **Mobile Phone Testing via Wi-Fi (`dev:lan`)**:
+   To test camera barcode scanning on a physical smartphone on the same local network:
+   ```bash
+   npm run dev:lan
+   ```
+   This serves Vite over HTTPS with local SSL and proxies API requests to Laravel. Open `https://<YOUR-LAN-IP>:5173/pos` on your computer, click **"Ikonekta ang Phone"**, and scan the QR code with your mobile device. See [docs/BARCODE.md](docs/BARCODE.md) for full architecture and live demo script.
 
 ---
 

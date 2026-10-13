@@ -2,8 +2,26 @@ import axios from 'axios'
 
 export const TOKEN_KEY = 'tindatrack_token'
 
+/**
+ * Returns the effective API base URL.
+ * Accepts full URLs (e.g. 'http://localhost:8000/api', 'https://api.example.com/api')
+ * or relative bases (e.g. '/api' when using Vite proxy in dev:lan mode).
+ */
+export function getApiBaseUrl() {
+  const envUrl = import.meta.env?.VITE_API_URL
+  if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    return envUrl
+  }
+  if (import.meta.env?.VITE_DEV_HTTPS === 'true') {
+    return '/api'
+  }
+  return 'http://localhost:8000/api'
+}
+
+export const API_BASE = getApiBaseUrl()
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: getApiBaseUrl(),
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
   timeout: 15000,
 })

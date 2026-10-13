@@ -483,3 +483,23 @@ Tracking implementation of Phase 3 tasks (T0–T11).
     - `ProductFormDialog`: internal barcode generator creates valid EAN-13 starting with `20`, online catalog lookup auto-fills empty fields without overwriting user input, duplicate local barcode prevents submission, unknown barcode displays manual fallback notice.
 - Gates: ESLint clean, production build clean, Vitest (151/151 tests green across 12 test files), Pest (70/70 tests green), Pint clean, all check scripts passing.
 
+### B11 Log:
+- Implemented Dev LAN/HTTPS mode, environment configs, and documentation:
+  - Installed `@vitejs/plugin-basic-ssl` and `cross-env`.
+  - Configured `frontend/vite.config.js`: when `VITE_DEV_HTTPS === 'true'`, enables `basicSsl()`, `server.host: true` (0.0.0.0), and proxies `/api` requests to `http://127.0.0.1:8000`.
+  - Updated `src/lib/api.js`, `src/services/api/scannerService.js`, and `src/lib/realtime.js` to dynamically support relative `/api` bases when running behind Vite reverse proxy.
+  - Added scripts: `"dev:lan": "cross-env VITE_DEV_HTTPS=true VITE_API_URL= vite"` in `frontend/package.json` and `"dev:lan"` / `"dev:web:lan"` in root `package.json`.
+  - Added environment templates: created `frontend/.env.example` documenting `VITE_REALTIME_DRIVER=polling`, `VITE_PUBLIC_APP_URL`, and optional Pusher credentials; updated `.env.development` and `.env.production.example`.
+  - Created `docs/BARCODE.md` covering:
+    - End-to-end ASCII event flow architecture diagram.
+    - Open Food Facts API integration, caching policy (30d hit / 1d miss), User-Agent headers, and ODbL licensing.
+    - Zero-login scoped device token security model (`X-Scanner-Token`), sha256 hashing at rest, expiration, throttles, and role authorization.
+    - Local phone testing guide via `npm run dev:lan` and Cloudflare tunnel fallback.
+    - 5-minute presentation demo script.
+  - Updated `docs/DEPLOY.md` with Railway and Vercel environment variables, clarifying zero-worker deployment.
+  - Updated `README.md` features list and local development guides.
+  - Updated `docs/API.md` with request and response examples for all barcode and scanner endpoints.
+  - Updated `docs/CHANGELOG.md` with full `[v1.1.0]` release notes.
+- Gates: ESLint clean, production build clean, Vitest (151/151 tests green across 12 test files), Pest (70/70 tests green), Pint clean, all check scripts passing.
+
+

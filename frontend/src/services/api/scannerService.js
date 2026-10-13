@@ -1,11 +1,12 @@
 import axios from 'axios'
 import { apiClient } from './apiClient.js'
 import { ApiError } from '@/lib/mockApi'
+import { getApiBaseUrl } from '@/lib/api'
 
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
 
 const deviceAxios = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: getApiBaseUrl(),
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
   timeout: 10000,
 })

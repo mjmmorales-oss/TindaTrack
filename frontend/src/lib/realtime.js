@@ -1,5 +1,5 @@
 import { listScannerEvents } from '@/services/scanner.js'
-import { TOKEN_KEY } from '@/lib/api.js'
+import { TOKEN_KEY, getApiBaseUrl } from '@/lib/api.js'
 
 /**
  * Subscribes to live scanner events for a specific scanner session.
@@ -124,7 +124,7 @@ export function subscribeToScanner(sessionId, { onEvent }) {
         }
 
         window.Pusher = Pusher
-        const apiBase = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api'
+        const apiBase = getApiBaseUrl()
         const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
 
         echoInstance = new Echo({

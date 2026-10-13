@@ -2,6 +2,40 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.1.0] - Barcode Scanning, Open Food Facts Auto-Fill, and Phone-to-POS Live Sync
+- **Backend Schema & Architecture (B1–B4)**:
+  - Migrated `products` table adding `image_url`, `brand`, `size`, `source`, `source_ref`, and unique indexed `barcode`.
+  - Added `barcode_catalog` cache table storing Open Food Facts lookup results with 30-day hit and 1-day miss TTLs.
+  - Added `scanner_sessions` and `scanner_events` tables for phone-to-POS pairing and live scan feeds.
+  - Added `App\Support\Barcode` helpers (`normalize`, `isValidGtin`, `isInternal`, `isAcceptable`, `makeInternal`).
+  - Added `App\Services\ProductLookupService` integrating Open Food Facts API (with Open Products and Open Beauty fallback) and intelligent category guessing (`App\Support\CategoryGuesser`).
+  - Added `scanner.device` middleware with scoped `X-Scanner-Token` authentication (sha256 hash at rest, zero-login).
+  - Added `App\Events\ScannerItemScanned` implementing `ShouldBroadcastNow` for low-latency Laravel broadcasting over Pusher or polling.
+  - Added automated unknown barcode tracking (`GET /api/scanner/unknown-barcodes`) resolving unknown events on product registration.
+  - 70/70 backend Pest tests green with 100% mocked HTTP and authorization guards.
+- **Frontend Barcode Core & Hardware Scanner (B5–B6)**:
+  - Integrated `barcode-detector` ZXing-C++ WebAssembly ponyfill with local `locateFile` module loading.
+  - Created `useCameraScanner` hook supporting environment camera switching, torch toggling, HTTPS security checks, and 1500ms duplicate throttling.
+  - Created `useBarcodeWedge` hook capturing high-speed (<50ms) keystrokes from USB/Bluetooth handheld barcode scanners while preserving text inputs.
+  - Added `feedback.js` providing WebAudio synthetic oscillator `beep()` and vibration haptics.
+  - Created `src/services/barcode.js` and `src/services/scanner.js` with full API and mock implementations (`BroadcastChannel` cross-tab sync).
+  - Created `src/lib/realtime.js` supporting configurable event drivers (`polling` default with deduplication, and `pusher` with automatic polling fallback).
+- **POS & Owner Product Workflows (B7–B9)**:
+  - Integrated live barcode scanning into POS terminal: camera scanner dialog, phone pairing dialog (`PairPhoneDialog`), persistent status badge ("📱 Phone scanner: Online"), and shared scan handler with cart quantity increments.
+  - Created standalone `/scan` phone scanner page: public zero-login route, auto-pairing from QR code query parameters, screen wake lock (`navigator.wakeLock`), quantity multipliers, and 10s heartbeat.
+  - Enhanced `ProductFormDialog`: "I-scan" and "Hanapin online" buttons, automatic GTIN detection, prefilling name/brand/size/image/category from Open Food Facts with ODbL attribution, duplicate barcode detection, and image preview.
+  - Added homemade product barcode generator (`makeInternal`) generating internal `20xxxx...` EAN-13 barcodes, and printable sticker label grid (`PrintLabelsDialog` with `JsBarcode` SVG).
+  - Added unknown barcodes alert card to Products page and barcode camera/wedge selection to `AdjustStockDialog`.
+  - Added inventory restock mode to phone scanner pairing on `/inventory`.
+- **Automated Frontend Test Suite (B10)**:
+  - Added `src/test/scan-flows.test.jsx` (14 tests) validating POS cart effects, pairing dialog, `/scan` page interactions, camera insecure context messaging, and product form auto-fill behaviors.
+  - Extended `src/test/containment.test.jsx` guarding `/scan` against sidebar and header duplication.
+  - Total Vitest tests: 151 green across 12 test files.
+- **Dev LAN Mode, Environment, and Documentation (B11)**:
+  - Added opt-in `npm run dev:lan` mode with `@vitejs/plugin-basic-ssl`, `0.0.0.0` host listening, and API proxying to `http://127.0.0.1:8000` for physical phone testing on local Wi-Fi.
+  - Authored comprehensive `docs/BARCODE.md` covering architecture, security, Open Food Facts caching, LAN testing, and 5-minute presentation demo script.
+  - Updated `docs/DEPLOY.md` with Railway and Vercel environment variables.
+
 ## [v1.0.4] - Layout Containment & Dialog Entry Points (D1–D4)
 - **Resolved Shell Layout Overflow (Bug 1)**:
   - Fixed flex/grid container blowout where wide tables expanded beyond the viewport, overlapping the sidebar, clipping PageHeader titles, and pushing action buttons off-screen.

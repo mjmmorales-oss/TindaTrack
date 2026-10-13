@@ -66,3 +66,149 @@ Not found errors: 404 `{ message: 'Resource not found.' }`.
 | `scannerService.pair(data)` | POST | `/api/scanner/pair` | Public | `{ pairing_code: string, device_label?: string }` | `{ data: { token: string, session: { id, mode, expires_at }, store_name: string, user_name: string } }` | Redeems unexpired pairing code for 40-char session device token. Throttled 10/min. Single-use. |
 | `scannerService.sendScan(data)` | POST | `/api/scanner/scans` | Device (`X-Scanner-Token`) | `{ barcode: string, quantity?: int }` | `{ data: { event_id: int, status: 'found'\|'out_of_stock'\|'unknown', product: ProductSnapshot\|null, catalog?: CatalogInfo } }` | Normalizes and logs scan event; broadcasts `scanner.scanned` live sync event. Throttled 120/min. |
 | `scannerService.heartbeat()` | POST | `/api/scanner/heartbeat` | Device (`X-Scanner-Token`) | None | `{ data: { ended: bool } }` | Touches device `last_seen_at`. 401 if session has ended or expired. |
+
+---
+
+## Barcode & Scanner Endpoints Detail
+
+### 1. `GET /api/barcode-lookup/{barcode}`
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Throttle**: 30 requests/min
+**Example Request**:
+```http
+GET /api/barcode-lookup/4800016644800 HTTP/1.1
+Authorization: Bearer <sanctum-token>
+```
+**Example Response (Owner)**:
+```json
+{
+  "data": {
+    "barcode": "4800016644800",
+    "local_product": null,
+    "catalog": {
+      "found": true,
+      "source": "openfoodfacts",
+      "name": "Lucky Me! Instant Pancit Canton Kalamansi",
+      "brand": "Lucky Me!",
+      "size": "60g",
+      "image_url": "https://images.openfoodfacts.org/images/products/480/001/664/4800/front_en.3.400.jpg",
+      "suggested_category_id": 4,
+      "attribution": "Data from Open Food Facts (ODbL)"
+    }
+  }
+}
+```
+
+### 2. `POST /api/scanner-sessions`
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Role**: `owner,cashier` (Note: `mode="inventory"` requires `role:owner`)
+**Request Body**:
+```json
+{
+  "mode": "pos"
+}
+```
+**Example Response**:
+```json
+{
+  "data": {
+    "id": "01JM7T4K8W2NZR5C3T99V0EF1G",
+    "mode": "pos",
+    "pairing_code": "K7RM-92NP",
+    "pairing_expires_at": "2026-10-14T00:15:00+08:00",
+    "expires_at": "2026-10-14T12:05:00+08:00"
+  }
+}
+```
+
+### 3. `POST /api/scanner/pair`
+**Auth**: Public, Throttle: 10/min
+**Request Body**:
+```json
+{
+  "pairing_code": "K7RM-92NP",
+  "device_label": "iPhone 15 Pro"
+}
+```
+**Example Response**:
+```json
+{
+  "data": {
+    "token": "40_character_random_hex_device_token",
+    "session": {
+      "id": "01JM7T4K8W2NZR5C3T99V0EF1G",
+      "mode": "pos",
+      "expires_at": "2026-10-14T12:05:00+08:00"
+    },
+    "store_name": "Tindahan ni Aling Nena",
+    "user_name": "Aling Nena"
+  }
+}
+```
+
+### 4. `POST /api/scanner/scans`
+**Auth**: Header `X-Scanner-Token: <device-token>`, Throttle: 120/min
+**Request Body**:
+```json
+{
+  "barcode": "4800016644800",
+  "quantity": 1
+}
+```
+**Example Response**:
+```json
+{
+  "data": {
+    "event_id": 142,
+    "status": "found",
+    "product": {
+      "id": 12,
+      "name": "Lucky Me Pancit Canton Kalamansi",
+      "price": 18.00,
+      "stock_quantity": 45,
+      "image_url": "https://images.openfoodfacts.org/images/products/.../front.jpg"
+    }
+  }
+}
+```
+
+### 5. `GET /api/scanner-sessions/{id}/events?after={lastId}`
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Example Response**:
+```json
+{
+  "data": [
+    {
+      "id": 142,
+      "scanner_session_id": "01JM7T4K8W2NZR5C3T99V0EF1G",
+      "barcode": "4800016644800",
+      "status": "found",
+      "quantity": 1,
+      "payload": {
+        "id": 12,
+        "name": "Lucky Me Pancit Canton Kalamansi",
+        "price": 18.00,
+        "stock_quantity": 45,
+        "image_url": "https://..."
+      },
+      "created_at": "2026-10-14T00:06:12+08:00"
+    }
+  ]
+}
+```
+
+### 6. `GET /api/scanner/unknown-barcodes`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Example Response**:
+```json
+{
+  "data": [
+    {
+      "barcode": "4800016644899",
+      "scan_count": 4,
+      "last_seen_at": "2026-10-13T23:54:10+08:00"
+    }
+  ]
+}
+```
+
