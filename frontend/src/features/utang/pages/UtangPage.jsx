@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   HandCoins,
   Users,
@@ -38,7 +39,8 @@ import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function UtangPage() {
-  useDocumentTitle('Talaan ng Utang (Utang Ledger)')
+  const { t } = useTranslation(['utang', 'common'])
+  useDocumentTitle(t('utang:title'))
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canCollect = can('utang.record_payment')
@@ -84,20 +86,24 @@ export function UtangPage() {
     refetchDebtors()
   }
 
-  // Copy polite Taglish SMS reminder from blueprint 7.10
+  // Copy polite reminder
   const handleCopyReminder = useCallback((customer) => {
     const amount = Number(customer.credit_balance || 0).toFixed(2)
     const displayName = customer.nickname || customer.name
-    const message = `Hi ${displayName}, paalala lang po sa utang ninyo na ₱${amount} sa ${storeName}. Salamat po!`
+    const message = t('utang:smsReminderTemplate', {
+      name: displayName,
+      amount,
+      store: storeName,
+    })
 
     navigator.clipboard.writeText(message)
     setCopiedId(customer.id)
     notify.success(
-      'Reminder copied',
-      `Mensahe para kay ${displayName} ay nakopya sa clipboard.`,
+      t('utang:reminderSuccessTitle'),
+      t('utang:reminderSuccessDesc', { name: displayName }),
     )
     setTimeout(() => setCopiedId(null), 2500)
-  }, [storeName])
+  }, [storeName, t])
 
   // Aging buckets calculations
   const aging = summary?.aging_buckets || {
@@ -118,8 +124,8 @@ export function UtangPage() {
   const agingItems = [
     {
       key: '0_7',
-      label: '0–7 Araw',
-      sublabel: 'Kamakailan / Bago',
+      label: t('utang:aging07Days'),
+      sublabel: t('utang:aging07DaysSub'),
       amount: Number(aging['0_7'] || 0),
       pct: Math.round(((Number(aging['0_7']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-success',
@@ -127,8 +133,8 @@ export function UtangPage() {
     },
     {
       key: '8_30',
-      label: '8–30 Araw',
-      sublabel: 'Katamtaman',
+      label: t('utang:aging830Days'),
+      sublabel: t('utang:aging830DaysSub'),
       amount: Number(aging['8_30'] || 0),
       pct: Math.round(((Number(aging['8_30']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-highlight',
@@ -136,8 +142,8 @@ export function UtangPage() {
     },
     {
       key: '31_60',
-      label: '31–60 Araw',
-      sublabel: 'Medyo Matagal',
+      label: t('utang:aging3160Days'),
+      sublabel: t('utang:aging3160DaysSub'),
       amount: Number(aging['31_60'] || 0),
       pct: Math.round(((Number(aging['31_60']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-utang',
@@ -145,8 +151,8 @@ export function UtangPage() {
     },
     {
       key: '60_plus',
-      label: '60+ Araw',
-      sublabel: 'Overdue / May Panganib',
+      label: t('utang:aging60PlusDays'),
+      sublabel: t('utang:aging60PlusDaysSub'),
       amount: Number(aging['60_plus'] || 0),
       pct: Math.round(((Number(aging['60_plus']) || 0) / totalAgingDebt) * 100),
       colorClass: 'bg-destructive',
@@ -160,7 +166,9 @@ export function UtangPage() {
       {
         id: 'name',
         accessorKey: 'name',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="May Utang (Suki)" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('utang:debtorCol')} />
+        ),
         cell: ({ row }) => {
           const c = row.original
           return (
@@ -186,7 +194,7 @@ export function UtangPage() {
       {
         id: 'contact_number',
         accessorKey: 'contact_number',
-        header: 'Telepono',
+        header: t('utang:phoneCol'),
         cell: ({ row }) => (
           <span className="text-xs font-mono text-muted-foreground">
             {row.original.contact_number || '—'}
@@ -196,7 +204,9 @@ export function UtangPage() {
       {
         id: 'credit_balance',
         accessorKey: 'credit_balance',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Balanse ng Utang" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('utang:balanceCol')} />
+        ),
         cell: ({ row }) => (
           <div className="font-semibold">
             <Money amount={row.original.credit_balance} size="sm" tone="utang" />
@@ -205,7 +215,7 @@ export function UtangPage() {
       },
       {
         id: 'utilization_rate',
-        header: 'Paggamit sa Limit',
+        header: t('utang:limitUtilizationCol'),
         cell: ({ row }) => {
           const c = row.original
           const limit = Number(c.credit_limit || 0)
@@ -217,7 +227,7 @@ export function UtangPage() {
             <div className="space-y-1 w-28">
               <div className="flex justify-between text-[11px] text-muted-foreground">
                 <span>{rate}%</span>
-                <span>Limit ₱{Math.round(limit)}</span>
+                <span>{t('utang:limitRateLabel', { amount: Math.round(limit) })}</span>
               </div>
               <Progress
                 value={rate}
@@ -230,7 +240,9 @@ export function UtangPage() {
       {
         id: 'oldest_debt_date',
         accessorKey: 'oldest_debt_date',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Pinakaluma / Araw" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('utang:oldestDebtCol')} />
+        ),
         cell: ({ row }) => {
           const days = row.original.days_overdue || 0
           const isOverdue = days > 30
@@ -243,10 +255,10 @@ export function UtangPage() {
                   isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground',
                 )}
               >
-                {days} araw nang nakalipas
+                {t('utang:daysAgo', { days })}
               </span>
               <span className="text-[10px] text-muted-foreground block">
-                Mula {formatDate(row.original.oldest_debt_date)}
+                {t('utang:sinceDate', { date: formatDate(row.original.oldest_debt_date) })}
               </span>
             </div>
           )
@@ -266,7 +278,7 @@ export function UtangPage() {
                   className="h-8 gap-1.5 text-xs bg-primary text-primary-foreground"
                 >
                   <HandCoins className="h-3.5 w-3.5" />
-                  Collect
+                  {t('utang:collectButton')}
                 </Button>
               )}
 
@@ -275,14 +287,14 @@ export function UtangPage() {
                 size="sm"
                 onClick={() => handleCopyReminder(c)}
                 className="h-8 gap-1.5 text-xs"
-                title="Kopyahin ang Taglish SMS paalala"
+                title={t('utang:reminderTitle')}
               >
                 {copiedId === c.id ? (
                   <Check className="h-3.5 w-3.5 text-success" />
                 ) : (
                   <Copy className="h-3.5 w-3.5" />
                 )}
-                Paalala
+                {t('utang:reminderButton')}
               </Button>
 
               <DropdownMenu>
@@ -291,14 +303,14 @@ export function UtangPage() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    aria-label={`Aksyon para kay ${c.name}`}
+                    aria-label={t('utang:actionForDebtor', { name: c.name })}
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem onClick={() => navigate(`/customers/${c.id}`)}>
-                    Tingnan ang Profile
+                    {t('utang:viewProfile')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -307,7 +319,7 @@ export function UtangPage() {
         },
       },
     ],
-    [navigate, canCollect, copiedId, handleCopyReminder],
+    [navigate, canCollect, copiedId, handleCopyReminder, t],
   )
 
   // Mobile card renderer below md
@@ -348,15 +360,15 @@ export function UtangPage() {
                 isOverdue ? 'text-destructive' : 'text-muted-foreground',
               )}
             >
-              {days} araw na
+              {t('utang:daysOverdueBadge', { days })}
             </span>
           </div>
         </div>
 
         {/* Contact and limit line */}
         <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 pt-2">
-          <span className="font-mono">{d.contact_number || 'Walang telepono'}</span>
-          <span>Limit: ₱{Math.round(d.credit_limit || 0)}</span>
+          <span className="font-mono">{d.contact_number || t('utang:noPhone')}</span>
+          <span>{t('utang:limitRateLabel', { amount: Math.round(d.credit_limit || 0) })}</span>
         </div>
 
         {/* Actions row: Collect is a visible button, Copy reminder lives in actions menu */}
@@ -368,7 +380,7 @@ export function UtangPage() {
               className="h-11 flex-1 gap-1.5 text-xs font-semibold"
             >
               <HandCoins className="h-4 w-4" />
-              Collect (Kolektahin)
+              {t('utang:collectLongButton')}
             </Button>
           ) : (
             <div />
@@ -380,7 +392,7 @@ export function UtangPage() {
                 variant="outline"
                 size="icon"
                 className="h-11 w-11 text-muted-foreground hover:text-foreground touch-manipulation shrink-0"
-                aria-label={`Aksyon para kay ${d.name}`}
+                aria-label={t('utang:actionForDebtor', { name: d.name })}
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
@@ -388,11 +400,11 @@ export function UtangPage() {
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onClick={() => handleCopyReminder(d)}>
                 <Copy className="mr-2 h-4 w-4" />
-                Copy Reminder (SMS)
+                {t('utang:reminderButton')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate(`/customers/${d.id}`)}>
                 <ArrowRight className="mr-2 h-4 w-4" />
-                Tingnan ang Profile
+                {t('utang:viewProfile')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -404,50 +416,50 @@ export function UtangPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Talaan ng Utang at Singilin"
-        description="Subaybayan ang mga pautang, aging ng utang, at magpadala ng magalang na paalala sa mga suki"
+        title={t('utang:pageTitle')}
+        description={t('utang:pageSubtitle')}
       />
 
       {/* 4 StatCards (grid-cols-2 lg:grid-cols-4 on phones/desktops) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           icon={HandCoins}
-          label="Kabuuang Utang"
+          label={t('utang:statTotalUtang')}
           value={summary?.total_outstanding || 0}
           format="currency"
           tone="utang"
           loading={isSummaryLoading}
-          description="Lahat ng aktibong pautang"
+          description={t('utang:statTotalUtangDesc')}
         />
 
         <StatCard
           icon={Users}
-          label="Bilang ng May Utang"
+          label={t('utang:statDebtorsCount')}
           value={summary?.debtors_count || 0}
           format="number"
           tone="default"
           loading={isSummaryLoading}
-          description="Mga aktibong suki na may balanse"
+          description={t('utang:statDebtorsCountDesc')}
         />
 
         <StatCard
           icon={PiggyBank}
-          label="Nakolekta Ngayong Linggo"
+          label={t('utang:statCollectedWeek')}
           value={summary?.collected_this_week || 0}
           format="currency"
           tone="success"
           loading={isSummaryLoading}
-          description="Nabayarang utang nitong 7 araw"
+          description={t('utang:statCollectedWeekDesc')}
         />
 
         <StatCard
           icon={AlertTriangle}
-          label="Overdue (> 30 Araw)"
+          label={t('utang:statOverdueCount')}
           value={summary?.overdue_count || 0}
           format="number"
           tone="destructive"
           loading={isSummaryLoading}
-          description="Lagpas isang buwan nang utang"
+          description={t('utang:statOverdueCountDesc')}
         />
       </div>
 
@@ -455,9 +467,9 @@ export function UtangPage() {
       <Card className="border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center justify-between">
-            <span>Antas ng Pagkakatagal ng Utang (Aging Buckets)</span>
+            <span>{t('utang:agingCardTitle')}</span>
             <span className="text-xs font-normal text-muted-foreground">
-              Batay sa pinakalumang transaksyon
+              {t('utang:agingCardSubtitle')}
             </span>
           </CardTitle>
         </CardHeader>
@@ -548,14 +560,14 @@ export function UtangPage() {
           onSortChange={(sort) => setParams({ sort, page: 1 })}
           search={params.q}
           onSearchChange={(q) => setParams({ q, page: 1 })}
-          searchPlaceholder="Maghanap sa pangalan o telepono ng may utang..."
+          searchPlaceholder={t('utang:searchPlaceholder')}
           renderMobileCard={renderMobileCard}
           isLoading={isDebtorsLoading}
           isError={isDebtorsError}
           onRetry={refetchDebtors}
           emptyIcon={HandCoins}
-          emptyTitle="Walang aktibong may utang"
-          emptyDescription="Lahat ng suki ay nakabayad na o walang naitalang utang sa kasalukuyan."
+          emptyTitle={t('utang:emptyDebtorsTitle')}
+          emptyDescription={t('utang:emptyDebtorsDesc')}
         />
       </div>
 

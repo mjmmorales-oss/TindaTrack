@@ -85,7 +85,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|New Customer/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|New Customer|Register New Suki/i)).toBeInTheDocument()
 
       const customer = useMockDb.getState().customers[0]
       renderWithProviders(
@@ -110,7 +110,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Kolektahin ang Bayad|Record Payment|Collect Payment/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment|Collect Payment/i })).toBeInTheDocument()
     })
 
     it('renders PaymentDialog on cash and utang tabs', async () => {
@@ -208,10 +208,10 @@ describe('Interaction and Dialog Smoke Tests', () => {
       const user = userEvent.setup()
       renderRoute('/customers/1', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang/i }, { timeout: 8000 })
+      const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang|Credit Ledger/i }, { timeout: 8000 })
       expect(ledgerTab).toBeInTheDocument()
 
-      const purchasesTab = await screen.findByRole('tab', { name: /Kasaysayan ng Bili/i })
+      const purchasesTab = await screen.findByRole('tab', { name: /Kasaysayan ng Bili|Purchase History/i })
       await user.click(purchasesTab)
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
 

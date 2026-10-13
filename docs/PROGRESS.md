@@ -777,6 +777,21 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - ESLint: 0 errors, 0 warnings.
   - Vite build: Production bundle built cleanly.
   - Backend: Pest 74/74 tests green, Pint clean.
-
-
+### H4d Log (Sales, Customers, and Utang Feature Localization):
+- **Feature Component Translation**:
+  - Fully translated all 7 target files with standard English default and rich Taglish/Filipino translation:
+    - Sales: `SalesPage.jsx`, `SaleDetailPage.jsx`.
+    - Customers: `CustomersPage.jsx`, `CustomerDetailPage.jsx`, `CustomerFormDialog.jsx`.
+    - Utang: `UtangPage.jsx`, `RecordPaymentDialog.jsx`.
+- **Locale Dictionary Alignment**:
+  - Expanded `en/sales.json` & `fil/sales.json` (100 keys each, 100% key parity).
+  - Expanded `en/customers.json` & `fil/customers.json` (94 keys each, 100% key parity).
+  - Expanded `en/utang.json` & `fil/utang.json` (62 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `routes.test.jsx`, `dialogs.test.jsx`, `entrypoints.test.jsx`, and `interactions.test.jsx` for bilingual assertions and heading role queries on dual-label modals.
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, 979 validated `t(...)` calls (+278 calls verified), untranslated candidate count reduced from 242 to 187.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
 

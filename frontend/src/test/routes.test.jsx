@@ -100,7 +100,7 @@ function assertLayoutIntegrity(path) {
     const ownerRoutes = [
       { path: '/dashboard', expected: /Good (morning|day|afternoon|evening)|Magandang/i },
       { path: '/pos', expected: /Point of Sale Terminal|Kasalukuyang Benta|Connect Phone|Ikonekta ang Phone/i },
-      { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta/i },
+      { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta|Sales History/i },
       { path: '/sales/1', expected: /Resibo TT-|Receipt TT-/i },
       { path: '/products', expected: /Mga Paninda at Imbentaryo|Products & Inventory/i },
       { path: '/products/1', expected: /Coca-Cola|SKU:/i },
@@ -130,7 +130,7 @@ function assertLayoutIntegrity(path) {
     const cashierRoutes = [
       { path: '/dashboard', expected: /Good (morning|day|afternoon|evening)|Magandang/i },
       { path: '/pos', expected: /Point of Sale Terminal|Kasalukuyang Benta|Connect Phone|Ikonekta ang Phone/i },
-      { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta/i },
+      { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta|Sales History/i },
       { path: '/sales/1', expected: /Resibo TT-|Receipt TT-/i },
       { path: '/products', expected: /Mga Paninda at Imbentaryo|Products & Inventory/i },
       { path: '/products/1', expected: /Coca-Cola|SKU:/i },

@@ -158,7 +158,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       renderWithProviders(
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={debtor} />,
       )
-      expect(await screen.findByText(/Kolektahin ang Bayad|Record Payment/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment/i })).toBeInTheDocument()
       expect(screen.getByText(new RegExp(debtor.name, 'i'))).toBeInTheDocument()
       expect(screen.getByDisplayValue(Number(debtor.credit_balance).toFixed(0))).toBeInTheDocument()
     })
@@ -168,7 +168,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       renderWithProviders(
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
-      expect(await screen.findByText(/Kolektahin ang Bayad|Record Payment/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment/i })).toBeInTheDocument()
       expect(screen.getByText(new RegExp(customer.name, 'i'))).toBeInTheDocument()
     })
 
@@ -198,7 +198,7 @@ describe('Dialog Entry Points and Adjust Stock Product Picker Tests', () => {
       const { unmount } = renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki|Register New Suki/i)).toBeInTheDocument()
       unmount()
 
       // 2. Edit mode

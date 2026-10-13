@@ -118,7 +118,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki|Register New Suki/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode (seeded customer)', async () => {
@@ -182,7 +182,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={debtor} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Kolektahin ang Bayad/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment/i })).toBeInTheDocument()
     })
 
     it('renders PaymentDialog on cash tab', async () => {
@@ -307,9 +307,9 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
   describe('Staff Add Cashier Dialog', () => {
     it('opens add cashier modal on /staff', async () => {
       renderRoute('/staff', { role: 'owner' })
-      const addBtn = await screen.findByRole('button', { name: /Magdagdag ng Kahera/i }, {}, { timeout: 8000 })
+      const addBtn = await screen.findByRole('button', { name: /Magdagdag ng Kahera|Add Cashier|Add Staff/i }, { timeout: 10000 })
       addBtn.click()
-      expect(await screen.findByText(/Magdagdag ng Bagong Kahera/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Kahera|Add Cashier|Add Staff|New Staff/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
   })
 })

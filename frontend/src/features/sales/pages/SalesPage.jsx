@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Plus,
   ReceiptText,
@@ -39,7 +40,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatDateTime } from '@/lib/format'
 
 export function SalesPage() {
-  useDocumentTitle('Kasaysayan ng Benta (Sales History)')
+  const { t } = useTranslation(['sales', 'common'])
+  useDocumentTitle(t('sales:title'))
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canViewAll = can('sales.view_all')
@@ -97,18 +99,18 @@ export function SalesPage() {
     const filters = [
       {
         columnId: 'payment_type',
-        title: 'Paraan (Payment)',
+        title: t('sales:filterPayment'),
         options: [
-          { label: 'Cash (Salapi)', value: 'cash', icon: CreditCard },
-          { label: 'Utang (Pautang)', value: 'utang', icon: ReceiptText },
+          { label: t('sales:filterPaymentCash'), value: 'cash', icon: CreditCard },
+          { label: t('sales:filterPaymentUtang'), value: 'utang', icon: ReceiptText },
         ],
       },
       {
         columnId: 'status',
-        title: 'Katayuan (Status)',
+        title: t('sales:filterStatus'),
         options: [
-          { label: 'Completed (Tapos)', value: 'completed', icon: CheckCircle2 },
-          { label: 'Voided (Kanselado)', value: 'voided', icon: XCircle },
+          { label: t('sales:filterStatusCompleted'), value: 'completed', icon: CheckCircle2 },
+          { label: t('sales:filterStatusVoided'), value: 'voided', icon: XCircle },
         ],
       },
     ]
@@ -116,13 +118,13 @@ export function SalesPage() {
     if (canViewAll && cashierFilterOptions.length > 0) {
       filters.push({
         columnId: 'user_id',
-        title: 'Kahera (Cashier)',
+        title: t('sales:filterCashier'),
         options: cashierFilterOptions,
       })
     }
 
     return filters
-  }, [canViewAll, cashierFilterOptions])
+  }, [canViewAll, cashierFilterOptions, t])
 
   // Selected date range for DateRangePicker
   const selectedDateRange = useMemo(() => {
@@ -162,7 +164,9 @@ export function SalesPage() {
       {
         id: 'sale_no',
         accessorKey: 'sale_no',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Resibo No." />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:receiptNoCol')} />
+        ),
         cell: ({ row }) => (
           <button
             type="button"
@@ -176,7 +180,9 @@ export function SalesPage() {
       {
         id: 'created_at',
         accessorKey: 'created_at',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Petsa at Oras" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:dateCol')} />
+        ),
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             {formatDateTime(row.original.created_at)}
@@ -186,7 +192,9 @@ export function SalesPage() {
       {
         id: 'user_id',
         accessorKey: 'user_id',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Kahera" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:cashierCol')} />
+        ),
         cell: ({ row }) => {
           const cashier = row.original.cashier
           return (
@@ -202,11 +210,13 @@ export function SalesPage() {
       {
         id: 'customer',
         accessorKey: 'customer_id',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Kustomer / Suki" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:customerCol')} />
+        ),
         cell: ({ row }) => {
           const cust = row.original.customer
           if (!cust) {
-            return <span className="text-xs text-muted-foreground italic">Walk-in</span>
+            return <span className="text-xs text-muted-foreground italic">{t('sales:walkIn')}</span>
           }
           return (
             <Link
@@ -220,22 +230,28 @@ export function SalesPage() {
       },
       {
         id: 'items_count',
-        header: 'Mga Item',
+        header: t('sales:itemsCountCol'),
         cell: ({ row }) => {
           const count = row.original.items?.length || 0
-          return <span className="text-xs text-muted-foreground">{count} items</span>
+          return (
+            <span className="text-xs text-muted-foreground">
+              {t('sales:itemsCount', { count })}
+            </span>
+          )
         },
       },
       {
         id: 'payment_type',
         accessorKey: 'payment_type',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Paraan" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:paymentMethodCol')} />
+        ),
         cell: ({ row }) => {
           const type = row.original.payment_type
           return (
             <StatusBadge
               status={type === 'utang' ? 'utang' : 'completed'}
-              label={type === 'utang' ? 'Utang' : 'Cash'}
+              label={type === 'utang' ? t('sales:methodUtang') : t('sales:methodCash')}
             />
           )
         },
@@ -243,7 +259,9 @@ export function SalesPage() {
       {
         id: 'total_amount',
         accessorKey: 'total_amount',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Halaga" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:totalAmountCol')} />
+        ),
         cell: ({ row }) => {
           const isVoided = row.original.status === 'voided'
           const amt = row.original.total_amount ?? row.original.total ?? 0
@@ -261,13 +279,15 @@ export function SalesPage() {
       {
         id: 'status',
         accessorKey: 'status',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Katayuan" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('sales:statusCol')} />
+        ),
         cell: ({ row }) => {
           const status = row.original.status
           return (
             <StatusBadge
               status={status === 'voided' ? 'archived' : 'success'}
-              label={status === 'voided' ? 'Voided' : 'Completed'}
+              label={status === 'voided' ? t('sales:voidedBadge') : t('sales:completedBadge')}
             />
           )
         },
@@ -287,7 +307,7 @@ export function SalesPage() {
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    aria-label={`Aksyon para sa resibo ${sale.sale_no}`}
+                    aria-label={t('sales:actionForReceipt', { saleNo: sale.sale_no })}
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
@@ -295,7 +315,7 @@ export function SalesPage() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => navigate(`/sales/${sale.id}`)}>
                     <Eye className="mr-2 h-4 w-4" />
-                    Tingnan ang Resibo
+                    {t('sales:viewReceipt')}
                   </DropdownMenuItem>
                   {canVoidThis && (
                     <DropdownMenuItem
@@ -303,7 +323,7 @@ export function SalesPage() {
                       className="text-destructive focus:text-destructive"
                     >
                       <Ban className="mr-2 h-4 w-4" />
-                      I-void ang Benta
+                      {t('sales:voidSale')}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -313,7 +333,7 @@ export function SalesPage() {
         },
       },
     ],
-    [navigate, canVoid],
+    [navigate, canVoid, t],
   )
 
   // Mobile card renderer below md
@@ -350,7 +370,7 @@ export function SalesPage() {
               className={isVoided ? 'line-through text-muted-foreground' : 'text-foreground font-bold'}
             />
             <span className="text-[10px] text-muted-foreground block">
-              {s.items?.length || 0} items
+              {t('sales:itemsCount', { count: s.items?.length || 0 })}
             </span>
           </div>
         </div>
@@ -359,7 +379,7 @@ export function SalesPage() {
         <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/60 pt-2">
           <div className="truncate max-w-[55%]">
             <span className="font-medium text-foreground">
-              {cust ? (cust.nickname ? `${cust.name} (${cust.nickname})` : cust.name) : 'Walk-in'}
+              {cust ? (cust.nickname ? `${cust.name} (${cust.nickname})` : cust.name) : t('sales:walkIn')}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -375,11 +395,11 @@ export function SalesPage() {
           <div className="flex items-center gap-1.5 flex-wrap">
             <StatusBadge
               status={s.payment_type === 'utang' ? 'utang' : 'completed'}
-              label={s.payment_type === 'utang' ? 'Utang' : 'Cash'}
+              label={s.payment_type === 'utang' ? t('sales:methodUtang') : t('sales:methodCash')}
             />
             <StatusBadge
               status={isVoided ? 'archived' : 'success'}
-              label={isVoided ? 'Voided' : 'Completed'}
+              label={isVoided ? t('sales:voidedBadge') : t('sales:completedBadge')}
             />
           </div>
 
@@ -389,7 +409,7 @@ export function SalesPage() {
                 variant="ghost"
                 size="icon"
                 className="h-11 w-11 text-muted-foreground hover:text-foreground touch-manipulation"
-                aria-label={`Aksyon sa resibo ${s.sale_no}`}
+                aria-label={t('sales:actionForReceipt', { saleNo: s.sale_no })}
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
@@ -397,7 +417,7 @@ export function SalesPage() {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => navigate(`/sales/${s.id}`)}>
                 <Eye className="mr-2 h-4 w-4" />
-                Tingnan ang Resibo
+                {t('sales:viewReceipt')}
               </DropdownMenuItem>
               {canVoidThis && (
                 <DropdownMenuItem
@@ -405,7 +425,7 @@ export function SalesPage() {
                   className="text-destructive focus:text-destructive"
                 >
                   <Ban className="mr-2 h-4 w-4" />
-                  I-void ang Benta
+                  {t('sales:voidSale')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -418,13 +438,13 @@ export function SalesPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Kasaysayan ng Benta"
-        description="Subaybayan ang mga transaksyon, resibo, paraan ng bayad, at talaan ng void"
+        title={t('sales:pageTitle')}
+        description={t('sales:pageSubtitle')}
         actions={
           <Button asChild size="sm" className="gap-1.5 h-9">
             <Link to="/pos">
               <Plus className="h-4 w-4" />
-              Bagong Benta (New Sale)
+              {t('sales:newSaleButton')}
             </Link>
           </Button>
         }
@@ -435,7 +455,9 @@ export function SalesPage() {
         <Card className="p-3 sm:p-4 border-border bg-card">
           <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
             <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-[11px] sm:text-xs font-medium truncate">Kabuuang Benta</span>
+            <span className="text-[11px] sm:text-xs font-medium truncate">
+              {t('sales:statTotalSales')}
+            </span>
           </div>
           <Money
             amount={summary.total_amount}
@@ -443,27 +465,31 @@ export function SalesPage() {
             className="sm:text-lg font-bold text-foreground block truncate"
           />
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-            mga validong benta
+            {t('sales:statTotalSalesDesc')}
           </span>
         </Card>
 
         <Card className="p-3 sm:p-4 border-border bg-card">
           <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
             <ShoppingBag className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-[11px] sm:text-xs font-medium truncate">Transaksyon</span>
+            <span className="text-[11px] sm:text-xs font-medium truncate">
+              {t('sales:statTransactions')}
+            </span>
           </div>
           <span className="text-sm sm:text-lg font-bold text-foreground block truncate">
             {summary.total_count}
           </span>
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-            kabuuang resibo
+            {t('sales:statTransactionsDesc')}
           </span>
         </Card>
 
         <Card className="p-3 sm:p-4 border-border bg-card">
           <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
             <ReceiptText className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-[11px] sm:text-xs font-medium truncate">Karaniwang Benta</span>
+            <span className="text-[11px] sm:text-xs font-medium truncate">
+              {t('sales:statAverageSale')}
+            </span>
           </div>
           <Money
             amount={summary.average_sale}
@@ -471,7 +497,7 @@ export function SalesPage() {
             className="sm:text-lg font-bold text-foreground block truncate"
           />
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-            average per resibo
+            {t('sales:statAverageSaleDesc')}
           </span>
         </Card>
       </div>
@@ -490,7 +516,7 @@ export function SalesPage() {
           onSortChange={(sort) => setParams({ sort, page: 1 })}
           search={params.q}
           onSearchChange={(q) => setParams({ q, page: 1 })}
-          searchPlaceholder="Hanapin sa Resibo No. (hal. TT-202610...)"
+          searchPlaceholder={t('sales:searchPlaceholder')}
           facetedFilters={facetedFilters}
           activeFilters={params}
           onFilterChange={(colId, val) => setParams({ [colId]: val, page: 1 })}
@@ -512,7 +538,7 @@ export function SalesPage() {
               <DateRangePicker
                 value={selectedDateRange}
                 onChange={handleDateRangeChange}
-                placeholder="Pumili ng petsa"
+                placeholder={t('sales:dateRangePlaceholder')}
                 className="w-full sm:w-[260px] h-9 text-xs"
               />
             </div>
@@ -522,11 +548,11 @@ export function SalesPage() {
           isError={isError}
           onRetry={refetch}
           emptyIcon={ReceiptText}
-          emptyTitle="Walang natagpuang rekord ng benta"
-          emptyDescription="Subukang baguhin ang napiling petsa, tagasala (filter), o mag-record ng bagong benta sa POS."
+          emptyTitle={t('sales:emptySalesTitle')}
+          emptyDescription={t('sales:emptySalesDesc')}
           emptyAction={
             <Button asChild size="sm">
-              <Link to="/pos">Pumunta sa POS</Link>
+              <Link to="/pos">{t('sales:goToPos')}</Link>
             </Button>
           }
         />
@@ -536,15 +562,15 @@ export function SalesPage() {
       <ConfirmDialog
         open={voidDialogOpen}
         onOpenChange={setVoidDialogOpen}
-        title="I-void ang Resibo (Void Sale)"
-        description={`Sigurado ka bang nais mong i-void ang resibo ${voidingSale?.sale_no}? Ibabalik nito ang stock sa imbentaryo at ibabawas ang utang kung pautang ang transaksyon.`}
-        confirmText="Oo, I-void ang Benta"
-        cancelText="Huwag Ituloy"
+        title={t('sales:voidDialogTitle')}
+        description={t('sales:voidDialogDesc', { saleNo: voidingSale?.sale_no })}
+        confirmText={t('sales:confirmVoidButton')}
+        cancelText={t('sales:cancelVoidButton')}
         tone="destructive"
         requireReason={true}
         minReasonLength={5}
-        reasonLabel="Dahilan ng Pag-void (Required)"
-        reasonPlaceholder="Hal. Maling item ang na-punch sa POS o ibinalik ng kustomer..."
+        reasonLabel={t('sales:voidReasonLabel')}
+        reasonPlaceholder={t('sales:voidReasonPlaceholder')}
         onConfirm={handleConfirmVoid}
         isLoading={voidMutation.isPending}
       />

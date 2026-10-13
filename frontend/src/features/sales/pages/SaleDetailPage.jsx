@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
   Printer,
@@ -28,6 +29,7 @@ import { formatDateTime } from '@/lib/format'
 export function SaleDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation(['sales', 'common'])
   const { can } = usePermissions()
   const canVoid = can('sales.void')
 
@@ -43,7 +45,9 @@ export function SaleDetailPage() {
 
   const [voidDialogOpen, setVoidDialogOpen] = useState(false)
 
-  useDocumentTitle(sale ? `Resibo ${sale.sale_no}` : 'Detalye ng Benta')
+  useDocumentTitle(
+    sale ? t('sales:saleDetailTitle', { saleNo: sale.sale_no }) : t('sales:pageTitle'),
+  )
 
   const handlePrint = () => {
     window.print()
@@ -81,8 +85,8 @@ export function SaleDetailPage() {
     return (
       <PageContainer>
         <ErrorState
-          title="Hindi mahanap ang resibo"
-          message="Maaaring nabura o maling ID ang inilagay para sa transaksyon na ito."
+          title={t('sales:notFoundTitle')}
+          message={t('sales:notFoundDesc')}
           onRetry={refetch}
         />
       </PageContainer>
@@ -95,16 +99,16 @@ export function SaleDetailPage() {
 
   const paymentItems = [
     {
-      label: 'Paraan ng Pagbabayad',
+      label: t('sales:paymentMethodLabel'),
       value: (
         <StatusBadge
           status={isUtang ? 'utang' : 'completed'}
-          label={isUtang ? 'Utang / Lista' : 'Cash (Salapi)'}
+          label={isUtang ? t('sales:methodUtang') : t('sales:methodCash')}
         />
       ),
     },
     {
-      label: 'Kabuuang Halaga (Total)',
+      label: t('sales:totalAmountLabel'),
       value: (
         <Money
           amount={sale.total_amount ?? sale.total}
@@ -114,12 +118,12 @@ export function SaleDetailPage() {
       ),
     },
     {
-      label: 'Ibinayad (Paid)',
+      label: t('sales:amountPaidLabel'),
       value: <Money amount={sale.amount_paid} size="sm" />,
     },
     isUtang
       ? {
-          label: 'Nadagdag sa Utang (Balance Added)',
+          label: t('sales:balanceAddedLabel'),
           value: (
             <Money
               amount={Math.max(0, (sale.total_amount ?? sale.total) - sale.amount_paid)}
@@ -130,14 +134,14 @@ export function SaleDetailPage() {
           ),
         }
       : {
-          label: 'Sukli (Change)',
+          label: t('sales:changeLabel'),
           value: <Money amount={sale.change_amount || 0} size="sm" tone="success" />,
         },
   ]
 
   const auditItems = [
     {
-      label: 'Kahera (Punch by)',
+      label: t('sales:punchedByLabel'),
       value: (
         <div className="flex items-center gap-2">
           <UserAvatar name={sale.cashier?.name || 'Juan'} size="xs" />
@@ -146,11 +150,11 @@ export function SaleDetailPage() {
       ),
     },
     {
-      label: 'Petsa at Oras ng Benta',
+      label: t('sales:saleDateLabel'),
       value: formatDateTime(sale.created_at),
     },
     {
-      label: 'Kustomer',
+      label: t('sales:customerLabel'),
       value: sale.customer ? (
         <Link
           to={`/customers/${sale.customer.id}`}
@@ -159,7 +163,7 @@ export function SaleDetailPage() {
           {sale.customer.nickname ? `${sale.customer.name} (${sale.customer.nickname})` : sale.customer.name}
         </Link>
       ) : (
-        <span className="text-muted-foreground italic">Walk-in</span>
+        <span className="text-muted-foreground italic">{t('sales:walkIn')}</span>
       ),
     },
   ]
@@ -167,19 +171,19 @@ export function SaleDetailPage() {
   if (isVoided) {
     auditItems.push(
       {
-        label: 'Katayuan (Status)',
-        value: <StatusBadge status="archived" label="Voided" />,
+        label: t('sales:voidStatusLabel'),
+        value: <StatusBadge status="archived" label={t('sales:voidedBadge')} />,
       },
       {
-        label: 'Dahilan ng Pag-void',
+        label: t('sales:voidReasonDetailLabel'),
         value: (
           <span className="text-destructive font-semibold">
-            {sale.void_reason || 'Kanseladong transaksyon'}
+            {sale.void_reason || t('sales:defaultVoidReason')}
           </span>
         ),
       },
       {
-        label: 'Oras ng Pag-void',
+        label: t('sales:voidTimeLabel'),
         value: sale.voided_at ? formatDateTime(sale.voided_at) : '—',
       },
     )
@@ -190,8 +194,8 @@ export function SaleDetailPage() {
       {/* Header with actions (Print & Void) */}
       <div className="print:hidden">
         <PageHeader
-          title={`Resibo ${sale.sale_no}`}
-          description={`Nai-record noong ${formatDateTime(sale.created_at)}`}
+          title={t('sales:saleDetailTitle', { saleNo: sale.sale_no })}
+          description={t('sales:recordedAt', { date: formatDateTime(sale.created_at) })}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -201,7 +205,7 @@ export function SaleDetailPage() {
                 className="gap-1.5"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Bumalik sa Benta
+                {t('sales:backToSales')}
               </Button>
               <Button
                 variant="outline"
@@ -210,7 +214,7 @@ export function SaleDetailPage() {
                 className="gap-1.5"
               >
                 <Printer className="h-4 w-4" />
-                I-print (Print)
+                {t('sales:printButton')}
               </Button>
               {canVoidThis && (
                 <Button
@@ -220,7 +224,7 @@ export function SaleDetailPage() {
                   className="gap-1.5"
                 >
                   <Ban className="h-4 w-4" />
-                  I-void ang Benta
+                  {t('sales:voidSale')}
                 </Button>
               )}
             </div>
@@ -239,7 +243,9 @@ export function SaleDetailPage() {
             {/* Void Banner if voided */}
             {isVoided && (
               <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-2.5 text-center text-destructive">
-                <p className="text-sm font-bold tracking-widest uppercase">*** VOIDED SALE ***</p>
+                <p className="text-sm font-bold tracking-widest uppercase">
+                  {t('sales:thermalVoidBanner')}
+                </p>
                 <p className="text-[11px] font-sans mt-0.5">{sale.void_reason}</p>
               </div>
             )}
@@ -256,25 +262,25 @@ export function SaleDetailPage() {
             {/* Receipt Metadata */}
             <div className="py-2.5 space-y-1 text-[11px] border-b border-dashed border-border/80">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Resibo #:</span>
+                <span className="text-muted-foreground">{t('sales:thermalReceiptNo')}</span>
                 <span className="font-bold text-foreground">{sale.sale_no}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Petsa:</span>
+                <span className="text-muted-foreground">{t('sales:thermalDate')}</span>
                 <span>{formatDateTime(sale.created_at)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Kahera:</span>
+                <span className="text-muted-foreground">{t('sales:thermalCashier')}</span>
                 <span>{sale.cashier?.name || 'Juan'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Kustomer:</span>
+                <span className="text-muted-foreground">{t('sales:thermalCustomer')}</span>
                 <span className="font-medium">
-                  {sale.customer ? (sale.customer.nickname || sale.customer.name) : 'Walk-in'}
+                  {sale.customer ? (sale.customer.nickname || sale.customer.name) : t('sales:walkIn')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Paraan:</span>
+                <span className="text-muted-foreground">{t('sales:thermalMethod')}</span>
                 <span className="uppercase font-semibold text-foreground">
                   {isUtang ? 'LISTA / UTANG' : 'CASH'}
                 </span>
@@ -302,7 +308,7 @@ export function SaleDetailPage() {
             {/* Totals & Payments */}
             <div className="py-2.5 space-y-1.5 border-b border-dashed border-border/80">
               <div className="flex justify-between text-xs font-bold text-foreground">
-                <span>KABUUANG HALAGA:</span>
+                <span>{t('sales:thermalTotal')}</span>
                 <Money
                   amount={sale.total_amount ?? sale.total}
                   size="sm"
@@ -314,11 +320,11 @@ export function SaleDetailPage() {
               {isUtang ? (
                 <>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>Ibinayad Ngayon:</span>
+                    <span>{t('sales:thermalPaidToday')}</span>
                     <Money amount={sale.amount_paid} size="xs" />
                   </div>
                   <div className="flex justify-between text-[11px] font-bold text-utang">
-                    <span>Nadagdag sa Utang:</span>
+                    <span>{t('sales:thermalBalanceAdded')}</span>
                     <Money
                       amount={Math.max(0, (sale.total_amount ?? sale.total) - sale.amount_paid)}
                       size="xs"
@@ -329,11 +335,11 @@ export function SaleDetailPage() {
               ) : (
                 <>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>Perang Ibinayad (Cash):</span>
+                    <span>{t('sales:thermalCashTendered')}</span>
                     <Money amount={sale.amount_paid} size="xs" />
                   </div>
                   <div className="flex justify-between text-xs font-bold text-success">
-                    <span>SUKLI (Change):</span>
+                    <span>{t('sales:thermalChange')}</span>
                     <Money
                       amount={sale.change_amount || 0}
                       size="sm"
@@ -351,7 +357,7 @@ export function SaleDetailPage() {
                 {receiptFooter}
               </p>
               <p className="text-[9px] text-muted-foreground">
-                POS Powered by TindaTrack · Libre at Bukas
+                {t('sales:thermalFooterPowered')}
               </p>
             </div>
           </div>
@@ -363,9 +369,9 @@ export function SaleDetailPage() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center justify-between">
-                <span>Mga Biniling Paninda (Items)</span>
+                <span>{t('sales:purchasedItemsTitle')}</span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {sale.items?.length || 0} uri ng produkto
+                  {t('sales:purchasedVarietyCount', { count: sale.items?.length || 0 })}
                 </span>
               </CardTitle>
             </CardHeader>
@@ -374,10 +380,10 @@ export function SaleDetailPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-border/80 text-xs text-muted-foreground font-medium">
                     <tr>
-                      <th className="py-2">Produkto</th>
-                      <th className="py-2 text-center">Dami (Qty)</th>
-                      <th className="py-2 text-right">Presyo</th>
-                      <th className="py-2 text-right">Subtotal</th>
+                      <th className="py-2">{t('sales:productCol')}</th>
+                      <th className="py-2 text-center">{t('sales:qtyCol')}</th>
+                      <th className="py-2 text-right">{t('sales:priceCol')}</th>
+                      <th className="py-2 text-right">{t('sales:subtotalCol')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -409,7 +415,7 @@ export function SaleDetailPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
                   <CreditCard className="h-4 w-4 text-primary" />
-                  Impormasyon sa Pagbabayad
+                  {t('sales:paymentInfoCardTitle')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -421,7 +427,7 @@ export function SaleDetailPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  Audit at Pagsusuri
+                  {t('sales:auditInfoCardTitle')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -436,15 +442,15 @@ export function SaleDetailPage() {
       <ConfirmDialog
         open={voidDialogOpen}
         onOpenChange={setVoidDialogOpen}
-        title="I-void ang Resibo (Void Sale)"
-        description={`Sigurado ka bang nais mong i-void ang resibo ${sale.sale_no}? Ibabalik nito ang stock sa imbentaryo at ibabawas ang utang ng kustomer.`}
-        confirmText="Oo, I-void ang Benta"
-        cancelText="Huwag Ituloy"
+        title={t('sales:voidDialogTitle')}
+        description={t('sales:voidSaleDescDetail', { saleNo: sale.sale_no })}
+        confirmText={t('sales:confirmVoidButton')}
+        cancelText={t('sales:cancelVoidButton')}
         tone="destructive"
         requireReason={true}
         minReasonLength={5}
-        reasonLabel="Dahilan ng Pag-void (Required)"
-        reasonPlaceholder="Hal. Maling item ang napili o ibinalik ng kustomer..."
+        reasonLabel={t('sales:voidReasonLabel')}
+        reasonPlaceholder={t('sales:voidReasonPlaceholder')}
         onConfirm={handleConfirmVoid}
         isLoading={voidMutation.isPending}
       />

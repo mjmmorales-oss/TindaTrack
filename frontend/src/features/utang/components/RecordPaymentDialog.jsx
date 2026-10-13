@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { HandCoins, Loader2 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -29,6 +30,7 @@ export function RecordPaymentDialog({
   customer,
   onSuccess,
 }) {
+  const { t } = useTranslation(['utang', 'common'])
   const recordPaymentMutation = useRecordPayment()
   const isPending = recordPaymentMutation.isPending
 
@@ -82,7 +84,7 @@ export function RecordPaymentDialog({
     const paymentAmount = Number(values.amount || 0)
     if (paymentAmount > currentBalance) {
       setError('amount', {
-        message: `Hindi maaaring lumampas sa kasalukuyang utang na ₱${currentBalance.toFixed(2)}.`,
+        message: t('utang:exceedsBalanceError', { amount: currentBalance.toFixed(2) }),
       })
       return
     }
@@ -95,11 +97,16 @@ export function RecordPaymentDialog({
           payment_date: values.payment_date
             ? new Date(values.payment_date).toISOString()
             : new Date().toISOString(),
-          notes: values.notes?.trim() || 'Bayad sa tindahan',
+          notes: values.notes?.trim() || t('utang:defaultNotes'),
         },
       })
 
-      notify.success(`Payment of ₱${paymentAmount.toFixed(2)} recorded for ${customer.name}`)
+      notify.success(
+        t('utang:paymentRecordedSuccess', {
+          amount: paymentAmount.toFixed(2),
+          name: customer.name,
+        }),
+      )
       onOpenChange(false)
       onSuccess?.()
     } catch (err) {
@@ -120,8 +127,10 @@ export function RecordPaymentDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Kolektahin ang Bayad (Record Payment)"
-      description={`Itala ang pagbabayad ng utang para kay ${customer?.nickname ? `${customer.name} (${customer.nickname})` : customer?.name || 'suki'}.`}
+      title={t('utang:dialogTitle')}
+      description={t('utang:dialogDesc', {
+        name: customer?.nickname ? `${customer.name} (${customer.nickname})` : customer?.name || 'suki',
+      })}
       className="sm:max-w-md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -129,13 +138,13 @@ export function RecordPaymentDialog({
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3">
           <div>
             <span className="text-xs text-muted-foreground block">
-              Kasalukuyang Utang:
+              {t('utang:currentBalanceLabel')}
             </span>
             <Money amount={currentBalance} size="base" tone="utang" className="font-bold" />
           </div>
           <div className="text-right">
             <span className="text-xs text-muted-foreground block">
-              Matitirang Balanse:
+              {t('utang:remainingBalanceLabel')}
             </span>
             <Money
               amount={remainingBalancePreview}
@@ -149,7 +158,7 @@ export function RecordPaymentDialog({
         {/* Quick Amount Buttons (44px tap target, grid-cols-3) */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground block">
-            Mabilisang Halaga (Quick Select)
+            {t('utang:quickSelectLabel')}
           </label>
           <div className="grid grid-cols-3 gap-2">
             <Button
@@ -179,21 +188,21 @@ export function RecordPaymentDialog({
               className="h-11 font-semibold text-sm border border-border/80"
               onClick={() => handleQuickAmount(currentBalance)}
             >
-              Full (Lahat)
+              {t('utang:quickFull')}
             </Button>
           </div>
         </div>
 
         {/* Amount Input */}
         <Field error={errors.amount?.message}>
-          <FieldLabel htmlFor="payment-amount">Halaga ng Ibinayad (Amount) *</FieldLabel>
+          <FieldLabel htmlFor="payment-amount">{t('utang:amountLabel')}</FieldLabel>
           <Controller
             name="amount"
             control={control}
             render={({ field }) => (
               <MoneyInput
                 id="payment-amount"
-                placeholder="0.00"
+                placeholder={t('utang:amountPlaceholder')}
                 value={field.value}
                 onChange={field.onChange}
                 hasError={!!errors.amount}
@@ -207,7 +216,7 @@ export function RecordPaymentDialog({
         <FormInput
           name="payment_date"
           control={control}
-          label="Petsa ng Pagbabayad (Payment Date)"
+          label={t('utang:paymentDateLabel')}
           type="date"
           error={errors.payment_date?.message}
         />
@@ -216,8 +225,8 @@ export function RecordPaymentDialog({
         <FormTextarea
           name="notes"
           control={control}
-          label="Tala sa Resibo (Note / Reference)"
-          placeholder="Hal. Binigay ng anak, paunang bayad sa bigas..."
+          label={t('utang:paymentNotesLabel')}
+          placeholder={t('utang:notesPlaceholder')}
           rows={2}
           error={errors.notes?.message}
         />
@@ -230,7 +239,7 @@ export function RecordPaymentDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Kanselahin (Cancel)
+            {t('utang:cancelButton')}
           </Button>
           <Button
             type="submit"
@@ -240,12 +249,12 @@ export function RecordPaymentDialog({
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Itinatala...
+                {t('utang:recordingPayment')}
               </>
             ) : (
               <>
                 <HandCoins className="h-4 w-4" />
-                Itala ang Bayad
+                {t('utang:submitButton')}
               </>
             )}
           </Button>
