@@ -658,3 +658,23 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - **Release**:
   - Merged `fix/pairing` into `main` with `--no-ff`.
   - Tagged `v1.1.1` and pushed to remote origin.
+
+---
+
+## Phase 3.2: Pre-Deployment Hardening, English-First i18n, Product Images, and One-Step Barcode Auto-Fill (v1.2.0)
+
+### H0 Log (Preflight):
+- Created branch `hardening/v1.2` branched from `main` (clean at `v1.1.1`).
+- Verified database setup in `backend/phpunit.xml`:
+  - Unit/Feature tests use `DB_CONNECTION="sqlite"`, `DB_DATABASE=":memory:"`.
+  - Development and production deployments use MySQL. All subsequent migrations will use driver-aware logic (e.g. `DB::getDriverName() === 'mysql'` for `MEDIUMBLOB`) to maintain SQLite in-memory test compatibility alongside MySQL production safety.
+- Mirrored root scripts: created `scripts/check-contract.mjs` and `scripts/check-services.mjs` at the repository root, ensuring root execution passes seamlessly.
+- Baseline test verification:
+  - Backend Pest: 71/71 tests green (380 assertions).
+  - Pint: Clean PSR-12 code style.
+  - `php artisan tindatrack:check`: 100% reconciled across customer balances, stock movements, and unique sales numbers.
+  - Frontend Lint: 0 errors, 72 warnings.
+  - Frontend Build: Clean production bundle compiled in 9.23s.
+  - Frontend Vitest: 23/23 tests green in `src/test/scan-flows.test.jsx`.
+  - Contract & Service check: 46/46 API contracts verified, 12/12 service facades matched, ₱0.0000 mock data discrepancy.
+  - Smoke script: `smoke:pairing` passed on both Direct API (`http://127.0.0.1:8000`) and Vite Reverse Proxy (`https://127.0.0.1:5173`).
