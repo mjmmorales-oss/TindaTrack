@@ -124,3 +124,14 @@ export function makeInternal(sequence) {
   const check = computeCheckDigit(digits)
   return `${digits}${check}`
 }
+
+export const Barcode = {
+  normalize,
+  computeCheckDigit,
+  isValidGtin,
+  isInternal,
+  isAcceptable,
+  makeInternal,
+}
+
+export default Barcode

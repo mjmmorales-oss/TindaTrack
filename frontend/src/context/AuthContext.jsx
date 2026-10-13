@@ -20,6 +20,21 @@ export function AuthProvider({ children }) {
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
+    if (typeof sessionStorage !== 'undefined') {
+      const posSessionRaw = sessionStorage.getItem('tt_pos_scanner_session')
+      if (posSessionRaw) {
+        try {
+          const parsed = JSON.parse(posSessionRaw)
+          if (parsed?.id) {
+            import('@/services/scanner.js').then((m) => m.endScannerSession(parsed.id)).catch(() => {})
+          }
+        } catch {
+          // ignore
+        }
+      }
+      sessionStorage.removeItem('tt_pos_scanner_session')
+      sessionStorage.removeItem('tt_scanner_token')
+    }
     setUser(null)
     setStatus('guest')
     queryClient?.clear()

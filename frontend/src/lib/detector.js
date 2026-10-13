@@ -1,4 +1,4 @@
-import zxingWasmUrl from 'zxing-wasm/dist/reader/zxing_reader.wasm?url'
+import zxingWasmUrl from 'zxing-wasm/reader/zxing_reader.wasm?url'
 import {
   BarcodeDetector as PonyfillBarcodeDetector,
   prepareZXingModule,

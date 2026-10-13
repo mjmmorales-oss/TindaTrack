@@ -406,4 +406,29 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Authored Vitest unit tests in `src/test/realtime.test.jsx` (4 tests) verifying chronological ordering, deduplication, hidden tab backoff, and 401 cancellation.
 - Gates: ESLint clean, production build clean, Vitest (136 tests green across 11 files), check-contract (46/46 passing), check-services (12/12 passing).
 
+### B7 Log:
+- Implemented POS Terminal barcode & scanner integration (`PosPage.jsx`):
+  - POS header actions:
+    - "I-scan": launches `ScannerSheet` in continuous mode for direct laptop webcam or mobile scanning.
+    - "Ikonekta ang Phone": opens `PairPhoneDialog` for pairing with phone scanner.
+    - Persistent compact badge: "📱 Phone scanner: Online/Offline" with DropdownMenu to disconnect ("Idiskonekta").
+  - Hardware Wedge Scanner: enabled `useBarcodeWedge` on POS page, marked search input `data-barcode-input="true"`.
+  - Shared scan handler `handleScannedCode(code, { source, event })`:
+    - Checks loaded local product list by normalized barcode first.
+    - If missing locally, calls `lookupBarcode(normalized)`:
+      - Found in local inventory: adds to cart, increments quantity, emits audio `beep()`, and toasts "+1 {name}".
+      - Out of stock: displays warning toast ("Ubos na ang stock ng {name}") and prevents adding.
+      - Unknown:
+        - Owner: toast with CTA "Irehistro ang produkto" pre-populates and opens `ProductFormDialog`.
+        - Cashier: toast "Hindi pa naka-rehistro ang barcode na ito. Sabihan ang may-ari."
+  - Pairing Dialog (`PairPhoneDialog.jsx`):
+    - Generates 10-minute ephemeral session with human pairing code `XXXX-XXXX` and QR code pointing to `${PUBLIC_APP_URL}/scan?code=...`.
+    - Detects `localhost` and shows warning pointing to `npm run dev:lan` or production URL.
+    - Polls session status every 2 seconds until paired; displays animated green status indicator.
+  - Session persistence:
+    - Stores active session in `sessionStorage` (`tt_pos_scanner_session`) surviving page reloads.
+    - Automatically cleans up session tokens on user logout in `AuthContext.jsx`.
+- Gates: ESLint clean, production build clean, Vitest (136/136 tests passing), contract & mock data checks passing.
+
+
 
