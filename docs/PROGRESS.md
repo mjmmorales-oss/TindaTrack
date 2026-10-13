@@ -389,3 +389,21 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - Authored Vitest unit tests in `src/test/barcode.test.jsx` (9 tests) verifying parity with backend fixtures and keyboard wedge buffering.
 - Gates: ESLint clean, production build clean, Vitest (9 tests passed in barcode suite), check-contract (37/37 passing), check-services (10/10 passing), check-mockdata passing.
 
+### B6 Log:
+- Implemented frontend barcode and scanner services in both API and Mock modes:
+  - `src/services/api/barcodeService.js`: `lookupBarcode(code)` -> `GET /api/barcode-lookup/{barcode}`.
+  - `src/services/api/scannerService.js`:
+    - Authenticated: `createScannerSession`, `getScannerSession`, `listScannerEvents`, `endScannerSession`, `getUnknownBarcodes`.
+    - Device: `pairScanner`, `sendScan`, `scannerHeartbeat` using scoped `X-Scanner-Token` from `sessionStorage` with dedicated Axios client that never transmits user bearer tokens or triggers logout on 401.
+  - `src/services/mock/barcodeService.js`: realistic 8 PH product fixtures, online open food facts hit simulation with ODbL attribution, cashier role restriction (null catalog).
+  - `src/services/mock/scannerService.js`: cross-tab synchronization with `BroadcastChannel('tt-scanner')` and `localStorage`, pairing code generation, session state management, inventory online lookup.
+  - Facades `src/services/barcode.js`, `src/services/barcodeService.js`, `src/services/scanner.js`, `src/services/scannerService.js`.
+- Implemented `src/lib/realtime.js`:
+  - `subscribeToScanner(sessionId, { onEvent })`: supports `polling` (1200ms visible, 5000ms hidden, deduplication via `lastId`, auto-stop after 3 consecutive 401/404 errors) and optional `pusher` (lazy Echo/Pusher with 10s catch-up polling fallback).
+- Updated validation scripts:
+  - `scripts/check-contract.mjs`: added 9 contracts (46 total endpoints verified against backend).
+  - `scripts/check-services.mjs`: verified 1-to-1 method parity across all 12 services (100% matched).
+- Authored Vitest unit tests in `src/test/realtime.test.jsx` (4 tests) verifying chronological ordering, deduplication, hidden tab backoff, and 401 cancellation.
+- Gates: ESLint clean, production build clean, Vitest (136 tests green across 11 files), check-contract (46/46 passing), check-services (12/12 passing).
+
+
