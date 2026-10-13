@@ -241,7 +241,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
 - [x] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
 - [x] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
-- [ ] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
+- [x] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
 - [ ] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
 - [ ] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
 - [ ] **B7 — POS Integration**: POS header actions ("I-scan", "Ikonekta ang Phone"), wedge support, `handleScannedCode`, `PairPhoneDialog`, phone scanner badge & subscription.
@@ -347,6 +347,28 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Created `routes/channels.php` authorizing private channel `scanner-session.{id}` strictly for session creator.
   - Created `App\Events\ScannerItemScanned` implementing `ShouldBroadcastNow` on channel `scanner-session.{id}` with name `scanner.scanned`. Broadcast dispatch errors are safely swallowed so Pusher downtime never disrupts POS scans.
 - Added comprehensive Pest feature tests in `tests/Feature/ScannerSessionAndDeviceTest.php` (13 tests): full pairing flow, code reuse block, expiration check, 401 on wrong/ended tokens, scan status branches, polling feed `after`, cross-user access boundaries, role constraints, device token route isolation, `Event::fake` assertion, heartbeat, and unknown barcodes feed.
-- Documented all 8 new scanner endpoints in `docs/API.md`.
 - Gates: Pest (69/69 passing, 320 assertions), Pint clean, contract check passing.
+
+### B4 Log:
+- Conducted full backend hardening audit across all new controllers, services, middleware, resources, and models:
+  - Mass assignment: all attributes explicitly gated via `$fillable` on `Product`, `BarcodeCatalog`, `ScannerSession`, `ScannerEvent`.
+  - Client data isolation: phone scans only submit `barcode` and optional `quantity`. Prices, stock counts, and names are strictly retrieved server-side from active local inventory.
+  - Zero N+1 queries: `scanner_events` stores product snapshot payload directly; feed polling requires no eager relations or joins.
+  - Indexes verified: `scanner_sessions [user_id, ended_at]`, `scanner_events [scanner_session_id, id]`, `barcode_catalog [barcode primary]`.
+  - Timezone integrity: all timestamps use `now()` conforming to `Asia/Manila` with ISO 8601 formatting.
+- Extended `tindatrack:check` reconciliation command to include row counts for `Barcode Catalog`, `Scanner Sessions`, and `Scanner Events`.
+- Audited API routes and middleware via `php artisan route:list --path=api -v`:
+  ```
+  GET|HEAD api/barcode-lookup/{barcode} -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier, ThrottleRequests:30,1
+  POST api/scanner-sessions -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  GET|HEAD api/scanner-sessions/{id} -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  DELETE api/scanner-sessions/{id} -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  GET|HEAD api/scanner-sessions/{id}/events -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner,cashier
+  POST api/scanner/pair -> api, ThrottleRequests:10,1
+  POST api/scanner/scans -> api, EnsureValidScannerDevice, ThrottleRequests:120,1
+  POST api/scanner/heartbeat -> api, EnsureValidScannerDevice
+  GET|HEAD api/scanner/unknown-barcodes -> api, Authenticate:sanctum, EnsureUserIsActive, EnsureUserHasRole:owner
+  GET|POST|HEAD api/broadcasting/auth -> api, Authenticate:sanctum
+  ```
+- Gates: Pest (69/69 passing, 320 assertions), Pint clean, route check passing.
 
