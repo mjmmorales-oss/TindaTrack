@@ -242,7 +242,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
 - [x] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
 - [x] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
-- [ ] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
+- [x] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
 - [ ] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
 - [ ] **B7 — POS Integration**: POS header actions ("I-scan", "Ikonekta ang Phone"), wedge support, `handleScannedCode`, `PairPhoneDialog`, phone scanner badge & subscription.
 - [ ] **B8 — Phone Scanner Page (`/scan`)**: Public minimal layout, pair flow, continuous camera scan, scan feedback, last scans list, wake lock, heartbeat.
@@ -371,4 +371,21 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   GET|POST|HEAD api/broadcasting/auth -> api, Authenticate:sanctum
   ```
 - Gates: Pest (69/69 passing, 320 assertions), Pint clean, route check passing.
+
+### B5 Log:
+- Installed frontend dependencies: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`.
+- Configured self-hosted WebAssembly ponyfill with native fallback (`src/lib/detector.js`):
+  - Prepares `zxing-wasm/dist/reader/zxing_reader.wasm?url` via `prepareZXingModule` overrides so production bundle does not rely on third-party CDNs.
+  - Queries `window.BarcodeDetector` when available with `ean_13` format support, falling back to WebAssembly ponyfill.
+- Created `src/lib/barcode.js` porting `normalize`, `computeCheckDigit`, `isValidGtin`, `isInternal`, `isAcceptable`, and `makeInternal` to JavaScript.
+- Created `src/hooks/useCameraScanner.js`:
+  - Captures environment camera stream using `navigator.mediaDevices.getUserMedia`.
+  - Frame detection loop with ~200ms throttle, `requestAnimationFrame`, tab visibility pause, and 1500ms deduplication window.
+  - Handles HTTPS insecure context warning (`isSecureContext`), permission denied states, torch toggle, and front/back camera switching.
+- Created `src/lib/feedback.js` with WebAudio oscillator `beep()` (1400-1800Hz smooth chime) and haptic `vibrate()` (60ms), persisting user sound preferences in localStorage.
+- Created `src/components/scanner/CameraScanner.jsx` with dark rounded viewfinder overlay, animated laser scan beam (`@keyframes scan-line` respecting `prefers-reduced-motion`), torch toggle, and fallback manual entry form.
+- Created `src/components/scanner/ScannerSheet.jsx` wrapping `CameraScanner` in a `ResponsiveDialog` with single-scan and continuous scan modes.
+- Created `src/hooks/useBarcodeWedge.js` capturing rapid hardware barcode scanner keystrokes (<50ms inter-key gap) while ignoring human typing and textarea focus.
+- Authored Vitest unit tests in `src/test/barcode.test.jsx` (9 tests) verifying parity with backend fixtures and keyboard wedge buffering.
+- Gates: ESLint clean, production build clean, Vitest (9 tests passed in barcode suite), check-contract (37/37 passing), check-services (10/10 passing), check-mockdata passing.
 
