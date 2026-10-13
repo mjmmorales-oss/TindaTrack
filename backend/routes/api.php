@@ -7,6 +7,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ScannerDeviceController;
@@ -24,6 +25,9 @@ Route::get('/ping', fn () => response()->json([
     'app' => config('app.name'),
     'time' => now()->toIso8601String(),
 ]));
+
+// Public binary product image stream
+Route::get('/product-images/{ulid}', [ProductImageController::class, 'show']);
 
 // Device-scoped scanner endpoints (phone client)
 Route::prefix('scanner')->group(function () {
@@ -111,6 +115,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
         Route::post('/products/{product}/adjust', [ProductController::class, 'adjustStock']);
+        Route::post('/products/{product}/image', [ProductImageController::class, 'upload']);
+        Route::post('/products/{product}/image/import', [ProductImageController::class, 'import']);
+        Route::delete('/products/{product}/image', [ProductImageController::class, 'destroy']);
 
         // Customer deletion
         Route::delete('/customers/{customer}', [CustomerController::class, 'destroy']);

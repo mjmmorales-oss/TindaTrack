@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2, PackagePlus } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -23,6 +24,7 @@ export function BulkRestockDialog({
   onOpenChange,
   onSuccess,
 }) {
+  const { t } = useTranslation(['inventory', 'common'])
   const [quantities, setQuantities] = useState({})
   const [defaultAddQty, setDefaultAddQty] = useState('10')
   const [notes, setNotes] = useState('Bulk restock')
@@ -64,8 +66,8 @@ export function BulkRestockDialog({
         })
       }
       notify.success(
-        'Matagumpay na na-restock!',
-        `Naidagdag ang bagong stock sa ${items.length} mga paninda.`,
+        t('inventory:bulkRestockSuccessTitle'),
+        t('inventory:bulkRestockSuccessDesc', { count: items.length }),
       )
       onSuccess?.()
       onOpenChange(false)
@@ -80,8 +82,8 @@ export function BulkRestockDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={`Maramihang Pag-restock (${items.length} Items)`}
-      description="Magdagdag ng bagong dating na stock sa mga napiling paninda."
+      title={t('inventory:bulkRestockModalTitleCount', { count: items.length })}
+      description={t('inventory:bulkRestockModalDescHelp')}
       className="sm:max-w-lg"
       footer={
         <div className="flex w-full items-center justify-end gap-2">
@@ -91,7 +93,7 @@ export function BulkRestockDialog({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Kanselahin
+            {t('common:cancel')}
           </Button>
           <Button
             type="submit"
@@ -104,7 +106,7 @@ export function BulkRestockDialog({
             ) : (
               <PackagePlus className="h-4 w-4" />
             )}
-            Kumpirmahin ang Restock ({items.length})
+            {t('inventory:confirmBulkRestockCount', { count: items.length })}
           </Button>
         </div>
       }
@@ -113,7 +115,7 @@ export function BulkRestockDialog({
         {/* Quick set for all items */}
         <div className="rounded-xl border border-border/80 bg-muted/30 p-3 space-y-2">
           <Label className="text-xs font-semibold">
-            Itakda ang Dami para sa Lahat (Quick Fill)
+            {t('inventory:quickFillLabel')}
           </Label>
           <div className="flex items-center gap-2">
             <Input
@@ -130,7 +132,7 @@ export function BulkRestockDialog({
               onClick={handleApplyToAll}
               className="h-9 text-xs"
             >
-              Ilapat sa Lahat
+              {t('inventory:applyToAllButton')}
             </Button>
           </div>
         </div>
@@ -138,7 +140,7 @@ export function BulkRestockDialog({
         {/* Selected Items List */}
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold">
-            Talaan ng mga Paninda at Idaragdag na Stock:
+            {t('inventory:itemsAndQtyLabel')}
           </Label>
           <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
             {items.map((item) => {
@@ -159,7 +161,7 @@ export function BulkRestockDialog({
                       {item.name}
                     </p>
                     <p className="text-[11px] text-muted-foreground font-mono">
-                      Stock ngayon: {currentStock} → Bagong Stock: <strong>{projected}</strong>
+                      {t('inventory:currentToNewStock', { current: currentStock, projected })}
                     </p>
                   </div>
 
@@ -182,13 +184,13 @@ export function BulkRestockDialog({
         {/* Notes */}
         <div className="space-y-1.5">
           <Label htmlFor="bulk-notes" className="text-xs font-semibold">
-            Tala / Sanggunian (Opsyonal)
+            {t('inventory:bulkNotesLabel')}
           </Label>
           <Input
             id="bulk-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="hal. Weekly supermarket delivery, supplier invoice #..."
+            placeholder={t('inventory:bulkNotesPlaceholder')}
             className="h-9 text-xs"
           />
         </div>

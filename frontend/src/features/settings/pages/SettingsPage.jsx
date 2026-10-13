@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   Store,
   Receipt,
@@ -23,6 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { ReceiptView } from '@/features/pos/components/ReceiptView'
 import {
   useSettings,
@@ -30,9 +32,11 @@ import {
   useResetDemoData,
 } from '@/features/settings/hooks/useSettings'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { getAutoBarcodeLookup, setAutoBarcodeLookup } from '@/lib/barcodeSettings'
 
 export function SettingsPage() {
-  useDocumentTitle('Mga Setting ng Tindahan (Settings)')
+  const { t } = useTranslation(['settings', 'common'])
+  useDocumentTitle(t('settings:title'))
 
   const { data: settingsRes, isLoading } = useSettings()
   const settings = settingsRes?.data
@@ -40,6 +44,7 @@ export function SettingsPage() {
   const resetMutation = useResetDemoData()
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [autoLookup, setAutoLookup] = useState(() => getAutoBarcodeLookup())
 
   // React Hook Form for settings
   const {
@@ -119,8 +124,8 @@ export function SettingsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Mga Setting ng Tindahan"
-        description="I-customize ang impormasyon ng tindahan, disenyo ng resibo, at default ng imbentaryo"
+        title={t('settings:pageTitle')}
+        description={t('settings:pageSubtitle')}
       />
 
       <Tabs defaultValue="profile" className="space-y-6">
@@ -128,20 +133,20 @@ export function SettingsPage() {
           <TabsList className="h-10 w-full sm:w-auto inline-flex sm:min-w-[340px]">
             <TabsTrigger value="profile" className="flex-1 sm:flex-none gap-2">
               <Store className="h-4 w-4" />
-              Impormasyon ng Tindahan
+              {t('settings:profileTab')}
             </TabsTrigger>
             <TabsTrigger value="receipt" className="flex-1 sm:flex-none gap-2">
               <Receipt className="h-4 w-4" />
-              Resibo & Preview
+              {t('settings:receiptTab')}
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex-1 sm:flex-none gap-2">
               <Boxes className="h-4 w-4" />
-              Mga Default sa Stock
+              {t('settings:inventoryTab')}
             </TabsTrigger>
             {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
               <TabsTrigger value="data" className="flex-1 sm:flex-none gap-2">
                 <Database className="h-4 w-4" />
-                Datos & Reset
+                {t('settings:resetDataTab')}
               </TabsTrigger>
             )}
           </TabsList>
@@ -153,10 +158,10 @@ export function SettingsPage() {
             <form onSubmit={handleSubmit(onSubmit)}>
               <CardHeader>
                 <CardTitle className="text-base font-semibold">
-                  Profile ng Sari-Sari Store
+                  {t('settings:profileCardTitle')}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Pangunahing pangalan at tirahan na lumalabas sa mga ulat at talaan
+                  {t('settings:profileCardDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -164,23 +169,23 @@ export function SettingsPage() {
                   <FormInput
                     name="store_name"
                     control={control}
-                    label="Pangalan ng Tindahan (Store Name)"
-                    placeholder="Hal. Tindahan ni Aling Nena"
+                    label={t('settings:storeNameLabel')}
+                    placeholder={t('settings:storeNamePlaceholder')}
                     required
                     error={errors.store_name?.message}
                   />
                   <FormInput
                     name="owner_name"
                     control={control}
-                    label="Pangalan ng May-ari (Owner Name)"
-                    placeholder="Hal. Nena Santos"
+                    label={t('settings:ownerNameLabel')}
+                    placeholder={t('settings:ownerNamePlaceholder')}
                     error={errors.owner_name?.message}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="store-contact">Telepono ng Tindahan</Label>
+                    <Label htmlFor="store-contact">{t('settings:contactNumberLabel')}</Label>
                     <Controller
                       name="contact_number"
                       control={control}
@@ -189,7 +194,7 @@ export function SettingsPage() {
                           id="store-contact"
                           value={field.value}
                           onChange={field.onChange}
-                          placeholder="0917-123-4567"
+                          placeholder={t('settings:contactNumberPlaceholder')}
                         />
                       )}
                     />
@@ -197,8 +202,8 @@ export function SettingsPage() {
                   <FormInput
                     name="address"
                     control={control}
-                    label="Tirahan / Lokasyon (Address)"
-                    placeholder="Purok 3, Brgy. San Isidro"
+                    label={t('settings:addressLabel')}
+                    placeholder={t('settings:addressPlaceholder')}
                     error={errors.address?.message}
                   />
                 </div>
@@ -214,11 +219,13 @@ export function SettingsPage() {
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
-                  I-save ang Profile
+                  {t('settings:saveProfileButton')}
                 </Button>
               </CardFooter>
             </form>
           </Card>
+
+          <LanguageSwitcher variant="card" className="mt-6" />
         </TabsContent>
 
         {/* TAB 2: Receipt Settings with Live Preview */}
@@ -230,36 +237,36 @@ export function SettingsPage() {
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <CardHeader>
                     <CardTitle className="text-base font-semibold">
-                      Format ng POS Resibo
+                      {t('settings:receiptCardTitle')}
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      I-customize ang mensahe at detalye sa ilalim ng thermal receipt
+                      {t('settings:receiptCardDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormInput
                       name="store_name"
                       control={control}
-                      label="Header ng Resibo (Pangalan sa Itaas)"
-                      placeholder="Hal. TINDAHAN NI ALING NENA"
+                      label={t('settings:receiptHeaderLabel')}
+                      placeholder={t('settings:receiptHeaderPlaceholder')}
                       error={errors.store_name?.message}
                     />
 
                     <FormInput
                       name="receipt_footer"
                       control={control}
-                      label="Mensahe sa Ibaba (Footer Greetings)"
-                      placeholder="Hal. Salamat po! Balik po kayo muli!"
+                      label={t('settings:receiptFooterLabel')}
+                      placeholder={t('settings:receiptFooterPlaceholder')}
                       error={errors.receipt_footer?.message}
                     />
 
                     <div className="flex items-center justify-between rounded-lg border border-border p-3.5">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">
-                          Ipakita ang Pangalan ng Kahera
+                          {t('settings:showCashierLabel')}
                         </Label>
                         <p className="text-xs text-muted-foreground">
-                          Ilalagay sa resibo kung sino ang nag-punch ng benta
+                          {t('settings:showCashierDesc')}
                         </p>
                       </div>
                       <Controller
@@ -269,7 +276,7 @@ export function SettingsPage() {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            aria-label="Toggle cashier name on receipt"
+                            aria-label={t('settings:showCashierLabel')}
                           />
                         )}
                       />
@@ -286,7 +293,7 @@ export function SettingsPage() {
                       ) : (
                         <Save className="h-4 w-4" />
                       )}
-                      I-save ang Format
+                      {t('settings:saveReceiptButton')}
                     </Button>
                   </CardFooter>
                 </form>
@@ -297,7 +304,7 @@ export function SettingsPage() {
             <div className="lg:col-span-5 flex flex-col items-center">
               <div className="w-full text-center mb-2">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Live Preview ng Resibo
+                  {t('settings:receiptPreviewLive')}
                 </span>
               </div>
               <div className="w-full max-w-sm rounded-xl border border-dashed border-border bg-card p-4 font-mono text-xs shadow-xs">
@@ -325,10 +332,10 @@ export function SettingsPage() {
             <form onSubmit={handleSubmit(onSubmit)}>
               <CardHeader>
                 <CardTitle className="text-base font-semibold">
-                  Mga Default ng Imbentaryo (Inventory Defaults)
+                  {t('settings:inventoryCardTitle')}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Pamantayan para sa mga paalala kapag nauubusan ng paninda
+                  {t('settings:inventoryCardDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -336,7 +343,7 @@ export function SettingsPage() {
                   <FormInput
                     name="default_reorder_level"
                     control={control}
-                    label="Default Reorder Level (Piraso)"
+                    label={t('settings:reorderLevelUnits')}
                     type="number"
                     min="1"
                     placeholder="10"
@@ -345,8 +352,8 @@ export function SettingsPage() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-xs">
-                      <Label>Low-Stock Threshold: {watchedValues.low_stock_threshold_percent}%</Label>
-                      <span className="text-muted-foreground">ng reorder level</span>
+                      <Label>{t('settings:lowStockPercentLabel')}: {watchedValues.low_stock_threshold_percent}%</Label>
+                      <span className="text-muted-foreground">{t('settings:ofReorderLevel')}</span>
                     </div>
                     <Controller
                       name="low_stock_threshold_percent"
@@ -363,9 +370,30 @@ export function SettingsPage() {
                       )}
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Kapag umabot sa {watchedValues.low_stock_threshold_percent}% o mas mababa ang stock,
-                      mamarkahan ito bilang "Running Low".
+                      {t('settings:runningLowDesc', { percent: watchedValues.low_stock_threshold_percent })}
                     </p>
+                  </div>
+
+                  {/* Auto Online Barcode Lookup Toggle */}
+                  <div className="md:col-span-2 rounded-xl border border-border/80 bg-muted/20 p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="auto-lookup-switch" className="text-sm font-semibold cursor-pointer">
+                          {t('settings:autoBarcodeLookup')}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings:autoBarcodeLookupDesc')}
+                        </p>
+                      </div>
+                      <Switch
+                        id="auto-lookup-switch"
+                        checked={autoLookup}
+                        onCheckedChange={(checked) => {
+                          setAutoLookup(checked)
+                          setAutoBarcodeLookup(checked)
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -380,7 +408,7 @@ export function SettingsPage() {
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
-                  I-save ang Defaults
+                  {t('settings:saveInventoryButton')}
                 </Button>
               </CardFooter>
             </form>
@@ -394,18 +422,17 @@ export function SettingsPage() {
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2 text-destructive">
                   <AlertTriangle className="h-5 w-5" />
-                  Pamamahala ng Datos (Reset Demo Data)
+                  {t('settings:dataCardTitle')}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Ibalik ang buong database sa orihinal na binhi (seed) para sa pagsusulit o demonstrasyon.
+                  {t('settings:dataCardDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive space-y-1.5">
-                  <p className="font-semibold text-sm">BABALA SA PAG-RESET:</p>
+                  <p className="font-semibold text-sm">{t('settings:resetWarningTitle')}</p>
                   <p>
-                    Ang pag-reset ay magbabalik ng lahat ng paninda, mga kustomer, mga naitalang benta sa POS,
-                    at kasaysayan ng utang sa orihinal na mock dataset. Lahat ng bagong naidagdag ay mabubura.
+                    {t('settings:resetWarningBody')}
                   </p>
                 </div>
               </CardContent>
@@ -416,7 +443,7 @@ export function SettingsPage() {
                   className="gap-2 w-full sm:w-auto"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  I-reset ang Lahat ng Demo Data
+                  {t('settings:resetDataButton')}
                 </Button>
               </CardFooter>
             </Card>
@@ -429,10 +456,10 @@ export function SettingsPage() {
         <ConfirmDialog
           open={resetDialogOpen}
           onOpenChange={setResetDialogOpen}
-          title="I-reset ang Lahat ng Datos sa Simula?"
-          description="Mawawala ang lahat ng mga bagong produktong idinagdag, nabagong utang, at bagong benta. Sigurado ka bang nais mong ibalik ang default demo seed data?"
-          confirmText="Oo, Ibalik sa Simula"
-          cancelText="Huwag Ituloy"
+          title={t('settings:confirmResetTitle')}
+          description={t('settings:confirmResetDesc')}
+          confirmText={t('settings:confirmResetButton')}
+          cancelText={t('settings:cancelResetButton')}
           tone="destructive"
           onConfirm={handleConfirmReset}
           isLoading={resetMutation.isPending}

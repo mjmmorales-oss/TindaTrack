@@ -17,7 +17,7 @@ export function getCurrentUser() {
   return {
     id: 1,
     name: 'Nena Dela Cruz',
-    email: 'owner@tindatrack.test',
+    email: 'owner@store.local',
     role: 'owner',
     is_active: true,
   }

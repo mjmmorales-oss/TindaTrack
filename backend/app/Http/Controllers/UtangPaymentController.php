@@ -28,7 +28,7 @@ class UtangPaymentController extends Controller
 
         return response()->json([
             'data' => new UtangPaymentResource($payment),
-            'message' => 'Matagumpay na naitala ang bayad ng utang.',
+            'message' => 'Debt payment recorded successfully.',
         ], 201);
     }
 }

@@ -41,12 +41,14 @@ import { useSales } from '@/features/sales/hooks/useSales'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePermissions } from '@/hooks/usePermissions'
 import { formatDate, formatDateTime, formatRelative } from '@/lib/format'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Product detail profile page displaying specifications, profit margins,
  * 30-day sales volume bar chart, stock movement audit trail, and recent transactions.
  */
 export function ProductDetailPage() {
+  const { t } = useTranslation(['products', 'common'])
   const { id } = useParams()
   const navigate = useNavigate()
   const { can } = usePermissions()
@@ -158,9 +160,9 @@ export function ProductDetailPage() {
     return (
       <PageContainer className="py-12">
         <ErrorState
-          title="Hindi mahanap ang produkto"
-          description={productError?.message || 'Maaaring nabura na o maling ID ang ibinigay.'}
-          actionText="Bumalik sa Listahan ng Produkto"
+          title={t('products:notFoundTitle', 'Product not found')}
+          description={productError?.message || t('products:notFoundDesc', 'The product may have been removed or an invalid ID was requested.')}
+          actionText={t('products:backToList', 'Back to Products List')}
           onAction={() => navigate('/products')}
         />
       </PageContainer>
@@ -183,7 +185,7 @@ export function ProductDetailPage() {
             <Button variant="ghost" size="sm" asChild className="h-8 px-2 -ml-2 text-muted-foreground">
               <Link to="/products">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Mga Produkto
+                {t('products:productsBreadcrumb', 'Products')}
               </Link>
             </Button>
             <StatusBadge
@@ -212,7 +214,7 @@ export function ProductDetailPage() {
               className="h-11 sm:h-9 gap-1.5 font-semibold"
             >
               <ArrowDownUp className="h-4 w-4" />
-              I-adjust ang Stock
+              {t('products:adjustStock', 'Adjust Stock')}
             </Button>
             <Button
               size="sm"
@@ -220,7 +222,7 @@ export function ProductDetailPage() {
               className="h-11 sm:h-9 gap-1.5 font-semibold shadow-xs"
             >
               <Pencil className="h-4 w-4" />
-              I-edit ang Produkto
+              {t('products:edit', 'Edit')}
             </Button>
           </div>
         )}
@@ -233,25 +235,25 @@ export function ProductDetailPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Package className="h-4 w-4 text-primary" />
-              Impormasyon ng Produkto
+              {t('products:generalInfoTitle', 'Product Information')}
             </CardTitle>
             <CardDescription className="text-xs">
-              Mga batayang detalye at klasipikasyon ng paninda
+              {t('products:generalInfoDesc', 'Core specifications and shelf categorization')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
-              <ProductThumb name={product.name} size="xl" className="rounded-xl shrink-0" />
+              <ProductThumb name={product.name} imageUrl={product.image_url} size="xl" className="rounded-xl shrink-0" />
               <div className="space-y-1 min-w-0">
                 <p className="font-bold text-base text-foreground leading-snug">
                   {product.name}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    {category?.name || 'Walang Kategorya'}
+                    {category?.name || t('products:noCategory', 'No Category')}
                   </Badge>
                   <Badge variant="secondary" className="text-xs">
-                    Sukat: {product.unit || 'pc'}
+                    {t('products:unitBadge', { unit: product.unit || 'pc', defaultValue: `Unit: ${product.unit || 'pc'}` })}
                   </Badge>
                 </div>
               </div>
@@ -259,19 +261,19 @@ export function ProductDetailPage() {
 
             <div className="rounded-xl border border-border/70 bg-muted/30 p-3.5 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Paglalarawan:</span>
+                <span className="text-muted-foreground">{t('products:descLabel', 'Description:')}</span>
                 <span className="text-foreground text-right font-medium max-w-[240px]">
-                  {product.description || 'Walang karagdagang paglalarawan.'}
+                  {product.description || t('products:noDesc', 'No description provided.')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Unang Naitala:</span>
+                <span className="text-muted-foreground">{t('products:firstRecorded', 'First Recorded:')}</span>
                 <span className="font-mono text-muted-foreground">
                   {formatDate(product.created_at)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Huling Na-update:</span>
+                <span className="text-muted-foreground">{t('products:updatedCol', 'Last Updated')}:</span>
                 <span className="font-mono text-muted-foreground">
                   {formatRelative(product.updated_at || product.created_at)}
                 </span>
@@ -285,19 +287,19 @@ export function ProductDetailPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-success" />
-              Presyo at Kita (Pricing & Profit)
+              {t('products:pricingTitle', 'Pricing & Profit')}
             </CardTitle>
             <CardDescription className="text-xs">
               {canViewCost
-                ? 'Paghahambing ng puhunan, presyo ng benta, at porsyento ng kita'
-                : 'Kasalukuyang presyo ng benta para sa mga mamimili'}
+                ? t('products:pricingDescCost', 'Comparison of cost price, selling price, and profit margins')
+                : t('products:pricingDescPublic', 'Current selling price for retail customers')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="rounded-xl border border-border/80 bg-card p-3 space-y-1">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                  Presyo ng Benta
+                  {t('products:sellingPrice', 'Selling Price')}
                 </span>
                 <Money amount={price} size="xl" tone="default" className="font-extrabold" />
               </div>
@@ -305,17 +307,17 @@ export function ProductDetailPage() {
               {canViewCost ? (
                 <div className="rounded-xl border border-border/80 bg-card p-3 space-y-1">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                    Puhunan (Cost)
+                    {t('products:costCol', 'Cost Price (Puhunan)')}
                   </span>
                   <Money amount={cost} size="xl" tone="muted" className="font-extrabold" />
                 </div>
               ) : (
                 <div className="rounded-xl border border-border/80 bg-card p-3 space-y-1">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                    Sukat (Unit)
+                    {t('products:unitLabel', 'Unit')}
                   </span>
                   <span className="font-mono text-xl font-bold text-foreground block">
-                    bawat {product.unit || 'pc'}
+                    {t('products:perUnit', { unit: product.unit || 'pc', defaultValue: `per ${product.unit || 'pc'}` })}
                   </span>
                 </div>
               )}
@@ -324,17 +326,17 @@ export function ProductDetailPage() {
             {canViewCost && (
               <div className="rounded-xl border border-success/30 bg-success/5 p-3.5 space-y-2 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Tubo bawat Piraso (Profit):</span>
+                  <span className="text-muted-foreground font-medium">{t('products:profitPerUnit', 'Profit per Unit:')}</span>
                   <Money amount={profitPerUnit} size="sm" tone="success" className="font-bold" />
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Profit Margin:</span>
+                  <span className="text-muted-foreground font-medium">{t('products:marginLabel', 'Profit Margin:')}</span>
                   <Badge variant="outline" className="border-success/40 text-success font-mono font-bold">
                     {marginPercent}%
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Markup sa Puhunan:</span>
+                  <span className="text-muted-foreground font-medium">{t('products:markupLabel', 'Markup on Cost:')}</span>
                   <span className="font-mono text-foreground font-bold">
                     {markupPercent}%
                   </span>
@@ -351,21 +353,21 @@ export function ProductDetailPage() {
               <div>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Layers className="h-4 w-4 text-warning" />
-                  Kasalukuyang Stock & Kasaysayan
+                  {t('products:stockHistoryTitle', 'Current Stock & History')}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Subaybayan ang pagpasok at pagbawas ng paninda
+                  {t('products:stockHistoryDesc', 'Monitor inventory additions, deductions, and sales')}
                 </CardDescription>
               </div>
               <Badge variant="outline" className="font-mono text-xs">
-                {product.stock_quantity} {product.unit || 'pcs'} natira
+                {t('products:stockRemaining', { count: product.stock_quantity, unit: product.unit || 'pcs', defaultValue: `${product.stock_quantity} ${product.unit || 'pcs'} remaining` })}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Dami vs Reorder Level:</span>
+                <span>{t('products:stockVsMin', 'Stock vs Minimum:')}</span>
                 <span className="font-mono font-bold text-foreground">
                   {product.stock_quantity} / Min {product.reorder_level}
                 </span>
@@ -380,7 +382,7 @@ export function ProductDetailPage() {
             {/* Movements history */}
             <div className="space-y-2 pt-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                Mga Kamakailang Paggalaw (Recent Movements):
+                {t('products:recentMovements', 'Recent Movements')}:
               </span>
 
               {movements.length > 0 ? (
@@ -393,12 +395,12 @@ export function ProductDetailPage() {
                       <div className="min-w-0 pr-2">
                         <p className="font-semibold text-foreground capitalize">
                           {m.type === 'sale'
-                            ? 'Benta sa POS'
+                            ? t('products:movementSale', 'POS Sale')
                             : m.type === 'restock'
-                              ? 'Restock'
+                              ? t('products:movementRestock', 'Restock')
                               : m.type === 'damage'
-                                ? 'Sira / Tapon'
-                                : 'Koreksyon'}
+                                ? t('products:movementDamage', 'Damage / Waste')
+                                : t('products:movementCorrection', 'Correction')}
                         </p>
                         <p className="text-[11px] text-muted-foreground">
                           {formatDateTime(m.created_at)} {m.notes ? `· ${m.notes}` : ''}
@@ -413,7 +415,7 @@ export function ProductDetailPage() {
                           {m.quantity > 0 ? `+${m.quantity}` : m.quantity} {product.unit || 'pcs'}
                         </span>
                         <p className="text-[10px] text-muted-foreground font-mono">
-                          Balanse: {m.stock_after}
+                          {t('products:balanceAfterLabel', { count: m.stock_after, defaultValue: `Balance: ${m.stock_after}` })}
                         </p>
                       </div>
                     </div>
@@ -421,7 +423,7 @@ export function ProductDetailPage() {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground py-4 text-center">
-                  Walang naitalang paggalaw ng stock.
+                  {t('products:noMovementsRecorded', 'No stock movements recorded yet.')}
                 </p>
               )}
             </div>

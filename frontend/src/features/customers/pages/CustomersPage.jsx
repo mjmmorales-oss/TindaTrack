@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Plus,
   Users,
@@ -43,7 +44,8 @@ import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function CustomersPage() {
-  useDocumentTitle('Mga Suki at Kustomer (Customers)')
+  const { t } = useTranslation(['customers', 'common'])
+  useDocumentTitle(t('customers:title'))
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canManage = can('customers.manage')
@@ -133,7 +135,7 @@ export function CustomersPage() {
     if (bal <= 0) {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-          ₱0.00 (Walang Utang)
+          {t('customers:noDebtBadge')}
         </span>
       )
     }
@@ -142,14 +144,14 @@ export function CustomersPage() {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2.5 py-0.5 text-xs font-semibold text-destructive border border-destructive/30">
           <AlertCircle className="h-3 w-3" />
-          <Money amount={bal} size="xs" tone="destructive" /> (Over Limit)
+          <Money amount={bal} size="xs" tone="destructive" /> ({t('customers:overLimitBadge')})
         </span>
       )
     }
 
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-utang/15 px-2.5 py-0.5 text-xs font-semibold text-utang border border-utang/30">
-        <Money amount={bal} size="xs" tone="utang" /> Utang
+        <Money amount={bal} size="xs" tone="utang" /> {t('customers:utangBadge')}
       </span>
     )
   }
@@ -160,7 +162,9 @@ export function CustomersPage() {
       {
         id: 'name',
         accessorKey: 'name',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Pangalan ng Suki" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('customers:nameCol')} />
+        ),
         cell: ({ row }) => {
           const c = row.original
           return (
@@ -186,7 +190,7 @@ export function CustomersPage() {
       {
         id: 'contact_number',
         accessorKey: 'contact_number',
-        header: 'Telepono',
+        header: t('customers:phoneCol'),
         cell: ({ row }) => {
           const phone = row.original.contact_number
           return phone ? (
@@ -199,7 +203,7 @@ export function CustomersPage() {
       {
         id: 'address',
         accessorKey: 'address',
-        header: 'Tirahan',
+        header: t('customers:addressCol'),
         cell: ({ row }) => {
           const addr = row.original.address
           return (
@@ -212,13 +216,15 @@ export function CustomersPage() {
       {
         id: 'credit_balance',
         accessorKey: 'credit_balance',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Balanse ng Utang" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('customers:balanceCol')} />
+        ),
         cell: ({ row }) => renderBalanceBadge(row.original),
       },
       {
         id: 'last_activity',
         accessorKey: 'last_activity',
-        header: 'Huling Transaksyon',
+        header: t('customers:lastActivityCol'),
         cell: ({ row }) => {
           const date = row.original.last_activity || row.original.created_at
           return (
@@ -241,7 +247,7 @@ export function CustomersPage() {
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    aria-label={`Aksyon para kay ${c.name}`}
+                    aria-label={t('customers:actionForCustomer', { name: c.name })}
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
@@ -249,7 +255,7 @@ export function CustomersPage() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => navigate(`/customers/${c.id}`)}>
                     <Eye className="mr-2 h-4 w-4" />
-                    Tingnan ang Profile
+                    {t('customers:viewProfile')}
                   </DropdownMenuItem>
 
                   {canCollect && Number(c.credit_balance || 0) > 0 && (
@@ -258,14 +264,14 @@ export function CustomersPage() {
                       className="text-utang focus:text-utang"
                     >
                       <HandCoins className="mr-2 h-4 w-4" />
-                      Kolektahin ang Bayad
+                      {t('customers:collectPayment')}
                     </DropdownMenuItem>
                   )}
 
                   {canManage && (
                     <DropdownMenuItem onClick={() => handleEdit(c)}>
                       <Edit2 className="mr-2 h-4 w-4" />
-                      I-edit ang Impormasyon
+                      {t('customers:editInfo')}
                     </DropdownMenuItem>
                   )}
 
@@ -275,7 +281,7 @@ export function CustomersPage() {
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Burahin ang Rekord
+                      {t('customers:deleteRecord')}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -285,7 +291,7 @@ export function CustomersPage() {
         },
       },
     ],
-    [navigate, canManage, canDelete, canCollect],
+    [navigate, canManage, canDelete, canCollect, t],
   )
 
   // Mobile card renderer below md
@@ -322,7 +328,7 @@ export function CustomersPage() {
                 variant="ghost"
                 size="icon"
                 className="h-11 w-11 text-muted-foreground hover:text-foreground touch-manipulation shrink-0"
-                aria-label={`Aksyon para kay ${c.name}`}
+                aria-label={t('customers:actionForCustomer', { name: c.name })}
               >
                 <MoreVertical className="h-5 w-5" />
               </Button>
@@ -330,7 +336,7 @@ export function CustomersPage() {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => navigate(`/customers/${c.id}`)}>
                 <Eye className="mr-2 h-4 w-4" />
-                Tingnan ang Profile
+                {t('customers:viewProfile')}
               </DropdownMenuItem>
               {canCollect && hasBalance && (
                 <DropdownMenuItem
@@ -338,13 +344,13 @@ export function CustomersPage() {
                   className="text-utang focus:text-utang"
                 >
                   <HandCoins className="mr-2 h-4 w-4" />
-                  Kolektahin ang Bayad
+                  {t('customers:collectPayment')}
                 </DropdownMenuItem>
               )}
               {canManage && (
                 <DropdownMenuItem onClick={() => handleEdit(c)}>
                   <Edit2 className="mr-2 h-4 w-4" />
-                  I-edit
+                  {t('customers:editShort')}
                 </DropdownMenuItem>
               )}
               {canDelete && (
@@ -353,7 +359,7 @@ export function CustomersPage() {
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Burahin
+                  {t('customers:deleteShort')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -387,7 +393,7 @@ export function CustomersPage() {
               className="h-8 gap-1.5 text-xs text-utang hover:text-utang border-utang/40 hover:bg-utang/10"
             >
               <HandCoins className="h-3.5 w-3.5" />
-              Kolektahin
+              {t('customers:collectShort')}
             </Button>
           )}
         </div>
@@ -398,13 +404,13 @@ export function CustomersPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Direktoryo ng Suki (Customers)"
-        description="Pamahalaan ang mga profile ng kustomer, contact number, credit limit, at utang"
+        title={t('customers:pageTitle')}
+        description={t('customers:pageSubtitle')}
         actions={
           canManage && (
             <Button size="sm" onClick={handleCreate} className="gap-1.5 h-9">
               <Plus className="h-4 w-4" />
-              Magdagdag ng Suki (Add Customer)
+              {t('customers:addCustomerButton')}
             </Button>
           )
         }
@@ -414,7 +420,7 @@ export function CustomersPage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
         <span className="text-muted-foreground font-medium shrink-0 flex items-center gap-1">
           <Filter className="h-3.5 w-3.5" />
-          Filter:
+          {t('customers:filterLabel')}
         </span>
         <button
           type="button"
@@ -426,7 +432,7 @@ export function CustomersPage() {
               : 'bg-card text-muted-foreground border-border hover:bg-muted',
           )}
         >
-          Lahat (All)
+          {t('customers:filterAll')}
         </button>
         <button
           type="button"
@@ -438,7 +444,7 @@ export function CustomersPage() {
               : 'bg-card text-muted-foreground border-border hover:bg-muted',
           )}
         >
-          May Utang (With Balance)
+          {t('customers:filterWithBalance')}
         </button>
         <button
           type="button"
@@ -450,7 +456,7 @@ export function CustomersPage() {
               : 'bg-card text-muted-foreground border-border hover:bg-muted',
           )}
         >
-          Lampas sa Limit (Over Limit)
+          {t('customers:filterOverLimit')}
         </button>
       </div>
 
@@ -468,7 +474,7 @@ export function CustomersPage() {
           onSortChange={(sort) => setParams({ sort, page: 1 })}
           search={params.q}
           onSearchChange={(q) => setParams({ q, page: 1 })}
-          searchPlaceholder="Maghanap sa pangalan, palayaw, o telepono..."
+          searchPlaceholder={t('customers:searchPlaceholder')}
           activeFilters={params}
           onResetFilters={() =>
             resetParams({
@@ -485,12 +491,12 @@ export function CustomersPage() {
           isError={isError}
           onRetry={refetch}
           emptyIcon={Users}
-          emptyTitle="Walang natagpuang kustomer"
-          emptyDescription="Maaaring magdagdag ng bagong suki o baguhin ang mga filter sa paghahanap."
+          emptyTitle={t('customers:emptyTitle')}
+          emptyDescription={t('customers:emptyDesc')}
           emptyAction={
             canManage && (
               <Button size="sm" onClick={handleCreate}>
-                Magdagdag ng Suki
+                {t('customers:addCustomer')}
               </Button>
             )
           }
@@ -517,10 +523,10 @@ export function CustomersPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Burahin ang Rekord ng Suki"
-        description={`Sigurado ka bang nais mong burahin ang rekord ni ${deletingCustomer?.name}? Hindi na ito maibabalik.`}
-        confirmText="Oo, Burahin"
-        cancelText="Huwag Ituloy"
+        title={t('customers:deleteConfirmTitle')}
+        description={t('customers:deleteConfirmDesc', { name: deletingCustomer?.name })}
+        confirmText={t('customers:deleteConfirmButton')}
+        cancelText={t('customers:cancelButton')}
         tone="destructive"
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
@@ -530,22 +536,20 @@ export function CustomersPage() {
       <ResponsiveDialog
         open={blockedAlertOpen}
         onOpenChange={setBlockedAlertOpen}
-        title="Hindi Maaaring Burahin ang Suki"
-        description="Mayroon pang natitirang utang ang kustomer."
+        title={t('customers:blockedDeleteTitle')}
+        description={t('customers:blockedDeleteDesc')}
         className="sm:max-w-md"
       >
         <div className="space-y-4 py-2">
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3.5 text-sm text-destructive flex items-start gap-3">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">May Natitirang Balanse</p>
+              <p className="font-semibold">{t('customers:blockedDeleteHasBalance')}</p>
               <p className="text-xs mt-1 text-destructive/90">
-                May natitirang utang pa na{' '}
-                <strong className="underline">
-                  ₱{Number(blockedCustomer?.credit_balance || 0).toFixed(2)}
-                </strong>{' '}
-                si {blockedCustomer?.name}. Kailangang makolekta o ma-clear muna ang utang bago
-                burahin ang kanyang account.
+                {t('customers:blockedDeleteDetail', {
+                  name: blockedCustomer?.name,
+                  amount: `₱${Number(blockedCustomer?.credit_balance || 0).toFixed(2)}`,
+                })}
               </p>
             </div>
           </div>
@@ -555,7 +559,7 @@ export function CustomersPage() {
               variant="outline"
               onClick={() => setBlockedAlertOpen(false)}
             >
-              Isara (Close)
+              {t('customers:closeButton')}
             </Button>
             {canCollect && (
               <Button
@@ -566,7 +570,7 @@ export function CustomersPage() {
                 className="gap-1.5"
               >
                 <HandCoins className="h-4 w-4" />
-                Kolektahin ang Bayad
+                {t('customers:collectPayment')}
               </Button>
             )}
           </div>

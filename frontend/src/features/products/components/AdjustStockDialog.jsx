@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Check, ChevronsUpDown, Loader2, PackageCheck, ScanBarcode } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -54,6 +55,7 @@ export function AdjustStockDialog({
   product = null,
   onSuccess,
 }) {
+  const { t } = useTranslation(['inventory', 'common', 'products'])
   const [chosenProduct, setChosenProduct] = useState(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
@@ -78,9 +80,9 @@ export function AdjustStockDialog({
     if (matched) {
       setChosenProduct(matched)
       beep()
-      notify.success('Napili ang produkto', matched.name)
+      notify.success(t('inventory:productSelected'), matched.name)
     } else {
-      notify.warning('Hindi nahanap', 'Walang produktong may barcode na ito.')
+      notify.warning(t('inventory:productNotFound'), t('inventory:noProductWithBarcode'))
     }
   }
 
@@ -130,12 +132,12 @@ export function AdjustStockDialog({
     setErrorMsg('')
 
     if (!activeProduct) {
-      setErrorMsg('Pumili muna ng produkto bago mag-adjust ng stock.')
+      setErrorMsg(t('inventory:mustSelectProduct'))
       return
     }
 
     if (computedNewStock < 0) {
-      setErrorMsg('Hindi maaaring maging negatibo ang bilang ng stock.')
+      setErrorMsg(t('inventory:cannotBeNegative'))
       return
     }
 
@@ -145,7 +147,7 @@ export function AdjustStockDialog({
     if (type === 'correction') {
       const delta = qtyNum - currentStock
       if (delta === 0) {
-        setErrorMsg('Walang pagbabago sa bilang ng stock.')
+        setErrorMsg(t('inventory:noStockChange'))
         return
       }
       payloadQty = Math.abs(delta)
@@ -167,7 +169,7 @@ export function AdjustStockDialog({
       setErrorMsg(
         err.response?.data?.message ||
           err.message ||
-          'Nabigong i-adjust ang stock.',
+          t('inventory:adjustFailed'),
       )
     }
   }
@@ -175,286 +177,286 @@ export function AdjustStockDialog({
   return (
     <>
       <ResponsiveDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={
-        activeProduct
-          ? `I-adjust ang Stock: ${activeProduct.name}`
-          : 'I-adjust ang Stock'
-      }
-      description={
-        activeProduct
-          ? `Kasalukuyang stock: ${currentStock} ${activeProduct.unit || 'pcs'}`
-          : 'Pumili ng produkto upang i-adjust ang bilang sa imbentaryo.'
-      }
-      className="sm:max-w-md"
-      footer={
-        <div className="flex w-full items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={adjustMutation.isPending}
-          >
-            Kanselahin
-          </Button>
-          <Button
-            type="submit"
-            form="adjust-stock-form"
-            disabled={!canSubmit}
-            className="gap-1.5"
-          >
-            {adjustMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <PackageCheck className="h-4 w-4" />
-            )}
-            {activeProduct
-              ? `Kumpirmahin ang Stock (${computedNewStock})`
-              : 'Pumili ng Produkto'}
-          </Button>
-        </div>
-      }
-    >
-      <form id="adjust-stock-form" onSubmit={handleSubmit} className="space-y-4">
-        {errorMsg && (
-          <Alert variant="destructive" className="py-2.5">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Product Selection Mode: Read-Only Header when passed, Popover Picker when absent */}
-        {product ? (
-          <div className="rounded-xl border border-border/80 bg-muted/40 p-3 flex items-center justify-between text-xs">
-            <div className="min-w-0 pr-2">
-              <span className="font-semibold text-foreground truncate block">
-                {product.name}
-              </span>
-              <span className="text-muted-foreground font-mono text-[11px]">
-                {product.sku || 'Walang SKU'}
-                {product.barcode ? ` · ${product.barcode}` : ''}
-              </span>
-            </div>
-            <Badge variant="outline" className="font-mono text-xs shrink-0 font-medium">
-              Stock: {currentStock} {product.unit || 'pcs'}
-            </Badge>
+        open={open}
+        onOpenChange={onOpenChange}
+        title={
+          activeProduct
+            ? t('inventory:adjustStockModalProductTitle', { name: activeProduct.name })
+            : t('inventory:adjustStockModalTitle')
+        }
+        description={
+          activeProduct
+            ? t('inventory:adjustStockDescProduct', { count: currentStock, unit: activeProduct.unit || 'pcs' })
+            : t('inventory:adjustStockDescGeneral')
+        }
+        className="sm:max-w-md"
+        footer={
+          <div className="flex w-full items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={adjustMutation.isPending}
+            >
+              {t('common:cancel')}
+            </Button>
+            <Button
+              type="submit"
+              form="adjust-stock-form"
+              disabled={!canSubmit}
+              className="gap-1.5"
+            >
+              {adjustMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PackageCheck className="h-4 w-4" />
+              )}
+              {activeProduct
+                ? t('inventory:confirmStockCount', { count: computedNewStock })
+                : t('inventory:selectProductFirst')}
+            </Button>
           </div>
-        ) : (
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Pumili ng Produkto</Label>
-            <div className="flex items-center gap-1.5">
-              <div className="flex-1 min-w-0">
-                <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={pickerOpen}
-                      aria-label="Pumili ng produkto para sa stock adjustment"
-                      className="w-full justify-between h-10 text-xs font-normal"
-                    >
-                      {chosenProduct ? (
-                        <span className="truncate font-medium text-foreground">
-                          {chosenProduct.name} ({chosenProduct.stock_quantity ?? 0}{' '}
-                          {chosenProduct.unit || 'pcs'})
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          Pumili ng produkto (Maghanap ayon sa pangalan, SKU)...
-                        </span>
-                      )}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[320px] sm:w-[400px] p-0" align="start">
-                    <Command>
-                      <CommandInput
-                        placeholder="Maghanap ng pangalan, SKU, barcode..."
-                        className="text-xs"
-                      />
-                      <CommandList className="max-h-60">
-                        <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">
-                          {isProductsLoading
-                            ? 'Kinukuha ang mga paninda...'
-                            : 'Walang nahanap na produkto.'}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {productList.map((p) => {
-                            const isSelected = activeProduct?.id === p.id
-                            return (
-                              <CommandItem
-                                key={p.id}
-                                value={`${p.name} ${p.sku || ''} ${p.barcode || ''} ${p.id}`}
-                                onSelect={() => {
-                                  setChosenProduct(p)
-                                  setPickerOpen(false)
-                                }}
-                                className="flex items-center justify-between py-2 text-xs cursor-pointer"
-                              >
-                                <div className="flex items-center gap-2 min-w-0 pr-2">
-                                  <Check
-                                    className={cn(
-                                      'h-4 w-4 shrink-0',
-                                      isSelected ? 'opacity-100 text-primary' : 'opacity-0',
-                                    )}
-                                  />
-                                  <div className="min-w-0">
-                                    <span className="font-semibold block truncate">
-                                      {p.name}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground font-mono">
-                                      {p.sku || 'Walang SKU'}
-                                      {p.barcode ? ` · ${p.barcode}` : ''}
-                                    </span>
-                                  </div>
-                                </div>
-                                <Badge
-                                  variant={
-                                    p.stock_quantity <= (p.reorder_level || 5)
-                                      ? 'warning'
-                                      : 'outline'
-                                  }
-                                  className="font-mono text-[10px] shrink-0"
-                                >
-                                  {p.stock_quantity} {p.unit || 'pcs'}
-                                </Badge>
-                              </CommandItem>
-                            )
-                          })}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+        }
+      >
+        <form id="adjust-stock-form" onSubmit={handleSubmit} className="space-y-4">
+          {errorMsg && (
+            <Alert variant="destructive" className="py-2.5">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Product Selection Mode: Read-Only Header when passed, Popover Picker when absent */}
+          {product ? (
+            <div className="rounded-xl border border-border/80 bg-muted/40 p-3 flex items-center justify-between text-xs">
+              <div className="min-w-0 pr-2">
+                <span className="font-semibold text-foreground truncate block">
+                  {product.name}
+                </span>
+                <span className="text-muted-foreground font-mono text-[11px]">
+                  {product.sku || t('inventory:noSku')}
+                  {product.barcode ? ` · ${product.barcode}` : ''}
+                </span>
               </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsScannerOpen(true)}
-                className="h-10 text-xs px-2.5 gap-1 shrink-0"
-                title="I-scan ang barcode ng produkto"
-              >
-                <ScanBarcode className="h-4 w-4 text-primary" />
-                <span className="hidden sm:inline">I-scan</span>
-              </Button>
+              <Badge variant="outline" className="font-mono text-xs shrink-0 font-medium">
+                {t('inventory:currentStockLabel')} {currentStock} {product.unit || 'pcs'}
+              </Badge>
             </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">{t('inventory:selectProductLabel')}</Label>
+              <div className="flex items-center gap-1.5">
+                <div className="flex-1 min-w-0">
+                  <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={pickerOpen}
+                        aria-label={t('inventory:selectProductLabel')}
+                        className="w-full justify-between h-10 text-xs font-normal"
+                      >
+                        {chosenProduct ? (
+                          <span className="truncate font-medium text-foreground">
+                            {chosenProduct.name} ({chosenProduct.stock_quantity ?? 0}{' '}
+                            {chosenProduct.unit || 'pcs'})
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {t('inventory:selectProductComboboxPlaceholder')}
+                          </span>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[320px] sm:w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder={t('inventory:searchProductPlaceholder')}
+                          className="text-xs"
+                        />
+                        <CommandList className="max-h-60">
+                          <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">
+                            {isProductsLoading
+                              ? t('inventory:loadingProducts')
+                              : t('inventory:noProductsFound')}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {productList.map((p) => {
+                              const isSelected = activeProduct?.id === p.id
+                              return (
+                                <CommandItem
+                                  key={p.id}
+                                  value={`${p.name} ${p.sku || ''} ${p.barcode || ''} ${p.id}`}
+                                  onSelect={() => {
+                                    setChosenProduct(p)
+                                    setPickerOpen(false)
+                                  }}
+                                  className="flex items-center justify-between py-2 text-xs cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                                    <Check
+                                      className={cn(
+                                        'h-4 w-4 shrink-0',
+                                        isSelected ? 'opacity-100 text-primary' : 'opacity-0',
+                                      )}
+                                    />
+                                    <div className="min-w-0">
+                                      <span className="font-semibold block truncate">
+                                        {p.name}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground font-mono">
+                                        {p.sku || t('inventory:noSku')}
+                                        {p.barcode ? ` · ${p.barcode}` : ''}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      p.stock_quantity <= (p.reorder_level || 5)
+                                        ? 'warning'
+                                        : 'outline'
+                                    }
+                                    className="font-mono text-[10px] shrink-0"
+                                  >
+                                    {p.stock_quantity} {p.unit || 'pcs'}
+                                  </Badge>
+                                </CommandItem>
+                              )
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsScannerOpen(true)}
+                  className="h-10 text-xs px-2.5 gap-1 shrink-0"
+                  title={t('inventory:scanBarcodeTooltip')}
+                >
+                  <ScanBarcode className="h-4 w-4 text-primary" />
+                  <span className="hidden sm:inline">{t('inventory:scanBarcodeButton')}</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Adjustment Type Selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">{t('inventory:adjustmentReasonLabel')}</Label>
+            <Select
+              value={type}
+              onValueChange={setType}
+              disabled={!activeProduct}
+            >
+              <SelectTrigger className="h-10 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="restock" className="text-xs">
+                  {t('inventory:reasonRestock')}
+                </SelectItem>
+                <SelectItem value="damage" className="text-xs">
+                  {t('inventory:reasonDamage')}
+                </SelectItem>
+                <SelectItem value="correction" className="text-xs">
+                  {t('inventory:reasonCorrection')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
 
-        {/* Adjustment Type Selector */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-semibold">Uri ng Pagbabago (Reason)</Label>
-          <Select
-            value={type}
-            onValueChange={setType}
-            disabled={!activeProduct}
-          >
-            <SelectTrigger className="h-10 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="restock" className="text-xs">
-                📦 Restock (Bagong dating na paninda)
-              </SelectItem>
-              <SelectItem value="damage" className="text-xs">
-                ⚠️ Damage / Tapon (Sira o expire na paninda)
-              </SelectItem>
-              <SelectItem value="correction" className="text-xs">
-                🔍 Physical Count Correction (Aktwal na bilang)
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Quantity Input */}
-        <div className="space-y-1.5">
-          <Label htmlFor="adjust-qty" className="text-xs font-semibold">
-            {type === 'correction'
-              ? 'Aktwal na Bagong Bilang ng Stock'
-              : 'Dami (Quantity)'}
-          </Label>
-          <Input
-            id="adjust-qty"
-            type="number"
-            min={type === 'correction' ? 0 : 1}
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            disabled={!activeProduct}
-            className="h-10 font-mono text-base md:text-sm"
-            inputMode="numeric"
-            autoFocus={Boolean(activeProduct)}
-          />
-        </div>
-
-        {/* Live Stock Preview Card */}
-        {activeProduct ? (
-          <div className="rounded-xl border border-border/80 bg-muted/40 p-3 space-y-1.5 text-xs">
-            <div className="flex justify-between text-muted-foreground">
-              <span>Dating Stock:</span>
-              <span className="font-mono font-medium">
-                {currentStock} {activeProduct.unit || 'pcs'}
-              </span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Pagbabago:</span>
-              <span className="font-mono font-bold">
-                {type === 'restock' && `+${qtyNum}`}
-                {type === 'damage' && `-${qtyNum}`}
-                {type === 'correction' &&
-                  `${qtyNum - currentStock >= 0 ? '+' : ''}${qtyNum - currentStock}`}
-              </span>
-            </div>
-            <div className="border-t border-border/70 pt-1.5 flex justify-between items-center font-bold">
-              <span className="text-foreground">Bagong Stock:</span>
-              <span
-                className={`font-mono text-sm ${
-                  isInvalidStock ? 'text-destructive' : 'text-primary'
-                }`}
-              >
-                {computedNewStock} {activeProduct.unit || 'pcs'}
-              </span>
-            </div>
+          {/* Quantity Input */}
+          <div className="space-y-1.5">
+            <Label htmlFor="adjust-qty" className="text-xs font-semibold">
+              {type === 'correction'
+                ? t('inventory:actualStockQtyLabel')
+                : t('inventory:quantityLabel')}
+            </Label>
+            <Input
+              id="adjust-qty"
+              type="number"
+              min={type === 'correction' ? 0 : 1}
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              disabled={!activeProduct}
+              className="h-10 font-mono text-base md:text-sm"
+              inputMode="numeric"
+              autoFocus={Boolean(activeProduct)}
+            />
           </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-3 text-center text-xs text-muted-foreground">
-            Pumili ng produkto sa itaas upang makita ang bagong kalkulasyon ng stock.
+
+          {/* Live Stock Preview Card */}
+          {activeProduct ? (
+            <div className="rounded-xl border border-border/80 bg-muted/40 p-3 space-y-1.5 text-xs">
+              <div className="flex justify-between text-muted-foreground">
+                <span>{t('inventory:previousStockLabel')}</span>
+                <span className="font-mono font-medium">
+                  {currentStock} {activeProduct.unit || 'pcs'}
+                </span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>{t('inventory:changeLabel')}</span>
+                <span className="font-mono font-bold">
+                  {type === 'restock' && `+${qtyNum}`}
+                  {type === 'damage' && `-${qtyNum}`}
+                  {type === 'correction' &&
+                    `${qtyNum - currentStock >= 0 ? '+' : ''}${qtyNum - currentStock}`}
+                </span>
+              </div>
+              <div className="border-t border-border/70 pt-1.5 flex justify-between items-center font-bold">
+                <span className="text-foreground">{t('inventory:newStockLabel')}</span>
+                <span
+                  className={`font-mono text-sm ${
+                    isInvalidStock ? 'text-destructive' : 'text-primary'
+                  }`}
+                >
+                  {computedNewStock} {activeProduct.unit || 'pcs'}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-3 text-center text-xs text-muted-foreground">
+              {t('inventory:selectProductPrompt')}
+            </div>
+          )}
+
+          {isInvalidStock && (
+            <p className="text-xs text-destructive font-medium">
+              {t('inventory:negativeStockWarning')}
+            </p>
+          )}
+
+          {/* Notes */}
+          <div className="space-y-1.5">
+            <Label htmlFor="adjust-notes" className="text-xs font-semibold">
+              {t('inventory:notesLabelOptional')}
+            </Label>
+            <Input
+              id="adjust-notes"
+              placeholder={t('inventory:notesPlaceholderInput')}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={!activeProduct}
+              className="h-10 text-xs"
+            />
           </div>
-        )}
+        </form>
+      </ResponsiveDialog>
 
-        {isInvalidStock && (
-          <p className="text-xs text-destructive font-medium">
-            Hindi sapat ang stock para sa bawas na ito.
-          </p>
-        )}
-
-        {/* Notes */}
-        <div className="space-y-1.5">
-          <Label htmlFor="adjust-notes" className="text-xs font-semibold">
-            Tala / Dahilan (Opsyonal)
-          </Label>
-          <Input
-            id="adjust-notes"
-            placeholder="hal. Dumating galing supermarket, Nabutas ang pakete..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={!activeProduct}
-            className="h-10 text-xs"
-          />
-        </div>
-      </form>
-    </ResponsiveDialog>
-
-    <ScannerSheet
-      open={isScannerOpen}
-      onOpenChange={setIsScannerOpen}
-      continuous={false}
-      title="I-scan ang Barcode para Piliin ang Produkto"
-      onDetected={handleBarcodeScanned}
-    />
-  </>
+      <ScannerSheet
+        open={isScannerOpen}
+        onOpenChange={setIsScannerOpen}
+        continuous={false}
+        title={t('inventory:scanBarcodeSheetTitle')}
+        onDetected={handleBarcodeScanned}
+      />
+    </>
 )
 }
 

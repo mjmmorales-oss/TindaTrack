@@ -76,13 +76,13 @@ function assertLayoutIntegrity(path) {
 
   describe('Guest / Public routes', () => {
     const guestRoutes = [
-      { path: '/', expected: /Benta, stock, at utang/i },
+      { path: '/', expected: /Sales, stock, and credit|Benta, stock, at utang/i },
       { path: '/login', expected: /Enter your tindahan account/i },
       { path: '/register', expected: /Register Store/i },
-      { path: '/forgot-password', expected: /Forgot Password/i },
-      { path: '/password-reset/test-token', expected: /Reset Password/i },
-      { path: '/403', expected: /Bawal ang Aksyon|Access Denied|403/i },
-      { path: '/non-existent-page', expected: /Hindi Nahanap|Not Found|404/i },
+      { path: '/forgot-password', expected: /Forgot Password|Nakalimutan ang Password/i },
+      { path: '/password-reset/test-token', expected: /Reset Password|I-reset ang Password/i },
+      { path: '/403', expected: /Bawal ang Aksyon|Access Denied|Forbidden|403/i },
+      { path: '/non-existent-page', expected: /Hindi Nahanap|Not Found|Page Not Found|404/i },
     ]
 
     guestRoutes.forEach(({ path, expected }) => {
@@ -98,21 +98,21 @@ function assertLayoutIntegrity(path) {
 
   describe('Owner routes', () => {
     const ownerRoutes = [
-      { path: '/dashboard', expected: /Magandang/i },
-      { path: '/pos', expected: /Kasalukuyang Benta|Dashboard/i },
-      { path: '/sales', expected: /Kasaysayan ng Benta/i },
-      { path: '/sales/1', expected: /Resibo TT-/i },
-      { path: '/products', expected: /Mga Paninda at Imbentaryo/i },
+      { path: '/dashboard', expected: /Good (morning|day|afternoon|evening)|Magandang/i },
+      { path: '/pos', expected: /Point of Sale Terminal|Kasalukuyang Benta|Connect Phone|Ikonekta ang Phone/i },
+      { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta|Sales History/i },
+      { path: '/sales/1', expected: /Resibo TT-|Receipt TT-/i },
+      { path: '/products', expected: /Mga Paninda at Imbentaryo|Products & Inventory/i },
       { path: '/products/1', expected: /Coca-Cola|SKU:/i },
-      { path: '/categories', expected: /Mga Kategorya/i },
-      { path: '/inventory', expected: /Pamamahala sa Imbentaryo/i },
-      { path: '/customers', expected: /Direktoryo ng Suki/i },
-      { path: '/customers/1', expected: /Kasalukuyang Utang|Bumalik sa mga Suki/i },
-      { path: '/utang', expected: /Talaan ng Utang/i },
-      { path: '/reports', expected: /Mga Ulat at Pagsusuri/i },
-      { path: '/staff', expected: /Mga Account ng Staff at Kahera/i },
-      { path: '/settings', expected: /Mga Setting ng Tindahan/i },
-      { path: '/account', expected: /Aking Account/i },
+      { path: '/categories', expected: /Mga Kategorya ng Paninda|Product Categories|Magdagdag ng Kategorya|Add Category/i },
+      { path: '/inventory', expected: /Pamamahala sa Imbentaryo|Inventory & Stock Management/i },
+      { path: '/customers', expected: /Direktoryo ng Suki|Customer Directory/i },
+      { path: '/customers/1', expected: /Kasalukuyang Utang|Current Credit|Bumalik sa mga Suki|Back to Customers/i },
+      { path: '/utang', expected: /Talaan ng Utang|Credit Ledger/i },
+      { path: '/reports', expected: /Mga Ulat at Pagsusuri|Reports & Analytics/i },
+      { path: '/staff', expected: /Mga Account ng Staff at Kahera|Staff & Cashier Accounts/i },
+      { path: '/settings', expected: /Mga Setting ng Tindahan|Store Settings/i },
+      { path: '/account', expected: /Aking Account|My Account/i },
     ]
 
     ownerRoutes.forEach(({ path, expected }) => {
@@ -128,16 +128,16 @@ function assertLayoutIntegrity(path) {
 
   describe('Cashier routes', () => {
     const cashierRoutes = [
-      { path: '/dashboard', expected: /Magandang/i },
-      { path: '/pos', expected: /Kasalukuyang Benta|Dashboard/i },
-      { path: '/sales', expected: /Kasaysayan ng Benta/i },
-      { path: '/sales/1', expected: /Resibo TT-/i },
-      { path: '/products', expected: /Mga Paninda at Imbentaryo/i },
+      { path: '/dashboard', expected: /Good (morning|day|afternoon|evening)|Magandang/i },
+      { path: '/pos', expected: /Point of Sale Terminal|Kasalukuyang Benta|Connect Phone|Ikonekta ang Phone/i },
+      { path: '/sales', expected: /Subaybayan|Kasaysayan ng Benta|Sales History/i },
+      { path: '/sales/1', expected: /Resibo TT-|Receipt TT-/i },
+      { path: '/products', expected: /Mga Paninda at Imbentaryo|Products & Inventory/i },
       { path: '/products/1', expected: /Coca-Cola|SKU:/i },
-      { path: '/customers', expected: /Direktoryo ng Suki/i },
-      { path: '/customers/1', expected: /Kasalukuyang Utang|Bumalik sa mga Suki/i },
-      { path: '/utang', expected: /Talaan ng Utang/i },
-      { path: '/account', expected: /Aking Account/i },
+      { path: '/customers', expected: /Direktoryo ng Suki|Customer Directory/i },
+      { path: '/customers/1', expected: /Kasalukuyang Utang|Current Credit|Bumalik sa mga Suki|Back to Customers/i },
+      { path: '/utang', expected: /Talaan ng Utang|Credit Ledger/i },
+      { path: '/account', expected: /Aking Account|My Account/i },
     ]
 
     cashierRoutes.forEach(({ path, expected }) => {

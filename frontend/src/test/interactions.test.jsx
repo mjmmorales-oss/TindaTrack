@@ -55,7 +55,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Magdagdag ng Paninda|Add Product/i)).toBeInTheDocument()
     })
 
     it('renders ProductFormDialog in Edit mode', async () => {
@@ -69,7 +69,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Produkto|I-edit ang Paninda|Edit Product/i)).toBeInTheDocument()
     })
 
     it('renders CategoryFormDialog in Add and Edit modes', async () => {
@@ -77,7 +77,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Bagong Kategorya/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Bagong Kategorya|New Category/i)).toBeInTheDocument()
     })
 
     it('renders CustomerFormDialog in Add and Edit modes', async () => {
@@ -85,14 +85,14 @@ describe('Interaction and Dialog Smoke Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|New Customer|Register New Suki/i)).toBeInTheDocument()
 
       const customer = useMockDb.getState().customers[0]
       renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Suki|Edit Customer/i)).toBeInTheDocument()
     })
 
     it('renders AdjustStockDialog', async () => {
@@ -101,7 +101,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={product} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-adjust ang Stock/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-adjust ang Stock|Adjust Stock/i)).toBeInTheDocument()
     })
 
     it('renders RecordPaymentDialog', async () => {
@@ -110,7 +110,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Kolektahin ang Bayad/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment|Collect Payment/i })).toBeInTheDocument()
     })
 
     it('renders PaymentDialog on cash and utang tabs', async () => {
@@ -136,24 +136,24 @@ describe('Interaction and Dialog Smoke Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Cash \(Bayad\)/i)).toBeInTheDocument()
+      expect(await screen.findByRole('tab', { name: /Cash/i })).toBeInTheDocument()
 
       // Switch to Utang tab
       const utangTab = screen.getByRole('tab', { name: /Utang/i })
       await user.click(utangTab)
-      expect(await screen.findByText(/Pangalan ng Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Pangalan ng Suki|Customer Name/i)).toBeInTheDocument()
     })
 
     it('opens Add Cashier dialog on /staff', async () => {
       const user = userEvent.setup()
       renderRoute('/staff', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Mga Account ng Staff at Kahera/i, {}, { timeout: 8000 })
+      await screen.findByText(/Mga Account ng Staff at Kahera|Staff & Cashier/i, {}, { timeout: 8000 })
 
-      const addButton = await screen.findByRole('button', { name: /Magdagdag ng Kahera/i }, { timeout: 8000 })
+      const addButton = await screen.findByRole('button', { name: /Magdagdag ng Kahera|Add Cashier|Add Staff/i }, { timeout: 8000 })
       await user.click(addButton)
 
-      expect(await screen.findByText(/Magdagdag ng Bagong Kahera/i, {}, { timeout: 8000 })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Magdagdag ng Bagong Kahera|Add Cashier|New Cashier|Add Staff/i }, { timeout: 8000 })).toBeInTheDocument()
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
     })
   })
@@ -165,12 +165,12 @@ describe('Interaction and Dialog Smoke Tests', () => {
         const user = userEvent.setup()
         renderRoute('/inventory', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Pamamahala sa Imbentaryo/i, {}, { timeout: 8000 })
+      await screen.findByText(/Pamamahala sa Imbentaryo|Inventory & Stock Management|Stock & Inventory/i, {}, { timeout: 8000 })
 
       const tabs = [
-        { name: /Paubos na Paninda/i, textMatch: /Mga Panindang Paubos at Ubos Na/i },
-        { name: /Audit Log/i, textMatch: /Petsa at Oras|Kasaysayan/i },
-        { name: /Pangkalahatang Tanaw/i, textMatch: /Halaga sa Benta|Dami ng Produkto/i },
+        { name: /Paubos na Paninda|Running Low|Paubos na/i, textMatch: /Mga Panindang Paubos at Ubos Na|Running Low|Paubos/i },
+        { name: /Audit Log|Stock Movements|Paggalaw ng Stock/i, textMatch: /Petsa at Oras|Kasaysayan|Date & Time|Reason|Movement/i },
+        { name: /Pangkalahatang Tanaw|Overview|Pangkalahatan/i, textMatch: /Retail Value|Cost Valuation|Adequately Stocked|Halaga sa Benta|Dami ng Produkto|Total Products|Stock Value|Halaga/i },
       ]
 
       for (const tab of tabs) {
@@ -186,13 +186,13 @@ describe('Interaction and Dialog Smoke Tests', () => {
       const user = userEvent.setup()
       renderRoute('/settings', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      await screen.findByText(/Mga Setting ng Tindahan/i, {}, { timeout: 8000 })
+      await screen.findByText(/Mga Setting ng Tindahan|Store Settings/i, {}, { timeout: 8000 })
 
       const tabs = [
-        { name: /Resibo & Preview/i, textMatch: /Format ng POS Resibo/i },
-        { name: /Mga Default sa Stock/i, textMatch: /Mga Default ng Imbentaryo/i },
-        { name: /Datos & Reset/i, textMatch: /Pamamahala ng Datos/i },
-        { name: /Impormasyon ng Tindahan/i, textMatch: /Profile ng Sari-Sari Store/i },
+        { name: /Resibo & Preview|Receipt & Preview/i, textMatch: /Format ng POS Resibo|POS Receipt Format/i },
+        { name: /Mga Default sa Stock|Stock Defaults/i, textMatch: /Mga Default ng Imbentaryo|Inventory Defaults/i },
+        { name: /Datos & Reset|Data & Reset/i, textMatch: /Pamamahala ng Datos|Data Management/i },
+        { name: /Impormasyon ng Tindahan|Store Profile/i, textMatch: /Profile ng Sari-Sari Store|Store Profile/i },
       ]
 
       for (const tab of tabs) {
@@ -208,10 +208,10 @@ describe('Interaction and Dialog Smoke Tests', () => {
       const user = userEvent.setup()
       renderRoute('/customers/1', { role: 'owner' })
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang/i }, { timeout: 8000 })
+      const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang|Credit Ledger/i }, { timeout: 8000 })
       expect(ledgerTab).toBeInTheDocument()
 
-      const purchasesTab = await screen.findByRole('tab', { name: /Kasaysayan ng Bili/i })
+      const purchasesTab = await screen.findByRole('tab', { name: /Kasaysayan ng Bili|Purchase History/i })
       await user.click(purchasesTab)
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
 

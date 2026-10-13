@@ -1,4 +1,5 @@
 import { format, formatDistanceToNow, isValid } from 'date-fns'
+import i18n from '@/i18n'
 
 const phpCurrencyFormatter = new Intl.NumberFormat('en-PH', {
   style: 'currency',
@@ -8,6 +9,15 @@ const phpCurrencyFormatter = new Intl.NumberFormat('en-PH', {
 })
 
 const phpNumberFormatter = new Intl.NumberFormat('en-PH')
+
+/**
+ * Returns active locale string for Intl formatters ('en-PH' or 'fil-PH').
+ * @returns {'en-PH' | 'fil-PH'}
+ */
+export function getActiveLocale() {
+  const lng = i18n?.language
+  return lng === 'fil' ? 'fil-PH' : 'en-PH'
+}
 
 /**
  * Format a number into Philippine Peso currency string (e.g. ₱1,250.00).
@@ -54,7 +64,7 @@ function toValidDate(date) {
 }
 
 /**
- * Format a date string or timestamp (e.g. "Oct 7, 2026").
+ * Format a date string or timestamp (e.g. "Oct 7, 2026" / "Okt 7, 2026").
  * @param {string|number|Date} date
  * @param {string} [pattern='MMM d, yyyy']
  * @returns {string}
@@ -62,7 +72,24 @@ function toValidDate(date) {
 export function formatDate(date, pattern = 'MMM d, yyyy') {
   const d = toValidDate(date)
   if (!d) return ''
-  return format(d, pattern)
+
+  if (pattern === 'MMM d, yyyy') {
+    return new Intl.DateTimeFormat(getActiveLocale(), {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(d)
+  }
+
+  try {
+    return format(d, pattern)
+  } catch {
+    return new Intl.DateTimeFormat(getActiveLocale(), {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(d)
+  }
 }
 
 /**
@@ -74,7 +101,29 @@ export function formatDate(date, pattern = 'MMM d, yyyy') {
 export function formatDateTime(date, pattern = 'MMM d, yyyy · h:mm a') {
   const d = toValidDate(date)
   if (!d) return ''
-  return format(d, pattern)
+
+  if (pattern === 'MMM d, yyyy · h:mm a') {
+    const datePart = new Intl.DateTimeFormat(getActiveLocale(), {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(d)
+    const timePart = new Intl.DateTimeFormat(getActiveLocale(), {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(d)
+    return `${datePart} · ${timePart}`
+  }
+
+  try {
+    return format(d, pattern)
+  } catch {
+    return new Intl.DateTimeFormat(getActiveLocale(), {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(d)
+  }
 }
 
 /**
@@ -86,7 +135,22 @@ export function formatDateTime(date, pattern = 'MMM d, yyyy · h:mm a') {
 export function formatTime(date, pattern = 'h:mm a') {
   const d = toValidDate(date)
   if (!d) return ''
-  return format(d, pattern)
+
+  if (pattern === 'h:mm a') {
+    return new Intl.DateTimeFormat(getActiveLocale(), {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(d)
+  }
+
+  try {
+    return format(d, pattern)
+  } catch {
+    return new Intl.DateTimeFormat(getActiveLocale(), {
+      timeStyle: 'short',
+    }).format(d)
+  }
 }
 
 /**

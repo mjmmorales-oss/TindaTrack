@@ -56,6 +56,33 @@ export const productService = {
   async lowStock() {
     return apiClient.get('/products/low-stock')
   },
+
+  /**
+   * Uploads an image file for a product (owner only).
+   * POST /api/products/{id}/image
+   */
+  async uploadImage(id, file, source = 'upload') {
+    const formData = new FormData()
+    formData.append('image', file)
+    if (source) formData.append('source', source)
+    return apiClient.post(`/products/${id}/image`, formData)
+  },
+
+  /**
+   * Imports an image from an external Open Food Facts URL with SSRF protection (owner only).
+   * POST /api/products/{id}/image/import
+   */
+  async importImage(id, url) {
+    return apiClient.post(`/products/${id}/image/import`, { url })
+  },
+
+  /**
+   * Deletes a product's stored image and resets image_url to null (owner only).
+   * DELETE /api/products/{id}/image
+   */
+  async deleteImage(id) {
+    return apiClient.delete(`/products/${id}/image`)
+  },
 }
 
 export default productService

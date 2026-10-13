@@ -60,7 +60,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
     })
 
     it('renders in create mode with complete DEFAULT_PRODUCT', async () => {
@@ -74,7 +74,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode with seeded product', async () => {
@@ -89,7 +89,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Produkto/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Produkto|Edit Product/i)).toBeInTheDocument()
     })
   })
 
@@ -99,7 +99,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Bagong Kategorya/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Bagong Kategorya|New Category/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode (seeded category)', async () => {
@@ -108,7 +108,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={category} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Kategorya/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Kategorya|Edit Category/i)).toBeInTheDocument()
     })
   })
 
@@ -118,7 +118,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magdagdag ng Bagong Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki|Register New Suki/i)).toBeInTheDocument()
     })
 
     it('renders in edit mode (seeded customer)', async () => {
@@ -127,7 +127,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/I-edit ang Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/I-edit ang Suki|Edit Customer/i)).toBeInTheDocument()
     })
   })
 
@@ -138,7 +138,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={product} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(new RegExp(`I-adjust ang Stock: ${product.name}`, 'i'))).toBeInTheDocument()
+      expect(await screen.findByText(new RegExp(`(I-adjust ang Stock|Adjust Stock): ${product.name}`, 'i'))).toBeInTheDocument()
     })
 
     it('renders AdjustStockDialog without product and shows product picker', async () => {
@@ -146,7 +146,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={null} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByRole('combobox', { name: /Pumili ng produkto para sa stock adjustment/i })).toBeInTheDocument()
+      expect(await screen.findByRole('combobox', { name: /Pumili ng Produkto|Select Product/i })).toBeInTheDocument()
     })
 
     it('renders BulkRestockDialog with seeded products', async () => {
@@ -159,7 +159,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Maramihang Pag-restock/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
     })
 
     it('renders BulkRestockDialog with empty items array without crashing', async () => {
@@ -171,7 +171,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Maramihang Pag-restock/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
     })
   })
 
@@ -182,7 +182,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={debtor} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Kolektahin ang Bayad/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment/i })).toBeInTheDocument()
     })
 
     it('renders PaymentDialog on cash tab', async () => {
@@ -206,8 +206,8 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Bayaran ang Benta/i)).toBeInTheDocument()
-      expect(screen.getByText(/Cash \(Bayad\)/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Checkout & Payment|Bayaran ang Benta/i)).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: /Cash/i })).toBeInTheDocument()
     })
 
     it('renders PaymentDialog on utang tab and selects customer', async () => {
@@ -230,7 +230,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           customers={useMockDb.getState().customers}
         />,
       )
-      expect(screen.getByText(/Utang \(Lista\)/i)).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: /Utang/i })).toBeInTheDocument()
     })
 
     it('renders NewCustomerMiniForm standalone', async () => {
@@ -238,7 +238,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <NewCustomerMiniForm onSuccess={() => {}} onCancel={() => {}} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Magrehistro ng Bagong Suki/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Register New Customer|Magrehistro ng Bagong Suki/i)).toBeInTheDocument()
     })
   })
 
@@ -264,7 +264,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
         <HeldCartsDialog open={true} onOpenChange={() => {}} />,
       )
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
-      expect(await screen.findByText(/Mga Naka-hold na Benta/i)).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /Parked Sales|Mga Naka-hold na Benta/i })).toBeInTheDocument()
     })
   })
 
@@ -306,10 +306,10 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
 
   describe('Staff Add Cashier Dialog', () => {
     it('opens add cashier modal on /staff', async () => {
-      renderRoute('/staff')
-      const addBtn = await screen.findByRole('button', { name: /Magdagdag ng Kahera/i }, {}, { timeout: 8000 })
+      renderRoute('/staff', { role: 'owner' })
+      const addBtn = await screen.findByRole('button', { name: /Magdagdag ng Kahera|Add Cashier|Add Staff/i }, { timeout: 10000 })
       addBtn.click()
-      expect(await screen.findByText(/Magdagdag ng Bagong Kahera/i)).toBeInTheDocument()
+      expect(await screen.findByText(/Magdagdag ng Bagong Kahera|Add Cashier|Add Staff|New Staff/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
   })
 })

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   ArrowDownUp,
@@ -68,7 +69,8 @@ import { formatDateTime } from '@/lib/format'
  * Features 4 tabs: Overview, Running Low (with bulk restock), Stock Movements, and Restock Checklist.
  */
 export function InventoryPage() {
-  useDocumentTitle('Stock & Inventory')
+  const { t } = useTranslation(['inventory', 'common', 'products'])
+  useDocumentTitle(t('inventory:pageTitle'))
 
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -134,7 +136,7 @@ export function InventoryPage() {
           // Product found locally: open adjust stock dialog preselected
           setSingleAdjustProduct(event.payload)
           setSingleAdjustOpen(true)
-          notify.info(`Na-scan mula sa Phone: ${event.payload.name}`)
+          notify.info(t('inventory:phoneScanned', { name: event.payload.name }))
         } else if (event.status === 'unknown' && event.barcode) {
           // Unknown barcode: route to product create flow prefilled
           try {
@@ -169,7 +171,7 @@ export function InventoryPage() {
             })
           }
           setProductFormOpen(true)
-          notify.warning('Hindi kilalang produkto', `I-rehistro ang barcode ${event.barcode}`)
+          notify.warning(t('inventory:unknownScannedTitle'), t('inventory:unknownScannedDesc', { barcode: event.barcode }))
         }
       },
     })
@@ -245,8 +247,8 @@ export function InventoryPage() {
     <PageContainer className="pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8 space-y-6">
       {/* Page Header */}
       <PageHeader
-        title="Pamamahala sa Imbentaryo (Stock Control)"
-        description="Pagsusuri sa halaga ng mga paninda, pag-restock sa mga paubos na stock, at audit trail ng mga paggalaw."
+        title={t('inventory:pageTitle')}
+        description={t('inventory:pageSubtitle')}
         actions={
           <div className="flex flex-wrap items-center gap-2 print:hidden w-full sm:w-auto">
             <Button
@@ -256,7 +258,7 @@ export function InventoryPage() {
               className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5"
             >
               <Smartphone className="h-4 w-4" />
-              {pairedSession ? '📱 Phone Aktibo' : 'I-scan gamit ang Phone'}
+              {pairedSession ? t('inventory:scanPhoneActive') : t('inventory:scanWithPhone')}
             </Button>
             <Button
               variant="outline"
@@ -265,7 +267,7 @@ export function InventoryPage() {
               className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5"
             >
               <Printer className="h-4 w-4" />
-              Restock List
+              {t('inventory:restockList')}
             </Button>
             <Button
               size="sm"
@@ -276,7 +278,7 @@ export function InventoryPage() {
               className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5 font-semibold shadow-xs"
             >
               <ArrowDownUp className="h-4 w-4" />
-              I-adjust ang Stock
+              {t('inventory:adjustStock')}
             </Button>
           </div>
         }
@@ -287,10 +289,10 @@ export function InventoryPage() {
         <div className="w-full overflow-x-auto no-scrollbar border-b border-border pb-1 print:hidden">
           <TabsList className="inline-flex h-11 w-full sm:w-auto justify-start gap-1 p-1 bg-muted/60 flex-nowrap">
             <TabsTrigger value="overview" className="h-9 px-4 text-xs sm:text-sm font-semibold shrink-0">
-              Pangkalahatang Tanaw (Overview)
+              {t('inventory:tabOverviewLabel')}
             </TabsTrigger>
             <TabsTrigger value="running-low" className="h-9 px-4 text-xs sm:text-sm font-semibold shrink-0 gap-1.5">
-              Paubos na Paninda (Running Low)
+              {t('inventory:tabRunningLowLabel')}
               {overview?.low_stock_count > 0 && (
                 <Badge variant="destructive" className="h-4 px-1 text-[10px] font-mono">
                   {overview.low_stock_count}
@@ -298,10 +300,10 @@ export function InventoryPage() {
               )}
             </TabsTrigger>
             <TabsTrigger value="movements" className="h-9 px-4 text-xs sm:text-sm font-semibold shrink-0">
-              Audit Log (Movements)
+              {t('inventory:tabMovementsLabel')}
             </TabsTrigger>
             <TabsTrigger value="restock-list" className="h-9 px-4 text-xs sm:text-sm font-semibold shrink-0">
-              Checklist sa Pamimili (Restock List)
+              {t('inventory:tabChecklistLabel')}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -311,47 +313,47 @@ export function InventoryPage() {
           {/* 4 StatCards (2x2 on phones, 4 cols on lg+) */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <StatCard
-              label="Halaga sa Puhunan (Cost Value)"
+              label={t('inventory:statCostValue')}
               value={overview?.total_stock_value_cost ?? 0}
               format="currency"
               tone="default"
               icon={DollarSign}
-              description="Kabuuang kapital na nakatabi sa tindahan"
+              description={t('inventory:statCostValueDesc')}
             />
             <StatCard
-              label="Halaga sa Benta (Retail Value)"
+              label={t('inventory:statRetailValue')}
               value={overview?.total_stock_value_retail ?? 0}
               format="currency"
               tone="success"
               icon={DollarSign}
-              description="Tinatayang benta kapag naubos lahat"
+              description={t('inventory:statRetailValueDesc')}
             />
             <StatCard
-              label="May Sapat na Stock (In Stock)"
+              label={t('inventory:statInStock')}
               value={overview?.in_stock_count ?? 0}
               format="number"
               tone="success"
               icon={CheckCircle2}
-              description={`${overview?.total_products || 0} kabuuang uri ng paninda`}
+              description={t('inventory:statInStockDesc', { count: overview?.total_products || 0 })}
             />
             <StatCard
-              label="Paubos / Ubos na (Alerts)"
+              label={t('inventory:statAlerts')}
               value={(overview?.low_stock_count ?? 0) + (overview?.out_of_stock_count ?? 0)}
               format="number"
               tone={overview?.out_of_stock_count > 0 ? 'destructive' : 'warning'}
               icon={AlertTriangle}
               description={
                 overview?.out_of_stock_count > 0
-                  ? `${overview.out_of_stock_count} ang lubusang ubos na`
-                  : 'May ilang piraso pang natitira'
+                  ? t('inventory:statOutOfStockAlertDesc', { count: overview.out_of_stock_count })
+                  : t('inventory:statLowStockAlertDesc')
               }
             />
           </div>
 
           {/* Category Breakdown Bar Chart */}
           <ChartCard
-            title="Dami ng Produkto bawat Kategorya"
-            description="Paghahambing ng dami ng uri ng paninda sa bawat kategorya"
+            title={t('inventory:chartCategoryStockTitle')}
+            description={t('inventory:chartCategoryStockSub')}
           >
             <div className="h-[260px] w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
@@ -375,7 +377,7 @@ export function InventoryPage() {
                     allowDecimals={false}
                   />
                   <Tooltip
-                    formatter={(val) => [`${val} produkto`, 'Bilang']}
+                    formatter={(val) => [t('inventory:chartCategoryStockUnit', { count: val }), t('inventory:chartCategoryStockTooltip')]}
                   />
                   <Bar
                     dataKey="count"
@@ -393,10 +395,10 @@ export function InventoryPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-base font-bold text-foreground">
-                Mga Panindang Paubos at Ubos Na ({runningLowProducts.length})
+                {t('inventory:runningLowSectionTitle', { count: runningLowProducts.length })}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Piliin ang mga paninda upang sabay-sabay na mag-restock.
+                {t('inventory:runningLowSectionDesc')}
               </p>
             </div>
 
@@ -407,7 +409,7 @@ export function InventoryPage() {
                 className="gap-2 font-bold shadow-md h-11 sm:h-9"
               >
                 <PackagePlus className="h-4 w-4" />
-                I-restock ang Napiling {selectedProductsList.length} Paninda
+                {t('inventory:bulkRestockSelected', { count: selectedProductsList.length })}
               </Button>
             )}
           </div>
@@ -423,20 +425,20 @@ export function InventoryPage() {
                     selectedProductsList.length === runningLowProducts.length
                   }
                   onCheckedChange={toggleSelectAll}
-                  aria-label="Piliin ang lahat ng paubos na paninda"
+                  aria-label={t('inventory:selectAll', { count: runningLowProducts.length })}
                 />
-                <span className="text-xs font-semibold">Piliin Lahat ({runningLowProducts.length})</span>
+                <span className="text-xs font-semibold">{t('inventory:selectAll', { count: runningLowProducts.length })}</span>
               </div>
               <span className="text-xs text-muted-foreground font-mono">
-                {selectedProductsList.length} napili
+                {t('inventory:selectedCount', { count: selectedProductsList.length })}
               </span>
             </div>
 
             {runningLowProducts.length === 0 ? (
               <EmptyState
                 icon={PackageCheck}
-                title="Lahat ng paninda ay may sapat na stock!"
-                description="Walang produkto na nasa ilalim ng reorder level threshold."
+                title={t('inventory:noRunningLowTitle')}
+                description={t('inventory:noRunningLowDesc')}
               />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -455,7 +457,7 @@ export function InventoryPage() {
                             checked={isChecked}
                             onCheckedChange={() => toggleSelectItem(p.id)}
                             className="mt-1"
-                            aria-label={`Piliin ang ${p.name}`}
+                            aria-label={`Select ${p.name}`}
                           />
                           <div className="min-w-0">
                             <Link
@@ -474,7 +476,7 @@ export function InventoryPage() {
                           variant={p.stock_quantity <= 0 ? 'destructive' : 'warning'}
                           className="shrink-0 text-xs font-mono"
                         >
-                          {p.stock_quantity} natira
+                          {t('inventory:remainingBadge', { count: p.stock_quantity })}
                         </Badge>
                       </div>
 
@@ -487,7 +489,7 @@ export function InventoryPage() {
 
                         <div className="flex items-center justify-between text-xs pt-1">
                           <span className="text-muted-foreground font-mono">
-                            Reorder: {p.reorder_level} {p.unit || 'pcs'}
+                            {t('inventory:reorderLabel', { count: p.reorder_level, unit: p.unit || 'pcs' })}
                           </span>
                           <Button
                             variant="outline"
@@ -499,7 +501,7 @@ export function InventoryPage() {
                             className="h-8 text-xs font-semibold gap-1"
                           >
                             <ArrowDownUp className="h-3 w-3" />
-                            Restock
+                            {t('inventory:restockButton')}
                           </Button>
                         </div>
                       </div>
@@ -518,7 +520,7 @@ export function InventoryPage() {
                 className="w-full h-12 text-base font-bold shadow-md gap-2"
               >
                 <PackagePlus className="h-5 w-5" />
-                I-restock ang Napiling {selectedProductsList.length} Paninda
+                {t('inventory:bulkRestockSelected', { count: selectedProductsList.length })}
               </Button>
             </div>
           )}
@@ -538,12 +540,12 @@ export function InventoryPage() {
               {/* Movement Type Badges / Buttons */}
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
                 {[
-                  { value: '', label: 'Lahat' },
-                  { value: 'sale', label: 'Benta (Sale)' },
-                  { value: 'restock', label: 'Restock' },
-                  { value: 'damage', label: 'Damage' },
-                  { value: 'correction', label: 'Koreksyon' },
-                  { value: 'void', label: 'Void' },
+                  { value: '', label: t('inventory:typeAll') },
+                  { value: 'sale', label: t('inventory:typeSaleFilter') },
+                  { value: 'restock', label: t('inventory:typeRestockFilter') },
+                  { value: 'damage', label: t('inventory:typeDamageFilter') },
+                  { value: 'correction', label: t('inventory:typeCorrectionFilter') },
+                  { value: 'void', label: t('inventory:typeVoidFilter') },
                 ].map((item) => (
                   <Button
                     key={item.value}
@@ -570,7 +572,7 @@ export function InventoryPage() {
                 className="h-8 text-xs text-muted-foreground self-start md:self-auto"
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                I-clear ang Filter
+                {t('inventory:clearFilter')}
               </Button>
             )}
           </div>
@@ -580,8 +582,8 @@ export function InventoryPage() {
             {movements.length === 0 ? (
               <EmptyState
                 icon={Warehouse}
-                title="Walang naitalang paggalaw ng stock"
-                description="Subukang magpalit ng petsa o uri ng transaksyon."
+                title={t('inventory:noMovementsTitle')}
+                description={t('inventory:noMovementsDesc')}
               />
             ) : (
               <>
@@ -590,12 +592,12 @@ export function InventoryPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">
-                        <TableHead className="w-[180px]">Petsa at Oras</TableHead>
-                        <TableHead>Produkto</TableHead>
-                        <TableHead className="w-[120px]">Uri</TableHead>
-                        <TableHead className="text-right w-[120px]">Dami (Qty)</TableHead>
-                        <TableHead className="text-right w-[120px]">Balanse</TableHead>
-                        <TableHead>Gumawa / Tala</TableHead>
+                        <TableHead className="w-[180px]">{t('inventory:colDateTime')}</TableHead>
+                        <TableHead>{t('inventory:colProduct')}</TableHead>
+                        <TableHead className="w-[120px]">{t('inventory:colType')}</TableHead>
+                        <TableHead className="text-right w-[120px]">{t('inventory:colQuantity')}</TableHead>
+                        <TableHead className="text-right w-[120px]">{t('inventory:colBalance')}</TableHead>
+                        <TableHead>{t('inventory:colNotes')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -605,7 +607,7 @@ export function InventoryPage() {
                             {formatDateTime(m.created_at)}
                           </TableCell>
                           <TableCell className="font-semibold text-xs text-foreground">
-                            {m.product?.name || `Product #${m.product_id}`}
+                            {m.product?.name || t('inventory:productFallback', { id: m.product_id })}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-[11px] capitalize">
@@ -621,7 +623,7 @@ export function InventoryPage() {
                             {m.stock_after}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {m.user?.name || 'Staff'} {m.notes ? `· ${m.notes}` : ''}
+                            {m.user?.name || t('inventory:staffFallback')} {m.notes ? `· ${m.notes}` : ''}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -639,7 +641,7 @@ export function InventoryPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-bold text-foreground truncate">
-                            {m.product?.name || `Product #${m.product_id}`}
+                            {m.product?.name || t('inventory:productFallback', { id: m.product_id })}
                           </p>
                           <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
                             {formatDateTime(m.created_at)}
@@ -652,7 +654,7 @@ export function InventoryPage() {
 
                       <div className="border-t border-border/50 pt-2 flex items-center justify-between font-mono">
                         <span className="text-muted-foreground">
-                          Balanse Pagkatapos: <strong>{m.stock_after}</strong>
+                          {t('inventory:balanceAfter', { count: m.stock_after })}
                         </span>
                         <span
                           className={`text-sm font-bold ${

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Package,
   Utensils,
@@ -66,6 +67,7 @@ export function CategoryFormDialog({
   category = null,
   onSuccess,
 }) {
+  const { t } = useTranslation(['categories', 'common'])
   const isEdit = !!category
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -92,7 +94,7 @@ export function CategoryFormDialog({
     setErrorMessage('')
 
     if (!name.trim()) {
-      setErrorMessage('Kailangan ang pangalan ng kategorya.')
+      setErrorMessage(t('categories:validationRequired'))
       return
     }
 
@@ -116,7 +118,7 @@ export function CategoryFormDialog({
       setErrorMessage(
         err.response?.data?.message ||
           err.message ||
-          'Nabigong i-save ang kategorya.',
+          t('categories:saveError'),
       )
     }
   }
@@ -125,8 +127,8 @@ export function CategoryFormDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? `I-edit ang Kategorya: ${category.name}` : 'Magdagdag ng Bagong Kategorya'}
-      description="Pamahalaan ang pagkakagrupo ng mga paninda gamit ang custom icon at kulay."
+      title={isEdit ? t('categories:editModalTitle', { name: category.name }) : t('categories:createModalTitle')}
+      description={t('categories:categoryModalDesc')}
       className="sm:max-w-lg"
       footer={
         <div className="flex w-full items-center justify-end gap-2">
@@ -136,7 +138,7 @@ export function CategoryFormDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Kanselahin
+            {t('common:cancel')}
           </Button>
           <Button
             type="submit"
@@ -145,7 +147,7 @@ export function CategoryFormDialog({
             className="gap-1.5"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isEdit ? 'I-save ang Pagbabago' : 'Idagdag ang Kategorya'}
+            {isEdit ? t('categories:saveChanges') : t('categories:addCategory')}
           </Button>
         </div>
       }
@@ -160,11 +162,11 @@ export function CategoryFormDialog({
         {/* Name */}
         <div className="space-y-1.5">
           <Label htmlFor="category-name" className="text-xs font-semibold">
-            Pangalan ng Kategorya <span className="text-destructive">*</span>
+            {t('categories:nameLabel')} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="category-name"
-            placeholder="hal. Snacks, Drinks, Canned Goods"
+            placeholder={t('categories:namePlaceholder')}
             value={name}
             onChange={(e) => {
               setName(e.target.value)
@@ -178,11 +180,11 @@ export function CategoryFormDialog({
         {/* Description */}
         <div className="space-y-1.5">
           <Label htmlFor="category-desc" className="text-xs font-semibold">
-            Paglalarawan (Opsyonal)
+            {t('categories:descLabel')}
           </Label>
           <Textarea
             id="category-desc"
-            placeholder="Maikling paliwanag sa mga uri ng paninda sa kategoryang ito..."
+            placeholder={t('categories:descPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
@@ -193,7 +195,7 @@ export function CategoryFormDialog({
         {/* 8 Color Swatches (44px tap targets) */}
         <div className="space-y-2">
           <Label className="text-xs font-semibold block">
-            Kulay ng Kategorya (8 Preset Swatches)
+            {t('categories:colorSwatchesLabel')}
           </Label>
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {COLOR_SWATCHES.map((swatch) => {
@@ -221,7 +223,7 @@ export function CategoryFormDialog({
         {/* 12-Icon Picker (44px tap targets) */}
         <div className="space-y-2">
           <Label className="text-xs font-semibold block">
-            Icon ng Kategorya (12 Lucide Icons)
+            {t('categories:iconPickerLabel')}
           </Label>
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
             {ICON_OPTIONS.map((item) => {

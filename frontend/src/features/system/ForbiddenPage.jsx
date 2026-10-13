@@ -1,11 +1,13 @@
 import { Link } from 'react-router'
 import { ShieldAlert, ArrowLeft, ScanBarcode } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export function ForbiddenPage() {
-  useDocumentTitle('Access Denied')
+  const { t } = useTranslation(['errors', 'common'])
+  useDocumentTitle(t('errors:accessDeniedTitle'))
   const { user } = useAuth()
   const isCashier = user?.role === 'cashier'
 
@@ -15,15 +17,15 @@ export function ForbiddenPage() {
         <ShieldAlert className="h-8 w-8" />
       </div>
       <span className="text-destructive bg-destructive/10 mb-3 rounded-full px-2.5 py-1 text-xs font-bold tracking-wider uppercase">
-        403 · Access Denied
+        {t('errors:accessDeniedBadge')}
       </span>
       <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
-        Store Owner Access Only
+        {t('errors:accessDeniedTitle')}
       </h1>
       <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
         {isCashier
-          ? 'Ang pahinang ito ay para lamang sa store owner. Ang iyong cashier account ay may limitadong access upang maprotektahan ang mga ulat at settings.'
-          : 'You do not have permission to view or manage this module.'}
+          ? t('errors:accessDeniedCashierDesc')
+          : t('errors:accessDeniedGeneralDesc')}
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -31,14 +33,14 @@ export function ForbiddenPage() {
           <Button asChild className="gap-2">
             <Link to="/pos">
               <ScanBarcode className="h-4 w-4" />
-              Go to POS Terminal
+              {t('errors:goToPos')}
             </Link>
           </Button>
         ) : (
           <Button asChild className="gap-2">
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              {t('errors:backToDashboard')}
             </Link>
           </Button>
         )}

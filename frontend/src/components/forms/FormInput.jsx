@@ -6,6 +6,7 @@ import {
   FieldError,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { translateErrorMessage } from '@/lib/errors'
 
 /**
  * React Hook Form wrapped Input field with label, description, and error integration.
@@ -66,7 +67,7 @@ export function FormInput({
         {hasError && (
           <FieldError
             id={`${name}-error`}
-            errors={Array.isArray(explicitError) ? explicitError : [explicitError]}
+            errors={Array.isArray(explicitError) ? explicitError.map(translateErrorMessage) : [translateErrorMessage(explicitError)]}
           />
         )}
       </Field>
@@ -109,7 +110,7 @@ export function FormInput({
             {hasError && errorMsg && (
               <FieldError
                 id={`${name}-error`}
-                errors={Array.isArray(errorMsg) ? errorMsg : [errorMsg]}
+                errors={Array.isArray(errorMsg) ? errorMsg.map(translateErrorMessage) : [translateErrorMessage(errorMsg)]}
               />
             )}
           </Field>

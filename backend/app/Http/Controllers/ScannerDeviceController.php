@@ -37,21 +37,21 @@ class ScannerDeviceController extends Controller
         if (! $session) {
             return response()->json([
                 'reason' => 'not_found',
-                'message' => 'Hindi nahanap ang pairing code. Tiyaking tama ang code mula sa POS.',
+                'message' => 'Pairing code not found. Please verify the code from the POS.',
             ], 422);
         }
 
         if ($session->paired_at !== null || $session->device_token_hash !== null) {
             return response()->json([
                 'reason' => 'used',
-                'message' => 'Nagamit na ang pairing code na ito. Humingi ng bago sa POS.',
+                'message' => 'This pairing code has already been used. Please request a new code from the POS.',
             ], 422);
         }
 
         if ($session->ended_at !== null || $session->pairing_expires_at->isPast()) {
             return response()->json([
                 'reason' => 'expired',
-                'message' => 'Luma o paso na ang pairing code. Humingi ng bago sa POS.',
+                'message' => 'Pairing code has expired. Please request a new code from the POS.',
             ], 422);
         }
 
@@ -97,7 +97,7 @@ class ScannerDeviceController extends Controller
         $barcode = Barcode::normalize($validated['barcode']);
         if (! Barcode::isAcceptable($barcode) && ! Product::where('barcode', $barcode)->exists()) {
             return response()->json([
-                'message' => 'Hindi wastong barcode format.',
+                'message' => 'Invalid barcode format.',
             ], 422);
         }
 

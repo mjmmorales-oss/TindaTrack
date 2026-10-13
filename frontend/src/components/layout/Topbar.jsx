@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/popover'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ModeToggle } from '@/components/common/ModeToggle'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { Kbd } from '@/components/ui/kbd'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -135,7 +136,8 @@ export function Topbar() {
           </PopoverContent>
         </Popover>
 
-        {/* Theme mode toggle */}
+        {/* Language switcher & theme mode toggle */}
+        <LanguageSwitcher variant="compact" />
         <ModeToggle />
       </div>
     </header>

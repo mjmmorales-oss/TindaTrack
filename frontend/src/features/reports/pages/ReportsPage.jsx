@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   TrendingUp,
   Download,
@@ -50,7 +51,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { exportToCsv } from '@/lib/toCsv'
 
 export function ReportsPage() {
-  useDocumentTitle('Mga Ulat at Benta (Reports)')
+  const { t } = useTranslation(['reports', 'common'])
+  useDocumentTitle(t('reports:title'))
 
   // Date range default: Last 30 days
   const [dateRange, setDateRange] = useState(() => ({
@@ -101,13 +103,13 @@ export function ReportsPage() {
     exportToCsv(
       series,
       [
-        { key: 'period', label: 'Petsa / Panahon' },
-        { key: 'sales', label: 'Benta (₱)' },
-        { key: 'cost', label: 'Puhunan (₱)' },
-        { key: 'gross_profit', label: 'Tubo (₱)' },
-        { key: 'cash', label: 'Cash (₱)' },
-        { key: 'utang', label: 'Utang (₱)' },
-        { key: 'transactions', label: 'Transaksyon' },
+        { key: 'period', label: 'Period' },
+        { key: 'sales', label: 'Sales (PHP)' },
+        { key: 'cost', label: 'Cost (PHP)' },
+        { key: 'gross_profit', label: 'Gross Profit (PHP)' },
+        { key: 'cash', label: 'Cash (PHP)' },
+        { key: 'utang', label: 'Utang (PHP)' },
+        { key: 'transactions', label: 'Transactions' },
       ],
       `tindatrack-sales-report-${granularity}.csv`,
     )
@@ -117,12 +119,12 @@ export function ReportsPage() {
     exportToCsv(
       bestSellers,
       [
-        { key: 'product_name', label: 'Produkto' },
+        { key: 'product_name', label: 'Product' },
         { key: 'sku', label: 'SKU' },
-        { key: 'category_name', label: 'Kategorya' },
-        { key: 'quantity_sold', label: 'Dami ng Benta (Qty)' },
-        { key: 'revenue', label: 'Kabuuang Benta (₱)' },
-        { key: 'gross_profit', label: 'Tubo (₱)' },
+        { key: 'category_name', label: 'Category' },
+        { key: 'quantity_sold', label: 'Qty Sold' },
+        { key: 'revenue', label: 'Revenue (PHP)' },
+        { key: 'gross_profit', label: 'Gross Profit (PHP)' },
       ],
       'tindatrack-best-sellers.csv',
     )
@@ -132,10 +134,10 @@ export function ReportsPage() {
     exportToCsv(
       categories,
       [
-        { key: 'category_name', label: 'Kategorya' },
-        { key: 'items_sold', label: 'Bilang ng Benta (Items)' },
-        { key: 'revenue', label: 'Kabuuang Benta (₱)' },
-        { key: 'percentage', label: 'Porsyento (%)' },
+        { key: 'category_name', label: 'Category' },
+        { key: 'items_sold', label: 'Items Sold' },
+        { key: 'revenue', label: 'Revenue (PHP)' },
+        { key: 'percentage', label: 'Percentage (%)' },
       ],
       'tindatrack-category-breakdown.csv',
     )
@@ -145,9 +147,9 @@ export function ReportsPage() {
     exportToCsv(
       hourlyData,
       [
-        { key: 'label', label: 'Oras' },
-        { key: 'sales', label: 'Benta (₱)' },
-        { key: 'transactions', label: 'Bilang ng Transaksyon' },
+        { key: 'label', label: 'Hour' },
+        { key: 'sales', label: 'Sales (PHP)' },
+        { key: 'transactions', label: 'Transactions' },
       ],
       'tindatrack-busiest-hours.csv',
     )
@@ -159,17 +161,17 @@ export function ReportsPage() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
             <Download className="h-3.5 w-3.5" />
-            Export
+            {t('reports:exportButton')}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
           <DropdownMenuItem onClick={onCsv}>
             <Download className="mr-2 h-3.5 w-3.5" />
-            I-download (CSV)
+            {t('reports:downloadCsv')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handlePrint}>
             <Printer className="mr-2 h-3.5 w-3.5" />
-            I-print (Print)
+            {t('reports:printMenu')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -179,8 +181,8 @@ export function ReportsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Mga Ulat at Pagsusuri (Reports)"
-        description="Pagsusuri sa benta, tubo, pinakamabiling paninda, at paggalaw ng salapi"
+        title={t('reports:pageTitle')}
+        description={t('reports:pageSubtitle')}
         actions={
           <Button
             variant="outline"
@@ -189,7 +191,7 @@ export function ReportsPage() {
             className="gap-1.5 h-9 print:hidden"
           >
             <Printer className="h-4 w-4" />
-            I-print ang Ulat (Print)
+            {t('reports:printReport')}
           </Button>
         }
       />
@@ -200,14 +202,14 @@ export function ReportsPage() {
           <DateRangePicker
             value={dateRange}
             onChange={(range) => range && setDateRange(range)}
-            placeholder="Pumili ng saklaw ng petsa"
+            placeholder={t('reports:dateRangePlaceholder')}
             className="w-full sm:w-[280px] h-10 text-xs"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <span className="text-xs text-muted-foreground font-medium shrink-0">
-            Pagsasama:
+            {t('reports:granularityLabel')}
           </span>
           <ToggleGroup
             type="single"
@@ -219,19 +221,19 @@ export function ReportsPage() {
               value="daily"
               className="flex-1 sm:flex-none text-xs h-8 px-3"
             >
-              Arawan (Daily)
+              {t('reports:granularityDaily')}
             </ToggleGroupItem>
             <ToggleGroupItem
               value="weekly"
               className="flex-1 sm:flex-none text-xs h-8 px-3"
             >
-              Lingguhan (Weekly)
+              {t('reports:granularityWeekly')}
             </ToggleGroupItem>
             <ToggleGroupItem
               value="monthly"
               className="flex-1 sm:flex-none text-xs h-8 px-3"
             >
-              Buwanan (Monthly)
+              {t('reports:granularityMonthly')}
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -241,42 +243,42 @@ export function ReportsPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           icon={CircleDollarSign}
-          label="Kabuuang Benta"
+          label={t('reports:statTotalSales')}
           value={summary.total_sales}
           format="currency"
           tone="default"
           loading={isSalesLoading}
-          description="Lahat ng nakumpletong benta"
+          description={t('reports:statTotalSalesDesc')}
         />
 
         <StatCard
           icon={TrendingUp}
-          label="Tinatayang Tubo (Profit)"
+          label={t('reports:statProfit')}
           value={summary.total_gross_profit}
           format="currency"
           tone="success"
           loading={isSalesLoading}
-          description={`Margin: ${summary.profit_margin}%`}
+          description={t('reports:statProfitMargin', { percent: summary.profit_margin })}
         />
 
         <StatCard
           icon={ShoppingBag}
-          label="Bilang ng Benta"
+          label={t('reports:statTransactions')}
           value={summary.total_transactions}
           format="number"
           tone="default"
           loading={isSalesLoading}
-          description="Kabuuang transaksyon sa POS"
+          description={t('reports:statTransactionsDesc')}
         />
 
         <StatCard
           icon={Wallet}
-          label="Pautang (Utang Benta)"
+          label={t('reports:statUtang')}
           value={summary.total_utang}
           format="currency"
           tone="utang"
           loading={isSalesLoading}
-          description={`Cash: ₱${Math.round(summary.total_cash)}`}
+          description={t('reports:statCashDesc', { amount: `₱${Math.round(summary.total_cash)}` })}
         />
       </div>
 
@@ -284,8 +286,8 @@ export function ReportsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* CHART 1: Sales Over Time */}
         <ChartCard
-          title="Benta sa Paglipas ng Panahon (Sales Over Time)"
-          description="Halaga ng benta bawat araw o linggo"
+          title={t('reports:salesOverTime')}
+          description={t('reports:salesOverTimeDesc')}
           actions={renderExportMenu(exportSalesCsv)}
           loading={isSalesLoading}
           empty={series.length === 0}
@@ -319,10 +321,10 @@ export function ReportsPage() {
                         <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
                           <p className="font-semibold text-popover-foreground">{d.period}</p>
                           <p className="text-primary font-bold">
-                            Benta: ₱{Number(d.sales).toFixed(2)}
+                            {t('reports:salesAmount', { amount: Number(d.sales).toFixed(2) })}
                           </p>
                           <p className="text-muted-foreground text-[11px]">
-                            {d.transactions} transaksyon
+                            {t('reports:transactionsCount', { count: d.transactions })}
                           </p>
                         </div>
                       )
@@ -338,8 +340,8 @@ export function ReportsPage() {
 
         {/* CHART 2: Gross Profit Estimate */}
         <ChartCard
-          title="Tinatayang Tubo (Gross Profit: Benta − Puhunan)"
-          description="Paghahambing ng kabuuang benta at netong tubo"
+          title={t('reports:grossProfit')}
+          description={t('reports:grossProfitDesc')}
           actions={renderExportMenu(exportSalesCsv)}
           loading={isSalesLoading}
           empty={series.length === 0}
@@ -372,9 +374,15 @@ export function ReportsPage() {
                       return (
                         <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
                           <p className="font-semibold text-popover-foreground">{d.period}</p>
-                          <p className="text-primary font-medium">Benta: ₱{Number(d.sales).toFixed(2)}</p>
-                          <p className="text-success font-bold">Tubo: ₱{Number(d.gross_profit).toFixed(2)}</p>
-                          <p className="text-muted-foreground text-[11px]">Puhunan: ₱{Number(d.cost).toFixed(2)}</p>
+                          <p className="text-primary font-medium">
+                            {t('reports:salesAmount', { amount: Number(d.sales).toFixed(2) })}
+                          </p>
+                          <p className="text-success font-bold">
+                            {t('reports:profitAmount', { amount: Number(d.gross_profit).toFixed(2) })}
+                          </p>
+                          <p className="text-muted-foreground text-[11px]">
+                            {t('reports:costAmount', { amount: Number(d.cost).toFixed(2) })}
+                          </p>
                         </div>
                       )
                     }
@@ -386,8 +394,8 @@ export function ReportsPage() {
                   align="right"
                   wrapperStyle={{ fontSize: 11, paddingBottom: 8 }}
                 />
-                <Bar dataKey="cost" name="Puhunan" fill="var(--muted-foreground)" opacity={0.4} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="gross_profit" name="Tubo (Profit)" fill="var(--success)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cost" name={t('reports:costLabel')} fill="var(--muted-foreground)" opacity={0.4} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="gross_profit" name={t('reports:profitLabel')} fill="var(--success)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -395,8 +403,8 @@ export function ReportsPage() {
 
         {/* CHART 3: Cash vs Utang Trend */}
         <ChartCard
-          title="Paraan ng Bayad: Salapi vs Utang (Cash vs Utang)"
-          description="Dami ng cash inflows kumpara sa pautang sa suki"
+          title={t('reports:cashVsUtang')}
+          description={t('reports:cashVsUtangDesc')}
           actions={renderExportMenu(exportSalesCsv)}
           loading={isSalesLoading}
           empty={series.length === 0}
@@ -429,8 +437,12 @@ export function ReportsPage() {
                       return (
                         <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
                           <p className="font-semibold text-popover-foreground">{d.period}</p>
-                          <p className="text-primary font-semibold">Cash: ₱{Number(d.cash).toFixed(2)}</p>
-                          <p className="text-utang font-semibold">Utang: ₱{Number(d.utang).toFixed(2)}</p>
+                          <p className="text-primary font-semibold">
+                            {t('reports:cashAmount', { amount: Number(d.cash).toFixed(2) })}
+                          </p>
+                          <p className="text-utang font-semibold">
+                            {t('reports:utangAmount', { amount: Number(d.utang).toFixed(2) })}
+                          </p>
                         </div>
                       )
                     }
@@ -442,8 +454,8 @@ export function ReportsPage() {
                   align="right"
                   wrapperStyle={{ fontSize: 11, paddingBottom: 8 }}
                 />
-                <Bar dataKey="cash" name="Cash" stackId="a" fill="var(--primary)" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="utang" name="Utang" stackId="a" fill="var(--utang)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cash" name={t('reports:cashLabel')} stackId="a" fill="var(--primary)" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="utang" name={t('reports:utangLabel')} stackId="a" fill="var(--utang)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -451,8 +463,8 @@ export function ReportsPage() {
 
         {/* CHART 4: Busiest Hours */}
         <ChartCard
-          title="Mga Pinakaabalang Oras (Busiest Hours)"
-          description="Bilang ng transaksyon ayon sa oras ng araw (Peak hours)"
+          title={t('reports:busiestHours')}
+          description={t('reports:busiestHoursDesc')}
           actions={renderExportMenu(exportHourlyCsv)}
           loading={isHourlyLoading}
           empty={hourlyData.length === 0}
@@ -485,10 +497,10 @@ export function ReportsPage() {
                         <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
                           <p className="font-semibold text-popover-foreground">{d.label}</p>
                           <p className="text-primary font-bold">
-                            {d.transactions} transaksyon
+                            {t('reports:transactionsCount', { count: d.transactions })}
                           </p>
                           <p className="text-muted-foreground text-[11px]">
-                            Benta: ₱{Number(d.sales).toFixed(2)}
+                            {t('reports:salesAmount', { amount: Number(d.sales).toFixed(2) })}
                           </p>
                         </div>
                       )
@@ -496,7 +508,7 @@ export function ReportsPage() {
                     return null
                   }}
                 />
-                <Bar dataKey="transactions" name="Transaksyon" fill="var(--highlight)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="transactions" name={t('reports:transactionsLabel')} fill="var(--highlight)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -508,10 +520,10 @@ export function ReportsPage() {
             <div>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Award className="h-4 w-4 text-highlight" />
-                Nangungunang Paninda (Top 10 Best Sellers)
+                {t('reports:bestSellers')}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Pinakamaraming naibentang piraso sa napiling saklaw ng petsa
+                {t('reports:bestSellersDesc')}
               </p>
             </div>
             {renderExportMenu(exportBestSellersCsv)}
@@ -525,19 +537,19 @@ export function ReportsPage() {
               </div>
             ) : bestSellers.length === 0 ? (
               <p className="text-xs text-muted-foreground py-6 text-center">
-                Walang naitalang benta sa panahong ito.
+                {t('reports:noDataPeriod')}
               </p>
             ) : (
               <div className="overflow-x-auto min-w-0 w-full">
                 <table className="w-full min-w-max text-left text-xs">
                   <thead className="border-b border-border/80 text-muted-foreground font-medium">
                     <tr>
-                      <th className="py-2.5 pl-2">#</th>
-                      <th className="py-2.5">Produkto</th>
-                      <th className="py-2.5">Kategorya</th>
-                      <th className="py-2.5 text-center">Naibenta (Qty)</th>
-                      <th className="py-2.5 text-right">Kabuuang Benta</th>
-                      <th className="py-2.5 text-right pr-2">Tubo (Gross Profit)</th>
+                      <th className="py-2.5 pl-2">{t('reports:rankCol')}</th>
+                      <th className="py-2.5">{t('reports:productCol')}</th>
+                      <th className="py-2.5">{t('reports:categoryCol')}</th>
+                      <th className="py-2.5 text-center">{t('reports:qtySoldCol')}</th>
+                      <th className="py-2.5 text-right">{t('reports:totalSalesCol')}</th>
+                      <th className="py-2.5 text-right pr-2">{t('reports:grossProfitCol')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -558,7 +570,7 @@ export function ReportsPage() {
                           {item.category_name}
                         </td>
                         <td className="py-2.5 text-center font-bold font-mono">
-                          {item.quantity_sold} pcs
+                          {t('reports:pcs', { count: item.quantity_sold })}
                         </td>
                         <td className="py-2.5 text-right font-medium">
                           <Money amount={item.revenue} size="xs" />
@@ -581,10 +593,10 @@ export function ReportsPage() {
             <div>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" />
-                Hati ng Benta Ayon sa Kategorya (Category Breakdown)
+                {t('reports:categoryBreakdown')}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Bahagi ng bawat kategorya sa kabuuang benta ng tindahan
+                {t('reports:categoryBreakdownDesc')}
               </p>
             </div>
             {renderExportMenu(exportCategoryCsv)}
@@ -597,7 +609,7 @@ export function ReportsPage() {
               </div>
             ) : categories.length === 0 ? (
               <p className="text-xs text-muted-foreground py-6 text-center">
-                Walang naitalang datos para sa mga kategorya.
+                {t('reports:noDataCategories')}
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -624,8 +636,8 @@ export function ReportsPage() {
                       />
                     </div>
                     <div className="flex justify-between text-[10px] text-muted-foreground">
-                      <span>{cat.items_sold} piraso naibenta</span>
-                      <span>{cat.percentage}% ng kabuuan</span>
+                      <span>{t('reports:itemsSold', { count: cat.items_sold })}</span>
+                      <span>{t('reports:totalShare', { percent: cat.percentage })}</span>
                     </div>
                   </div>
                 ))}

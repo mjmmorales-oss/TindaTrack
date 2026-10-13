@@ -1,11 +1,13 @@
 import { Link } from 'react-router'
 import { FileQuestion, ArrowLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export function NotFoundPage() {
-  useDocumentTitle('Page Not Found')
+  const { t } = useTranslation(['errors', 'common'])
+  useDocumentTitle(t('errors:pageNotFoundTitle'))
   const { user } = useAuth()
   const homePath = user?.role === 'cashier' ? '/pos' : '/dashboard'
 
@@ -15,21 +17,20 @@ export function NotFoundPage() {
         <FileQuestion className="h-8 w-8" />
       </div>
       <span className="text-primary bg-primary/10 mb-3 rounded-full px-2.5 py-1 text-xs font-bold tracking-wider uppercase">
-        404 · Not Found
+        {t('errors:pageNotFoundBadge')}
       </span>
       <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
-        Page Not Found
+        {t('errors:pageNotFoundTitle')}
       </h1>
       <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-        Paumanhin, hindi mahanap ang pahinang hinahanap mo. Maaaring mali ang
-        link o nailipat ang lokasyon nito.
+        {t('errors:pageNotFoundDesc')}
       </p>
 
       <div className="mt-8">
         <Button asChild className="gap-2">
           <Link to={user ? homePath : '/'}>
             <ArrowLeft className="h-4 w-4" />
-            {user ? 'Back to App' : 'Back to Home'}
+            {user ? t('errors:backToApp') : t('errors:backToHome')}
           </Link>
         </Button>
       </div>

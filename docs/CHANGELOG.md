@@ -2,6 +2,41 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.2.0] - Pre-Deployment Hardening, English-First i18n, In-DB Images & Quick Add Barcode Flow
+- **Pre-Deployment Hardening & Security Audit (H0–H2, H8)**:
+  - Sanctum token authentication hardening: connection-level `throttle:10,1` on `POST /api/login`, dual environment expiration (`SANCTUM_EXPIRATION` and `SANCTUM_TOKEN_EXPIRATION`), token revocation on logout.
+  - Secret & credential segregation: dev-only demo accounts module, zero demo strings in production bundles verified via `scripts/check-prod-bundle.mjs`. Production seeders require explicit operator passwords (`DEMO_OWNER_PASSWORD`, `DEMO_CASHIER_PASSWORD`).
+  - Cart and session isolation: purged cart stores, POS cart storage, scanner pairing sessions, and TanStack query caches on user switch or logout (`SEC-05`).
+  - Production HTTPS scheme enforcement (`DEP-03`) via `URL::forceScheme('https')` in `AppServiceProvider.php`.
+  - Hotkey typing suppression (`UI-03`): `ignoreInputs: true` prevents inadvertent triggers while typing in inputs.
+- **Bilingual Internationalization (H3–H4e)**:
+  - English default with Taglish/Filipino toggle in Settings (`I18N-01`).
+  - 18 complete namespaces across `en/` and `fil/` with 100% dictionary key parity verified by `scripts/check-i18n.mjs` over 1,213 `t(...)` calls.
+- **In-DB Product Images with ULID Binary Storage & SSRF Protection (H5–H6)**:
+  - `product_images` table with `MEDIUMBLOB` up to 16MB on MySQL, ULID primary keys, and SHA-256 checksum indexing (`SEC-04`).
+  - Public streaming endpoint `GET /api/product-images/{ulid}` with 1-year immutable caching and 304 ETag revalidation.
+  - Owner-only upload (`POST /api/products/{id}/image`) and SSRF-safe URL import (`POST /api/products/{id}/image/import`) with host allowlist and IP block.
+  - Frontend client-side canvas downscaling (max 800px, WebP/JPEG <= 300KB) and camera photo capture (`capture="environment"`).
+  - Dynamic `resolveImageUrl` with origin resolution and preview error state resets on URL update (`UI-02`).
+- **One-Step Barcode Auto-Fill & Continuous Quick Add Flow (H7)**:
+  - Continuous "Quick Add by Scan" modal (`QuickAddScanDialog`) for high-speed shelf inventory intake with automatic price focus and session counter (`UI-01`).
+  - Local duplicate inventory restock buttons (`+5`, `+10`, `+20`, `+50`).
+  - 500ms debounced GTIN auto-lookup on manual typing in `ProductFormDialog`.
+  - Configurable "Auto Online Barcode Lookup" preference toggle in Settings (`tt_auto_barcode_lookup`).
+- **Deployment Hardening (H9)**:
+  - Pinned PHP 8.4 runtime in `backend/nixpacks.toml` with `pdo_mysql`, `bcmath`, `mbstring`, and `fileinfo` (`DEP-01`).
+  - Optimized Railway `preDeployCommand` with `config:cache`, `route:cache`, and `view:cache` (`DEP-05`).
+  - Hardened Vercel `vercel.json` SPA rewrites and 1-year immutable cache headers for `/assets/*` (`DEP-02`).
+  - Production-like HTTP smoke test script `scripts/smoke-prod-like.mjs` (`npm run smoke:prod`).
+- **Verification Gates**:
+  - Vitest: 15/15 test files passing (184/184 tests green).
+  - Pest: 84/84 tests passing (450 assertions).
+  - Pint: Clean PSR-12 code style.
+  - ESLint: 0 errors.
+  - Vite build: Clean production bundle compiled.
+  - Bundle security: 92 assets scanned, 0 secrets/dev leaks.
+  - Contract check: 49/49 API contracts verified against Laravel routes, 12/12 service facades matched.
+
 ## [v1.1.1] - Fix Phone Pairing & End-to-End Live Sync Hardening
 - **Phone Pairing Response Unwrapping & API Base Fixes (F0–F1)**:
   - Resolved primary root cause where `apiClient.js` returns Axios `response.data`, leaving nested `{ data: { ... } }` wrapped in `scannerService.js` and `barcodeService.js`. Unwrapped all response payloads so `pairing_code`, `id`, and `pairing_expires_at` evaluate properly.

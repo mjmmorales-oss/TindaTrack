@@ -12,6 +12,7 @@ import {
   Scan,
   Trash2,
   X,
+  Zap,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,7 @@ import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { QuickAddScanDialog } from '@/features/products/components/QuickAddScanDialog'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
 import { ScannerSheet } from '@/components/scanner/ScannerSheet'
@@ -50,13 +52,15 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePermissions } from '@/hooks/usePermissions'
 import { formatRelative } from '@/lib/format'
 import { notify } from '@/lib/notify'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Product catalog management page with server-filtered data table,
  * category & stock faceted filters, responsive mobile cards, and full CRUD workflows.
  */
 export function ProductsPage() {
-  useDocumentTitle('Products')
+  const { t } = useTranslation(['products', 'common'])
+  useDocumentTitle(t('products:pageTitle', 'Products & Inventory'))
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canViewCost = can('products.view_cost')
@@ -101,6 +105,7 @@ export function ProductsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingProduct, setDeletingProduct] = useState(null)
   const [scannerSheetOpen, setScannerSheetOpen] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [dismissedUnknownCard, setDismissedUnknownCard] = useState(false)
 
   // Unknown barcodes for owner
@@ -116,7 +121,7 @@ export function ProductsPage() {
     try {
       const res = await barcodeService.lookupBarcode(barcode)
       if (res?.data?.local_product) {
-        notify.info(`Naka-rehistro na: ${res.data.local_product.name}`)
+        notify.info(t('products:alreadyRegisteredAlert', { name: res.data.local_product.name, defaultValue: `Already registered: ${res.data.local_product.name}` }))
         setEditingProduct(res.data.local_product)
         setFormDialogOpen(true)
       } else if (res?.data?.catalog?.found) {
@@ -166,7 +171,7 @@ export function ProductsPage() {
   const handleDuplicate = (prod) => {
     setEditingProduct({
       ...prod,
-      name: `${prod.name} (Kopya)`,
+      name: `${prod.name} ${t('products:copySuffix', '(Copy)')}`,
       sku: prod.sku ? `${prod.sku}-COPY` : '',
       barcode: '',
       __isDuplicate: true,
@@ -203,14 +208,14 @@ export function ProductsPage() {
   )
 
   const stockFilterOptions = [
-    { label: 'In Stock', value: 'in' },
-    { label: 'Low Stock', value: 'low' },
-    { label: 'Out of Stock', value: 'out' },
+    { label: t('products:inStock', 'In Stock'), value: 'in' },
+    { label: t('products:lowStock', 'Low Stock'), value: 'low' },
+    { label: t('products:outOfStock', 'Out of Stock'), value: 'out' },
   ]
 
   const statusFilterOptions = [
-    { label: 'Aktibo (Active)', value: 'true' },
-    { label: 'Hindi Aktibo (Inactive)', value: 'false' },
+    { label: t('products:active', 'Active'), value: 'true' },
+    { label: t('products:inactive', 'Inactive'), value: 'false' },
   ]
 
   const isFiltered = Boolean(
@@ -220,7 +225,7 @@ export function ProductsPage() {
   const filters = [
     {
       columnId: 'category_id',
-      title: 'Kategorya',
+      title: t('products:categoryFilter', 'Category'),
       options: categoryFilterOptions,
       selectedValues: params.category_id ? [String(params.category_id)] : [],
       onChange: (vals) =>
@@ -228,7 +233,7 @@ export function ProductsPage() {
     },
     {
       columnId: 'stock',
-      title: 'Stock Level',
+      title: t('products:stockLevelFilter', 'Stock Level'),
       options: stockFilterOptions,
       selectedValues: params.stock ? [params.stock] : [],
       onChange: (vals) =>
@@ -236,7 +241,7 @@ export function ProductsPage() {
     },
     {
       columnId: 'is_active',
-      title: 'Katayuan',
+      title: t('products:statusFilter', 'Status'),
       options: statusFilterOptions,
       selectedValues: params.is_active !== '' ? [String(params.is_active)] : [],
       onChange: (vals) =>
@@ -250,7 +255,7 @@ export function ProductsPage() {
       {
         accessorKey: 'name',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Produkto" />
+          <DataTableColumnHeader column={column} title={t('products:productCol', 'Product')} />
         ),
         cell: ({ row }) => {
           const p = row.original
@@ -270,7 +275,7 @@ export function ProductsPage() {
                   {p.name}
                 </Link>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-                  <span>{p.sku || 'WALANG-SKU'}</span>
+                  <span>{p.sku || t('products:noSku', 'NO-SKU')}</span>
                   {p.barcode && <span>· {p.barcode}</span>}
                 </div>
               </div>
@@ -281,11 +286,11 @@ export function ProductsPage() {
       {
         accessorKey: 'category_id',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Kategorya" />
+          <DataTableColumnHeader column={column} title={t('products:categoryCol', 'Category')} />
         ),
         cell: ({ row }) => {
           const p = row?.original || row || {}
-          const catName = (p.category_id && categoryMap[p.category_id]) || 'Iba pa'
+          const catName = (p.category_id && categoryMap[p.category_id]) || t('products:otherCategory', 'Other')
           return (
             <Badge variant="outline" className="text-xs font-normal">
               {catName}
@@ -296,7 +301,7 @@ export function ProductsPage() {
       {
         accessorKey: 'price',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Presyo" />
+          <DataTableColumnHeader column={column} title={t('products:priceCol', 'Price')} />
         ),
         cell: ({ row }) => (
           <Money amount={row.original.price} size="sm" tone="default" />
@@ -308,7 +313,7 @@ export function ProductsPage() {
       cols.push({
         accessorKey: 'cost_price',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Puhunan (Cost)" />
+          <DataTableColumnHeader column={column} title={t('products:costCol', 'Cost')} />
         ),
         cell: ({ row }) => (
           <Money amount={row.original.cost_price} size="sm" tone="muted" />
@@ -320,7 +325,7 @@ export function ProductsPage() {
       {
         accessorKey: 'stock_quantity',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Stock" />
+          <DataTableColumnHeader column={column} title={t('products:stockCol', 'Stock')} />
         ),
         cell: ({ row }) => {
           const p = row.original
@@ -342,7 +347,7 @@ export function ProductsPage() {
       {
         accessorKey: 'is_active',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Katayuan" />
+          <DataTableColumnHeader column={column} title={t('products:statusCol', 'Status')} />
         ),
         cell: ({ row }) => (
           <StatusBadge
@@ -354,7 +359,7 @@ export function ProductsPage() {
       {
         accessorKey: 'updated_at',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Huling Na-update" />
+          <DataTableColumnHeader column={column} title={t('products:updatedCol', 'Last Updated')} />
         ),
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -373,7 +378,7 @@ export function ProductsPage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 p-0"
-                  aria-label="Buksan ang menu ng produkto"
+                  aria-label={t('products:openProductMenu', 'Open product menu')}
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -384,7 +389,7 @@ export function ProductsPage() {
                   className="gap-2 text-xs"
                 >
                   <Eye className="h-3.5 w-3.5" />
-                  Tingnan (View)
+                  {t('products:view', 'View')}
                 </DropdownMenuItem>
 
                 {canManage && (
@@ -394,21 +399,21 @@ export function ProductsPage() {
                       className="gap-2 text-xs"
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                      I-edit
+                      {t('products:edit', 'Edit')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleAdjust(p)}
                       className="gap-2 text-xs"
                     >
                       <ArrowDownUp className="h-3.5 w-3.5" />
-                      I-adjust ang Stock
+                      {t('products:adjustStock', 'Adjust Stock')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleDuplicate(p)}
                       className="gap-2 text-xs"
                     >
                       <Copy className="h-3.5 w-3.5" />
-                      Kopyahin (Duplicate)
+                      {t('products:duplicate', 'Duplicate')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -416,7 +421,7 @@ export function ProductsPage() {
                       className="gap-2 text-xs text-destructive focus:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Burahin (Delete)
+                      {t('products:delete', 'Delete')}
                     </DropdownMenuItem>
                   </>
                 )}
@@ -428,12 +433,12 @@ export function ProductsPage() {
     )
 
     return cols
-  }, [categoryMap, canViewCost, canManage, navigate])
+  }, [categoryMap, canViewCost, canManage, navigate, t])
 
   // Mobile card renderer for screens below md
   const renderMobileCard = (row) => {
     const p = row?.original || row || {}
-    const catName = (p.category_id && categoryMap[p.category_id]) || 'Iba pa'
+    const catName = (p.category_id && categoryMap[p.category_id]) || t('products:otherCategory', 'Other')
 
     return (
       <div
@@ -456,7 +461,7 @@ export function ProductsPage() {
                 {p.name}
               </Link>
               <p className="text-xs font-mono text-muted-foreground mt-0.5">
-                {p.sku || 'WALANG-SKU'}
+                {p.sku || t('products:noSku', 'NO-SKU')}
               </p>
             </div>
           </div>
@@ -468,7 +473,7 @@ export function ProductsPage() {
                 variant="ghost"
                 size="icon"
                 className="h-11 w-11 shrink-0 p-0"
-                aria-label="Aksyon sa produkto"
+                aria-label={t('products:openProductMenu', 'Open product menu')}
               >
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
@@ -479,7 +484,7 @@ export function ProductsPage() {
                 className="gap-2 text-xs"
               >
                 <Eye className="h-4 w-4" />
-                Tingnan ang Detalye
+                {t('products:viewDetails', 'View Details')}
               </DropdownMenuItem>
               {canManage && (
                 <>
@@ -488,21 +493,21 @@ export function ProductsPage() {
                     className="gap-2 text-xs"
                   >
                     <Pencil className="h-4 w-4" />
-                    I-edit
+                    {t('products:edit', 'Edit')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleAdjust(p)}
                     className="gap-2 text-xs"
                   >
                     <ArrowDownUp className="h-4 w-4" />
-                    I-adjust ang Stock
+                    {t('products:adjustStock', 'Adjust Stock')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleDuplicate(p)}
                     className="gap-2 text-xs"
                   >
                     <Copy className="h-4 w-4" />
-                    Kopyahin
+                    {t('products:duplicate', 'Duplicate')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -510,7 +515,7 @@ export function ProductsPage() {
                     className="gap-2 text-xs text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Burahin
+                    {t('products:delete', 'Delete')}
                   </DropdownMenuItem>
                 </>
               )}
@@ -521,13 +526,13 @@ export function ProductsPage() {
         {/* Details row: Price, Cost, Category, Status */}
         <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/50 pt-2.5">
           <div>
-            <span className="text-muted-foreground block text-[11px]">Presyo ng Benta</span>
+            <span className="text-muted-foreground block text-[11px]">{t('products:sellingPrice', 'Selling Price')}</span>
             <Money amount={p.price} size="sm" tone="default" className="font-bold" />
           </div>
 
           {canViewCost && (
             <div>
-              <span className="text-muted-foreground block text-[11px]">Puhunan (Cost)</span>
+              <span className="text-muted-foreground block text-[11px]">{t('products:costPrice', 'Cost (Puhunan)')}</span>
               <Money amount={p.cost_price} size="sm" tone="muted" />
             </div>
           )}
@@ -550,7 +555,7 @@ export function ProductsPage() {
         {/* Stock Level Bar */}
         <div className="border-t border-border/50 pt-2 space-y-1">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-muted-foreground text-[11px]">Kasalukuyang Stock:</span>
+            <span className="text-muted-foreground text-[11px]">{t('products:currentStock', 'Current Stock:')}</span>
             <span className="font-mono font-bold text-foreground">
               {p.stock_quantity} / {p.reorder_level} {p.unit || 'pcs'}
             </span>
@@ -568,22 +573,30 @@ export function ProductsPage() {
   return (
     <PageContainer className="pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
       <PageHeader
-        title="Mga Paninda at Imbentaryo"
-        description="Pamamahala ng mga produkto, presyo ng benta, puhunan, at dami ng stock"
+        title={t('products:pageTitle', 'Products & Inventory')}
+        description={t('products:subtitle', 'Manage product catalog, selling prices, costs, and stock levels')}
         actions={
           canManage && (
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setQuickAddOpen(true)}
+                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-primary/5 hover:bg-primary/10 text-primary border-primary/25 font-semibold"
+              >
+                <Zap className="h-4 w-4" />
+                {t('products:quickAddByScan')}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setScannerSheetOpen(true)}
                 className="gap-1.5 shadow-xs h-11 sm:h-9"
               >
                 <Scan className="h-4 w-4" />
-                I-scan para magdagdag
+                {t('products:scanToAdd', 'Scan to add')}
               </Button>
               <Button onClick={handleCreate} className="gap-1.5 shadow-xs h-11 sm:h-9">
                 <Plus className="h-4 w-4" />
-                Magdagdag ng Produkto
+                {t('products:addProduct', 'Add Product')}
               </Button>
             </div>
           )
@@ -597,7 +610,7 @@ export function ProductsPage() {
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-warning shrink-0" />
               <h3 className="font-semibold text-sm">
-                Mga barcode na hindi pa naka-rehistro ({unknownBarcodes.length})
+                {t('products:unknownBarcodesTitle', { count: unknownBarcodes.length, defaultValue: `Unregistered barcodes (${unknownBarcodes.length})` })}
               </h3>
             </div>
             <Button
@@ -605,13 +618,13 @@ export function ProductsPage() {
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
               onClick={() => setDismissedUnknownCard(true)}
-              aria-label="Isara ang babala"
+              aria-label={t('products:closeAlert', 'Close alert')}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            May mga na-scan na barcode sa POS na wala pa sa iyong imbentaryo. Pindutin ang &quot;Irehistro&quot; para mabilis itong maipasok.
+            {t('products:unknownBarcodesDesc', 'Barcodes scanned at POS that are not yet in your inventory. Click "Register" to add them quickly.')}
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 pt-1">
             {unknownBarcodes.map((item) => (
@@ -622,7 +635,7 @@ export function ProductsPage() {
                 <div className="min-w-0 pr-2">
                   <span className="font-mono font-bold block truncate">{item.barcode}</span>
                   <span className="text-[11px] text-muted-foreground block truncate">
-                    Na-scan nang {item.scan_count}× · {formatRelative(item.last_seen_at)}
+                    {t('products:scannedTimes', { count: item.scan_count, time: formatRelative(item.last_seen_at), defaultValue: `Scanned ${item.scan_count}× · ${formatRelative(item.last_seen_at)}` })}
                   </span>
                 </div>
                 <Button
@@ -631,7 +644,7 @@ export function ProductsPage() {
                   className="h-8 text-xs shrink-0"
                   onClick={() => handleRegisterBarcode(item.barcode)}
                 >
-                  Irehistro
+                  {t('products:register', 'Register')}
                 </Button>
               </div>
             ))}
@@ -651,7 +664,7 @@ export function ProductsPage() {
         renderMobileCard={renderMobileCard}
         toolbar={
           <DataTableToolbar
-            searchPlaceholder="Maghanap ng pangalan, SKU, barcode..."
+            searchPlaceholder={t('products:searchPlaceholder', 'Search name, SKU, barcode...')}
             searchValue={params.q}
             onSearchChange={(q) => setParams({ q, page: 1 })}
             filters={filters}
@@ -662,13 +675,13 @@ export function ProductsPage() {
         emptyState={
           <EmptyState
             icon={Package}
-            title={isFiltered ? 'Walang nahanap na tugmang produkto' : 'Walang nakatalang paninda'}
+            title={isFiltered ? t('products:emptyFilteredTitle', 'No matching products found') : t('products:emptyDefaultTitle', 'No products registered yet')}
             description={
               isFiltered
-                ? 'Subukang alisin ang mga filter o maghanap ng ibang salita.'
-                : 'Magsimula sa pamamagitan ng pagdaragdag ng unang produkto sa iyong tindahan.'
+                ? t('products:emptyFilteredDesc', 'Try clearing filters or searching for different keywords.')
+                : t('products:emptyDefaultDesc', 'Get started by adding the first product to your store.')
             }
-            actionText={isFiltered ? 'I-clear ang mga Filter' : canManage ? 'Magdagdag ng Produkto' : undefined}
+            actionText={isFiltered ? t('products:clearFilters', 'Clear Filters') : canManage ? t('products:addProduct', 'Add Product') : undefined}
             onAction={isFiltered ? resetParams : canManage ? handleCreate : undefined}
           />
         }
@@ -695,10 +708,10 @@ export function ProductsPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title={`Burahin ang "${deletingProduct?.name}"?`}
-        description="Kapag may nakaraang benta na ito, mamarkahan ito bilang hindi aktibo (inactive) upang mapanatili ang integridad ng mga ulat."
-        confirmText="Oo, Burahin"
-        cancelText="Kanselahin"
+        title={t('products:deleteConfirmTitle', { name: deletingProduct?.name, defaultValue: `Delete "${deletingProduct?.name}"?` })}
+        description={t('products:deleteConfirmDesc', 'If this product has previous sales, it will be marked as inactive to preserve report integrity.')}
+        confirmText={t('products:confirmDelete', 'Yes, Delete')}
+        cancelText={t('products:cancel', 'Cancel')}
         tone="destructive"
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
@@ -709,8 +722,16 @@ export function ProductsPage() {
         open={scannerSheetOpen}
         onOpenChange={setScannerSheetOpen}
         continuous={false}
-        title="I-scan ang Produkto para Idagdag"
+        title={t('products:scanToAddSheetTitle', 'Scan Product to Add')}
         onDetected={handleScanDetected}
+      />
+
+      {/* Quick Add by Scan Continuous Modal */}
+      <QuickAddScanDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        categories={categories}
+        onSuccess={() => refetch()}
       />
     </PageContainer>
   )

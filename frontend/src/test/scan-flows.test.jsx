@@ -156,8 +156,8 @@ describe('B10: PairPhoneDialog Component', () => {
       expect(screen.getByText('ABCD-9876')).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/Buksan ang camera ng iyong phone/i)).toBeInTheDocument()
-    expect(screen.getByText(/I-scan ang QR code sa itaas/i)).toBeInTheDocument()
+    expect(screen.getByText(/Open your phone camera|Buksan ang camera ng iyong phone/i)).toBeInTheDocument()
+    expect(screen.getByText(/Scan the QR code above|I-scan ang QR code sa itaas/i)).toBeInTheDocument()
   })
 
   it('shows localhost warning when origin is localhost', async () => {
@@ -222,7 +222,7 @@ describe('B10: PairPhoneDialog Component', () => {
       expect(screen.getByText('AHAW-YD4S')).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/O ilagay ang code na ito sa \/scan/i)).toBeInTheDocument()
+    expect(screen.getByText(/Or enter this code at \/scan|O ilagay ang code na ito sa \/scan/i)).toBeInTheDocument()
     expect(screen.queryByText(/Hindi makagawa ng code/i)).toBeNull()
   })
 
@@ -245,8 +245,8 @@ describe('B10: PairPhoneDialog Component', () => {
     })
 
     // Assert that pairing code container and instructions are NOT rendered
-    expect(screen.queryByText(/O ilagay ang code na ito sa \/scan/i)).toBeNull()
-    expect(screen.getByRole('button', { name: /Subukan ulit/i })).toBeInTheDocument()
+    expect(screen.queryByText(/Or enter this code at \/scan|O ilagay ang code na ito sa \/scan/i)).toBeNull()
+    expect(screen.getByRole('button', { name: /Try again|Subukan ulit/i })).toBeInTheDocument()
   })
 
   it('calls createScannerSession exactly once even under <React.StrictMode>', async () => {
@@ -346,7 +346,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
       expect(screen.getByText('Tindahan ni Aling Nena')).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/Konektado kay Aling Nena/i)).toBeInTheDocument()
+    expect(screen.getByText(/Connected to Aling Nena|Konektado kay Aling Nena/i)).toBeInTheDocument()
     expect(screen.getByText('POS')).toBeInTheDocument()
   })
 
@@ -386,7 +386,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
     const manualBtn = screen.getByRole('button', { name: /manual/i })
     fireEvent.click(manualBtn)
 
-    const input = screen.getByPlaceholderText(/I-type ang barcode dito/i)
+    const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
     fireEvent.change(input, { target: { value: '4800016601011' } })
 
     const form = input.closest('form')
@@ -396,7 +396,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
       expect(screen.getAllByText('Lucky Me Pancit Canton Original').length).toBeGreaterThanOrEqual(1)
     })
 
-    expect(screen.getByText(/Naipadala sa POS/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sent to POS|Naipadala sa POS/i)).toBeInTheDocument()
   })
 
   it('shows ended session message on 401 error', async () => {
@@ -425,7 +425,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
     const manualBtn = screen.getByRole('button', { name: /manual/i })
     fireEvent.click(manualBtn)
 
-    const input = screen.getByPlaceholderText(/I-type ang barcode dito/i)
+    const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
     fireEvent.change(input, { target: { value: '4800016601011' } })
 
     const form = input.closest('form')
@@ -433,7 +433,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Natapos na ang session\. Mag-scan ng bagong QR\./i),
+        screen.getByText(/Session ended|Natapos na ang session/i),
       ).toBeInTheDocument()
     })
   })
@@ -454,7 +454,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Hindi nahanap ang pairing code\. Tiyaking tama ang code mula sa POS\./i),
+        screen.getByText(/Pairing code not found|Hindi nahanap ang pairing code/i),
       ).toBeInTheDocument()
     })
   })
@@ -475,7 +475,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Paso na ang pairing code\. Humingi ng bagong code sa POS\./i),
+        screen.getByText(/Pairing code expired|Paso na ang pairing code/i),
       ).toBeInTheDocument()
     })
   })
@@ -496,7 +496,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Nagamit na ang pairing code na ito\. Humingi ng bagong code sa POS\./i),
+        screen.getByText(/This pairing code was already used|Nagamit na ang pairing code/i),
       ).toBeInTheDocument()
     })
   })
@@ -512,7 +512,7 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Walang pairing code sa URL/i),
+        screen.getByText(/No pairing code provided|Walang pairing code sa URL/i),
       ).toBeInTheDocument()
     })
   })
@@ -591,14 +591,14 @@ describe('B10: ProductFormDialog Auto-Fill and Internal Barcode', () => {
       />,
     )
 
-    expect(screen.getByRole('heading', { name: /Magdagdag ng Bagong Produkto/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Magdagdag ng Bagong Produkto|Add New Product/i })).toBeInTheDocument()
 
     // Type barcode into #product-barcode input (in portal)
     const barcodeInput = document.getElementById('product-barcode')
     expect(barcodeInput).not.toBeNull()
     fireEvent.change(barcodeInput, { target: { value: '3017620422003' } })
 
-    const lookupBtn = screen.getByRole('button', { name: /Hanapin online/i })
+    const lookupBtn = screen.getByRole('button', { name: /Hanapin online|Search online/i })
     fireEvent.click(lookupBtn)
 
     await waitFor(() => {
@@ -612,7 +612,7 @@ describe('B10: ProductFormDialog Auto-Fill and Internal Barcode', () => {
     const sizeInput = document.querySelector('input[name="size"]')
     expect(sizeInput?.value).toBe('350g')
 
-    expect(screen.getByText(/Data mula sa Open Food Facts/i)).toBeInTheDocument()
+    expect(screen.getByText(/Data mula sa Open Food Facts|Data from Open Food Facts/i)).toBeInTheDocument()
   })
 
   it('shows not found message when online lookup finds no data', async () => {
@@ -640,12 +640,12 @@ describe('B10: ProductFormDialog Auto-Fill and Internal Barcode', () => {
     expect(barcodeInput).not.toBeNull()
     fireEvent.change(barcodeInput, { target: { value: validUnknownGtin } })
 
-    const lookupBtn = screen.getByRole('button', { name: /Hanapin online/i })
+    const lookupBtn = screen.getByRole('button', { name: /Hanapin online|Search online/i })
     fireEvent.click(lookupBtn)
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Walang nakitang data online, punan nang manual\./i),
+        screen.getByText(/Walang nakitang data online, punan nang manual|No data found online, please fill in manually/i),
       ).toBeInTheDocument()
     })
   })
@@ -665,10 +665,10 @@ describe('B10: ProductFormDialog Auto-Fill and Internal Barcode', () => {
     fireEvent.change(barcodeInput, { target: { value: '4800016601011' } })
 
     await waitFor(() => {
-      expect(screen.getByText(/Naka-rehistro na ito/i)).toBeInTheDocument()
+      expect(screen.getByText(/Naka-rehistro na ito|Already registered/i)).toBeInTheDocument()
     })
 
-    const submitBtn = screen.getByRole('button', { name: /Idagdag ang Produkto/i })
+    const submitBtn = screen.getByRole('button', { name: /Idagdag ang Produkto|Add Product|Save Product/i })
     expect(submitBtn).toBeDisabled()
   })
 })

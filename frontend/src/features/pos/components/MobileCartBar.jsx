@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ShoppingBag, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Money } from '@/components/common/Money'
@@ -18,6 +19,8 @@ export function MobileCartBar({
   onOpenDrawer,
   onOpenPayment,
 }) {
+  const { t } = useTranslation(['pos', 'common'])
+
   if (itemCount <= 0) return null
 
   return (
@@ -28,7 +31,7 @@ export function MobileCartBar({
           type="button"
           onClick={onOpenDrawer}
           className="flex min-w-0 flex-1 items-center gap-2.5 text-left outline-none cursor-pointer"
-          aria-label={`Buksan ang cart na may ${itemCount} items na nagkakahalaga ng ₱${Number(total || 0).toFixed(2)}`}
+          aria-label={t('pos:viewCartList', 'View cart list')}
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <ShoppingBag className="h-5 w-5" />
@@ -37,7 +40,7 @@ export function MobileCartBar({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-xs text-foreground truncate">
-                {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                {itemCount} {itemCount === 1 ? t('pos:pieces', 'item') : t('pos:piecesPlural', 'items')}
               </span>
               <span className="text-muted-foreground/60 text-xs">·</span>
               <Money
@@ -48,7 +51,7 @@ export function MobileCartBar({
               />
             </div>
             <div className="flex items-center text-[10px] text-muted-foreground gap-0.5">
-              <span>Tingnan ang listahan</span>
+              <span>{t('pos:viewCartList', 'View cart list')}</span>
               <ChevronUp className="h-3 w-3" />
             </div>
           </div>
@@ -61,7 +64,7 @@ export function MobileCartBar({
           onClick={onOpenPayment}
           className="h-10 px-5 text-sm font-bold shadow-md shrink-0"
         >
-          Bayaran (Pay)
+          {t('pos:payButton', 'Pay')}
         </Button>
       </div>
     </div>

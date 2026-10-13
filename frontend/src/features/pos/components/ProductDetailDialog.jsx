@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { Money } from '@/components/common/Money'
@@ -20,6 +21,7 @@ export function ProductDetailDialog({
   onOpenChange,
   onAddToCart,
 }) {
+  const { t } = useTranslation(['pos', 'common'])
   if (!product) return null
 
   const isOutOfStock = (product.stock_quantity ?? 0) <= 0
@@ -32,7 +34,7 @@ export function ProductDetailDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={product.name}
-      description="Detalye ng Produkto"
+      description={t('pos:productDetails', 'Product Details')}
       className="sm:max-w-sm"
       footer={
         <div className="flex w-full items-center justify-end gap-2">
@@ -42,7 +44,7 @@ export function ProductDetailDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
           >
-            Isara
+            {t('pos:close', 'Close')}
           </Button>
           <Button
             type="button"
@@ -55,14 +57,14 @@ export function ProductDetailDialog({
             className="gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            Idagdag sa Cart
+            {t('pos:addToCart', 'Add to cart')}
           </Button>
         </div>
       }
     >
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <ProductThumb name={product.name} size="lg" />
+          <ProductThumb name={product.name} imageUrl={product.image_url} size="lg" />
           <div className="space-y-1">
             <h4 className="font-semibold text-sm text-foreground">
               {product.name}
@@ -73,28 +75,28 @@ export function ProductDetailDialog({
 
         <div className="rounded-lg border border-border/70 bg-muted/30 p-3 space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Presyo (Selling Price):</span>
+            <span className="text-muted-foreground">{t('pos:sellingPrice', 'Selling Price')}:</span>
             <Money amount={product.price} size="sm" tone="default" />
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Kasalukuyang Stock:</span>
+            <span className="text-muted-foreground">{t('pos:currentStock', 'Current Stock')}:</span>
             <span className="font-mono font-bold">
               {product.stock_quantity} {product.unit || 'pcs'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Reorder Level:</span>
+            <span className="text-muted-foreground">{t('pos:reorderLevel', 'Reorder Level')}:</span>
             <span className="font-mono">
               {product.reorder_level} {product.unit || 'pcs'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">SKU:</span>
+            <span className="text-muted-foreground">{t('pos:sku', 'SKU')}:</span>
             <span className="font-mono">{product.sku || 'N/A'}</span>
           </div>
           {product.barcode && (
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Barcode:</span>
+              <span className="text-muted-foreground">{t('pos:barcode', 'Barcode')}:</span>
               <span className="font-mono">{product.barcode}</span>
             </div>
           )}

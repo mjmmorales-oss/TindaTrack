@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Printer, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Money } from '@/components/common/Money'
@@ -14,6 +15,7 @@ import { formatDateTime } from '@/lib/format'
  * @param {() => void} props.onNewSale - Reset POS and clear cart callback
  */
 export function ReceiptView({ sale, settings, cashier, onNewSale }) {
+  const { t } = useTranslation(['pos', 'common'])
   const storeName = settings?.store_name || 'Tindahan ni Aling Nena'
   const storeAddress = settings?.address || 'Purok 3, Brgy. San Isidro'
   const storeContact = settings?.contact_number || '0917-123-4567'
@@ -46,10 +48,10 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <h3 className="text-lg font-bold text-foreground">
-          Matagumpay na Naitala ang Benta!
+          {t('pos:saleCompleteTitle', 'Sale Completed Successfully')}
         </h3>
         <p className="text-xs text-muted-foreground">
-          Resibo No: <span className="font-mono font-medium text-foreground">{sale.sale_no}</span>
+          {t('pos:receiptNo', 'Receipt #')}: <span className="font-mono font-medium text-foreground">{sale.sale_no}</span>
         </p>
       </div>
 
@@ -70,21 +72,21 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
         {/* Metadata */}
         <div className="py-2.5 space-y-1 text-[11px] border-b border-dashed border-border/80">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Resibo #:</span>
+            <span className="text-muted-foreground">{t('pos:receiptNo', 'Receipt #')}:</span>
             <span className="font-bold text-foreground">{sale.sale_no}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Petsa:</span>
+            <span className="text-muted-foreground">{t('common:date', 'Date')}:</span>
             <span>{formatDateTime(sale.created_at)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Kahera:</span>
+            <span className="text-muted-foreground">{t('common:cashier', 'Cashier')}:</span>
             <span>{cashierName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Paraan:</span>
+            <span className="text-muted-foreground">{t('common:paymentMethod', 'Method')}:</span>
             <span className="uppercase font-semibold text-foreground">
-              {isUtang ? 'LISTA / UTANG' : 'CASH'}
+              {isUtang ? t('pos:utang', 'Credit (Utang)') : t('pos:cash', 'Cash')}
             </span>
           </div>
         </div>
@@ -110,18 +112,18 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
         {/* Totals & Payments */}
         <div className="py-2.5 space-y-1.5 border-b border-dashed border-border/80">
           <div className="flex justify-between text-xs font-bold text-foreground">
-            <span>KABUUANG HALAGA:</span>
+            <span>{t('pos:totalAmount', 'TOTAL AMOUNT')}:</span>
             <Money amount={sale.total_amount} size="sm" tone="highlight" />
           </div>
 
           {isUtang ? (
             <>
               <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Ibinayad Ngayon:</span>
+                <span>{t('pos:paidNow', 'Paid Now:')}</span>
                 <Money amount={sale.amount_paid} size="xs" />
               </div>
               <div className="flex justify-between text-[11px] font-bold text-utang">
-                <span>Nadagdag sa Utang:</span>
+                <span>{t('pos:addedToCredit', 'Added to Credit:')}</span>
                 <Money
                   amount={Math.max(0, sale.total_amount - sale.amount_paid)}
                   size="xs"
@@ -132,11 +134,11 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
           ) : (
             <>
               <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Perang Ibinayad (Cash):</span>
+                <span>{t('pos:cashTendered', 'Cash Tendered:')}</span>
                 <Money amount={sale.amount_paid} size="xs" />
               </div>
               <div className="flex justify-between text-xs font-bold text-success">
-                <span>SUKLI (Change):</span>
+                <span>{t('pos:change', 'SUKLI (Change)')}:</span>
                 <Money
                   amount={sale.change_amount}
                   size="sm"
@@ -152,7 +154,7 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
         <div className="pt-3 text-center space-y-1">
           <p className="text-[11px] font-medium text-foreground">{receiptFooter}</p>
           <p className="text-[9px] text-muted-foreground">
-            POS Powered by TindaTrack · Libre at Bukas
+            POS Powered by TindaTrack
           </p>
         </div>
       </div>
@@ -167,7 +169,7 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
           className="w-full sm:w-auto gap-2"
         >
           <Printer className="h-4 w-4" />
-          I-print ang Resibo (Print)
+          {t('pos:printReceipt', 'Print Thermal Receipt')}
         </Button>
         <Button
           type="button"
@@ -176,7 +178,7 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
           className="w-full sm:w-auto gap-2 shadow-md"
         >
           <PlusCircle className="h-4 w-4" />
-          Bagong Benta (New Sale · Enter)
+          {t('pos:newSale', 'New Sale')}
         </Button>
       </div>
     </div>

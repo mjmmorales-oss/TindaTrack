@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { PackageSearch } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card } from '@/components/ui/card'
@@ -21,6 +22,8 @@ export function ProductGrid({
   onViewProduct,
   onClearFilter,
 }) {
+  const { t } = useTranslation(['pos', 'common'])
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -49,9 +52,9 @@ export function ProductGrid({
       <div className="py-12 flex items-center justify-center">
         <EmptyState
           icon={PackageSearch}
-          title="Walang nahanap na produkto"
-          description="Subukang maghanap ng ibang pangalan o pumili ng ibang kategorya sa itaas."
-          actionText={onClearFilter ? 'Ibalik sa Lahat' : undefined}
+          title={t('pos:noProductsFound', 'No products found')}
+          description={t('pos:noProductsSearchDesc', 'Try searching for a different name or select another category above.')}
+          actionText={onClearFilter ? t('pos:resetFilters', 'Reset to All') : undefined}
           onAction={onClearFilter}
           className="max-w-md"
         />

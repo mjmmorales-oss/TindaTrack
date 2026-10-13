@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   AlertTriangle,
@@ -10,6 +11,10 @@ import {
   ExternalLink,
   Printer,
   CheckCircle2,
+  Camera,
+  Upload,
+  Trash2,
+  Image as ImageIcon,
 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -24,11 +29,20 @@ import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { ScannerSheet } from '@/components/scanner/ScannerSheet'
 import { PrintLabelsDialog } from '@/components/scanner/PrintLabelsDialog'
 import { productSchema, PRODUCT_UNITS, DEFAULT_PRODUCT } from '@/features/products/schemas'
-import { useCreateProduct, useUpdateProduct, useProducts } from '@/features/products/hooks/useProducts'
+import {
+  useCreateProduct,
+  useUpdateProduct,
+  useProducts,
+  useUploadProductImage,
+  useDeleteProductImage,
+} from '@/features/products/hooks/useProducts'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Barcode } from '@/lib/barcode'
 import { lookupBarcode } from '@/services/barcode'
 import { notify } from '@/lib/notify'
+import { resolveImageUrl } from '@/lib/images'
+import { resizeImage } from '@/lib/imageResize'
+import { getAutoBarcodeLookup } from '@/lib/barcodeSettings'
 
 /**
  * Product Create & Edit modal form with Open Food Facts auto-fill,
@@ -41,6 +55,7 @@ export function ProductFormDialog({
   categories = [],
   onSuccess,
 }) {
+  const { t } = useTranslation(['products', 'common'])
   const currentProduct = product || DEFAULT_PRODUCT
   const isEdit = Boolean(currentProduct.id && !currentProduct.__isDuplicate)
   const { can } = usePermissions()
@@ -48,7 +63,8 @@ export function ProductFormDialog({
 
   const createMutation = useCreateProduct()
   const updateMutation = useUpdateProduct()
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const uploadImageMutation = useUploadProductImage()
+  const deleteImageMutation = useDeleteProductImage()
 
   // Existing products to calculate sequence and check duplicate
   const { data: allProductsRes } = useProducts({ per_page: 200 })
@@ -62,8 +78,21 @@ export function ProductFormDialog({
   const [localDuplicate, setLocalDuplicate] = useState(null)
   const [isPrintLabelsOpen, setIsPrintLabelsOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [pendingImage, setPendingImage] = useState(null)
+  const [isOptimizingImage, setIsOptimizingImage] = useState(false)
+  const [imageRemoved, setImageRemoved] = useState(false)
+  const [showUrlInput, setShowUrlInput] = useState(false)
+
+  const isPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    uploadImageMutation.isPending ||
+    deleteImageMutation.isPending ||
+    isOptimizingImage
 
   const priceInputRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const cameraInputRef = useRef(null)
 
   const categoryOptions = (categories || []).map((c) => ({
     value: String(c.id),
@@ -134,8 +163,48 @@ export function ProductFormDialog({
       setLookupNotFound(false)
       setLocalDuplicate(null)
       setImageError(false)
+      setPendingImage(null)
+      setImageRemoved(false)
+      setIsOptimizingImage(false)
+      setShowUrlInput(false)
     }
   }, [open, product, reset])
+
+  const handleImageFile = async (file, source = 'upload') => {
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      notify.error(t('products:imageFileTooLarge'))
+      return
+    }
+    setIsOptimizingImage(true)
+    try {
+      const resized = await resizeImage(file)
+      setPendingImage({
+        file: resized.file,
+        dataUrl: resized.dataUrl,
+        sizeBytes: resized.sizeBytes,
+        source,
+      })
+      setValue('image_url', resized.dataUrl, { shouldValidate: true })
+      setImageRemoved(false)
+      setImageError(false)
+    } catch (err) {
+      notify.error('Failed to process image: ' + err.message)
+    } finally {
+      setIsOptimizingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setPendingImage(null)
+    setValue('image_url', '', { shouldValidate: true })
+    setImageRemoved(true)
+    setImageError(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+  }
 
   // Reset image error state when URL changes
   useEffect(() => {
@@ -171,7 +240,7 @@ export function ProductFormDialog({
       const normalized = Barcode.normalize(code)
       if (!Barcode.isAcceptable(normalized)) {
         if (!isAutoRun) {
-          setError('barcode', { message: 'Hindi wastong barcode format.' })
+          setError('barcode', { message: t('products:invalidBarcodeFormat') })
         }
         return
       }
@@ -187,8 +256,8 @@ export function ProductFormDialog({
         if (res?.local_product && (!isEdit || res.local_product.id !== product?.id)) {
           setLocalDuplicate(res.local_product)
           notify.warning(
-            'Naka-rehistro na ang barcode',
-            `Naka-rehistro na ito: ${res.local_product.name}`,
+            t('products:barcodeRegisteredTitle'),
+            t('products:barcodeRegisteredDesc', { name: res.local_product.name }),
           )
           return
         }
@@ -196,7 +265,7 @@ export function ProductFormDialog({
         // 2. Catalog found hit
         if (res?.catalog?.found) {
           const cat = res.catalog
-          setLookupAttribution(cat.attribution || 'Data mula sa Open Food Facts (ODbL)')
+          setLookupAttribution(cat.attribution || t('products:openFoodFactsAttribution'))
 
           // Prefill only fields that are currently empty
           const currentName = watch('name')
@@ -228,7 +297,7 @@ export function ProductFormDialog({
           setValue('source', cat.source || 'openfoodfacts')
           setValue('source_ref', normalized)
 
-          notify.success('Nakita sa Open Food Facts', 'Kusang pinunan ang mga detalye.')
+          notify.success(t('products:foundOnOffTitle'), t('products:foundOnOffDesc'))
 
           // Focus price field after auto-fill
           setTimeout(() => {
@@ -240,20 +309,20 @@ export function ProductFormDialog({
           setLookupNotFound(true)
           if (!isAutoRun) {
             notify.info(
-              'Walang nakitang data online',
-              'Walang nakitang data online, punan nang manual.',
+              t('products:notFoundOnlineAlert'),
+              t('products:notFoundOnlineAlert'),
             )
           }
         }
       } catch (err) {
         if (!isAutoRun) {
-          notify.error('Lookup error', err?.message || 'Hindi ma-lookup ang barcode.')
+          notify.error(t('products:lookupError'), err?.message || t('products:lookupError'))
         }
       } finally {
         setIsLookingUp(false)
       }
     },
-    [watchedBarcode, isEdit, product?.id, watch, setValue, setError, clearErrors],
+    [watchedBarcode, isEdit, product?.id, watch, setValue, setError, clearErrors, t],
   )
 
   // Handle scanned barcode from ScannerSheet
@@ -263,10 +332,27 @@ export function ProductFormDialog({
     setIsScannerOpen(false)
 
     // Auto-run online lookup when a valid GTIN is scanned in create mode
-    if (!isEdit && Barcode.isValidGtin(normalized)) {
+    if (!isEdit && Barcode.isValidGtin(normalized) && getAutoBarcodeLookup()) {
       handleOnlineLookup(normalized, true)
     }
   }
+
+  // Debounced auto-lookup when a valid GTIN is entered via keyboard or pasted
+  const lastLookedUpRef = useRef('')
+  useEffect(() => {
+    if (isEdit || !watchedBarcode || !getAutoBarcodeLookup()) return
+    const normalized = Barcode.normalize(watchedBarcode)
+    if (!Barcode.isValidGtin(normalized) || lastLookedUpRef.current === normalized) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      lastLookedUpRef.current = normalized
+      handleOnlineLookup(normalized, true)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [watchedBarcode, isEdit, handleOnlineLookup])
 
   // Generate homemade internal barcode (EAN-13 starting with 20)
   const handleGenerateInternalBarcode = () => {
@@ -287,12 +373,12 @@ export function ProductFormDialog({
     const internalBarcode = Barcode.makeInternal(nextSeq)
     setValue('barcode', internalBarcode, { shouldValidate: true })
     setValue('source', 'manual')
-    notify.success('Sariling Barcode', `Nabuo: ${internalBarcode}`)
+    notify.success(t('products:internalBarcodeTitle'), t('products:internalBarcodeDesc', { barcode: internalBarcode }))
   }
 
   const onSubmit = async (values) => {
     if (localDuplicate) {
-      notify.error('Duplicate Barcode', 'Naka-rehistro na ang barcode na ito sa ibang produkto.')
+      notify.error(t('products:duplicateBarcodeTitle'), t('products:duplicateBarcodeDesc'))
       return
     }
 
@@ -307,16 +393,39 @@ export function ProductFormDialog({
         barcode: values.barcode ? Barcode.normalize(values.barcode) : null,
         brand: values.brand?.trim() || null,
         size: values.size?.trim() || null,
-        image_url: values.image_url?.trim() || null,
+        image_url: pendingImage ? null : (values.image_url?.trim() || null),
         source: values.source || 'manual',
         source_ref: values.source_ref || null,
       }
 
+      if (imageRemoved) {
+        payload.image_url = null
+      }
+
+      let savedProduct
       if (isEdit) {
         delete payload.stock_quantity
-        await updateMutation.mutateAsync({ id: product.id, data: payload })
+        const res = await updateMutation.mutateAsync({ id: product.id, data: payload })
+        savedProduct = res.data
+        if (imageRemoved && product.image_url) {
+          try {
+            await deleteImageMutation.mutateAsync(product.id)
+          } catch {
+            // Ignore if image was already deleted
+          }
+        }
       } else {
-        await createMutation.mutateAsync(payload)
+        const res = await createMutation.mutateAsync(payload)
+        savedProduct = res.data
+      }
+
+      // If user selected a new photo, upload it as a binary file to the database
+      if (pendingImage && savedProduct?.id) {
+        await uploadImageMutation.mutateAsync({
+          id: savedProduct.id,
+          file: pendingImage.file,
+          source: pendingImage.source || 'upload',
+        })
       }
 
       onSuccess?.()
@@ -340,15 +449,15 @@ export function ProductFormDialog({
         onOpenChange={onOpenChange}
         title={
           isEdit
-            ? `I-edit ang Produkto: ${product.name}`
+            ? t('products:editProductModalTitle', { name: product.name })
             : product?.__isDuplicate
-            ? 'Kopyahin ang Produkto (Duplicate)'
-            : 'Magdagdag ng Bagong Produkto'
+            ? t('products:duplicateProductModalTitle')
+            : t('products:createProductModalTitle')
         }
         description={
           isEdit
-            ? 'I-update ang presyo, detalye, at impormasyon ng paninda.'
-            : 'Punan ang impormasyon ng panindang ibebenta sa tindahan.'
+            ? t('products:editProductModalDesc')
+            : t('products:createProductModalDesc')
         }
         className="sm:max-w-xl"
         footer={
@@ -363,7 +472,7 @@ export function ProductFormDialog({
                   className="gap-1.5 text-xs h-9"
                 >
                   <Printer className="h-3.5 w-3.5" />
-                  I-print ang label
+                  {t('products:printBarcodeLabel')}
                 </Button>
               )}
             </div>
@@ -375,7 +484,7 @@ export function ProductFormDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={isPending}
               >
-                Kanselahin
+                {t('common:cancel')}
               </Button>
               <Button
                 type="submit"
@@ -384,7 +493,7 @@ export function ProductFormDialog({
                 className="gap-1.5 font-bold"
               >
                 {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? 'I-save ang Pagbabago' : 'Idagdag ang Produkto'}
+                {isEdit ? t('products:saveChanges') : t('products:addProduct')}
               </Button>
             </div>
           </div>
@@ -396,8 +505,7 @@ export function ProductFormDialog({
             <Alert variant="destructive" className="py-2.5">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-xs font-medium">
-                Naka-rehistro na ito: <strong>{localDuplicate.name}</strong> (SKU: {localDuplicate.sku}).
-                Hindi maaaring magkaroon ng parehong barcode ang magkaibang produkto.
+                {t('products:duplicateBarcodeAlert', { name: localDuplicate.name, sku: localDuplicate.sku })}
               </AlertDescription>
             </Alert>
           )}
@@ -416,7 +524,7 @@ export function ProductFormDialog({
                   rel="noreferrer"
                   className="text-primary hover:underline flex items-center gap-1 text-[11px] font-bold"
                 >
-                  Tingnan sa OFF
+                  {t('products:viewOnOff')}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               )}
@@ -428,7 +536,7 @@ export function ProductFormDialog({
             <Alert variant="warning" className="border-warning/40 bg-warning/10 py-2">
               <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="text-xs text-warning-foreground font-medium">
-                Walang nakitang data online, punan nang manual.
+                {t('products:notFoundOnlineAlert')}
               </AlertDescription>
             </Alert>
           )}
@@ -437,7 +545,7 @@ export function ProductFormDialog({
           <div className="space-y-1.5 p-3 rounded-xl border border-border/80 bg-muted/20">
             <div className="flex items-center justify-between">
               <label htmlFor="product-barcode" className="text-xs font-bold text-foreground">
-                Barcode
+                {t('products:barcodeCol')}
               </label>
 
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -449,7 +557,7 @@ export function ProductFormDialog({
                   className="h-7 text-[11px] px-2 gap-1"
                 >
                   <ScanBarcode className="h-3 w-3 text-primary" />
-                  I-scan
+                  {t('products:scanBarcodeButton')}
                 </Button>
 
                 <Button
@@ -465,7 +573,7 @@ export function ProductFormDialog({
                   ) : (
                     <Search className="h-3 w-3 text-primary" />
                   )}
-                  Hanapin online
+                  {t('products:searchOnlineButton')}
                 </Button>
 
                 {!isEdit && (
@@ -477,7 +585,7 @@ export function ProductFormDialog({
                     className="h-7 text-[11px] px-2 gap-1 text-primary hover:text-primary font-semibold"
                   >
                     <Sparkles className="h-3 w-3" />
-                    Sariling barcode
+                    {t('products:generateHomemadeBarcode')}
                   </Button>
                 )}
               </div>
@@ -487,7 +595,7 @@ export function ProductFormDialog({
               id="product-barcode"
               name="barcode"
               control={control}
-              placeholder="8-13 tambilang (hal. 4800016601011)"
+              placeholder={t('products:barcodePlaceholder')}
               className="font-mono text-sm"
             />
           </div>
@@ -496,8 +604,8 @@ export function ProductFormDialog({
           <FormInput
             name="name"
             control={control}
-            label="Pangalan ng Produkto"
-            placeholder="hal. Lucky Me! Pancit Canton Kalamansi"
+            label={t('products:nameLabel')}
+            placeholder={t('products:namePlaceholder')}
             className="text-base md:text-sm"
           />
 
@@ -506,41 +614,154 @@ export function ProductFormDialog({
             <FormInput
               name="brand"
               control={control}
-              label="Brand / Tatak (Opsyonal)"
-              placeholder="hal. Lucky Me!, Bear Brand, Coke"
+              label={t('products:brandLabel')}
+              placeholder={t('products:brandPlaceholder')}
             />
             <FormInput
               name="size"
               control={control}
-              label="Sukat / Size (Opsyonal)"
-              placeholder="hal. 60g, 295ml, 1L"
+              label={t('products:sizeLabel')}
+              placeholder={t('products:sizePlaceholder')}
             />
           </div>
 
-          {/* Image URL & Image Preview */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <FormInput
-                  name="image_url"
-                  control={control}
-                  label="URL ng Larawan ng Produkto (Opsyonal)"
-                  placeholder="https://images.openfoodfacts.org/..."
-                  description="I-paste ang link ng larawan (walang file upload para sa mabilis na pag-load)."
-                />
-              </div>
+          {/* Product Photo Upload, Camera, & Preview */}
+          <div className="space-y-2 p-3 rounded-xl border border-border/80 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-foreground">
+                {t('products:uploadImage')}
+              </label>
 
-              {watchedImageUrl && !imageError && (
-                <div className="h-16 w-16 rounded-lg border border-border overflow-hidden shrink-0 bg-muted/40 self-end mb-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isOptimizingImage || isPending}
+                  className="h-7 text-[11px] px-2 gap-1"
+                >
+                  <Upload className="h-3 w-3" />
+                  {t('products:uploadImage')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isOptimizingImage || isPending}
+                  className="h-7 text-[11px] px-2 gap-1"
+                >
+                  <Camera className="h-3 w-3" />
+                  {t('products:takePhoto')}
+                </Button>
+                {(pendingImage || (watchedImageUrl && !imageRemoved)) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                    disabled={isPending}
+                    className="h-7 text-[11px] px-2 gap-1 text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    {t('products:removeImage')}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Hidden file and camera inputs */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageFile(e.target.files?.[0], 'upload')}
+            />
+            <input
+              type="file"
+              ref={cameraInputRef}
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleImageFile(e.target.files?.[0], 'camera')}
+            />
+
+            {/* Thumbnail preview and status card */}
+            <div className="flex items-center gap-3 bg-card p-2.5 rounded-lg border border-border/60">
+              <div className="relative h-16 w-16 rounded-lg border border-border overflow-hidden shrink-0 bg-muted/40 flex items-center justify-center">
+                {isOptimizingImage ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (pendingImage?.dataUrl || resolveImageUrl(watchedImageUrl)) && !imageError ? (
                   <img
-                    src={watchedImageUrl}
-                    alt="Preview"
+                    src={pendingImage?.dataUrl || resolveImageUrl(watchedImageUrl)}
+                    alt={t('products:uploadImage')}
                     className="h-full w-full object-cover"
                     onError={() => setImageError(true)}
                   />
+                ) : (
+                  <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-1">
+                {isOptimizingImage ? (
+                  <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t('products:optimizingImage')}
+                  </p>
+                ) : pendingImage ? (
+                  <div>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {t('products:imageSourcePending')} ({Math.round(pendingImage.sizeBytes / 1024)} KB)
+                    </span>
+                  </div>
+                ) : watchedImageUrl && watchedImageUrl.includes('openfoodfacts') ? (
+                  <div>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-highlight/15 px-2 py-0.5 text-[11px] font-semibold text-highlight">
+                      <Sparkles className="h-3 w-3" />
+                      {t('products:imageSourceOff')}
+                    </span>
+                  </div>
+                ) : watchedImageUrl && watchedImageUrl.includes('/api/product-images/') ? (
+                  <div>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
+                      <CheckCircle2 className="h-3 w-3 text-success" />
+                      {t('products:imageSourceLocal')}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t('products:dragOrClickPhoto')}
+                  </p>
+                )}
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlInput(!showUrlInput)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+                  >
+                    {showUrlInput ? 'Hide photo URL' : 'Or paste photo URL'}
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
+
+            {/* Optional manual URL input */}
+            {showUrlInput && (
+              <div className="pt-1">
+                <FormInput
+                  name="image_url"
+                  control={control}
+                  label={t('products:imageUrlLabel')}
+                  placeholder={t('products:imageUrlPlaceholder')}
+                  description={t('products:imageUrlDesc')}
+                />
+              </div>
+            )}
           </div>
 
           {/* Category & Unit */}
@@ -548,16 +769,16 @@ export function ProductFormDialog({
             <FormSelect
               name="category_id"
               control={control}
-              label="Kategorya"
+              label={t('products:categoryLabel')}
               options={categoryOptions}
-              placeholder="Pumili ng kategorya..."
+              placeholder={t('products:categoryPlaceholder')}
             />
             <FormSelect
               name="unit"
               control={control}
-              label="Sukat / Unit"
+              label={t('products:unitLabel')}
               options={PRODUCT_UNITS}
-              placeholder="Pumili ng unit..."
+              placeholder={t('products:unitPlaceholder')}
             />
           </div>
 
@@ -565,9 +786,9 @@ export function ProductFormDialog({
           <FormInput
             name="sku"
             control={control}
-            label="SKU (Stock Keeping Unit)"
-            placeholder="hal. TT-NOO-001"
-            description="Kusang bubuuin kung hahayaang bakante."
+            label={t('products:skuLabel')}
+            placeholder={t('products:skuPlaceholder')}
+            description={t('products:skuDesc')}
           />
 
           {/* Pricing: Selling Price & Cost Price */}
@@ -577,7 +798,7 @@ export function ProductFormDialog({
               control={control}
               render={({ field, fieldState: { error } }) => (
                 <Field data-invalid={!!error}>
-                  <FieldLabel htmlFor="product-price">Presyo ng Benta (₱)</FieldLabel>
+                  <FieldLabel htmlFor="product-price">{t('products:priceLabel')}</FieldLabel>
                   <MoneyInput
                     id="product-price"
                     ref={priceInputRef}
@@ -596,7 +817,7 @@ export function ProductFormDialog({
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <Field data-invalid={!!error}>
-                    <FieldLabel htmlFor="product-cost">Puhunan / Cost (₱)</FieldLabel>
+                    <FieldLabel htmlFor="product-cost">{t('products:costLabel')}</FieldLabel>
                     <MoneyInput
                       id="product-cost"
                       value={field.value}
@@ -615,7 +836,7 @@ export function ProductFormDialog({
             <Alert variant="warning" className="border-warning bg-warning/10 py-2">
               <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="text-xs text-warning-foreground font-medium">
-                Babala: Mas mataas ang puhunan (₱{watchedCost.toFixed(2)}) kaysa sa presyo ng benta (₱{watchedPrice.toFixed(2)}). Malulugi ang tindahan sa bawat benta nito.
+                {t('products:costHigherThanPriceDesc', { cost: watchedCost.toFixed(2), price: watchedPrice.toFixed(2) })}
               </AlertDescription>
             </Alert>
           )}
@@ -625,19 +846,19 @@ export function ProductFormDialog({
             <FormInput
               name="stock_quantity"
               control={control}
-              label="Panimulang Stock (Quantity)"
+              label={t('products:initialStockLabel')}
               type="number"
               inputMode="numeric"
               disabled={isEdit}
-              description={isEdit ? 'Baguhin gamit ang "Adjust Stock".' : undefined}
+              description={isEdit ? t('products:stockDisabledDesc') : undefined}
             />
             <FormInput
               name="reorder_level"
               control={control}
-              label="Reorder Level (Alert Limit)"
+              label={t('products:reorderLevelLabel')}
               type="number"
               inputMode="numeric"
-              description="Magpapakita ng babala kapag umabot dito ang stock."
+              description={t('products:reorderLevelDesc')}
             />
           </div>
 
@@ -646,8 +867,8 @@ export function ProductFormDialog({
             <FormSwitch
               name="is_active"
               control={control}
-              label="Aktibong Produkto"
-              description="Maaaring ibenta sa POS at hanapin sa tindahan."
+              label={t('products:isActiveLabel')}
+              description={t('products:isActiveDesc')}
             />
           </div>
 
@@ -655,8 +876,8 @@ export function ProductFormDialog({
           <FormTextarea
             name="description"
             control={control}
-            label="Paglalarawan / Tala (Opsyonal)"
-            placeholder="Mga karagdagang detalye tungkol sa paninda..."
+            label={t('products:descriptionLabel')}
+            placeholder={t('products:descriptionPlaceholder')}
             rows={2}
           />
         </form>
@@ -667,7 +888,7 @@ export function ProductFormDialog({
         open={isScannerOpen}
         onOpenChange={setIsScannerOpen}
         continuous={false}
-        title="I-scan ang Barcode ng Produkto"
+        title={t('products:scanSheetTitle')}
         onDetected={handleBarcodeScanned}
       />
 

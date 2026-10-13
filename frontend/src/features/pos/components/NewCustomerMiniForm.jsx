@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { UserPlus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ import { useCreateCustomer } from '@/features/customers/hooks/useCustomers'
  * @param {() => void} props.onCancel - Cancel callback
  */
 export function NewCustomerMiniForm({ onSuccess, onCancel }) {
+  const { t } = useTranslation(['pos', 'common'])
   const [name, setName] = useState('')
   const [nickname, setNickname] = useState('')
   const [contactNumber, setContactNumber] = useState('')
@@ -25,7 +27,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!name.trim()) {
-      setNameError('Kailangan ang pangalan ng suki.')
+      setNameError(t('pos:customerNameRequired', 'Customer name is required.'))
       return
     }
     setNameError('')
@@ -50,16 +52,16 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
     >
       <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
         <UserPlus className="h-4 w-4" />
-        <span>Magrehistro ng Bagong Suki (New Customer)</span>
+        <span>{t('pos:registerCustomer', 'Register New Customer (Suki)')}</span>
       </div>
 
       <div className="space-y-1">
         <Label htmlFor="suki-name" className="text-xs font-medium">
-          Buong Pangalan <span className="text-destructive">*</span>
+          {t('pos:fullName', 'Full Name')} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="suki-name"
-          placeholder="hal. Juan Dela Cruz"
+          placeholder="Juan Dela Cruz"
           value={name}
           onChange={(e) => {
             setName(e.target.value)
@@ -76,11 +78,11 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <Label htmlFor="suki-nickname" className="text-xs font-medium">
-            Palayaw (Nickname)
+            {t('pos:nickname', 'Nickname')}
           </Label>
           <Input
             id="suki-nickname"
-            placeholder="hal. Mang Juan"
+            placeholder="Mang Juan"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             className="h-9 text-xs"
@@ -89,7 +91,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
 
         <div className="space-y-1">
           <Label htmlFor="suki-phone" className="text-xs font-medium">
-            Telepono (CP #)
+            {t('pos:phone', 'Phone Number')}
           </Label>
           <Input
             id="suki-phone"
@@ -103,7 +105,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
 
       <div className="space-y-1">
         <Label htmlFor="suki-credit-limit" className="text-xs font-medium">
-          Credit Limit (₱)
+          {t('pos:creditLimit', 'Credit Limit:')} (₱)
         </Label>
         <MoneyInput
           id="suki-credit-limit"
@@ -123,7 +125,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
           disabled={createCustomerMutation.isPending}
           className="h-8 text-xs px-2.5"
         >
-          Kanselahin
+          {t('common:cancel', 'Cancel')}
         </Button>
         <Button
           type="submit"
@@ -134,7 +136,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
           {createCustomerMutation.isPending && (
             <Loader2 className="h-3 w-3 animate-spin" />
           )}
-          I-save ang Suki
+          {t('pos:saveCustomer', 'Save Customer')}
         </Button>
       </div>
     </form>

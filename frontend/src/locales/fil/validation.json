@@ -1,0 +1,12 @@
+{
+  "required": "Kailangan ang impormasyong ito.",
+  "invalidEmail": "Kailangan ng wastong email address.",
+  "invalidNumber": "Kailangan ng wastong numero.",
+  "positiveNumber": "Dapat mas mataas sa zero.",
+  "nonNegative": "Hindi maaaring maging negatibo.",
+  "minLength": "Dapat hindi bababa sa {{min}} karakter.",
+  "maxLength": "Dapat hindi hihigit sa {{max}} karakter.",
+  "invalidPhone": "Kailangan ng wastong numero ng telepono sa Pilipinas (hal. 0917-123-4567).",
+  "invalidBarcode": "Hindi wastong barcode format. Inaasahan ang 8, 12, 13, o 14 numero.",
+  "passwordMismatch": "Hindi tumutugma ang kumpirmasyon ng password."
+}

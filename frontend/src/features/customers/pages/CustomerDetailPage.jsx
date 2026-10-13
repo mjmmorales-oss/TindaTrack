@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
   HandCoins,
@@ -42,6 +43,7 @@ import { formatDateTime, formatDate } from '@/lib/format'
 export function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation(['customers', 'sales', 'common'])
   const { can } = usePermissions()
   const canManage = can('customers.manage')
   const canDelete = can('customers.delete')
@@ -71,7 +73,7 @@ export function CustomerDetailPage() {
 
   const deleteMutation = useDeleteCustomer()
 
-  useDocumentTitle(customer ? `${customer.name} - Profile` : 'Suki Profile')
+  useDocumentTitle(customer ? `${customer.name} - Profile` : t('customers:pageTitle'))
 
   // Dialog States
   const [formDialogOpen, setFormDialogOpen] = useState(false)
@@ -115,8 +117,8 @@ export function CustomerDetailPage() {
     return (
       <PageContainer>
         <ErrorState
-          title="Hindi mahanap ang suki"
-          message="Maaaring nabura o maling customer ID ang inilagay."
+          title={t('customers:customerNotFoundTitle')}
+          message={t('customers:customerNotFoundDesc')}
           onRetry={refetchCust}
         />
       </PageContainer>
@@ -152,7 +154,7 @@ export function CustomerDetailPage() {
         >
           <Link to="/customers">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Bumalik sa mga Suki
+            {t('customers:backToCustomers')}
           </Link>
         </Button>
       </div>
@@ -190,13 +192,13 @@ export function CustomerDetailPage() {
                 )}
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  Suki simula {formatDate(customer.created_at)}
+                  {t('customers:sukiSince', { date: formatDate(customer.created_at) })}
                 </span>
               </div>
 
               {customer.notes && (
                 <p className="text-xs text-muted-foreground/90 italic pt-1 line-clamp-2">
-                  Tala: {customer.notes}
+                  {t('customers:notesPrefix')} {customer.notes}
                 </p>
               )}
             </div>
@@ -206,10 +208,10 @@ export function CustomerDetailPage() {
           <div className="rounded-xl border border-border bg-muted/30 p-4 min-w-[260px] sm:min-w-[300px]">
             <div className="flex items-baseline justify-between mb-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Kasalukuyang Utang
+                {t('customers:currentUtang')}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
-                Limit: <Money amount={limit} size="xs" />
+                {t('customers:limitLabel')} <Money amount={limit} size="xs" />
               </span>
             </div>
 
@@ -222,7 +224,7 @@ export function CustomerDetailPage() {
               />
               {isOverLimit && (
                 <span className="text-[11px] font-bold text-destructive flex items-center gap-0.5">
-                  <AlertCircle className="h-3 w-3" /> Lampas Limit
+                  <AlertCircle className="h-3 w-3" /> {t('customers:overLimitWarning')}
                 </span>
               )}
             </div>
@@ -230,7 +232,7 @@ export function CustomerDetailPage() {
             {/* Credit Limit Progress */}
             <div className="space-y-1 pt-1">
               <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Paggamit sa Limit:</span>
+                <span>{t('customers:limitUtilization')}</span>
                 <span className={isOverLimit ? 'font-bold text-destructive' : 'font-medium'}>
                   {utilization}%
                 </span>
@@ -252,7 +254,7 @@ export function CustomerDetailPage() {
               className="flex-1 sm:flex-none gap-2 h-11 sm:h-9"
             >
               <HandCoins className="h-4 w-4" />
-              Kolektahin ang Bayad
+              {t('customers:collectPayment')}
             </Button>
           )}
 
@@ -263,7 +265,7 @@ export function CustomerDetailPage() {
               className="flex-1 sm:flex-none gap-2 h-11 sm:h-9"
             >
               <Edit2 className="h-4 w-4" />
-              I-edit ang Profile
+              {t('customers:editProfileButton')}
             </Button>
           )}
 
@@ -274,7 +276,7 @@ export function CustomerDetailPage() {
               className="w-full sm:w-auto ml-auto text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 gap-2 h-11 sm:h-9"
             >
               <Trash2 className="h-4 w-4" />
-              Burahin ang Rekord
+              {t('customers:deleteRecord')}
             </Button>
           )}
         </div>
@@ -287,11 +289,11 @@ export function CustomerDetailPage() {
             <TabsList className="h-10 w-full sm:w-auto inline-flex sm:min-w-[320px]">
               <TabsTrigger value="ledger" className="flex-1 sm:flex-none gap-2">
                 <ReceiptText className="h-4 w-4" />
-                Ledger ng Utang ({timelineItems.length})
+                {t('customers:tabLedger', { count: timelineItems.length })}
               </TabsTrigger>
               <TabsTrigger value="purchases" className="flex-1 sm:flex-none gap-2">
                 <ShoppingBag className="h-4 w-4" />
-                Kasaysayan ng Bili ({customerSales.length})
+                {t('customers:tabPurchases', { count: customerSales.length })}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -301,9 +303,9 @@ export function CustomerDetailPage() {
             <Card className="border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center justify-between">
-                  <span>Kronolohiya ng Utang at Bayad (Running Balance)</span>
+                  <span>{t('customers:ledgerTitle')}</span>
                   <span className="text-xs font-normal text-muted-foreground">
-                    Pinakabago muna
+                    {t('customers:newestFirst')}
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -317,8 +319,8 @@ export function CustomerDetailPage() {
                 ) : timelineItems.length === 0 ? (
                   <EmptyState
                     icon={ReceiptText}
-                    title="Walang naitalang transaksyon ng utang"
-                    description="Kasalukuyang walang utang o naitalang bayad para sa kustomer na ito."
+                    title={t('customers:emptyLedgerTitle')}
+                    description={t('customers:emptyLedgerDesc')}
                   />
                 ) : (
                   <Timeline items={timelineItems} />
@@ -332,7 +334,7 @@ export function CustomerDetailPage() {
             <Card className="border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold">
-                  Lahat ng Binili ni {customer.nickname || customer.name}
+                  {t('customers:purchasesTitle', { name: customer.nickname || customer.name })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -345,8 +347,8 @@ export function CustomerDetailPage() {
                 ) : customerSales.length === 0 ? (
                   <EmptyState
                     icon={ShoppingBag}
-                    title="Walang natagpuang rekord ng pagbili"
-                    description="Wala pang nakatalang benta sa ilalim ng pangalan ng kustomer na ito."
+                    title={t('customers:emptyPurchasesTitle')}
+                    description={t('customers:emptyPurchasesDesc')}
                   />
                 ) : (
                   <>
@@ -355,12 +357,12 @@ export function CustomerDetailPage() {
                       <table className="w-full min-w-max text-left text-xs">
                         <thead className="border-b border-border/80 text-muted-foreground font-medium">
                           <tr>
-                            <th className="py-2.5">Resibo No.</th>
-                            <th className="py-2.5">Petsa</th>
-                            <th className="py-2.5">Mga Item</th>
-                            <th className="py-2.5">Paraan</th>
-                            <th className="py-2.5 text-right">Kabuuang Halaga</th>
-                            <th className="py-2.5">Katayuan</th>
+                            <th className="py-2.5">{t('customers:receiptNo')}</th>
+                            <th className="py-2.5">{t('customers:dateCol')}</th>
+                            <th className="py-2.5">{t('customers:itemsCol')}</th>
+                            <th className="py-2.5">{t('customers:methodCol')}</th>
+                            <th className="py-2.5 text-right">{t('customers:totalCol')}</th>
+                            <th className="py-2.5">{t('customers:statusCol')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/60">
@@ -378,12 +380,12 @@ export function CustomerDetailPage() {
                                 {formatDateTime(s.created_at)}
                               </td>
                               <td className="py-2.5 text-muted-foreground">
-                                {s.items?.length || 0} items
+                                {t('sales:itemsCount', { count: s.items?.length || 0 })}
                               </td>
                               <td className="py-2.5">
                                 <StatusBadge
                                   status={s.payment_type === 'utang' ? 'utang' : 'completed'}
-                                  label={s.payment_type === 'utang' ? 'Utang' : 'Cash'}
+                                  label={s.payment_type === 'utang' ? t('sales:methodUtang') : t('sales:methodCash')}
                                 />
                               </td>
                               <td className="py-2.5 text-right font-medium">
@@ -396,7 +398,7 @@ export function CustomerDetailPage() {
                               <td className="py-2.5">
                                 <StatusBadge
                                   status={s.status === 'voided' ? 'archived' : 'success'}
-                                  label={s.status === 'voided' ? 'Voided' : 'Completed'}
+                                  label={s.status === 'voided' ? t('sales:voidedBadge') : t('sales:completedBadge')}
                                 />
                               </td>
                             </tr>
@@ -433,16 +435,16 @@ export function CustomerDetailPage() {
 
                           <div className="flex items-center justify-between text-xs pt-1 border-t border-border/60">
                             <span className="text-muted-foreground">
-                              {s.items?.length || 0} items
+                              {t('sales:itemsCount', { count: s.items?.length || 0 })}
                             </span>
                             <div className="flex items-center gap-1.5">
                               <StatusBadge
                                 status={s.payment_type === 'utang' ? 'utang' : 'completed'}
-                                label={s.payment_type === 'utang' ? 'Utang' : 'Cash'}
+                                label={s.payment_type === 'utang' ? t('sales:methodUtang') : t('sales:methodCash')}
                               />
                               <StatusBadge
                                 status={s.status === 'voided' ? 'archived' : 'success'}
-                                label={s.status === 'voided' ? 'Voided' : 'Completed'}
+                                label={s.status === 'voided' ? t('sales:voidedBadge') : t('sales:completedBadge')}
                               />
                             </div>
                           </div>
@@ -477,10 +479,10 @@ export function CustomerDetailPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Burahin ang Rekord ng Suki"
-        description={`Sigurado ka bang nais mong burahin ang profile ni ${customer.name}? Hindi na ito maibabalik.`}
-        confirmText="Oo, Burahin"
-        cancelText="Huwag Ituloy"
+        title={t('customers:deleteConfirmTitle')}
+        description={t('customers:deleteConfirmDesc', { name: customer.name })}
+        confirmText={t('customers:deleteConfirmButton')}
+        cancelText={t('customers:cancelButton')}
         tone="destructive"
         onConfirm={handleConfirmDelete}
         isLoading={deleteMutation.isPending}
@@ -490,18 +492,20 @@ export function CustomerDetailPage() {
       <ResponsiveDialog
         open={blockedAlertOpen}
         onOpenChange={setBlockedAlertOpen}
-        title="Hindi Maaaring Burahin"
-        description="Mayroon pang natitirang utang ang kustomer."
+        title={t('customers:blockedDeleteTitle')}
+        description={t('customers:blockedDeleteDesc')}
         className="sm:max-w-md"
       >
         <div className="space-y-4 py-2">
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3.5 text-sm text-destructive flex items-start gap-3">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">May Natitirang Utang si {customer.name}</p>
+              <p className="font-semibold">{t('customers:blockedDeleteHasBalance')}</p>
               <p className="text-xs mt-1 text-destructive/90">
-                May balanse pa na <strong>₱{balance.toFixed(2)}</strong>. Kolektahin muna ang
-                buong kabayaran bago tanggalin ang kanyang rekord sa tindahan.
+                {t('customers:blockedDeleteDetail', {
+                  name: customer.name,
+                  amount: `₱${balance.toFixed(2)}`,
+                })}
               </p>
             </div>
           </div>
@@ -511,7 +515,7 @@ export function CustomerDetailPage() {
               variant="outline"
               onClick={() => setBlockedAlertOpen(false)}
             >
-              Isara
+              {t('customers:closeButton')}
             </Button>
             {canCollect && (
               <Button
@@ -522,7 +526,7 @@ export function CustomerDetailPage() {
                 className="gap-1.5"
               >
                 <HandCoins className="h-4 w-4" />
-                Kolektahin ang Bayad
+                {t('customers:collectPayment')}
               </Button>
             )}
           </div>

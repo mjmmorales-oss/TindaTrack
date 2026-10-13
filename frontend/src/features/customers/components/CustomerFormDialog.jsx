@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { Loader2, UserPlus, UserCheck } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -31,6 +32,7 @@ export function CustomerFormDialog({
   customer = null,
   onSuccess,
 }) {
+  const { t } = useTranslation(['customers', 'common'])
   const isEdit = !!customer?.id
   const createMutation = useCreateCustomer()
   const updateMutation = useUpdateCustomer()
@@ -94,11 +96,11 @@ export function CustomerFormDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? 'I-edit ang Suki (Edit Customer)' : 'Magdagdag ng Bagong Suki (New Suki)'}
+      title={isEdit ? t('customers:editModalTitle') : t('customers:createModalTitle')}
       description={
         isEdit
-          ? `Baguhin ang impormasyon at credit limit para kay ${customer?.name || 'suki'}.`
-          : 'Magrehistro ng regular na bumibili para sa pagpapautang at loyalty tracking.'
+          ? t('customers:editModalDesc', { name: customer?.name || 'suki' })
+          : t('customers:createModalDesc')
       }
       className="sm:max-w-xl"
     >
@@ -108,16 +110,16 @@ export function CustomerFormDialog({
           <FormInput
             name="name"
             control={control}
-            label="Buong Pangalan (Full Name)"
-            placeholder="Hal. Rosario Mercado"
+            label={t('customers:fullNameLabel')}
+            placeholder={t('customers:fullNamePlaceholder')}
             required
             error={errors.name?.message}
           />
           <FormInput
             name="nickname"
             control={control}
-            label="Palayaw / Bansag (Nickname)"
-            placeholder="Hal. Aling Rosing"
+            label={t('customers:nicknameLabel')}
+            placeholder={t('customers:nicknamePlaceholder')}
             error={errors.nickname?.message}
           />
         </div>
@@ -125,14 +127,14 @@ export function CustomerFormDialog({
         {/* Contact and Credit Limit */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field error={errors.contact_number?.message}>
-            <FieldLabel htmlFor="customer-contact">Telepono (PH Mobile)</FieldLabel>
+            <FieldLabel htmlFor="customer-contact">{t('customers:contactLabel')}</FieldLabel>
             <Controller
               name="contact_number"
               control={control}
               render={({ field }) => (
                 <PhoneInput
                   id="customer-contact"
-                  placeholder="0917-123-4567"
+                  placeholder={t('customers:phonePlaceholder')}
                   value={field.value}
                   onChange={field.onChange}
                   hasError={!!errors.contact_number}
@@ -146,7 +148,7 @@ export function CustomerFormDialog({
 
           <Field error={errors.credit_limit?.message}>
             <FieldLabel htmlFor="customer-credit-limit">
-              Credit Limit (Hangganan ng Utang)
+              {t('customers:creditLimitLabel')}
             </FieldLabel>
             <Controller
               name="credit_limit"
@@ -171,8 +173,8 @@ export function CustomerFormDialog({
         <FormInput
           name="address"
           control={control}
-          label="Tirahan / Purok (Address)"
-          placeholder="Purok 1, Brgy. San Isidro"
+          label={t('customers:addressLabel')}
+          placeholder={t('customers:addressPlaceholder')}
           error={errors.address?.message}
         />
 
@@ -180,8 +182,8 @@ export function CustomerFormDialog({
         <FormTextarea
           name="notes"
           control={control}
-          label="Karagdagang Tala (Notes)"
-          placeholder="Hal. Nanay ni Pedro; suki sa bigas at palaman..."
+          label={t('customers:notesLabel')}
+          placeholder={t('customers:notesPlaceholder')}
           rows={3}
           error={errors.notes?.message}
         />
@@ -194,7 +196,7 @@ export function CustomerFormDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Kanselahin (Cancel)
+            {t('customers:cancelModal')}
           </Button>
           <Button
             type="submit"
@@ -204,17 +206,17 @@ export function CustomerFormDialog({
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Sinisave...
+                {t('customers:savingCustomer')}
               </>
             ) : isEdit ? (
               <>
                 <UserCheck className="h-4 w-4" />
-                I-update ang Suki
+                {t('customers:updateCustomer')}
               </>
             ) : (
               <>
                 <UserPlus className="h-4 w-4" />
-                I-save ang Suki
+                {t('customers:saveCustomer')}
               </>
             )}
           </Button>

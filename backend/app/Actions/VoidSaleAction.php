@@ -22,13 +22,13 @@ class VoidSaleAction
     public function execute(User $user, int $saleId, string $reason): Sale
     {
         if (! $user->isOwner()) {
-            throw new AuthorizationException('Tanging may-ari (owner) lamang ang may pahintulot mag-void ng resibo.');
+            throw new AuthorizationException('Only the store owner is authorized to void a receipt.');
         }
 
         $trimmedReason = trim($reason);
         if (mb_strlen($trimmedReason) < 5) {
             throw ValidationException::withMessages([
-                'reason' => ['Kinakailangan ng dahilan sa pag-void na may hindi bababa sa 5 karakter.'],
+                'reason' => ['Void reason must be at least 5 characters.'],
             ]);
         }
 
@@ -38,7 +38,7 @@ class VoidSaleAction
 
             if ($sale->status === SaleStatus::Voided) {
                 throw ValidationException::withMessages([
-                    'sale' => ['Kanselado na (voided) ang benta na ito.'],
+                    'sale' => ['This sale has already been voided.'],
                 ]);
             }
 

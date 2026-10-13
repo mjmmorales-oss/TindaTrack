@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Area,
   AreaChart,
@@ -35,14 +36,14 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { formatCurrency, formatRelative } from '@/lib/format'
 
 /**
- * Returns a warm time-of-day greeting in Filipino.
+ * Returns a warm time-of-day greeting.
  */
-function getGreeting() {
+function getGreeting(t) {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Magandang umaga'
-  if (hour < 13) return 'Magandang tanghali'
-  if (hour < 18) return 'Magandang hapon'
-  return 'Magandang gabi'
+  if (hour < 12) return t('dashboard:greetingMorning', 'Good morning')
+  if (hour < 13) return t('dashboard:greetingNoon', 'Good day')
+  if (hour < 18) return t('dashboard:greetingAfternoon', 'Good afternoon')
+  return t('dashboard:greetingEvening', 'Good evening')
 }
 
 /**
@@ -62,12 +63,13 @@ export function OwnerDashboard({
   user,
   settings,
 }) {
+  const { t } = useTranslation(['dashboard', 'common'])
   const { kpis, sales_trend, payment_mix, top_sellers, running_low, recent_sales } =
     dashboardData
 
   const storeName = settings?.store_name || 'Tindahan ni Aling Nena'
   const userName = user?.name || 'Aling Nena'
-  const greeting = `${getGreeting()}, ${userName}!`
+  const greeting = `${getGreeting(t)}, ${userName}!`
 
   const paymentDonutData = [
     { name: 'Cash', value: payment_mix?.cash || 0, color: 'var(--primary)' },
@@ -88,7 +90,7 @@ export function OwnerDashboard({
             <Store className="h-4 w-4 shrink-0 text-primary" />
             <span className="font-medium text-foreground">{storeName}</span>
             <span className="text-muted-foreground/60">·</span>
-            <span>Pangkalahatang Tanaw (Store Overview)</span>
+            <span>{t('dashboard:overviewSubtitle', 'Store Overview')}</span>
           </p>
         </div>
 
@@ -103,16 +105,16 @@ export function OwnerDashboard({
             variant="outline"
             size="sm"
             className="w-full grid grid-cols-3 sm:w-auto sm:flex"
-            aria-label="Pumili ng panahong ulat"
+            aria-label="Filter date range"
           >
             <ToggleGroupItem value="today" className="text-xs font-medium">
-              Today
+              {t('dashboard:rangeToday', 'Today')}
             </ToggleGroupItem>
             <ToggleGroupItem value="7d" className="text-xs font-medium">
-              7 Days
+              {t('dashboard:range7d', '7 Days')}
             </ToggleGroupItem>
             <ToggleGroupItem value="30d" className="text-xs font-medium">
-              30 Days
+              {t('dashboard:range30d', '30 Days')}
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -121,43 +123,43 @@ export function OwnerDashboard({
       {/* 2. 4 StatCards (2x2 on phones, 4 cols on lg+) */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
-          label="Kabuuang Benta (Sales)"
+          label={t('dashboard:totalSales', 'Total Sales')}
           value={kpis?.sales ?? 0}
           format="currency"
           delta={kpis?.sales_delta}
-          deltaLabel="vs. nakaraang panahon"
+          deltaLabel={t('dashboard:salesDelta', 'vs. previous period')}
           tone="success"
           icon={DollarSign}
         />
         <StatCard
-          label="Transaksyon"
+          label={t('dashboard:transactions', 'Transactions')}
           value={kpis?.transactions ?? 0}
           format="number"
           delta={kpis?.transactions_delta}
-          deltaLabel="vs. nakaraang panahon"
+          deltaLabel={t('dashboard:salesDelta', 'vs. previous period')}
           tone="default"
           icon={Receipt}
         />
         <StatCard
-          label="May Utang (Outstanding)"
+          label={t('dashboard:outstandingUtang', 'Outstanding Credit (Utang)')}
           value={kpis?.outstanding_utang ?? 0}
           format="currency"
           description={
             kpis?.debtors_count > 0
-              ? `${kpis.debtors_count} suki na may listahan`
-              : 'Walang balanseng utang'
+              ? t('dashboard:debtorsWithBalance', { count: kpis.debtors_count, defaultValue: `${kpis.debtors_count} suki with balance` })
+              : t('dashboard:noDebt', 'No outstanding balance')
           }
           tone="utang"
           icon={CreditCard}
         />
         <StatCard
-          label="Kulang na Stock (Alerts)"
+          label={t('dashboard:lowStockAlerts', 'Low Stock Alerts')}
           value={kpis?.low_stock_count ?? 0}
           format="number"
           description={
             kpis?.out_of_stock_count > 0
-              ? `${kpis.out_of_stock_count} ubos na sa tindahan`
-              : 'May sapat na paninda'
+              ? t('dashboard:outOfStockDesc', { count: kpis.out_of_stock_count, defaultValue: `${kpis.out_of_stock_count} out of stock` })
+              : t('dashboard:adequateStock', 'Adequate inventory')
           }
           tone={kpis?.out_of_stock_count > 0 ? 'destructive' : 'warning'}
           icon={AlertTriangle}
@@ -173,7 +175,7 @@ export function OwnerDashboard({
         >
           <Link to="/pos">
             <ScanBarcode className="h-5 w-5" />
-            Magbenta sa POS (Start Selling)
+            {t('dashboard:startSelling', 'Start Selling (POS)')}
           </Link>
         </Button>
       </div>
@@ -182,26 +184,26 @@ export function OwnerDashboard({
       <div className="hidden lg:flex items-center justify-between rounded-xl border border-border/80 bg-card p-3 shadow-xs">
         <div className="flex items-center gap-2 pl-2">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Mabilisang Aksyon (Quick Actions):
+            {t('dashboard:quickActions', 'Quick Actions:')}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild size="sm" className="gap-1.5 shadow-xs">
             <Link to="/pos">
               <ScanBarcode className="h-4 w-4" />
-              Bagong Benta (POS)
+              {t('dashboard:posTerminal', 'POS Terminal')}
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="gap-1.5">
             <Link to="/products">
               <PackagePlus className="h-4 w-4" />
-              Magdagdag ng Produkto
+              {t('dashboard:addProduct', 'Add Product')}
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="gap-1.5">
             <Link to="/utang">
               <CreditCard className="h-4 w-4" />
-              Magtala ng Bayad sa Utang
+              {t('dashboard:recordPayment', 'Record Credit Payment')}
             </Link>
           </Button>
         </div>
@@ -212,8 +214,8 @@ export function OwnerDashboard({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Sales Trend (8 cols on lg) */}
         <ChartCard
-          title="Daloy ng Benta (Sales Trend)"
-          description={`Kabuuang benta sa nakalipas na ${range === 'today' ? 'oras ngayong araw' : range === '7d' ? '7 araw' : '30 araw'}`}
+          title={t('dashboard:salesTrendTitle', 'Sales Trend')}
+          description={t('dashboard:salesTrendDesc', 'Total sales over the selected period')}
           className="lg:col-span-8"
         >
           <div className="h-[260px] w-full pt-2">
@@ -250,10 +252,10 @@ export function OwnerDashboard({
                         <div className="rounded-lg border border-border bg-popover p-2.5 shadow-md text-xs space-y-1">
                           <p className="font-semibold text-popover-foreground">{item.date}</p>
                           <p className="text-primary font-mono font-medium">
-                            Benta: {formatCurrency(item.sales)}
+                            {formatCurrency(item.sales)}
                           </p>
                           <p className="text-muted-foreground">
-                            {item.transactions} transaksyon
+                            {item.transactions} {t('dashboard:transactions', 'Transactions')}
                           </p>
                         </div>
                       )
@@ -276,8 +278,8 @@ export function OwnerDashboard({
 
         {/* Payment Mix Donut (4 cols on lg, stacks on mobile below trends) */}
         <ChartCard
-          title="Paraan ng Bayad (Payment Mix)"
-          description="Paghahambing ng Cash laban sa Utang"
+          title={t('dashboard:paymentMixTitle', 'Payment Mix')}
+          description={t('dashboard:paymentMixDesc', 'Comparison of Cash vs. Credit (Utang)')}
           className="lg:col-span-4"
         >
           <div className="flex flex-col items-center justify-center h-[260px]">
@@ -300,7 +302,7 @@ export function OwnerDashboard({
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(val) => [formatCurrency(val), 'Halaga']}
+                        formatter={(val) => [formatCurrency(val), 'Amount']}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -319,7 +321,7 @@ export function OwnerDashboard({
               </>
             ) : (
               <div className="text-center text-muted-foreground text-xs py-8">
-                Walang naitalang benta sa panahong ito.
+                {t('dashboard:noSalesData', 'No sales recorded in this period.')}
               </div>
             )}
           </div>
@@ -334,15 +336,15 @@ export function OwnerDashboard({
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="text-base font-semibold">
-                Kulang na Paninda (Running Low)
+                {t('dashboard:runningLowTitle', 'Running Low')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Mga produktong kailangan nang i-restock
+                {t('dashboard:runningLowDesc', 'Items needing restock')}
               </CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
               <Link to="/inventory">
-                Lahat
+                {t('dashboard:viewAll', 'All')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -371,7 +373,7 @@ export function OwnerDashboard({
                     </Badge>
                     <Button variant="outline" size="sm" asChild className="h-7 text-xs px-2">
                       <Link to="/inventory">
-                        Restock
+                        {t('dashboard:restock', 'Restock')}
                       </Link>
                     </Button>
                   </div>
@@ -380,7 +382,7 @@ export function OwnerDashboard({
             ) : (
               <div className="flex h-32 flex-col items-center justify-center text-center text-xs text-muted-foreground">
                 <Package className="mb-1.5 h-6 w-6 opacity-40" />
-                Lahat ng paninda ay may sapat pang stock.
+                {t('dashboard:allStockAdequate', 'All items have adequate stock.')}
               </div>
             )}
           </CardContent>
@@ -391,15 +393,15 @@ export function OwnerDashboard({
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="text-base font-semibold">
-                Mga Huling Benta (Recent Sales)
+                {t('dashboard:recentSalesTitle', 'Recent Sales')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Pinakahuling transaksyon sa tindahan
+                {t('dashboard:recentSalesDesc', 'Latest store transactions')}
               </CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
               <Link to="/sales">
-                Lahat
+                {t('dashboard:viewAll', 'All')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -429,7 +431,7 @@ export function OwnerDashboard({
             ) : (
               <div className="flex h-32 flex-col items-center justify-center text-center text-xs text-muted-foreground">
                 <ShoppingCart className="mb-1.5 h-6 w-6 opacity-40" />
-                Walang naitalang benta kani-kanina.
+                {t('dashboard:noRecentSales', 'No recent sales recorded.')}
               </div>
             )}
           </CardContent>
@@ -440,15 +442,15 @@ export function OwnerDashboard({
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
               <CardTitle className="text-base font-semibold">
-                Nangungunang Produkto (Top Sellers)
+                {t('dashboard:topSellersTitle', 'Top Selling Products')}
               </CardTitle>
               <CardDescription className="text-xs">
-                Pinakamabentang mga paninda
+                {t('dashboard:topSellersDesc', 'Best-selling store items')}
               </CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
               <Link to="/reports">
-                Ulat
+                {t('dashboard:viewAll', 'All')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -477,7 +479,7 @@ export function OwnerDashboard({
             ) : (
               <div className="flex h-32 flex-col items-center justify-center text-center text-xs text-muted-foreground">
                 <Store className="mb-1.5 h-6 w-6 opacity-40" />
-                Walang datos ng benta para sa mga produkto.
+                {t('dashboard:noTopSellers', 'No product sales data.')}
               </div>
             )}
           </CardContent>
@@ -489,13 +491,13 @@ export function OwnerDashboard({
         <Button asChild variant="outline" size="sm" className="h-11 gap-1.5 text-xs">
           <Link to="/products">
             <PackagePlus className="h-4 w-4" />
-            Magdagdag Produkto
+            {t('dashboard:addProduct', 'Add Product')}
           </Link>
         </Button>
         <Button asChild variant="outline" size="sm" className="h-11 gap-1.5 text-xs">
           <Link to="/utang">
             <CreditCard className="h-4 w-4" />
-            Talaan ng Utang
+            {t('dashboard:recordPayment', 'Record Credit Payment')}
           </Link>
         </Button>
       </div>

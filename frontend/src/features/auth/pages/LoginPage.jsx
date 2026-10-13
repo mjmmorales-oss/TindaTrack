@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, KeyRound, Loader2, UserCheck } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -24,8 +25,13 @@ import { notify } from '@/lib/notify'
 import { loginSchema } from '@/features/auth/schemas'
 import { SHOW_DEMO_ACCOUNTS } from '@/config/app'
 
+const DemoAccountsPanel = import.meta.env.DEV
+  ? lazy(() => import('@/features/auth/dev/DemoAccountsPanel'))
+  : () => null
+
 export function LoginPage() {
-  useDocumentTitle('Sign In')
+  const { t } = useTranslation(['auth', 'common'])
+  useDocumentTitle(t('auth:loginHeading', 'Sign In'))
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -52,7 +58,7 @@ export function LoginPage() {
     setServerError(null)
     try {
       const user = await login(data)
-      notify.success(`Welcome back, ${user.name}!`)
+      notify.success(t('auth:welcomeBack', { name: user.name, defaultValue: `Welcome back, ${user.name}!` }))
       const destination =
         from || (user.role === 'cashier' ? '/pos' : '/dashboard')
       navigate(destination, { replace: true })
@@ -67,19 +73,14 @@ export function LoginPage() {
     }
   }
 
-  const fillDemo = (email) => {
-    setValue('email', email)
-    setValue('password', 'password')
-  }
-
   return (
     <Card className="border-border/80 shadow-md">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="text-2xl font-bold tracking-tight">
-          Sign In
+          {t('auth:loginHeading', 'Sign In')}
         </CardTitle>
         <CardDescription>
-          Enter your tindahan account credentials to continue
+          {t('auth:loginSubtext', 'Enter your tindahan account credentials to continue')}
         </CardDescription>
       </CardHeader>
 
@@ -93,11 +94,11 @@ export function LoginPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{t('auth:emailLabel', 'Email address')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@email.com"
+              placeholder={t('auth:emailPlaceholder', 'you@email.com')}
               autoComplete="email"
               {...register('email')}
             />
@@ -110,12 +111,12 @@ export function LoginPage() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth:passwordLabel', 'Password')}</Label>
               <Link
                 to="/forgot-password"
                 className="text-primary text-xs font-medium hover:underline"
               >
-                Forgot password?
+                {t('auth:forgotPasswordLink', 'Forgot password?')}
               </Link>
             </div>
             <PasswordInput
@@ -132,34 +133,15 @@ export function LoginPage() {
           </div>
 
           {SHOW_DEMO_ACCOUNTS && (
-            <div className="border-border/80 bg-muted/40 space-y-2 rounded-lg border border-dashed p-3 text-xs">
-              <span className="text-foreground flex items-center gap-1.5 font-semibold">
-                <KeyRound className="text-primary h-3.5 w-3.5" />
-                Demo Credentials:
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 flex-1 gap-1 text-xs"
-                  onClick={() => fillDemo('owner@tindatrack.test')}
-                >
-                  <UserCheck className="text-primary h-3 w-3" />
-                  Owner Demo
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 flex-1 gap-1 text-xs"
-                  onClick={() => fillDemo('cashier@tindatrack.test')}
-                >
-                  <UserCheck className="text-muted-foreground h-3 w-3" />
-                  Cashier Demo
-                </Button>
-              </div>
-            </div>
+            <Suspense fallback={null}>
+              <DemoAccountsPanel
+                onSelectAccount={({ email, password }) => {
+                  setValue('email', email, { shouldValidate: true })
+                  setValue('password', password, { shouldValidate: true })
+                  setServerError(null)
+                }}
+              />
+            </Suspense>
           )}
         </CardContent>
 
@@ -170,16 +152,16 @@ export function LoginPage() {
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
+            {isSubmitting ? t('auth:signingIn', 'Signing in...') : t('auth:signInButton', 'Sign In')}
           </Button>
 
           <p className="text-muted-foreground text-center text-xs">
-            Don&apos;t have an account yet?{' '}
+            {t('auth:dontHaveAccountYet', "Don't have an account yet?")}{' '}
             <Link
               to="/register"
               className="text-primary font-semibold hover:underline"
             >
-              Register as Store Owner
+              {t('auth:registerOwnerLink', 'Register as Store Owner')}
             </Link>
           </p>
         </CardFooter>

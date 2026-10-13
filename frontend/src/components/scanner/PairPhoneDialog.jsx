@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import {
   Smartphone,
@@ -31,6 +32,7 @@ export function PairPhoneDialog({
   onPaired,
   mode = 'pos',
 }) {
+  const { t } = useTranslation(['scanner', 'common'])
   const [session, setSession] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -184,7 +186,7 @@ export function PairPhoneDialog({
           isPairedRef.current = true
           setPairedDevice(status.device_label || 'Phone')
           clearInterval(pollingRef.current)
-          notify.success('Nakakonekta na!', `Phone: ${status.device_label || 'Phone'}`)
+          notify.success(t('scanner:connectedTitle', 'Connected!'), `Phone: ${status.device_label || 'Phone'}`)
           onPaired?.({
             ...session,
             device_label: status.device_label,
@@ -196,7 +198,7 @@ export function PairPhoneDialog({
     }, 2000)
 
     return () => clearInterval(pollingRef.current)
-  }, [open, session, pairedDevice, onPaired])
+  }, [open, session, pairedDevice, onPaired, t])
 
   const pairingCode = session?.pairing_code || session?.data?.pairing_code || ''
   const scanUrl =
@@ -223,8 +225,8 @@ export function PairPhoneDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Ikonekta ang Phone bilang Barcode Scanner"
-      description="Gamitin ang camera ng smartphone para mag-scan ng paninda nang wireless."
+      title={t('scanner:connectPhoneTitle', 'Connect Phone as Barcode Scanner')}
+      description={t('scanner:connectPhoneDesc', 'Use your smartphone camera to scan products wirelessly.')}
       className="max-w-md"
     >
       <div className="space-y-4 py-2">
@@ -255,7 +257,7 @@ export function PairPhoneDialog({
               {error}
             </div>
             <p className="text-xs text-muted-foreground">
-              Hindi nagawa ang pairing code. Tiyaking bukas ang backend server.
+              {t('scanner:sessionCreationError', 'Could not create pairing code. Ensure the backend server is running.')}
             </p>
             <Button
               type="button"
@@ -265,7 +267,7 @@ export function PairPhoneDialog({
               className="gap-2 mx-auto"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              Subukan ulit
+              {t('scanner:tryAgain', 'Try again')}
             </Button>
           </div>
         )}
@@ -276,7 +278,9 @@ export function PairPhoneDialog({
               <QrCode className="h-10 w-10 animate-spin" />
             </div>
             <div className="h-6 w-36 bg-muted/80 rounded-md animate-pulse mt-2" />
-            <p className="text-xs text-muted-foreground">Gumagawa ng bagong session...</p>
+            <p className="text-xs text-muted-foreground">
+              {t('scanner:creatingSession', 'Creating new session...')}
+            </p>
           </div>
         )}
 
@@ -286,20 +290,22 @@ export function PairPhoneDialog({
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <div>
-              <p className="font-bold text-foreground text-base">Nakakonekta na!</p>
+              <p className="font-bold text-foreground text-base">
+                {t('scanner:connectedTitle', 'Connected!')}
+              </p>
               <p className="text-sm text-muted-foreground">
                 Device: <span className="font-semibold text-foreground">{pairedDevice}</span>
               </p>
             </div>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Maaari mo nang simulan ang pag-scan ng mga paninda sa phone. Kusa itong papasok dito sa POS terminal.
+              {t('scanner:connectedDesc', 'You can now scan products on your phone. They will automatically appear in this POS terminal.')}
             </p>
             <Button
               type="button"
               className="mt-2 w-full"
               onClick={() => onOpenChange(false)}
             >
-              Simulan ang Pagtitinda
+              {t('scanner:startSelling', 'Start Selling')}
             </Button>
           </div>
         ) : session && pairingCode ? (
@@ -318,7 +324,7 @@ export function PairPhoneDialog({
               {/* Pairing Code Display */}
               <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
                 <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                  O ilagay ang code na ito sa /scan
+                  {t('scanner:orEnterCodeAt', 'Or enter this code at /scan')}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-2xl sm:text-3xl font-black tracking-widest text-foreground select-all bg-background px-3 py-1 rounded-md border border-border">
@@ -330,8 +336,8 @@ export function PairPhoneDialog({
                     size="icon"
                     className="h-10 w-10 shrink-0"
                     onClick={handleCopyCode}
-                    title="Kopyahin ang code"
-                    aria-label="Kopyahin ang code"
+                    title={t('scanner:copyCode', 'Copy code')}
+                    aria-label={t('scanner:copyCode', 'Copy code')}
                   >
                     {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -341,10 +347,12 @@ export function PairPhoneDialog({
 
             {/* Steps Guide */}
             <div className="text-xs space-y-1.5 text-muted-foreground bg-card p-3 rounded-lg border border-border">
-              <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">Mga Hakbang:</p>
-              <p>1. Buksan ang camera ng iyong phone.</p>
-              <p>2. I-scan ang QR code sa itaas (o pumunta sa <code className="font-mono bg-muted px-1 rounded">/scan</code>).</p>
-              <p>3. Simulan ang pag-scan ng mga produkto!</p>
+              <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">
+                {t('scanner:stepsTitle', 'Steps:')}
+              </p>
+              <p>{t('scanner:stepOpenPhone', '1. Open your phone camera.')}</p>
+              <p>{t('scanner:stepScanQr', '2. Scan the QR code above (or visit /scan).')}</p>
+              <p>{t('scanner:stepStartScanning', '3. Start scanning products!')}</p>
             </div>
 
             {/* Expiry & Refresh */}
@@ -352,10 +360,12 @@ export function PairPhoneDialog({
               <span className="text-xs text-muted-foreground">
                 {timeLeft !== null && timeLeft > 0 ? (
                   <>
-                    Mapapaso sa loob ng: <strong className="text-foreground font-mono">{formattedTime}</strong>
+                    {t('scanner:expiresIn', 'Expires in:')} <strong className="text-foreground font-mono">{formattedTime}</strong>
                   </>
                 ) : (
-                  <span className="text-destructive font-semibold">Paso na ang code</span>
+                  <span className="text-destructive font-semibold">
+                    {t('scanner:codeExpired', 'Code expired')}
+                  </span>
                 )}
               </span>
 
@@ -368,7 +378,7 @@ export function PairPhoneDialog({
                 className="text-xs h-8 gap-1.5"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                Bagong code
+                {t('scanner:newCode', 'New code')}
               </Button>
             </div>
           </>

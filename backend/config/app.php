@@ -120,6 +120,15 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
+    'demo_password' => env('DEMO_PASSWORD', 'password'),
+    'demo_owner_password' => env('DEMO_OWNER_PASSWORD'),
+    'demo_cashier_password' => env('DEMO_CASHIER_PASSWORD'),
+    'demo_owner_email' => env('DEMO_OWNER_EMAIL', 'owner@tindatrack.test'),
+    'demo_cashier_email' => env('DEMO_CASHIER_EMAIL', 'cashier@tindatrack.test'),
+    'demo_reset_passwords' => (bool) env('DEMO_RESET_PASSWORDS', false),
+    'demo_history_days' => (int) env('DEMO_HISTORY_DAYS', 60),
+    'demo_base_date' => env('DEMO_BASE_DATE', '2026-10-07 18:00:00'),
+
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),

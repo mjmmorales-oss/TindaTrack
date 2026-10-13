@@ -28,6 +28,10 @@ Not found errors: 404 `{ message: 'Resource not found.' }`.
 | `productService.create(data)` | POST | `/api/products` | `owner` | `{ name: string, sku: string, barcode?: string, category_id: int, unit: string, price: number, cost_price: number, stock_quantity: int, reorder_level: int, is_active?: bool, description?: string }` | `{ data: Product }` | `sku` unique, `barcode` unique nullable, `price >= 0`, `cost_price >= 0`, `stock_quantity >= 0`. If `stock_quantity > 0`, records initial `restock` movement. |
 | `productService.update(id, data)` | PUT | `/api/products/{id}` | `owner` | `{ name?: string, sku?: string, barcode?: string, category_id?: int, unit?: string, price?: number, cost_price?: number, reorder_level?: int, is_active?: bool, description?: string }` | `{ data: Product }` | Does not directly alter `stock_quantity` (stock updates go through adjustStock or sales). SKU/barcode unique excluding current product. |
 | `productService.remove(id)` | DELETE | `/api/products/{id}` | `owner` | None | `{ message: string }` | Soft-deletes product. Past sales & stock movement history remain preserved. |
+| `productService.uploadImage(id, file, source)` | POST | `/api/products/{id}/image` | `owner` | `FormData: image (file, max 1MB), source?: 'upload'\|'camera'` | `{ data: Product }` | Validates MIME (`image/jpeg`, `image/png`, `image/webp`, `image/gif`), stores as ULID `MEDIUMBLOB`, sets `image_url = /api/product-images/{ulid}`. |
+| `productService.importImage(id, data)` | POST | `/api/products/{id}/image/import` | `owner` | `{ url: string }` | `{ data: Product }` | Imports external Open Food Facts image URL with SSRF protection (hostname allowlist, IP blocking), stores in DB. |
+| `productService.deleteImage(id)` | DELETE | `/api/products/{id}/image` | `owner` | None | `{ data: Product }` | Deletes associated `ProductImage` record and sets `products.image_url = null`. |
+| `productImage.show(ulid)` | GET | `/api/product-images/{ulid}` | Public | None | Binary stream | Streams raw image bytes with ETag sha256, 304 Not Modified, and 1-year immutable cache header. |
 | `productService.adjustStock(id, data)` | POST | `/api/products/{id}/adjust` | `owner` | `{ type: 'restock'\|'damage'\|'correction', quantity: int, notes?: string }` | `{ data: Product }` | Inside transaction with row lock. For damage/negative correction, new stock cannot be < 0 (422). Logs `StockMovement`. |
 | `productService.lowStock()` | GET | `/api/products/low-stock` | `owner,cashier` | None | `{ data: Product[] }` | Returns active products where `stock_quantity <= reorder_level`. Strips cost fields for cashiers. |
 | `barcodeService.lookup(barcode)` | GET | `/api/barcode-lookup/{barcode}` | `owner,cashier` | None | `{ data: { barcode: string, local_product: Product\|null, catalog: CatalogInfo\|null } }` | Throttled 30/min. Cashier gets only `local_product` (catalog is null). Owner gets full OFF catalog lookup cached in `barcode_catalog`. 422 on invalid format. |
@@ -211,4 +215,42 @@ Authorization: Bearer <sanctum-token>
   ]
 }
 ```
+
+---
+
+## Product Image Endpoints Detail
+
+### 1. `GET /api/product-images/{ulid}`
+**Auth**: Public
+**Headers**: `Cache-Control: public, max-age=31536000, immutable`, `ETag: "{sha256}"`
+**Response**: Binary image stream (`image/jpeg`, `image/png`, `image/webp`, or `image/gif`), or `304 Not Modified` when client sends matching `If-None-Match`.
+
+### 2. `POST /api/products/{id}/image`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Content-Type**: `multipart/form-data`
+**Request Body**:
+- `image`: File (required, max 1024KB / 1MB, MIME: jpeg/png/webp/gif)
+- `source`: string (optional, `'upload'` | `'camera'`, defaults to `'upload'`)
+**Response**: `{ "data": Product }` (with updated `image_url: "/api/product-images/{ulid}"`)
+
+### 3. `POST /api/products/{id}/image/import`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Content-Type**: `application/json`
+**Request Body**:
+```json
+{
+  "url": "https://images.openfoodfacts.org/images/products/480/001/664/4800/front_en.3.400.jpg"
+}
+```
+**SSRF Guards**:
+- Schemes allowed: `http`, `https`
+- Host allowlist: `*.openfoodfacts.org`, `*.openfoodfacts.net`
+- Target IP resolution check: Blocks `127.0.0.1`, loopback, cloud metadata (`169.254.169.254`), and private RFC 1918 subnets
+- Max download size: 2MB; Timeout: 8 seconds
+**Response**: `{ "data": Product }` (with updated `image_url: "/api/product-images/{ulid}"`)
+
+### 4. `DELETE /api/products/{id}/image`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Response**: `{ "data": Product }` (with `image_url: null`)
+
 

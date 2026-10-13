@@ -658,3 +658,282 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - **Release**:
   - Merged `fix/pairing` into `main` with `--no-ff`.
   - Tagged `v1.1.1` and pushed to remote origin.
+
+---
+
+## Phase 3.2: Pre-Deployment Hardening, English-First i18n, Product Images, and One-Step Barcode Auto-Fill (v1.2.0)
+
+### H0 Log (Preflight):
+- Created branch `hardening/v1.2` branched from `main` (clean at `v1.1.1`).
+- Verified database setup in `backend/phpunit.xml`:
+  - Unit/Feature tests use `DB_CONNECTION="sqlite"`, `DB_DATABASE=":memory:"`.
+  - Development and production deployments use MySQL. All subsequent migrations will use driver-aware logic (e.g. `DB::getDriverName() === 'mysql'` for `MEDIUMBLOB`) to maintain SQLite in-memory test compatibility alongside MySQL production safety.
+- Mirrored root scripts: created `scripts/check-contract.mjs` and `scripts/check-services.mjs` at the repository root, ensuring root execution passes seamlessly.
+- Baseline test verification:
+  - Backend Pest: 71/71 tests green (380 assertions).
+  - Pint: Clean PSR-12 code style.
+  - `php artisan tindatrack:check`: 100% reconciled across customer balances, stock movements, and unique sales numbers.
+  - Frontend Lint: 0 errors, 72 warnings.
+  - Frontend Build: Clean production bundle compiled in 9.23s.
+  - Frontend Vitest: 23/23 tests green in `src/test/scan-flows.test.jsx`.
+  - Contract & Service check: 46/46 API contracts verified, 12/12 service facades matched, ₱0.0000 mock data discrepancy.
+  - Smoke script: `smoke:pairing` passed on both Direct API (`http://127.0.0.1:8000`) and Vite Reverse Proxy (`https://127.0.0.1:5173`).
+
+### H1 Log (Full Audit):
+- Conducted exhaustive pre-deployment audit across security, authentication, data integrity, frontend runtime, deployment readiness, and localization.
+- Documented findings in `docs/AUDIT-v1.2.md` with structured severity ratings (7 High, 6 Medium, 2 Low):
+  - **High**:
+    - `SEC-01`: Missing route throttle on `POST /api/login`.
+    - `SEC-02`: Demo credentials bundled directly into frontend JavaScript bundle.
+    - `SEC-03`: Production seeders create demo accounts with default passwords (`password`).
+    - `SEC-04`: Missing product image uploads and SSRF risks on external image imports.
+    - `SEC-05`: Persisted cart and scanner session not cleared on logout / user switch.
+    - `DEP-01`: `nixpacks.toml` pins PHP 8.3 while `composer.lock` requires PHP >= 8.4.1.
+    - `DEP-02`: `vercel.json` rewrites asset paths and lacks long-term caching.
+  - **Medium**:
+    - `SEC-06`: Sanctum expiration env naming (`SANCTUM_EXPIRATION` vs `SANCTUM_TOKEN_EXPIRATION`).
+    - `DEP-03`: Missing `URL::forceScheme('https')` in production `AppServiceProvider`.
+    - `DEP-04`: Direct `env()` calls in seeders evaluate to null under `config:cache`.
+    - `UI-01`: No debounced auto-lookup on typed valid GTIN; no Quick Add by Scan shelf flow.
+    - `UI-02`: `imageError` state does not reset on URL change; no camera capture/upload for homemade items.
+    - `I18N-01`: Hardcoded Taglish without English default or localization system.
+  - **Low**:
+    - `UI-03`: Hotkey listener firing during text typing when `metaOrCtrl` is false.
+    - `DEP-05`: Production deployment script missing config/route caching.
+- Gates verified: Backend Pest 71/71 passing, Pint clean, frontend lint clean, build clean.
+
+### H2 Log (Demo Credentials Local-Only & Production Safety):
+- **Backend**:
+  - Wired `throttle:10,1` rate limiting to `POST /api/login` in `backend/routes/auth.php` (`SEC-01`).
+  - Added support for `SANCTUM_EXPIRATION` and `SANCTUM_TOKEN_EXPIRATION` in `backend/config/sanctum.php` (`SEC-06`).
+  - Added `demo_password`, `demo_owner_password`, `demo_cashier_password`, `demo_owner_email`, `demo_cashier_email`, `demo_reset_passwords`, `demo_history_days`, and `demo_base_date` in `backend/config/app.php`.
+  - Replaced direct `env()` calls with `config('app.demo_...')` in `DemoHistorySeeder.php` so seeders remain functional when `php artisan config:cache` is active (`DEP-04`).
+  - Updated `ReferenceDataSeeder.php`: in production (`app()->environment('production')`), creates demo owner/cashier only if `DEMO_OWNER_PASSWORD` and `DEMO_CASHIER_PASSWORD` are defined. Warns and skips otherwise; never seeds well-known default passwords (`SEC-03`). Idempotent unless `DEMO_RESET_PASSWORDS=true`.
+  - Authored `backend/tests/Feature/ProductionSeederTest.php` testing production seeder execution with and without demo env vars, plus idempotency.
+- **Frontend**:
+  - Extracted demo credentials and quick-login switcher to `src/features/auth/dev/demoAccounts.js` and `src/features/auth/dev/DemoAccountsPanel.jsx` (`SEC-02`).
+  - Updated `src/features/auth/pages/LoginPage.jsx` to load `DemoAccountsPanel` lazily strictly within `if (import.meta.env.DEV && SHOW_DEMO_ACCOUNTS)`, allowing Vite/Rollup tree-shaking to eliminate all demo strings and UI from production bundles.
+  - Guarded `http://localhost:8000/api` in `src/lib/api.js` with `import.meta.env.DEV`.
+  - Sanitized `src/lib/authBridge.js` and `src/mocks/data/staff.js` to avoid `tindatrack.test` demo email leaks in production bundle.
+  - Implemented `scripts/check-prod-bundle.mjs` verifying that `dist/**` contains zero demo emails, passwords, `DemoAccounts` references, or `localhost:8000` URLs. Wired as `npm run check:bundle` in root and frontend `package.json`.
+  - Updated `src/test/auth.test.jsx` verifying login page rendering with demo accounts enabled and disabled.
+- **Documentation**:
+  - Updated `docs/DEPLOY.md` to document Railway production credentials (`DEMO_OWNER_PASSWORD`, `DEMO_CASHIER_PASSWORD`, `SANCTUM_EXPIRATION`) and isolated local development credentials.
+- **Gates passed**:
+  - Backend: Pest 74/74 tests green (393 assertions), Pint clean.
+  - Frontend: `npm run lint` 0 errors, `npm run build` clean, `npm run check:bundle` (89 assets checked, 0 violations), Vitest 2/2 in `auth.test.jsx`.
+
+### H3 Log (i18n Infrastructure — English Default, Filipino/Taglish Optional):
+- **Dependencies & Setup**:
+  - Installed `i18next` and `react-i18next` in `frontend/`.
+  - Implemented `frontend/src/i18n/index.js` synchronously with bundled namespaces, `fallbackLng: 'en'`, `supportedLngs: ['en', 'fil']`, localStorage persistence via `tt_lang`, and automatic synchronization with `document.documentElement.lang`.
+  - Generated all 18 locale namespaces under `frontend/src/locales/en/` and `frontend/src/locales/fil/` (`common`, `nav`, `auth`, `landing`, `dashboard`, `pos`, `products`, `inventory`, `categories`, `sales`, `customers`, `utang`, `reports`, `users`, `settings`, `scanner`, `validation`, `errors`) with 100% key parity and zero empty values.
+- **Components & Language Switcher**:
+  - Authored `src/components/common/LanguageSwitcher.jsx` supporting card mode (used in Settings), compact dropdown mode (used in `PublicLayout`, `AuthLayout`, and `Topbar`), and menu item mode (used in `NavUser`).
+  - Integrated Language card in `SettingsPage.jsx`, compact switcher in `PublicLayout.jsx`, `AuthLayout.jsx`, and `Topbar.jsx`, and language toggle item in `NavUser.jsx`.
+- **Localization Formatting & Validation**:
+  - Extended `src/lib/format.js` to format dates according to active locale (`en-PH` vs `fil-PH`) via `Intl.DateTimeFormat` while strictly preserving `₱` (`PHP`) currency formatting in both languages.
+  - Updated `src/lib/errors.js` and form kit (`FormInput.jsx`, `FormTextarea.jsx`) with centralized `translateErrorMessage` mapping Zod error keys and backend machine-readable reason tags.
+- **Backend Response Translation**:
+  - Converted Taglish validation errors and success messages to clear, standard English across `CreateSaleAction`, `VoidSaleAction`, `RecordPaymentAction`, `AdjustStockAction`, `SaleController`, `SettingsController`, `AccountController`, `UtangPaymentController`, `BarcodeLookupController`, `ScannerDeviceController`, and `UserController`.
+  - Updated backend Pest test assertions to match English messages in `ScannerSessionAndDeviceTest.php`.
+- **Testing & Verification Script**:
+  - Authored Vitest suite `src/test/i18n.test.jsx` (7/7 tests passed) testing English default, live Taglish re-render, localStorage persistence, fallback handling, localized dates, and error translation.
+  - Authored `scripts/check-i18n.mjs` (and mirrored to `frontend/scripts/check-i18n.mjs`), validating 18/18 namespace key parities, non-empty dictionaries, code key invocations, and recording baseline untranslated candidate count: **385 strings**.
+  - Added `"check:i18n"` to root and frontend `package.json`.
+### H4b Log (Dashboard, POS, and Scanner Feature Localization):
+- **POS & Scanner Localization**:
+  - Translated all POS and Scanner components with full i18n support:
+    - POS: `PosPage.jsx`, `CartPanel.jsx`, `CartDrawer.jsx`, `MobileCartBar.jsx`, `CartItemRow.jsx`, `CartSummary.jsx`, `ProductGrid.jsx`, `ProductTile.jsx`, `ProductDetailDialog.jsx`, `PaymentDialog.jsx`, `HeldCartsDialog.jsx`, `ReceiptView.jsx`, `NewCustomerMiniForm.jsx`.
+    - Dashboard: `DashboardPage.jsx`, `OwnerDashboard.jsx`, `CashierDashboard.jsx`.
+    - Scanner: `PairPhoneDialog.jsx`, `ScannerSheet.jsx`, `PhoneScannerPage.jsx`, `CameraScanner.jsx`.
+  - Expanded `en/pos.json` & `fil/pos.json` (114 keys each, 100% key parity).
+  - Expanded `en/scanner.json` & `fil/scanner.json` (80 keys each, 100% key parity).
+  - Expanded `en/dashboard.json` & `fil/dashboard.json` (45 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `routes.test.jsx`, `scan-flows.test.jsx`, `entrypoints.test.jsx`, `interactions.test.jsx`, `dialogs.test.jsx`, `containment.test.jsx`, and `flows.test.jsx` to support bilingual assertions (matching both English default and Taglish).
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, untranslated candidate strings decreased from 385 to 321.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+  - Backend: Pest 74/74 tests green, Pint clean.
+
+### H4c Log (Products, Inventory, and Categories Feature Localization):
+- **Feature Component Translation**:
+  - Fully translated all 9 target files with standard English default and rich Taglish/Filipino translation:
+    - Products: `ProductsPage.jsx`, `ProductDetailPage.jsx`, `ProductFormDialog.jsx`.
+    - Inventory: `InventoryPage.jsx`, `AdjustStockDialog.jsx`, `BulkRestockDialog.jsx`, `PrintableRestockList.jsx`.
+    - Categories: `CategoriesPage.jsx`, `CategoryFormDialog.jsx`.
+- **Locale Dictionary Alignment**:
+  - Expanded `en/products.json` & `fil/products.json` (72 keys each, 100% key parity).
+  - Expanded `en/inventory.json` & `fil/inventory.json` (124 keys each, 100% key parity).
+  - Expanded `en/categories.json` & `fil/categories.json` (34 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `routes.test.jsx`, `roles.test.jsx`, `edge-states.test.jsx`, `interactions.test.jsx`, `scan-flows.test.jsx`, `dialogs.test.jsx`, and `entrypoints.test.jsx` for bilingual assertions (handling both English default and Filipino language modes).
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, 701 validated `t(...)` calls, untranslated candidate count reduced from 321 to 242.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+  - Backend: Pest 74/74 tests green, Pint clean.
+### H4d Log (Sales, Customers, and Utang Feature Localization):
+- **Feature Component Translation**:
+  - Fully translated all 7 target files with standard English default and rich Taglish/Filipino translation:
+    - Sales: `SalesPage.jsx`, `SaleDetailPage.jsx`.
+    - Customers: `CustomersPage.jsx`, `CustomerDetailPage.jsx`, `CustomerFormDialog.jsx`.
+    - Utang: `UtangPage.jsx`, `RecordPaymentDialog.jsx`.
+- **Locale Dictionary Alignment**:
+  - Expanded `en/sales.json` & `fil/sales.json` (100 keys each, 100% key parity).
+  - Expanded `en/customers.json` & `fil/customers.json` (94 keys each, 100% key parity).
+  - Expanded `en/utang.json` & `fil/utang.json` (62 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `routes.test.jsx`, `dialogs.test.jsx`, `entrypoints.test.jsx`, and `interactions.test.jsx` for bilingual assertions and heading role queries on dual-label modals.
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, 979 validated `t(...)` calls (+278 calls verified), untranslated candidate count reduced from 242 to 187.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+
+### H4e Log (Reports, Users/Staff, Settings, Errors Feature Localization):
+- **Feature Component Translation**:
+  - Fully translated all remaining feature pages with standard English default and Taglish/Filipino translation:
+    - Reports: `ReportsPage.jsx` (charts, stat cards, time-of-day heatmap, export actions, date filters).
+    - Staff: `StaffPage.jsx` (directory, cashier status toggling, permissions, add cashier dialog, confirm toggle dialog).
+    - Settings: `SettingsPage.jsx` (store profile, receipt customizer and live receipt preview, stock defaults, data reset dialog).
+    - Account: `AccountPage.jsx` (user profile, auth info, theme switcher, change password modal and form).
+    - System: `NotFoundPage.jsx` (404), `ForbiddenPage.jsx` (403).
+- **Locale Dictionary Alignment**:
+  - Expanded `en/reports.json` & `fil/reports.json` (75 keys each, 100% key parity).
+  - Expanded `en/users.json` & `fil/users.json` (53 keys each, 100% key parity).
+  - Expanded `en/settings.json` & `fil/settings.json` (97 keys each, 100% key parity).
+  - Expanded `en/errors.json` & `fil/errors.json` (23 keys each, 100% key parity).
+- **Test Suite Updates**:
+  - Updated `interactions.test.jsx` for bilingual tab matchers (`Receipt & Preview`, `Stock Defaults`, `Data & Reset`, `Store Profile`).
+  - Updated `flows.test.jsx` for bilingual assertions on `/staff`.
+- **Verification & Gates**:
+  - `check-i18n.mjs`: 18/18 namespaces verified, 0 missing keys, 1,175 validated `t(...)` calls (+196 calls verified), untranslated candidate count reduced from 187 to 137.
+  - Vitest: All 13 test files passing, 168/168 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Production bundle built cleanly.
+
+### H5 Log (Backend In-DB Product Images, ULID Binary Storage, and SSRF Import):
+- **Database Schema & Models**:
+  - Migration `2026_10_13_000005_create_product_images_table.php`:
+    - ULID primary `id`; `product_id` nullable FK cascade; `mime` string; `size_bytes` unsigned int; `width`/`height` nullable; `sha256` string(64) indexed; `source` string/enum; `source_url` nullable; `data` binary (`MEDIUMBLOB` up to 16MB on MySQL, binary on SQLite); timestamps.
+  - Model `App\Models\ProductImage`:
+    - Uses `HasUlids`, casts for dimensions and byte size, `belongsTo(Product::class)`.
+  - Model `App\Models\Product`:
+    - Added `image(): HasOne` relationship.
+- **Service Layer (`ProductImageService`)**:
+  - Validates image MIME (`image/jpeg`, `image/png`, `image/webp`, `image/gif`) via `finfo` buffer inspection.
+  - Computes `sha256` checksum and extracts dimensions via `getimagesizefromstring`.
+  - Atomically stores image in `product_images` and updates `products.image_url` to `/api/product-images/{ulid}`.
+  - SSRF-safe URL import:
+    - Host allowlist (`*.openfoodfacts.org`, `*.openfoodfacts.net`).
+    - Resolves IPs and rejects loopback (`127.0.0.1`, `::1`), link-local / cloud metadata (`169.254.169.254`), and private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
+    - 8-second timeout, 2MB max download limit.
+  - Auto-import triggered on `ProductController` `store` and `update` when receiving external Open Food Facts image URLs.
+- **Endpoints & Controller (`ProductImageController`)**:
+  - `GET /api/product-images/{ulid}`: Public streaming with `Content-Type`, `Content-Length`, `ETag: "{sha256}"`, `304 Not Modified`, and `Cache-Control: public, max-age=31536000, immutable`.
+  - `POST /api/products/{id}/image`: Owner-only file upload up to 1MB.
+  - `POST /api/products/{id}/image/import`: Owner-only Open Food Facts URL import.
+  - `DELETE /api/products/{id}/image`: Owner-only deletion, clears `image_url`.
+- **Testing & Verification**:
+  - Authored `backend/tests/Feature/ProductImageTest.php` with 10 comprehensive tests (57 assertions) covering streaming, 304 ETag caching, 404 handling, owner upload, cashier/guest 403 blocks, file size limits & MIME checking, Open Food Facts import, SSRF rejection, image deletion, and automatic store/update import.
+  - Backend Pest: 84/84 tests passing (450 assertions).
+  - Pint: Clean PSR-12 code style.
+
+### H6 Log (Frontend Product Image Upload, Client-Side Resize, and Image Rendering):
+- **Core Image Utilities**:
+  - Authored `frontend/src/lib/images.js`: `resolveImageUrl(url)` handling null/undefined/empty input, absolute external URLs (`http`, `https`), inline data/blob URLs, and local relative API paths (`/api/product-images/{ulid}`) prepending the API origin when needed.
+  - Authored `frontend/src/lib/imageResize.js`: Client-side HTML5 canvas image resize and compression downscaling photos to max 800px width/height and compressing to WebP (with JPEG fallback) ≤ 300KB. Guarded against jsdom and headless environments with immediate safe fallback.
+- **Service Layer Parity (`api` and `mock`)**:
+  - Added `uploadImage(id, file, source)`, `importImage(id, url)`, and `deleteImage(id)` across `api/productService.js` and `mock/productService.js` with 100% contract alignment.
+  - Updated `scripts/check-contract.mjs` and `frontend/scripts/check-contract.mjs` registering all 49 API endpoint contracts against Laravel routes.
+  - Added TanStack Query mutation hooks in `useProducts.js`: `useUploadProductImage`, `useImportProductImage`, and `useDeleteProductImage`.
+- **UI & Component Image Support**:
+  - Updated `ProductThumb.jsx` to resolve URLs via `resolveImageUrl` and dynamically reset `imgError` state on URL change (`UI-02`).
+  - Updated `ProductTile.jsx` and `ProductDetailDialog.jsx` to pass `imageUrl={product.image_url}` to `ProductThumb`.
+  - Redesigned `ProductFormDialog.jsx`:
+    - File upload and camera capture buttons (`accept="image/*"`, `capture="environment"`).
+    - Client-side automatic optimization and preview with size badge (`Ready to save`).
+    - Open Food Facts auto-fill preview with "Will be saved to store" indicator.
+    - Remove image button with automatic cleanup and server deletion.
+    - Expandable manual photo URL input.
+- **Localization**:
+  - Expanded `en/products.json` and `fil/products.json` with 11 image-specific keys with 100% key parity.
+- **Testing & Verification**:
+  - Authored Vitest suite `src/test/images.test.jsx` (8 tests passing in 51ms) covering `resolveImageUrl`, `resizeImage`, and mock `uploadImage`/`importImage`/`deleteImage`.
+  - Vitest: All 14 test files passing, 176/176 tests green.
+  - ESLint: 0 errors, 0 warnings.
+  - Vite build: Clean production bundle compiled in 3.23s.
+  - Secrets check (`npm run check:bundle`): 90 assets scanned, 0 leaks.
+  - Contracts & services: 49/49 API contracts verified, 12/12 service facades matched.
+
+### H7 Log (One-Step Barcode Auto-Fill and Continuous Quick Add Flow):
+- **Continuous Quick Add Modal (`QuickAddScanDialog`)**:
+  - Authored `frontend/src/features/products/components/QuickAddScanDialog.jsx`:
+    - Rapid shelf-stocking workflow: scan/type barcode, instant lookup against local store DB and Open Food Facts catalog fixtures.
+    - Local duplicate detection (`res.local_product`): warns if item is already in inventory and provides one-click restock increment pills (`+5`, `+10`, `+20`, `+50`) and custom quantity adjust with stock movement reason.
+    - Online catalog match: auto-populates product name, brand, size, suggested category, and image thumbnail. Automatically focuses selling price input.
+    - Continuous stocking loop: "Save & Scan Next" registers product via `useCreateProduct` and immediately cycles back to the barcode input with session count badge (`1 products added this session`) without closing the modal.
+    - Integrated mobile camera barcode scanner via `ScannerSheet`.
+- **Debounced GTIN Auto-Lookup in `ProductFormDialog` (`UI-01`)**:
+  - Connected `getAutoBarcodeLookup()` switch from local preferences.
+  - Added 500ms debounced auto-lookup on manual barcode typing in create mode: when 8, 12, 13, or 14-digit GTIN or internal barcode is entered, automatically triggers lookup to prefill brand, name, category, and photo without overwriting user-entered data.
+- **Barcode Preferences & Settings**:
+  - Authored `frontend/src/lib/barcodeSettings.js` (`getAutoBarcodeLookup`, `setAutoBarcodeLookup` with `tt_auto_barcode_lookup` key).
+  - Added "Auto Online Barcode Lookup" switch to the Inventory Defaults tab in `SettingsPage.jsx`.
+  - Added "Quick Add by Scan" action button to `ProductsPage.jsx` header with `Zap` icon.
+- **Localization**:
+  - Expanded `en/products.json`, `fil/products.json`, `en/settings.json`, and `fil/settings.json` with 100% bilingual key parity.
+- **Testing & Verification**:
+  - Authored `frontend/src/test/quick-add.test.jsx` (6 tests passing):
+    - `barcodeSettings` defaults and localStorage persistence.
+    - `QuickAddScanDialog` rendering, local duplicate restock flow, and catalog hit save & scan next flow.
+    - `ProductFormDialog` debounced GTIN auto-lookup in create mode.
+  - Vitest: All 15 test files passing, 182/182 tests green.
+  - ESLint: 0 errors, 80 compiler warnings.
+  - Vite build: Clean production bundle built in 2.21s.
+  - Bundle security: 91 assets scanned, 0 secrets/credentials leaked.
+  - i18n validator: 18/18 namespaces verified, 1,213 `t(...)` calls verified, 0 missing keys.
+  - Contract checks: 49/49 Laravel route contracts passed, 12/12 service facades matched.
+  - Backend: 84/84 Pest tests passing (450 assertions), Pint clean.
+
+### H8 Log (Audit Fixes: Cart Isolation, HTTPS Scheme, and Hotkey Input Guards):
+- **Session & Cart Isolation on Logout (`SEC-05`)**:
+  - Updated `frontend/src/stores/cartStore.js`: added `reset()` clearing both active items and all parked carts (`heldCarts`).
+  - Updated `frontend/src/context/AuthContext.jsx`:
+    - `clearSession()` purges `tindatrack-cart-v1`, `tt_pos_cart`, `tindatrack_user`, and `TOKEN_KEY` from `localStorage`.
+    - Resets `useCartStore` in-memory state and triggers `useCartStore.persist.clearStorage()`.
+    - Clears active POS scanner sessions and scanner tokens in `sessionStorage`.
+    - Wipes TanStack `queryClient` cache.
+- **Production HTTPS Scheme Enforcement (`DEP-03`)**:
+  - Updated `backend/app/Providers/AppServiceProvider.php`: added `URL::forceScheme('https')` inside `app()->environment('production')` guard to prevent mixed-content asset generation behind Railway reverse proxies.
+- **Hotkey Input Typing Suppression (`UI-03`)**:
+  - Updated `frontend/src/hooks/useHotkey.js`: added `ignoreInputs: true` option (default `true`) suppressing keystrokes when the active focused element is an `<input>`, `<textarea>`, `<select>`, or contenteditable unless explicit `metaOrCtrl` key is pressed.
+- **Testing & Verification**:
+  - Updated `frontend/src/test/auth.test.jsx`: added tests for `SEC-05` (cart and scanner session purge on logout) and `UI-03` (`useHotkey` input typing suppression).
+  - Vitest: All 15 test files passing, 184/184 tests green (+2 new tests).
+  - ESLint: 0 errors, 81 compiler warnings.
+  - Vite build: Clean production bundle built in 3.25s.
+  - Secrets check: 92 assets scanned, 0 leaks.
+  - Contract & service checks: 49/49 route contracts passed, 12/12 facades matched.
+  - Backend: 84/84 Pest tests passing (450 assertions), Pint clean.
+
+### H9 Log (Deployment Hardening, Production Smoke Tests, and Documentation):
+- **Deployment Configurations (`DEP-01`, `DEP-05`, `DEP-02`)**:
+  - `backend/nixpacks.toml`: Pinned PHP 8.4 runtime (`php84`) and required extensions (`pdo_mysql`, `bcmath`, `mbstring`, `fileinfo`) ensuring Railway builds resolve Composer dependencies requiring PHP >= 8.4 without runtime mismatch.
+  - `backend/railway.toml`: Optimized `preDeployCommand` adding `php artisan config:cache`, `php artisan route:cache`, and `php artisan view:cache` alongside migrations and idempotent seeders for fast, cold-start-optimized Railway deployments.
+  - `frontend/vercel.json`: Hardened SPA routing rewrites (ensuring `/index.html` catches client-side routes without masking static files) and added 1-year immutable caching (`public, max-age=31536000, immutable`) for all `/assets/*` bundles.
+- **Production Pre-Flight Smoke Verification**:
+  - Authored executable `scripts/smoke-prod-like.mjs` checking:
+    - Built SPA artifacts (`frontend/dist/index.html` and assets) for valid entry points and zero dev artifacts.
+    - `vercel.json` SPA rewrite rules and immutable cache headers.
+    - `railway.toml` and `nixpacks.toml` deployment directives, caching commands, and PHP 8.4 runtime specification.
+  - Registered `smoke:prod` in root `package.json`.
+- **Documentation & Release Notes**:
+  - `docs/BARCODE.md`: Added Section 7 ("Continuous Quick Add by Scan Flow") and Section 8 ("In-DB Product Images: `MEDIUMBLOB` + ULID Binary Storage").
+  - `README.md`: Updated tech stack and prerequisites to PHP 8.4+ with `fileinfo`, highlighted all v1.2.0 features, and updated the helpful commands table with `check:i18n`, `check:bundle`, `smoke:pairing`, and `smoke:prod`.
+  - `docs/CHANGELOG.md`: Added comprehensive `[v1.2.0]` release notes covering pre-deployment hardening, English-first i18n, in-DB product images, one-step barcode auto-fill, and deployment configurations.

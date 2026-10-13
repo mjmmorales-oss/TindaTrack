@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +25,8 @@ import { notify } from '@/lib/notify'
 import { resetPasswordSchema } from '@/features/auth/schemas'
 
 export function ResetPasswordPage() {
-  useDocumentTitle('Reset Password')
+  const { t } = useTranslation(['auth', 'common'])
+  useDocumentTitle(t('auth:resetPasswordTitle', 'Reset Password'))
   const { token } = useParams()
   const [searchParams] = useSearchParams()
   const emailFromUrl = searchParams.get('email') || ''
@@ -58,7 +60,7 @@ export function ResetPasswordPage() {
     try {
       await resetPassword(data)
       notify.success(
-        'Password reset successfully! Please sign in with your new password.',
+        t('auth:resetSuccess', 'Password reset successfully! Please sign in with your new password.'),
       )
       navigate('/login', { replace: true })
     } catch (err) {
@@ -76,10 +78,10 @@ export function ResetPasswordPage() {
     <Card className="border-border/80 shadow-md">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="text-2xl font-bold tracking-tight">
-          Reset Password
+          {t('auth:resetPasswordTitle', 'Reset Password')}
         </CardTitle>
         <CardDescription>
-          Choose a new password for your store account
+          {t('auth:resetPasswordSubtitle', 'Choose a new password for your store account')}
         </CardDescription>
       </CardHeader>
 
@@ -95,7 +97,7 @@ export function ResetPasswordPage() {
           <input type="hidden" {...register('token')} />
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{t('auth:emailLabel', 'Email address')}</Label>
             <Input
               id="email"
               type="email"
@@ -110,10 +112,10 @@ export function ResetPasswordPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
+            <Label htmlFor="password">{t('auth:newPasswordLabel', 'New Password')}</Label>
             <PasswordInput
               id="password"
-              placeholder="At least 8 characters"
+              placeholder={t('auth:passwordMinLength', 'At least 8 characters')}
               autoComplete="new-password"
               {...register('password')}
             />
@@ -125,10 +127,10 @@ export function ResetPasswordPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password_confirmation">Confirm New Password</Label>
+            <Label htmlFor="password_confirmation">{t('auth:confirmNewPasswordLabel', 'Confirm New Password')}</Label>
             <PasswordInput
               id="password_confirmation"
-              placeholder="Re-type new password"
+              placeholder={t('auth:confirmPasswordPlaceholder', 'Re-type new password')}
               autoComplete="new-password"
               {...register('password_confirmation')}
             />
@@ -147,16 +149,16 @@ export function ResetPasswordPage() {
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Resetting password...' : 'Update Password'}
+            {isSubmitting ? t('auth:resettingPassword', 'Resetting password...') : t('auth:updatePasswordButton', 'Update Password')}
           </Button>
 
           <p className="text-muted-foreground text-center text-xs">
-            Remembered your password?{' '}
+            {t('auth:rememberedPassword', 'Remembered your password?')}{' '}
             <Link
               to="/login"
               className="text-primary font-semibold hover:underline"
             >
-              Back to Sign In
+              {t('auth:backToLogin', 'Back to Sign In')}
             </Link>
           </p>
         </CardFooter>

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, TOKEN_KEY } from '@/lib/api'
-
+import { useCartStore } from '@/stores/cartStore'
 import { notify } from '@/lib/notify'
 
 export const AuthContext = createContext(null)
@@ -13,6 +13,13 @@ export function AuthProvider({ children }) {
 
   const saveSession = useCallback(({ user, token }) => {
     localStorage.setItem(TOKEN_KEY, token)
+    if (user) {
+      try {
+        localStorage.setItem('tindatrack_user', JSON.stringify(user))
+      } catch {
+        // ignore
+      }
+    }
     setUser(user)
     setStatus('authenticated')
     return user
@@ -20,6 +27,18 @@ export function AuthProvider({ children }) {
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem('tindatrack_user')
+    localStorage.removeItem('tindatrack-cart-v1')
+    localStorage.removeItem('tt_pos_cart')
+
+    // Reset Zustand cart store
+    try {
+      useCartStore.getState().reset?.()
+      useCartStore.persist?.clearStorage?.()
+    } catch {
+      // ignore
+    }
+
     if (typeof sessionStorage !== 'undefined') {
       const posSessionRaw = sessionStorage.getItem('tt_pos_scanner_session')
       if (posSessionRaw) {

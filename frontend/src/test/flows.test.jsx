@@ -81,18 +81,18 @@ describe('End-to-End User Flows Against Mock Database', () => {
     )
 
     // Tender exact cash
-    const exactBtn = screen.getByRole('button', { name: new RegExp(`Eksaktong Halaga`, 'i') })
+    const exactBtn = screen.getAllByRole('button', { name: /Eksaktong Halaga|Exact Amount/i })[0]
     await user.click(exactBtn)
 
     // Confirm cash
-    const confirmBtn = screen.getByRole('button', { name: /Kumpirmahin ang Cash/i })
+    const confirmBtn = screen.getByRole('button', { name: /Kumpirmahin ang Cash|Confirm Cash/i })
     await user.click(confirmBtn)
 
     // Receipt shows
-    expect(await screen.findByText(/Resibo ng Transaksyon/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Resibo ng Transaksyon|Transaction Receipt/i)).toBeInTheDocument()
 
     // Click "Bagong Benta"
-    const newSaleBtn = screen.getByRole('button', { name: /Bagong Benta/i })
+    const newSaleBtn = screen.getByRole('button', { name: /Bagong Benta|New Sale/i })
     await user.click(newSaleBtn)
 
     // Cart cleared
@@ -140,11 +140,11 @@ describe('End-to-End User Flows Against Mock Database', () => {
     await user.click(custOption)
 
     // Confirm Utang button
-    const confirmUtangBtn = screen.getByRole('button', { name: new RegExp(`Ilista sa Utang ni ${customer.name}`, 'i') })
+    const confirmUtangBtn = screen.getByRole('button', { name: new RegExp(`(Ilista sa Utang ni|Charge to (?:Utang|Credit) for) ${customer.name}`, 'i') })
     await user.click(confirmUtangBtn)
 
     // Receipt shows
-    expect(await screen.findByText(/Resibo ng Transaksyon/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Resibo ng Transaksyon|Transaction Receipt/i)).toBeInTheDocument()
 
     // Assert customer balance rose
     const updatedCustomer = useMockDb.getState().customers.find((c) => c.id === customer.id)
@@ -173,21 +173,21 @@ describe('End-to-End User Flows Against Mock Database', () => {
 
     await user.click(screen.getByRole('tab', { name: /Utang/i }))
 
-    // Click "+ Bagong Suki"
-    await user.click(screen.getByRole('button', { name: /\+ Bagong Suki/i }))
+    // Click "+ Bagong Suki" / "+ New Suki"
+    await user.click(screen.getByRole('button', { name: /\+ (Bagong Suki|New Suki|New Customer)/i }))
 
     // Fill inline mini form
-    const nameInput = screen.getByPlaceholderText(/hal\. Juan Dela Cruz/i)
+    const nameInput = screen.getByPlaceholderText(/Juan Dela Cruz/i)
     await user.type(nameInput, 'Bagong Inline Suki')
 
     // Submit mini form
-    await user.click(screen.getByRole('button', { name: /I-save ang Suki/i }))
+    await user.click(screen.getByRole('button', { name: /I-save ang Suki|Save Customer/i }))
 
     // Customer is now selected, confirm checkout
-    const confirmUtangBtn = await screen.findByRole('button', { name: /Ilista sa Utang ni Bagong Inline Suki/i })
+    const confirmUtangBtn = await screen.findByRole('button', { name: /(Ilista sa Utang ni|Charge to (?:Utang|Credit) for) Bagong Inline Suki/i })
     await user.click(confirmUtangBtn)
 
-    expect(await screen.findByText(/Resibo ng Transaksyon/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Resibo ng Transaksyon|Transaction Receipt/i)).toBeInTheDocument()
 
     // Assert new customer exists and has credit balance
     const newCust = useMockDb.getState().customers.find((c) => c.name === 'Bagong Inline Suki')
@@ -254,8 +254,8 @@ describe('End-to-End User Flows Against Mock Database', () => {
     await user.click(await screen.findByText(new RegExp(customer.name, 'i')))
 
     // Warning is visible and confirm button is disabled
-    expect(screen.getByText(/Lampas sa Credit Limit/i)).toBeInTheDocument()
-    const cashierConfirmBtn = screen.getByRole('button', { name: new RegExp(`Ilista sa Utang ni ${customer.name}`, 'i') })
+    expect(screen.getAllByText(/Lampas sa Credit Limit|Credit Limit Exceeded|Over Credit Limit/i).length).toBeGreaterThan(0)
+    const cashierConfirmBtn = screen.getByRole('button', { name: new RegExp(`(Ilista sa Utang ni|Charge to (?:Utang|Credit) for) ${customer.name}`, 'i') })
     expect(cashierConfirmBtn).toBeDisabled()
     unmount()
 
@@ -275,7 +275,7 @@ describe('End-to-End User Flows Against Mock Database', () => {
     await user.click(screen.getByRole('combobox'))
     await user.click(await screen.findByText(new RegExp(customer.name, 'i')))
 
-    const ownerConfirmBtn = screen.getByRole('button', { name: new RegExp(`Ilista sa Utang ni ${customer.name}`, 'i') })
+    const ownerConfirmBtn = screen.getByRole('button', { name: new RegExp(`(Ilista sa Utang ni|Charge to (?:Utang|Credit) for) ${customer.name}`, 'i') })
     expect(ownerConfirmBtn).not.toBeDisabled()
   })
 
@@ -477,7 +477,7 @@ describe('End-to-End User Flows Against Mock Database', () => {
 
     // 3. Render /staff and assert owner switch is disabled
     renderRoute('/staff')
-    expect(await screen.findByText(/Mga Account ng Staff at Kahera/i, {}, { timeout: 12000 })).toBeInTheDocument()
+    expect(await screen.findByText(/Mga Account ng Staff at Kahera|Staff & Cashier Accounts/i, {}, { timeout: 12000 })).toBeInTheDocument()
     const switches = await screen.findAllByRole('switch', {}, { timeout: 12000 })
     const disabledSwitches = switches.filter((s) => s.hasAttribute('disabled'))
     expect(disabledSwitches.length).toBeGreaterThan(0)

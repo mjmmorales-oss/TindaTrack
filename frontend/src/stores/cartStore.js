@@ -121,6 +121,11 @@ export const useCartStore = create(
       clear: () => set({ items: [] }),
 
       /**
+       * Resets entire cart store (active items + all held carts).
+       */
+      reset: () => set({ items: [], heldCarts: [] }),
+
+      /**
        * Holds current cart into heldCarts array (max 3).
        */
       holdCurrentCart: () => {

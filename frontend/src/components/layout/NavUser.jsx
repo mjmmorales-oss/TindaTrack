@@ -5,7 +5,9 @@ import {
   LogOut,
   Moon,
   Sun,
+  Languages,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -31,6 +33,7 @@ export function NavUser() {
   const { isMobile } = useSidebar()
   const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { i18n } = useTranslation()
   const navigate = useNavigate()
 
   if (!user) return null
@@ -117,6 +120,18 @@ export function NavUser() {
                   <Moon className="mr-2 h-4 w-4" />
                 )}
                 Toggle Theme
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => i18n.changeLanguage(i18n.language === 'fil' ? 'en' : 'fil')}
+                className="cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center">
+                  <Languages className="mr-2 h-4 w-4" />
+                  <span>Language</span>
+                </div>
+                <span className="font-mono text-[11px] text-muted-foreground uppercase">
+                  {i18n.language === 'fil' ? 'FIL' : 'EN'}
+                </span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
