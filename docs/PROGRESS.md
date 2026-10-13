@@ -625,3 +625,18 @@ Tracking implementation of Phase 3 tasks (T0–T11).
     - Tests complete flow against direct API (`http://127.0.0.1:8000`) and Vite reverse proxy (`https://127.0.0.1:5173`).
     - Both Direct API and Vite Proxy passed with 100% success against running servers.
 - Gates passed: Backend Pest (71/71 tests passed, 380 assertions), Pint clean; `smoke:pairing` PASS on both Direct API and Vite Reverse Proxy.
+
+### F3 Log:
+- Implemented comprehensive frontend automated tests catching this class of pairing bug:
+  - **Laravel wrapped response fixture test**: Added test in `src/test/scan-flows.test.jsx` providing the exact `{ data: { ... } }` payload returned by Laravel `ScannerSessionController@store`. Verifies `PairPhoneDialog` unwraps the payload, displays the code `AHAW-YD4S` and QR code, and does not show an error.
+  - **Error state verification**: Verified that when `createScannerSession` rejects (e.g. 500 Network connection refused), `PairPhoneDialog` displays "Hindi makagawa ng code: Network connection refused", renders a "Subukan ulit" button, and completely hides the code container and QR instructions.
+  - **StrictMode single session invocation**: Wrapped `PairPhoneDialog` in `<React.StrictMode>` and asserted `createScannerSession` is called exactly once despite React 19 dev double-invocation lifecycle.
+  - **Server expiry countdown & auto-refresh**: Using `vi.useFakeTimers()`, initialized session with server `pairing_expires_at` 2 seconds in the future. Verified initial single call, advanced time past 0, and asserted auto-request for a new code (`toHaveBeenCalledTimes(2)`).
+  - **PhoneScannerPage failure reason assertions**: Tested `/scan` with simulated API responses returning 422 with `reason: 'not_found'`, `reason: 'expired'`, `reason: 'used'`, and empty code in query params (`/scan?code=`). Verified distinct Taglish explanations for each scenario.
+  - **API client relative base resolution**: Added unit test verifying `getApiBaseUrl()` resolves to relative `/api` when `VITE_API_URL=""`, without falling back to `http://localhost:8000/api`.
+- Gates passed:
+  - Vitest: 23/23 tests green in `src/test/scan-flows.test.jsx`.
+  - Frontend Lint: 0 errors.
+  - Frontend Build: compiled cleanly.
+  - Backend: Pint clean, Pest 71/71 passed (380 assertions).
+  - Smoke script: `npm run smoke:pairing` PASS on Direct API and Vite Reverse Proxy.

@@ -156,7 +156,7 @@ export function PhoneScannerPage() {
       setCodeInput(formatted)
       handlePair(formatted)
     } else if (searchParams.has('code') && !searchParams.get('code')?.trim() && !sessionInfo) {
-      setPairError('Walang pairing code na ibinigay sa link. I-scan ang QR sa POS o i-type ang code.')
+      setPairError('Walang pairing code sa URL. I-scan ang QR sa POS o i-type ang code.')
     }
   }, [searchParams, sessionInfo, handlePair])
 
