@@ -240,7 +240,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 - [x] **B0 — Preflight**: Repository sanity, baseline test gates, branch creation `feat/barcode-scan`, barcode feature map.
 - [x] **B1 — Backend Schema**: Migrations for products columns (`image_url`, `brand`, `size`, `source`, `source_ref`), `barcode_catalog`, `scanner_sessions`, and `scanner_events`. Models, relationships, and casts.
 - [x] **B2 — Barcode Rules & Open Food Facts Lookup**: `App\Support\Barcode` helpers, services config, `ProductLookupService`, `GET /api/barcode-lookup/{barcode}`, Pest tests with `Http::fake`.
-- [ ] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
+- [x] **B3 — Scanner Sessions & Realtime**: `scanner.device` middleware, authenticated session endpoints, device endpoints (pair, scan, heartbeat), Pusher broadcasting and polling feed, Pest tests.
 - [ ] **B4 — Backend Hardening**: Mass assignment, authorization, N+1, index checks, reconciliation, routes audit.
 - [ ] **B5 — Frontend Scanning Core**: `barcode-detector`, `qrcode.react`, `jsbarcode`, `laravel-echo`, `pusher-js`. `lib/barcode.js`, `useCameraScanner`, `feedback.js`, `CameraScanner.jsx`, `ScannerSheet.jsx`, `useBarcodeWedge`.
 - [ ] **B6 — Frontend Services & Realtime Layer**: `barcode.js`, `scanner.js` (api + mock), `lib/realtime.js` polling and Pusher driver, Vitest tests.
@@ -324,4 +324,29 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - Owners receive full result.
 - Added comprehensive unit tests in `tests/Unit/BarcodeTest.php` (5 tests) and feature tests in `tests/Feature/BarcodeLookupTest.php` (10 tests with `Http::fake`).
 - Gates: Pest (56/56 passing, 267 assertions), Pint clean, contract check passing.
+
+### B3 Log:
+- Created and configured `scanner.device` middleware (`EnsureValidScannerDevice`):
+  - Validates `X-Scanner-Token` via sha256 equality on `device_token_hash`.
+  - Ensures session is unexpired and unended; updates `last_seen_at` at most once per 30s.
+  - Binds verified session object onto request attributes.
+- Implemented authenticated `ScannerSessionController`:
+  - `POST /api/scanner-sessions`: creates ULID session, ends previous sessions of same mode, lazily prunes events (>24h) and sessions (>24h). Enforces owner-only restriction on `mode=inventory` (403 for cashier).
+  - `GET /api/scanner-sessions/{id}`: returns session status (`paired`, `device_label`, `online`, `ended_at`). Owner-checked.
+  - `GET /api/scanner-sessions/{id}/events?after={lastId}`: polling feed with ascending order and limit 50.
+  - `DELETE /api/scanner-sessions/{id}`: ends session.
+  - `GET /api/scanner/unknown-barcodes`: retrieves distinct unresolved unknown barcodes from owner's store over last 14 days with scan counts and latest seen timestamp.
+- Implemented device `ScannerDeviceController`:
+  - `POST /api/scanner/pair`: verifies unexpired pairing code, ensures single-use, issues 40-character random device token, records sha256 hash, and returns store & user info (throttled 10/min).
+  - `POST /api/scanner/scans`: normalizes barcode, verifies `isAcceptable`, resolves active local product, determines status (`found`, `out_of_stock`, `unknown`), creates `ScannerEvent`, dispatches `ScannerItemScanned` broadcast event, and returns product snapshot payload (throttled 120/min). In inventory mode, unknown scans auto-query catalog.
+  - `POST /api/scanner/heartbeat`: touches `last_seen_at` and returns `{ ended: false }`.
+- Integrated optional Laravel Broadcasting:
+  - Installed `pusher/pusher-php-server` via Composer.
+  - Configured `config/broadcasting.php` with `pusher`, `log`, and `null` drivers.
+  - Configured `withBroadcasting` in `bootstrap/app.php` with bearer token auth on `/api/broadcasting/auth`.
+  - Created `routes/channels.php` authorizing private channel `scanner-session.{id}` strictly for session creator.
+  - Created `App\Events\ScannerItemScanned` implementing `ShouldBroadcastNow` on channel `scanner-session.{id}` with name `scanner.scanned`. Broadcast dispatch errors are safely swallowed so Pusher downtime never disrupts POS scans.
+- Added comprehensive Pest feature tests in `tests/Feature/ScannerSessionAndDeviceTest.php` (13 tests): full pairing flow, code reuse block, expiration check, 401 on wrong/ended tokens, scan status branches, polling feed `after`, cross-user access boundaries, role constraints, device token route isolation, `Event::fake` assertion, heartbeat, and unknown barcodes feed.
+- Documented all 8 new scanner endpoints in `docs/API.md`.
+- Gates: Pest (69/69 passing, 320 assertions), Pint clean, contract check passing.
 

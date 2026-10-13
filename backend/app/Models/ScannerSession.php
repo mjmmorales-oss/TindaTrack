@@ -60,4 +60,29 @@ class ScannerSession extends Model
     {
         return $this->ended_at !== null || $this->expires_at->isPast();
     }
+
+    /**
+     * Generates a 9-character human-friendly pairing code (XXXX-XXXX).
+     */
+    public static function generatePairingCode(): string
+    {
+        $alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $max = strlen($alphabet) - 1;
+
+        do {
+            $part1 = '';
+            for ($i = 0; $i < 4; $i++) {
+                $part1 .= $alphabet[random_int(0, $max)];
+            }
+
+            $part2 = '';
+            for ($i = 0; $i < 4; $i++) {
+                $part2 .= $alphabet[random_int(0, $max)];
+            }
+
+            $code = "{$part1}-{$part2}";
+        } while (static::where('pairing_code', $code)->where('pairing_expires_at', '>', now())->exists());
+
+        return $code;
+    }
 }
