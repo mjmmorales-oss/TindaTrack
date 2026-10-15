@@ -190,5 +190,22 @@
   "quickRestock": "Quick Restock",
   "restockAmount": "Add quantity:",
   "scanNext": "Scan Next Item",
-  "shelfStockingMode": "Continuous Shelf Stocking"
+  "shelfStockingMode": "Continuous Shelf Stocking",
+  "addByBarcode": "Add by barcode",
+  "scanOrTypeBarcodeDesc": "Scan with camera, USB scanner, or type a barcode to quickly add products.",
+  "noBarcodeHomemadeLink": "No barcode? Add a homemade item",
+  "searchingCatalog": "Searching product databases...",
+  "foundOnlineTitle": "Found Online — Quick Add",
+  "alreadyInStoreTitle": "Product Already in Inventory",
+  "notFoundOnlineTitle": "Not found online — add it manually",
+  "homemadeItemTitle": "Add Homemade / Custom Item",
+  "currentStockLabel": "Stock:",
+  "restock": "Restock",
+  "scanAnother": "Scan another",
+  "changePhoto": "Change photo",
+  "savedHomemadeNotice": "Saved! Print sticker barcode labels?",
+  "printLabels": "Print Labels",
+  "addedThisSession": "Added this session ({{count}})",
+  "tapToEdit": "Tap to edit",
+  "imageOptimizeError": "Could not process photo."
 }

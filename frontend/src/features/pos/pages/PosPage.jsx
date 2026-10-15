@@ -23,7 +23,7 @@ import { PaymentDialog } from '@/features/pos/components/PaymentDialog'
 import { ProductDetailDialog } from '@/features/pos/components/ProductDetailDialog'
 import { ScannerSheet } from '@/components/scanner/ScannerSheet'
 import { PairPhoneDialog } from '@/components/scanner/PairPhoneDialog'
-import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
+import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useCustomers } from '@/features/customers/hooks/useCustomers'
@@ -89,7 +89,7 @@ export function PosPage() {
 
   // Quick product create for unknown barcodes (owner)
   const [isRegisterProductOpen, setIsRegisterProductOpen] = useState(false)
-  const [registerBarcodeProduct, setRegisterBarcodeProduct] = useState(null)
+  const [registerBarcode, setRegisterBarcode] = useState('')
 
   // Cart store
   const items = useCartStore((state) => state.items)
@@ -139,15 +139,7 @@ export function PosPage() {
                 action: {
                   label: t('pos:registerProduct', 'Register product'),
                   onClick: () => {
-                    setRegisterBarcodeProduct({
-                      barcode: normalized,
-                      name: res?.catalog?.name || '',
-                      brand: res?.catalog?.brand || '',
-                      size: res?.catalog?.size || '',
-                      image_url: res?.catalog?.image_url || '',
-                      category_id: res?.catalog?.suggested_category_id || '',
-                      source: res?.catalog?.source || 'manual',
-                    })
+                    setRegisterBarcode(normalized)
                     setIsRegisterProductOpen(true)
                   },
                 },
@@ -568,14 +560,14 @@ export function PosPage() {
 
       {/* QUICK PRODUCT CREATE FOR UNKNOWN BARCODES (OWNER) */}
       {user?.role === 'owner' && (
-        <ProductFormDialog
+        <AddByBarcodeDialog
           open={isRegisterProductOpen}
           onOpenChange={setIsRegisterProductOpen}
-          product={registerBarcodeProduct}
+          initialBarcode={registerBarcode}
           categories={categories}
           onSuccess={() => {
             setIsRegisterProductOpen(false)
-            setRegisterBarcodeProduct(null)
+            setRegisterBarcode('')
           }}
         />
       )}

@@ -1,14 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
-import { CameraScanner } from '@/components/scanner/CameraScanner'
+import { BarcodeCapture } from '@/components/scanner/BarcodeCapture'
 
 /**
- * Modal dialog / bottom drawer wrapping CameraScanner for single-device barcode scanning.
+ * Modal dialog / bottom drawer wrapping BarcodeCapture for single-device barcode scanning.
+ * Supports USB wedge scanners, manual typing fallback, and inline camera preview.
  *
  * @param {object} props
  * @param {boolean} props.open - Whether dialog is open
  * @param {(open: boolean) => void} props.onOpenChange - Open state handler
- * @param {(code: string) => void} props.onDetected - Callback on detected barcode
+ * @param {(code: string, meta: { source: string }) => void} props.onDetected - Callback on detected barcode
  * @param {string} [props.title] - Dialog header title
  * @param {boolean} [props.continuous=false] - Whether scanner stays open after a scan
  */
@@ -20,10 +21,10 @@ export function ScannerSheet({
   continuous = false,
 }) {
   const { t } = useTranslation(['scanner', 'common'])
-  const resolvedTitle = title || t('scanner:scanAtPosTitle', 'Scan Barcode in POS')
+  const resolvedTitle = title || t('scanner:scanAtPosTitle', 'Scan Barcode')
 
-  const handleDetected = (code) => {
-    onDetected?.(code)
+  const handleDetected = (code, meta) => {
+    onDetected?.(code, meta)
     if (!continuous) {
       onOpenChange?.(false)
     }
@@ -34,14 +35,20 @@ export function ScannerSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={resolvedTitle}
-      description={t('scanner:scanAtPosDesc', 'Point the camera at the product barcode or QR code.')}
-      className="overflow-hidden p-0 sm:max-w-md"
+      description={t('scanner:scanAtPosDesc', 'Scan with camera, USB scanner, or type barcode numbers.')}
+      className="sm:max-w-md"
     >
-      <div className="p-3 sm:p-4">
-        <CameraScanner onDetected={handleDetected} paused={!open} />
+      <div className="p-1">
+        <BarcodeCapture
+          onCode={handleDetected}
+          continuous={continuous}
+          autoFocus={open}
+          cameraDefault="auto"
+        />
       </div>
     </ResponsiveDialog>
   )
 }
 
 export default ScannerSheet
+

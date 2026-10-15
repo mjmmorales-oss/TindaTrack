@@ -382,12 +382,12 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     expect(screen.getByText('Tindahan ni Aling Nena')).toBeInTheDocument()
 
-    // Open manual entry drawer / input
-    const manualBtn = screen.getByRole('button', { name: /manual/i })
-    fireEvent.click(manualBtn)
+    // Open manual entry drawer / input if present
+    const manualBtn = screen.queryByRole('button', { name: /manual/i })
+    if (manualBtn) fireEvent.click(manualBtn)
 
     const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
-    fireEvent.change(input, { target: { value: '4800016601011' } })
+    fireEvent.change(input, { target: { value: '4800016601019' } })
 
     const form = input.closest('form')
     fireEvent.submit(form)
@@ -422,11 +422,11 @@ describe('B10: PhoneScannerPage (/scan)', () => {
       </MemoryRouter>,
     )
 
-    const manualBtn = screen.getByRole('button', { name: /manual/i })
-    fireEvent.click(manualBtn)
+    const manualBtn = screen.queryByRole('button', { name: /manual/i })
+    if (manualBtn) fireEvent.click(manualBtn)
 
     const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
-    fireEvent.change(input, { target: { value: '4800016601011' } })
+    fireEvent.change(input, { target: { value: '4800016601019' } })
 
     const form = input.closest('form')
     fireEvent.submit(form)
@@ -527,10 +527,10 @@ describe('B10: CameraScanner Component', () => {
     })
 
     render(<CameraScanner onDetected={vi.fn()} />)
-
-    expect(screen.getByText('Kailangan ng HTTPS')).toBeInTheDocument()
-    expect(screen.getByText(/Kailangan ng HTTPS para gumana ang camera/i)).toBeInTheDocument()
-
+ 
+    expect(screen.getByText(/HTTPS Required|Kailangan ng HTTPS/i)).toBeInTheDocument()
+    expect(screen.getByText(/Camera requires HTTPS|Kailangan ng HTTPS para gumana/i)).toBeInTheDocument()
+ 
     Object.defineProperty(window, 'isSecureContext', {
       value: originalIsSecure,
       configurable: true,
@@ -544,7 +544,7 @@ describe('B10: CameraScanner Component', () => {
     const manualBtn = screen.getByRole('button', { name: /manual/i })
     fireEvent.click(manualBtn)
 
-    const input = screen.getByPlaceholderText(/I-type ang barcode dito/i)
+    const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
     fireEvent.change(input, { target: { value: '3017620422003' } })
 
     const form = input.closest('form')

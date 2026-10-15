@@ -190,5 +190,22 @@
   "quickRestock": "Mabilisang Dagdag-Stock",
   "restockAmount": "Dami na idaragdag:",
   "scanNext": "I-scan ang Susunod",
-  "shelfStockingMode": "Tuloy-tuloy na Paglalagay sa Istante"
+  "shelfStockingMode": "Tuloy-tuloy na Paglalagay sa Istante",
+  "addByBarcode": "Magdagdag gamit ang barcode",
+  "scanOrTypeBarcodeDesc": "I-scan gamit ang camera, USB scanner, o i-type ang barcode para mabilis makapagdagdag.",
+  "noBarcodeHomemadeLink": "Walang barcode? Magdagdag ng sariling gawang paninda",
+  "searchingCatalog": "Naghahanap sa listahan ng mga produkto...",
+  "foundOnlineTitle": "Nahanap Online — Mabilisang Dagdag",
+  "alreadyInStoreTitle": "Nasa Imbentaryo na ang Produkto",
+  "notFoundOnlineTitle": "Hindi nahanap online — ilagay nang mano-mano",
+  "homemadeItemTitle": "Magdagdag ng Sariling Gawang Paninda",
+  "currentStockLabel": "Stock:",
+  "restock": "Mag-restock",
+  "scanAnother": "Mag-scan ng iba",
+  "changePhoto": "Palitan ang litrato",
+  "savedHomemadeNotice": "Nai-save na! Mag-print ng sticker barcode labels?",
+  "printLabels": "I-print ang mga Label",
+  "addedThisSession": "Naidagdag ngayong sesyon ({{count}})",
+  "tapToEdit": "Pindutin para i-edit",
+  "imageOptimizeError": "Hindi maproseso ang litrato."
 }

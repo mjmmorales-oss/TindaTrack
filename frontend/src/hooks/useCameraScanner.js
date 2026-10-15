@@ -22,6 +22,7 @@ export function useCameraScanner({
   const [facingMode, setFacingMode] = useState('environment')
   const [torchSupported, setTorchSupported] = useState(false)
   const [isTorchOn, setIsTorchOn] = useState(false)
+  const [retryTrigger, setRetryTrigger] = useState(0)
 
   const videoRef = useRef(null)
   const streamRef = useRef(null)
@@ -29,9 +30,22 @@ export function useCameraScanner({
   const lastScanTimeRef = useRef(0)
   const lastScannedCodeRef = useRef('')
   const animFrameIdRef = useRef(null)
+  const startTimeoutRef = useRef(null)
+
+  // Retry function to re-attempt camera initialization
+  const retry = useCallback(() => {
+    setStatus('starting')
+    setError(null)
+    setRetryTrigger((prev) => prev + 1)
+  }, [])
 
   // Stop camera tracks helper
   const stopStream = useCallback(() => {
+    if (startTimeoutRef.current) {
+      clearTimeout(startTimeoutRef.current)
+      startTimeoutRef.current = null
+    }
+
     if (animFrameIdRef.current) {
       cancelAnimationFrame(animFrameIdRef.current)
       animFrameIdRef.current = null
@@ -67,13 +81,13 @@ export function useCameraScanner({
     // Security context check (camera requires HTTPS or localhost)
     if (typeof window !== 'undefined' && !window.isSecureContext) {
       setStatus('insecure')
-      setError('Kailangan ng HTTPS para gumana ang camera. Gamitin ang deployed link o npm run dev:lan.')
+      setError('Camera requires HTTPS or localhost. Please use a secure connection.')
       return
     }
 
-    if (!navigator?.mediaDevices?.getUserMedia) {
+    if (typeof navigator === 'undefined' || !navigator?.mediaDevices?.getUserMedia) {
       setStatus('unsupported')
-      setError('Hindi suportado ng browser na ito ang pag-access sa camera.')
+      setError('Camera is not supported on this device or browser.')
       return
     }
 
@@ -81,9 +95,34 @@ export function useCameraScanner({
     setStatus('starting')
     setError(null)
 
+    // 8-second camera start timeout
+    startTimeoutRef.current = setTimeout(() => {
+      if (!isMounted) return
+      setStatus((cur) => {
+        if (cur === 'starting') {
+          stopStream()
+          setError("Camera didn't start. Please check camera permissions or try again.")
+          return 'error'
+        }
+        return cur
+      })
+    }, 8000)
+
     async function initCamera() {
       try {
-        const detector = await createBarcodeDetector()
+        let detector
+        try {
+          // Wrap detector creation with a 6-second timeout
+          detector = await Promise.race([
+            createBarcodeDetector(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('wasm failed to load')), 6000),
+            ),
+          ])
+        } catch (detectorErr) {
+          throw new Error(detectorErr?.message || 'wasm failed to load')
+        }
+
         if (!isMounted) return
         detectorRef.current = detector
 
@@ -96,7 +135,13 @@ export function useCameraScanner({
           audio: false,
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        let stream
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints)
+        } catch (mediaErr) {
+          throw mediaErr
+        }
+
         if (!isMounted) {
           stream.getTracks().forEach((t) => t.stop())
           return
@@ -107,25 +152,57 @@ export function useCameraScanner({
         if (videoRef.current) {
           videoRef.current.srcObject = stream
           videoRef.current.setAttribute('playsinline', 'true')
-          await videoRef.current.play()
+          try {
+            await videoRef.current.play()
+          } catch {
+            // Some browsers require user interaction; proceed if video element is ready
+          }
         }
 
         // Check torch capability
         const videoTrack = stream.getVideoTracks()[0]
         if (videoTrack) {
-          const caps = typeof videoTrack.getCapabilities === 'function' ? videoTrack.getCapabilities() : {}
+          const caps =
+            typeof videoTrack.getCapabilities === 'function'
+              ? videoTrack.getCapabilities()
+              : {}
           setTorchSupported(Boolean(caps?.torch))
         }
 
-        setStatus('scanning')
+        if (startTimeoutRef.current) {
+          clearTimeout(startTimeoutRef.current)
+          startTimeoutRef.current = null
+        }
+
+        if (isMounted) {
+          setStatus('scanning')
+        }
       } catch (err) {
         if (!isMounted) return
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        if (startTimeoutRef.current) {
+          clearTimeout(startTimeoutRef.current)
+          startTimeoutRef.current = null
+        }
+
+        if (
+          err.name === 'NotAllowedError' ||
+          err.name === 'PermissionDeniedError' ||
+          err.message?.includes('permission denied')
+        ) {
           setStatus('denied')
-          setError('Hindi pinahintulutan ang camera access. Pakibuksan ang camera permissions sa settings.')
+          setError('Camera permission was denied. Please allow camera access in browser settings.')
+        } else if (err.message?.includes('wasm failed to load')) {
+          setStatus('error')
+          setError('Barcode detector (WASM) failed to load.')
+        } else if (
+          err.name === 'NotFoundError' ||
+          err.name === 'DevicesNotFoundError'
+        ) {
+          setStatus('unsupported')
+          setError('No camera detected on this device.')
         } else {
           setStatus('error')
-          setError(err.message || 'Hindi mabuksan ang camera.')
+          setError(err.message || "Camera didn't start.")
         }
       }
     }
@@ -134,9 +211,13 @@ export function useCameraScanner({
 
     return () => {
       isMounted = false
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current)
+        startTimeoutRef.current = null
+      }
       stopStream()
     }
-  }, [enabled, facingMode, stopStream])
+  }, [enabled, facingMode, retryTrigger, stopStream])
 
   // Continuous frame scanning loop (~200ms throttle)
   useEffect(() => {
@@ -231,6 +312,8 @@ export function useCameraScanner({
     isTorchOn,
     toggleTorch,
     switchCamera,
+    retry,
     stop: stopStream,
   }
 }
+

@@ -9,10 +9,9 @@ import {
   Package,
   Pencil,
   Plus,
-  Scan,
+  ScanBarcode,
   Trash2,
   X,
-  Zap,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -37,10 +36,9 @@ import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
-import { QuickAddScanDialog } from '@/features/products/components/QuickAddScanDialog'
+import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
-import { ScannerSheet } from '@/components/scanner/ScannerSheet'
 import { barcodeService } from '@/services/barcodeService'
 import {
   useProducts,
@@ -104,8 +102,8 @@ export function ProductsPage() {
   const [adjustingProduct, setAdjustingProduct] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingProduct, setDeletingProduct] = useState(null)
-  const [scannerSheetOpen, setScannerSheetOpen] = useState(false)
-  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [addByBarcodeOpen, setAddByBarcodeOpen] = useState(false)
+  const [addByBarcodeInitialCode, setAddByBarcodeInitialCode] = useState('')
   const [dismissedUnknownCard, setDismissedUnknownCard] = useState(false)
 
   // Unknown barcodes for owner
@@ -117,50 +115,9 @@ export function ProductsPage() {
     setFormDialogOpen(true)
   }
 
-  const handleRegisterBarcode = async (barcode) => {
-    try {
-      const res = await barcodeService.lookupBarcode(barcode)
-      if (res?.data?.local_product) {
-        notify.info(t('products:alreadyRegisteredAlert', { name: res.data.local_product.name, defaultValue: `Already registered: ${res.data.local_product.name}` }))
-        setEditingProduct(res.data.local_product)
-        setFormDialogOpen(true)
-      } else if (res?.data?.catalog?.found) {
-        const cat = res.data.catalog
-        const combinedName =
-          cat.brand && cat.name && !cat.name.toLowerCase().includes(cat.brand.toLowerCase())
-            ? `${cat.brand} ${cat.name}${cat.size ? ' ' + cat.size : ''}`
-            : `${cat.name || ''}${cat.size ? ' ' + cat.size : ''}`.trim()
-        setEditingProduct({
-          ...DEFAULT_PRODUCT,
-          barcode,
-          name: combinedName || cat.name || '',
-          brand: cat.brand || '',
-          size: cat.size || '',
-          image_url: cat.image_url || '',
-          category_id: cat.suggested_category_id ? String(cat.suggested_category_id) : '',
-          source: cat.source || 'openfoodfacts',
-          source_ref: barcode,
-        })
-        setFormDialogOpen(true)
-      } else {
-        setEditingProduct({
-          ...DEFAULT_PRODUCT,
-          barcode,
-        })
-        setFormDialogOpen(true)
-      }
-    } catch {
-      setEditingProduct({
-        ...DEFAULT_PRODUCT,
-        barcode,
-      })
-      setFormDialogOpen(true)
-    }
-  }
-
-  const handleScanDetected = async (code) => {
-    setScannerSheetOpen(false)
-    await handleRegisterBarcode(code)
+  const handleRegisterBarcode = (barcode) => {
+    setAddByBarcodeInitialCode(barcode)
+    setAddByBarcodeOpen(true)
   }
 
   const handleEdit = (prod) => {
@@ -579,22 +536,19 @@ export function ProductsPage() {
           canManage && (
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
-                variant="outline"
-                onClick={() => setQuickAddOpen(true)}
-                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-primary/5 hover:bg-primary/10 text-primary border-primary/25 font-semibold"
+                onClick={() => {
+                  setAddByBarcodeInitialCode('')
+                  setAddByBarcodeOpen(true)
+                }}
+                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-primary text-primary-foreground sm:bg-background sm:text-foreground sm:border sm:border-input sm:hover:bg-accent sm:hover:text-accent-foreground font-semibold"
               >
-                <Zap className="h-4 w-4" />
-                {t('products:quickAddByScan')}
+                <ScanBarcode className="h-4 w-4" />
+                {t('products:addByBarcode', 'Add by barcode')}
               </Button>
               <Button
-                variant="outline"
-                onClick={() => setScannerSheetOpen(true)}
-                className="gap-1.5 shadow-xs h-11 sm:h-9"
+                onClick={handleCreate}
+                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-background text-foreground border border-input hover:bg-accent hover:text-accent-foreground sm:bg-primary sm:text-primary-foreground sm:border-transparent sm:hover:bg-primary/90 font-semibold"
               >
-                <Scan className="h-4 w-4" />
-                {t('products:scanToAdd', 'Scan to add')}
-              </Button>
-              <Button onClick={handleCreate} className="gap-1.5 shadow-xs h-11 sm:h-9">
                 <Plus className="h-4 w-4" />
                 {t('products:addProduct', 'Add Product')}
               </Button>
@@ -717,21 +671,15 @@ export function ProductsPage() {
         isLoading={deleteMutation.isPending}
       />
 
-      {/* Scan to Add Modal */}
-      <ScannerSheet
-        open={scannerSheetOpen}
-        onOpenChange={setScannerSheetOpen}
-        continuous={false}
-        title={t('products:scanToAddSheetTitle', 'Scan Product to Add')}
-        onDetected={handleScanDetected}
-      />
-
-      {/* Quick Add by Scan Continuous Modal */}
-      <QuickAddScanDialog
-        open={quickAddOpen}
-        onOpenChange={setQuickAddOpen}
+      {/* Add by Barcode Modal */}
+      <AddByBarcodeDialog
+        open={addByBarcodeOpen}
+        onOpenChange={setAddByBarcodeOpen}
         categories={categories}
-        onSuccess={() => refetch()}
+        initialBarcode={addByBarcodeInitialCode}
+        onSuccess={refetch}
+        onEditProduct={handleEdit}
+        onRestockProduct={handleAdjust}
       />
     </PageContainer>
   )

@@ -944,7 +944,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 
 Tracking implementation of v1.3 tasks (U0–U7):
 - [x] **U0 — Preflight & v1.3 Map**: Verified git state, baseline test counts (Pest 84 passed, Vitest 184 passed, 49 API contracts, bundle/i18n/services clean), and mapped camera components, input sizes, drawer inputs, and bottom navigation behaviors.
-- [ ] **U1 — Unified "Add by Barcode" Flow**: Reusable `BarcodeCapture.jsx`, unified `AddByBarcodeDialog.jsx` replacing `QuickAddScanDialog` and old scan sheet, route unknown barcode entrypoints, tests.
+- [x] **U1 — Unified "Add by Barcode" Flow**: Reusable `BarcodeCapture.jsx`, unified `AddByBarcodeDialog.jsx` replacing `QuickAddScanDialog` and old scan sheet, route unknown barcode entrypoints, tests.
 - [ ] **U2 — Mobile Input Zoom Prevention**: Pointer-coarse 16px safety floor, command input sizing, remove small input classes, viewport interactive-widget, `check-mobile.mjs` gate.
 - [ ] **U3 — Mobile Drawers and Sheets Keyboard Polish**: `useVisualViewport.js` CSS vars (`--vvh`, `--keyboard-inset`), `ResponsiveDialog` drawer height and scroll polish, bottom nav hide on keyboard/modal, safe areas, tests, `docs/MOBILE.md`.
 - [ ] **U4 — Full Staff Management**: Soft deletes (`deleted_at`), phone, `must_change_password`, temporary password generation, password reset, restore, staff drawer, mobile action sheet, policy guards, Pest & Vitest tests.
@@ -999,3 +999,30 @@ Tracking implementation of v1.3 tasks (U0–U7):
     - `MobileBottomNav.jsx` is positioned `fixed bottom-0` across the viewport.
     - When an input in a drawer, sheet, or page is focused on iOS, the keyboard shrinks the *visual* viewport while the layout viewport remains unchanged. iOS scrolls the document to keep the focused input visible, causing `MobileBottomNav` (and dialog overlay backdrops) to float conspicuously mid-screen directly above or over the keyboard.
     - The bottom navigation also lacks any mechanism to hide itself when modals/drawers are open, creating visual clutter and overlay collision.
+
+### U1 Log (Unified Add by Barcode Flow & Reusable BarcodeCapture):
+- **Camera Hardening & English Defaults**:
+  - `useCameraScanner.js`: Added an 8-second initialization timeout guard that transitions from `starting` to `error` if media device or wasm initialization stalls; provided retry callback and English error messages with i18n keys.
+  - `CameraScanner.jsx`: Modernized error state with explicit Retry action, English fallbacks, and a `showManualFallback` prop (default `true`) allowing container components (`BarcodeCapture`) to suppress duplicate inputs.
+- **Reusable `BarcodeCapture.jsx`**:
+  - Created single unified barcode capture component (`frontend/src/components/scanner/BarcodeCapture.jsx`).
+  - Features: Large numeric autofocus input with `data-barcode-input`, 400ms GTIN auto-submit, inline check-digit validation, Enter submission for internal/custom codes, keyboard wedge scanner listener (`useBarcodeWedge`), inline camera preview collapsible toggle with `localStorage` memory and pointer-coarse auto-open, audio/haptic feedback (`beep()`, `vibrate()`), and 1500ms duplicate scan suppression.
+- **Unified `AddByBarcodeDialog.jsx`**:
+  - Built comprehensive `ResponsiveDialog` supporting all 6 states in one single dialog:
+    - (a) **Capture**: `BarcodeCapture` + shortcut link to homemade custom item.
+    - (b) **Looking up**: Animated skeleton with scanned barcode badge.
+    - (c) **Found online (not in store)**: Compact Quick Add form with Open Food Facts image preview, "Change photo" file uploader, prefilled editable name/brand/size/category, required selling price, optional cost price, initial stock, and action buttons (Save, Save & Scan Next, Back).
+    - (d) **Already in store**: Existing product card with stock count, current price, and actions (Restock, Edit, Scan another). Restock connects to `AdjustStockDialog`.
+    - (e) **Not found anywhere**: Compact manual entry form with image uploader and auto-suggest.
+    - (f) **Manual / homemade**: Generates valid internal barcode (`makeInternal`), offers "Print labels" shortcut via `PrintLabelsDialog`.
+  - Added session tracking banner ("Added this session (n)") with clickable thumbnails opening edit dialog.
+  - Routed unknown barcode actions from POS ("Register product"), Products page ("Unregistered barcodes" card), and Inventory phone events directly into `AddByBarcodeDialog` preloaded in state (b).
+- **Header Actions & Code Deletion**:
+  - Updated `ProductsPage.jsx` header actions to exactly two: `[Add by barcode]` and `[+ Add product]`.
+  - Deleted obsolete `QuickAddScanDialog.jsx`.
+  - Updated `ScannerSheet.jsx` and `PhoneScannerPage.jsx` to utilize `BarcodeCapture`.
+- **Testing & Verification**:
+  - Rewrote `frontend/src/test/quick-add.test.jsx` covering `BarcodeCapture` (GTIN auto-submit, invalid check digit rejection, internal code on Enter, wedge scanner input, pointer-fine/coarse camera defaults, camera timeout & retry) and `AddByBarcodeDialog` (states c, d, e, f, session list accumulation, restock routing, and ProductsPage header actions assertion).
+  - Updated `frontend/src/test/scan-flows.test.jsx` with bilingual assertions and valid GTIN test codes.
+  - All test gates passed: Vitest 15 files, 189 passed tests; Pest 84 passed (450 assertions); ESLint 0 errors; Vite build 0 errors; `check-i18n.mjs` clean.
+
