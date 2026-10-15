@@ -175,11 +175,32 @@
   * {
     border-color: var(--border);
   }
+  html,
+  body {
+    height: 100%;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     background-color: var(--background);
     color: var(--foreground);
     min-height: 100dvh;
     font-family: var(--font-sans);
+  }
+  button,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+  @media (pointer: coarse) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+    textarea,
+    select,
+    [contenteditable='true'],
+    [cmdk-input] {
+      font-size: max(16px, 1em) !important;
+    }
   }
 }
 

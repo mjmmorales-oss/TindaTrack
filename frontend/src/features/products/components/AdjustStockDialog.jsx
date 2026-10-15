@@ -273,7 +273,7 @@ export function AdjustStockDialog({
                       <Command>
                         <CommandInput
                           placeholder={t('inventory:searchProductPlaceholder')}
-                          className="text-xs"
+                          className="text-base md:text-xs"
                         />
                         <CommandList className="max-h-60">
                           <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">
@@ -443,7 +443,7 @@ export function AdjustStockDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={!activeProduct}
-              className="h-10 text-xs"
+              className="h-10 text-base md:text-xs"
             />
           </div>
         </form>

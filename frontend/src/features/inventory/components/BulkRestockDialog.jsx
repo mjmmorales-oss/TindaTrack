@@ -123,7 +123,7 @@ export function BulkRestockDialog({
               min="1"
               value={defaultAddQty}
               onChange={(e) => setDefaultAddQty(e.target.value)}
-              className="h-9 w-28 text-xs font-mono"
+              className="h-9 w-28 text-base md:text-xs font-mono"
             />
             <Button
               type="button"
@@ -172,7 +172,7 @@ export function BulkRestockDialog({
                       min="1"
                       value={itemAddQty}
                       onChange={(e) => handleQtyChange(item.id, e.target.value)}
-                      className="h-8 w-20 text-xs font-mono text-center"
+                      className="h-8 w-20 text-base md:text-xs font-mono text-center"
                     />
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export function BulkRestockDialog({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder={t('inventory:bulkNotesPlaceholder')}
-            className="h-9 text-xs"
+            className="h-9 text-base md:text-xs"
           />
         </div>
       </form>

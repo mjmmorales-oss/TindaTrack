@@ -188,7 +188,7 @@ export function CategoryFormDialog({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="text-xs"
+            className="text-base md:text-xs"
           />
         </div>
 

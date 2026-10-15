@@ -945,7 +945,7 @@ Tracking implementation of Phase 3 tasks (T0–T11).
 Tracking implementation of v1.3 tasks (U0–U7):
 - [x] **U0 — Preflight & v1.3 Map**: Verified git state, baseline test counts (Pest 84 passed, Vitest 184 passed, 49 API contracts, bundle/i18n/services clean), and mapped camera components, input sizes, drawer inputs, and bottom navigation behaviors.
 - [x] **U1 — Unified "Add by Barcode" Flow**: Reusable `BarcodeCapture.jsx`, unified `AddByBarcodeDialog.jsx` replacing `QuickAddScanDialog` and old scan sheet, route unknown barcode entrypoints, tests.
-- [ ] **U2 — Mobile Input Zoom Prevention**: Pointer-coarse 16px safety floor, command input sizing, remove small input classes, viewport interactive-widget, `check-mobile.mjs` gate.
+- [x] **U2 — Mobile Input Zoom Prevention**: Pointer-coarse 16px safety floor, command input sizing, remove small input classes, viewport interactive-widget, `check-mobile.mjs` gate.
 - [ ] **U3 — Mobile Drawers and Sheets Keyboard Polish**: `useVisualViewport.js` CSS vars (`--vvh`, `--keyboard-inset`), `ResponsiveDialog` drawer height and scroll polish, bottom nav hide on keyboard/modal, safe areas, tests, `docs/MOBILE.md`.
 - [ ] **U4 — Full Staff Management**: Soft deletes (`deleted_at`), phone, `must_change_password`, temporary password generation, password reset, restore, staff drawer, mobile action sheet, policy guards, Pest & Vitest tests.
 - [ ] **U5 — i18n Leaks & Strict Checker**: Eliminate Taglish leaks in scanner/toasts/backend, harden `check-i18n.mjs` with marker words, backend English messages, bilingual assertions.
@@ -1021,8 +1021,22 @@ Tracking implementation of v1.3 tasks (U0–U7):
   - Updated `ProductsPage.jsx` header actions to exactly two: `[Add by barcode]` and `[+ Add product]`.
   - Deleted obsolete `QuickAddScanDialog.jsx`.
   - Updated `ScannerSheet.jsx` and `PhoneScannerPage.jsx` to utilize `BarcodeCapture`.
-- **Testing & Verification**:
-  - Rewrote `frontend/src/test/quick-add.test.jsx` covering `BarcodeCapture` (GTIN auto-submit, invalid check digit rejection, internal code on Enter, wedge scanner input, pointer-fine/coarse camera defaults, camera timeout & retry) and `AddByBarcodeDialog` (states c, d, e, f, session list accumulation, restock routing, and ProductsPage header actions assertion).
-  - Updated `frontend/src/test/scan-flows.test.jsx` with bilingual assertions and valid GTIN test codes.
-  - All test gates passed: Vitest 15 files, 189 passed tests; Pest 84 passed (450 assertions); ESLint 0 errors; Vite build 0 errors; `check-i18n.mjs` clean.
+### U2 Log (Mobile Input Zoom Prevention & Safety Floor):
+- **Global Safety Floor in `index.css`**:
+  - Implemented `@media (pointer: coarse)` CSS safety floor under `@layer base`: forces `font-size: max(16px, 1em) !important;` on touch devices for all inputs, textareas, selects, `contenteditable`, and `cmdk-input`, preventing iOS Safari auto-zooming on focus while preserving desktop UI density.
+  - Added global touch rules: `html, body { height: 100%; overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }` and `touch-action: manipulation;` on buttons, inputs, selects, and textareas to eliminate double-tap zoom delay.
+- **Component Input Sizes**:
+  - `components/ui/command.jsx`: Changed `CommandInput` class from `text-sm` to `text-base md:text-sm`.
+  - Audited and updated callers with small input text classes to responsive prefixes (`text-base md:text-xs` / `text-base md:text-sm`): `DataTableFacetedFilter.jsx`, `ConfirmDialog.jsx`, `CategoryFormDialog.jsx`, `BulkRestockDialog.jsx`, `NewCustomerMiniForm.jsx`, `PaymentDialog.jsx`, `AddByBarcodeDialog.jsx`, and `AdjustStockDialog.jsx`.
+- **Viewport Units & Meta**:
+  - Replaced all layout and route `min-h-screen` usages with `min-h-dvh` across `AppLayout.jsx`, `AuthLayout.jsx`, `MinimalLayout.jsx`, `PosLayout.jsx`, `PublicLayout.jsx`, `GuestRoute.jsx`, `ProtectedRoute.jsx`, and `RoleRoute.jsx`.
+  - Updated `frontend/index.html` viewport meta to: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />`.
+- **Automated Mobile Linter**:
+  - Created `frontend/scripts/check-mobile.mjs` with a robust balanced-brace JSX parser to enforce: (1) no `<Input>`, `<Textarea>`, `<CommandInput>`, `<input>`, or `<textarea>` uses `text-xs` or `text-sm` without responsive prefixes like `md:`; (2) no forbidden viewport units (`min-h-screen`, `h-screen`, `100vh`, `h-[100vh]`) in `src/**`; (3) no accessibility-blocking `maximum-scale` or `user-scalable` in viewport meta.
+  - Added `npm run check:mobile` to both `frontend/package.json` and root `package.json`.
+- **Verification**:
+  - `npm run check:mobile`: Passed with 0 violations.
+  - `npm run lint`: 0 errors.
+  - `npm run build`: 0 errors.
+  - `npx vitest run`: 15 passed test files (189 tests).
 

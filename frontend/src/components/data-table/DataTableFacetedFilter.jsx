@@ -107,7 +107,7 @@ export function DataTableFacetedFilter({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
         <Command>
-          <CommandInput placeholder={title} className="text-xs" />
+          <CommandInput placeholder={title} className="text-base md:text-xs" />
           <CommandList>
             <CommandEmpty className="text-muted-foreground py-2 text-center text-xs">
               Walang nahanap.

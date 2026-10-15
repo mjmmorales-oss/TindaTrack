@@ -516,7 +516,7 @@ export function AddByBarcodeDialog({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. San Miguel Pale Pilsen 330ml"
-                    className="h-10 text-sm"
+                    className="h-10 text-base md:text-sm"
                     required
                   />
                 </div>
@@ -531,7 +531,7 @@ export function AddByBarcodeDialog({
                       id="quick-add-category"
                       value={categoryId}
                       onChange={(e) => setCategoryId(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       {categories.map((c) => (
                         <option key={c.id} value={String(c.id)}>
@@ -549,7 +549,7 @@ export function AddByBarcodeDialog({
                       id="quick-add-unit"
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="pc">Piece (pc)</option>
                       <option value="pack">Pack</option>
@@ -573,7 +573,7 @@ export function AddByBarcodeDialog({
                       value={price}
                       onChange={(e) => setPrice(e?.target ? e.target.value : e)}
                       placeholder="0.00"
-                      className="h-10 text-sm font-bold font-mono"
+                      className="h-10 text-base md:text-sm font-bold font-mono"
                     />
                   </div>
 
@@ -587,7 +587,7 @@ export function AddByBarcodeDialog({
                         value={costPrice}
                         onChange={(e) => setCostPrice(e?.target ? e.target.value : e)}
                         placeholder="0.00"
-                        className="h-10 text-sm font-mono text-muted-foreground"
+                        className="h-10 text-base md:text-sm font-mono text-muted-foreground"
                       />
                     </div>
                   )}
@@ -602,7 +602,7 @@ export function AddByBarcodeDialog({
                       min="0"
                       value={stockQuantity}
                       onChange={(e) => setStockQuantity(Number(e.target.value) || 0)}
-                      className="h-10 text-sm font-mono"
+                      className="h-10 text-base md:text-sm font-mono"
                     />
                   </div>
                 </div>

@@ -121,7 +121,7 @@ export function ConfirmDialog({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               disabled={loading}
-              className="min-h-[72px] resize-none text-sm"
+              className="min-h-[72px] resize-none text-base md:text-sm"
             />
             {reason.trim().length > 0 &&
               reason.trim().length < minReasonLength && (

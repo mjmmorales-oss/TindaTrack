@@ -12,7 +12,7 @@ export function PublicLayout() {
   const homePath = user?.role === 'cashier' ? '/pos' : '/dashboard'
 
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="bg-background flex min-h-dvh flex-col">
       <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 backdrop-blur-md md:px-8">
         <Link
           to="/"
