@@ -937,3 +937,65 @@ Tracking implementation of Phase 3 tasks (T0–T11).
   - `docs/BARCODE.md`: Added Section 7 ("Continuous Quick Add by Scan Flow") and Section 8 ("In-DB Product Images: `MEDIUMBLOB` + ULID Binary Storage").
   - `README.md`: Updated tech stack and prerequisites to PHP 8.4+ with `fileinfo`, highlighted all v1.2.0 features, and updated the helpful commands table with `check:i18n`, `check:bundle`, `smoke:pairing`, and `smoke:prod`.
   - `docs/CHANGELOG.md`: Added comprehensive `[v1.2.0]` release notes covering pre-deployment hardening, English-first i18n, in-DB product images, one-step barcode auto-fill, and deployment configurations.
+
+---
+
+## TindaTrack v1.3 Progress Tracker
+
+Tracking implementation of v1.3 tasks (U0–U7):
+- [x] **U0 — Preflight & v1.3 Map**: Verified git state, baseline test counts (Pest 84 passed, Vitest 184 passed, 49 API contracts, bundle/i18n/services clean), and mapped camera components, input sizes, drawer inputs, and bottom navigation behaviors.
+- [ ] **U1 — Unified "Add by Barcode" Flow**: Reusable `BarcodeCapture.jsx`, unified `AddByBarcodeDialog.jsx` replacing `QuickAddScanDialog` and old scan sheet, route unknown barcode entrypoints, tests.
+- [ ] **U2 — Mobile Input Zoom Prevention**: Pointer-coarse 16px safety floor, command input sizing, remove small input classes, viewport interactive-widget, `check-mobile.mjs` gate.
+- [ ] **U3 — Mobile Drawers and Sheets Keyboard Polish**: `useVisualViewport.js` CSS vars (`--vvh`, `--keyboard-inset`), `ResponsiveDialog` drawer height and scroll polish, bottom nav hide on keyboard/modal, safe areas, tests, `docs/MOBILE.md`.
+- [ ] **U4 — Full Staff Management**: Soft deletes (`deleted_at`), phone, `must_change_password`, temporary password generation, password reset, restore, staff drawer, mobile action sheet, policy guards, Pest & Vitest tests.
+- [ ] **U5 — i18n Leaks & Strict Checker**: Eliminate Taglish leaks in scanner/toasts/backend, harden `check-i18n.mjs` with marker words, backend English messages, bilingual assertions.
+- [ ] **U6 — Regression Sweep**: Verify v1.2 image pipeline, auto-lookup, pairing smoke, prod bundle, responsive containment, clean logout.
+- [ ] **U7 — Docs, Final Gates, Merge & Tag**: Updated docs, fresh migration & seeds, full gates, release commit, tag `v1.3.0`.
+
+### U0 Log (Preflight & v1.3 Map):
+- **Baseline Metrics**:
+  - Git Branch: `ux/v1.3` (cut clean from `main` at `v1.2.0`).
+  - Backend Suite (`php artisan test`): 84 passed (450 assertions).
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Frontend Suite (`npx vitest run`): 15 test files, 184 passed tests.
+  - Frontend Lint (`npm run lint` / oxlint): Passed.
+  - Frontend Build (`npm run build`): Clean production bundle compiled.
+  - Node Gate Scripts:
+    - `check-contract.mjs`: 49 API endpoint contracts verified against registered Laravel routes.
+    - `check-i18n.mjs`: 18 namespaces verified, 1,213 `t(...)` calls validated, 0 missing keys.
+    - `check-mockdata.mjs`: ₱0.0000 discrepancy, all assertions passed.
+    - `check-prod-bundle.mjs`: 92 built assets verified, 0 secret or dev leaks.
+    - `check-services.mjs`: 12/12 service facades matched.
+- **v1.3 Architectural Map**:
+  - *Which components open the camera?*
+    1. `CameraScanner.jsx`: Core scanner view mounting `<video>` and driving `useCameraScanner.js`.
+    2. `ScannerSheet.jsx`: Wraps `CameraScanner` inside `ResponsiveDialog` (mobile Drawer / desktop Dialog).
+    3. `ProductsPage.jsx`: Launches `ScannerSheet` ("Scan to add" button) and `QuickAddScanDialog`.
+    4. `QuickAddScanDialog.jsx`: Launches `ScannerSheet` via inline camera button.
+    5. `ProductFormDialog.jsx`: Launches `ScannerSheet` via barcode scan button; also mounts camera input (`capture="environment"`).
+    6. `AdjustStockDialog.jsx`: Launches `ScannerSheet` for product selection by barcode.
+    7. `PosPage.jsx`: Launches `ScannerSheet` from header scan button.
+    8. `/scan` route (`ScanPage.jsx`): Dedicated wireless scanner client page driving `useCameraScanner`.
+  - *Which inputs exist and with what font sizes?*
+    1. Standard shadcn `Input` (`components/ui/input.jsx`): `text-base md:text-sm` (16px on mobile, 14px on desktop).
+    2. `CommandInput` (`components/ui/command.jsx`): Hardcoded `text-sm` (14px), which triggers iOS Safari auto-zoom on touch focus.
+    3. Custom raw `<input>` elements (e.g. `CameraScanner.jsx:200` manual input): Inherits base or class styles without touch floor.
+    4. Various form and table filter inputs that may pass `text-xs` or `text-sm` without `md:` prefixes.
+  - *Which drawers or sheets contain inputs?*
+    1. `ResponsiveDialog` on mobile renders `<Drawer>` (vaul):
+       - `ProductFormDialog.jsx` (name, sku, barcode, price, cost, stock, reorder level, description).
+       - `QuickAddScanDialog.jsx` (barcode, price, cost, stock, name, restock amount).
+       - `AdjustStockDialog.jsx` (CommandInput search, quantity, adjustment notes).
+       - `CategoryFormDialog.jsx` (category name, description).
+       - `CustomerFormDialog.jsx` (name, phone, address, credit limit, notes).
+       - `PaymentDialog.jsx` (cash tendered, customer selection, notes).
+       - `RecordPaymentDialog.jsx` (payment amount, notes).
+       - `StaffPage.jsx` (add staff: name, email, password).
+       - `PairPhoneDialog.jsx` and `ShortcutsHelpDialog.jsx`.
+    2. Direct `Sheet` (`components/ui/sheet.jsx`):
+       - `CartDrawer.jsx` in POS (quantity steppers, notes, payment CTA).
+       - `MoreSheet.jsx` (navigation links).
+  - *What does the bottom navigation do when the keyboard is open?*
+    - `MobileBottomNav.jsx` is positioned `fixed bottom-0` across the viewport.
+    - When an input in a drawer, sheet, or page is focused on iOS, the keyboard shrinks the *visual* viewport while the layout viewport remains unchanged. iOS scrolls the document to keep the focused input visible, causing `MobileBottomNav` (and dialog overlay backdrops) to float conspicuously mid-screen directly above or over the keyboard.
+    - The bottom navigation also lacks any mechanism to hide itself when modals/drawers are open, creating visual clutter and overlay collision.
