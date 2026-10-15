@@ -946,7 +946,7 @@ Tracking implementation of v1.3 tasks (U0–U7):
 - [x] **U0 — Preflight & v1.3 Map**: Verified git state, baseline test counts (Pest 84 passed, Vitest 184 passed, 49 API contracts, bundle/i18n/services clean), and mapped camera components, input sizes, drawer inputs, and bottom navigation behaviors.
 - [x] **U1 — Unified "Add by Barcode" Flow**: Reusable `BarcodeCapture.jsx`, unified `AddByBarcodeDialog.jsx` replacing `QuickAddScanDialog` and old scan sheet, route unknown barcode entrypoints, tests.
 - [x] **U2 — Mobile Input Zoom Prevention**: Pointer-coarse 16px safety floor, command input sizing, remove small input classes, viewport interactive-widget, `check-mobile.mjs` gate.
-- [ ] **U3 — Mobile Drawers and Sheets Keyboard Polish**: `useVisualViewport.js` CSS vars (`--vvh`, `--keyboard-inset`), `ResponsiveDialog` drawer height and scroll polish, bottom nav hide on keyboard/modal, safe areas, tests, `docs/MOBILE.md`.
+- [x] **U3 — Mobile Drawers and Sheets Keyboard Polish**: `useVisualViewport.js` CSS vars (`--vvh`, `--keyboard-inset`), `ResponsiveDialog` drawer height and scroll polish, bottom nav hide on keyboard/modal, safe areas, tests, `docs/MOBILE.md`.
 - [ ] **U4 — Full Staff Management**: Soft deletes (`deleted_at`), phone, `must_change_password`, temporary password generation, password reset, restore, staff drawer, mobile action sheet, policy guards, Pest & Vitest tests.
 - [ ] **U5 — i18n Leaks & Strict Checker**: Eliminate Taglish leaks in scanner/toasts/backend, harden `check-i18n.mjs` with marker words, backend English messages, bilingual assertions.
 - [ ] **U6 — Regression Sweep**: Verify v1.2 image pipeline, auto-lookup, pairing smoke, prod bundle, responsive containment, clean logout.
@@ -1039,4 +1039,28 @@ Tracking implementation of v1.3 tasks (U0–U7):
   - `npm run lint`: 0 errors.
   - `npm run build`: 0 errors.
   - `npx vitest run`: 15 passed test files (189 tests).
+
+### U3 Log (Mobile Drawers and Sheets Keyboard Polish):
+- **Visual Viewport Geometry (`useVisualViewport.js`)**:
+  - Subscribes to `window.visualViewport` `resize` and `scroll` events throttled via `requestAnimationFrame`.
+  - Computes visual viewport height and keyboard inset: `--vvh = ${visualHeight}px`, `--keyboard-inset = max(0, innerHeight - visualHeight - offsetTop)px`.
+  - Toggles `document.documentElement.dataset.keyboard = 'open' | 'closed'` with a 120px threshold.
+  - Mounted `<VisualViewportWatcher />` once at root inside `providers.jsx`.
+- **Drawer Polish (`ResponsiveDialog.jsx`, `CartDrawer.jsx`, `DataTableToolbar.jsx`, `DateRangePicker.jsx`, `MoreSheet.jsx`)**:
+  - Bound mobile drawer max-height to `calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)`, automatically resizing sheets as the virtual keyboard expands/retracts.
+  - Passed `repositionInputs={false}` to Vaul Drawer roots. Evaluated Vaul props:
+    - *repositionInputs*: explicitly disabled (`false`) because Vaul's transform fights with dynamic visual-viewport sizing, causing jitter and gaps on iOS.
+    - *handleOnly*: kept `false` (default) to allow natural dismiss swipes on header while `overscroll-contain` protects body scroll.
+    - *disablePreventScroll*: kept `false` (default) to ensure document body scrolling behind the open drawer remains locked.
+  - Added `overscroll-contain` on scrollable drawer bodies with a focusin listener calling `target.scrollIntoView({ block: 'center', behavior: 'smooth' })` after 250ms.
+  - Converted footers to sticky bottom positioning with safe area insets: `sticky bottom-0 z-10 border-t pb-[max(12px,env(safe-area-inset-bottom))]`.
+- **Overlay & Navigation Coordination**:
+  - Created `frontend/src/stores/overlayStore.js` with `registerModal()` to track active open modals and sheets.
+  - Updated `MobileBottomNav.jsx` and `MobileCartBar.jsx` to hide (`hidden` and translate away) whenever `data-keyboard='open'` or `activeModalCount > 0`.
+  - Updated `AppLayout.jsx` main content container to include safe-area bottom padding: `pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8`.
+- **Documentation & Verification**:
+  - Created `docs/MOBILE.md` detailing the visual viewport architecture and providing comprehensive manual verification checklists for iOS Safari and Android Chrome across all core application forms.
+  - Created Vitest tests in `frontend/src/test/mobile-drawers.test.jsx` (5 tests passing).
+  - Gates passed: `npm run check:mobile` (clean), `npm run check:i18n` (clean), `npm run lint` (0 errors), `npm run build` (clean), `npx vitest run` (16 test files, 194 passed tests).
+
 

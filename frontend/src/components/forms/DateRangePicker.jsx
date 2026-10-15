@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   format,
   subDays,
@@ -26,6 +26,7 @@ import {
   DrawerFooter,
 } from '@/components/ui/drawer'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useOverlayStore } from '@/stores/overlayStore'
 import { cn } from '@/lib/utils'
 
 /**
@@ -160,12 +161,19 @@ export function DateRangePicker({
     </Button>
   )
 
+  useEffect(() => {
+    if (open && isMobile) {
+      const unregister = useOverlayStore.getState().registerModal()
+      return unregister
+    }
+  }, [open, isMobile])
+
   if (isMobile) {
     return (
       <>
         {triggerButton}
-        <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerContent className="max-h-[90dvh] flex flex-col">
+        <Drawer open={open} onOpenChange={setOpen} repositionInputs={false}>
+          <DrawerContent className="max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex flex-col">
             <DrawerHeader className="border-b border-border px-4 py-3 text-left">
               <DrawerTitle className="text-base font-bold text-foreground">
                 Pumili ng Petsa (Date Range)
@@ -174,10 +182,10 @@ export function DateRangePicker({
                 Salain ang mga transaksyon ayon sa petsa.
               </DrawerDescription>
             </DrawerHeader>
-            <div className="flex-1 overflow-y-auto p-2">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-2">
               {pickerContent}
             </div>
-            <DrawerFooter className="border-t border-border p-3">
+            <DrawerFooter className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-xs px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
               <Button type="button" className="w-full h-11" onClick={() => setOpen(false)}>
                 Ilapat ang Petsa
               </Button>

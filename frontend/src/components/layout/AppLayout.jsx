@@ -27,7 +27,7 @@ export function AppLayout() {
       <AppSidebar />
       <SidebarInset className="flex min-h-dvh flex-col min-w-0 w-full overflow-x-hidden">
         <Topbar />
-        <main className="flex-1 min-w-0 w-full overflow-x-hidden pb-24 md:pb-8">
+        <main className="flex-1 min-w-0 w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <Outlet />
         </main>
         <MobileBottomNav />

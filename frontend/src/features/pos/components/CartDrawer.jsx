@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ShoppingCart, Trash2, ArrowRight, Pause } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
@@ -16,6 +16,7 @@ import { CartItemRow } from '@/features/pos/components/CartItemRow'
 import { CartSummary } from '@/features/pos/components/CartSummary'
 import { HeldCartsDialog } from '@/features/pos/components/HeldCartsDialog'
 import { useCartStore } from '@/stores/cartStore'
+import { useOverlayStore } from '@/stores/overlayStore'
 import { notify } from '@/lib/notify'
 
 /**
@@ -51,6 +52,30 @@ export function CartDrawer({
   const heldCarts = useCartStore((state) => state.heldCarts)
   const holdCurrentCart = useCartStore((state) => state.holdCurrentCart)
 
+  useEffect(() => {
+    if (open) {
+      const unregister = useOverlayStore.getState().registerModal()
+      return unregister
+    }
+  }, [open])
+
+  const handleBodyFocusIn = (e) => {
+    const target = e.target
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      setTimeout(() => {
+        if (target && typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }
+      }, 250)
+    }
+  }
+
   const handleHoldCart = () => {
     if (heldCarts.length >= 3) {
       notify.warning(t('pos:heldSlotsFull', 'Hold slots are full. Up to 3 sales can be parked.'))
@@ -65,8 +90,8 @@ export function CartDrawer({
 
   return (
     <>
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="flex max-h-[90dvh] flex-col">
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+        <DrawerContent className="flex max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex-col">
           {/* Header */}
           <DrawerHeader className="border-b border-border px-4 py-3 text-left flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -128,7 +153,10 @@ export function CartDrawer({
           </DrawerHeader>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto px-4 py-2">
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain px-4 py-2"
+            onFocus={handleBodyFocusIn}
+          >
             {isEmpty ? (
               <div className="py-12 text-center text-muted-foreground text-xs">
                 {t('pos:cartEmptyTitle', 'Your cart is empty')}
@@ -147,8 +175,8 @@ export function CartDrawer({
             )}
           </div>
 
-          {/* Footer with summary and Pay button */}
-          <DrawerFooter className="border-t border-border bg-card px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3">
+          {/* Sticky footer with summary and Pay button */}
+          <DrawerFooter className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-xs px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] space-y-3">
             <CartSummary itemCount={itemCount} total={total} />
 
             <Button

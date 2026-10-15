@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
   BadgeCheck,
@@ -25,6 +26,7 @@ import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/useAuth'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useTheme } from '@/context/ThemeProvider'
+import { useOverlayStore } from '@/stores/overlayStore'
 import { getAvatarUrl, getInitials } from '@/lib/avatar'
 
 export function MoreSheet({ open, onOpenChange }) {
@@ -32,6 +34,13 @@ export function MoreSheet({ open, onOpenChange }) {
   const { can } = usePermissions()
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (open) {
+      const unregister = useOverlayStore.getState().registerModal()
+      return unregister
+    }
+  }, [open])
 
   if (!user) return null
 
@@ -93,7 +102,7 @@ export function MoreSheet({ open, onOpenChange }) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[85vh] overflow-y-auto rounded-t-2xl px-5 pt-4 pb-8"
+        className="max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] overflow-y-auto overscroll-contain rounded-t-2xl px-5 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
       >
         <SheetHeader className="pb-2 text-left">
           <SheetTitle className="text-base font-semibold">

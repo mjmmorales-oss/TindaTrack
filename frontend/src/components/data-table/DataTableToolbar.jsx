@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Filter, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import {
 import { SearchInput } from '@/components/forms/SearchInput'
 import { DataTableFacetedFilter } from '@/components/data-table/DataTableFacetedFilter'
 import { DataTableViewOptions } from '@/components/data-table/DataTableViewOptions'
+import { useOverlayStore } from '@/stores/overlayStore'
 import { cn } from '@/lib/utils'
 
 /**
@@ -50,6 +51,30 @@ export function DataTableToolbar({
   className,
 }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+
+  useEffect(() => {
+    if (mobileDrawerOpen) {
+      const unregister = useOverlayStore.getState().registerModal()
+      return unregister
+    }
+  }, [mobileDrawerOpen])
+
+  const handleBodyFocusIn = (e) => {
+    const target = e.target
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      setTimeout(() => {
+        if (target && typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }
+      }, 250)
+    }
+  }
 
   const activeFiltersCount = filters.reduce((acc, f) => {
     const count = f.selectedValues ? (Array.isArray(f.selectedValues) ? f.selectedValues.length : f.selectedValues.size || 0) : 0
@@ -149,8 +174,8 @@ export function DataTableToolbar({
       </div>
 
       {/* Mobile Filters Drawer (< md) */}
-      <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
-        <DrawerContent className="max-h-[85dvh] flex flex-col">
+      <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen} repositionInputs={false}>
+        <DrawerContent className="max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex flex-col">
           <DrawerHeader className="border-b border-border px-4 py-3 text-left">
             <div className="flex items-center justify-between">
               <DrawerTitle className="text-base font-bold text-foreground flex items-center gap-2">
@@ -176,7 +201,10 @@ export function DataTableToolbar({
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4"
+            onFocus={handleBodyFocusIn}
+          >
             {filters.map((filter) => (
               <div key={filter.columnId} className="space-y-1.5">
                 <span className="text-xs font-bold text-foreground uppercase tracking-wider">
@@ -204,7 +232,7 @@ export function DataTableToolbar({
             )}
           </div>
 
-          <DrawerFooter className="border-t border-border bg-card p-4">
+          <DrawerFooter className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-xs px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
             <Button
               type="button"
               className="w-full h-11 text-sm font-bold shadow-md"

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import {
   Dialog,
@@ -17,11 +18,15 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
+import { useOverlayStore } from '@/stores/overlayStore'
 import { cn } from '@/lib/utils'
 
 /**
  * Responsive modal component: renders a Dialog on tablet/desktop (md+),
  * and a touch-friendly bottom Drawer on mobile (< md).
+ *
+ * Implements iOS visual-viewport aware sizing, sticky footer, overscroll-contain,
+ * and smooth focus centering.
  *
  * @component
  * @param {object} props
@@ -47,11 +52,42 @@ export function ResponsiveDialog({
 }) {
   const isMobile = useIsMobile()
 
+  // Register open state in overlayStore to coordinate hiding bottom navigation
+  useEffect(() => {
+    if (open) {
+      const unregister = useOverlayStore.getState().registerModal()
+      return unregister
+    }
+  }, [open])
+
+  // Center input into view smoothly after iOS keyboard appears (~250ms)
+  const handleBodyFocusIn = (e) => {
+    const target = e.target
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      setTimeout(() => {
+        if (target && typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }
+      }, 250)
+    }
+  }
+
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
         {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
-        <DrawerContent className={cn('flex max-h-[90dvh] flex-col', className)}>
+        <DrawerContent
+          className={cn(
+            'flex max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex-col',
+            className,
+          )}
+        >
           <DrawerHeader className="border-border border-b px-4 pt-3 pb-2 text-left">
             <DrawerTitle className="text-foreground text-lg font-bold">
               {title}
@@ -62,9 +98,14 @@ export function ResponsiveDialog({
               </DrawerDescription>
             )}
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 py-4">{children}</div>
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain px-4 py-3"
+            onFocus={handleBodyFocusIn}
+          >
+            {children}
+          </div>
           {footer && (
-            <DrawerFooter className="border-border bg-muted/20 border-t px-4 py-3">
+            <DrawerFooter className="sticky bottom-0 z-10 border-border bg-background/95 backdrop-blur-xs border-t px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
               {footer}
             </DrawerFooter>
           )}
