@@ -1063,4 +1063,45 @@ Tracking implementation of v1.3 tasks (U0–U7):
   - Created Vitest tests in `frontend/src/test/mobile-drawers.test.jsx` (5 tests passing).
   - Gates passed: `npm run check:mobile` (clean), `npm run check:i18n` (clean), `npm run lint` (0 errors), `npm run build` (clean), `npx vitest run` (16 test files, 194 passed tests).
 
+### U4 Log (Full Staff Management, Temporary Passwords, and Security Rules):
+- **Backend Schema & Soft Deletes**:
+  - Migration `2026_10_16_000001_add_soft_deletes_and_staff_fields_to_users_table.php` added `phone`, `must_change_password`, and `deleted_at` to `users`.
+  - Added `SoftDeletes` trait to `User.php`.
+  - Updated relationships in `Sale.php` (`user`, `cashier`), `StockMovement.php` (`user`), and `UtangPayment.php` (`recorder`) with `->withTrashed()` to maintain audit integrity when staff accounts are soft-deleted.
+  - Middleware `EnsureUserIsActive` updated to reject deactivated or trashed users.
+  - `LoginRequest` rejects inactive and archived users with 422.
+  - `AuthenticatedSessionController` includes `must_change_password` flag in auth payload.
+  - `AccountController` updates own password and clears `must_change_password = false`.
+- **UserController Endpoints & Security Rules**:
+  - `GET /api/users`: Filterable by `status` (`active`, `inactive`, `archived`, `all`) and `search`. Includes sales aggregates (`withCount('sales')` and `withSum('sales today')`) without N+1 queries.
+  - `GET /api/users/{user}`: Uses `withTrashed()` route model binding.
+  - `POST /api/users`: Creates cashier accounts with optional or auto-generated 10-char mixed complexity password, returning `temp_password` in 201 response and setting `must_change_password = true`.
+  - `PUT /api/users/{user}`: Updates profile (name, email, phone) with email uniqueness check.
+  - `PATCH /api/users/{user}/toggle-active`: Toggles active status with safeguards preventing self-deactivation (`self_action`) and last active owner deactivation (`last_owner`).
+  - `POST /api/users/{user}/reset-password`: Sets `must_change_password = true`, revokes all active tokens, and prevents self-reset (`self_action`) or resetting other owners (`owner_protected`).
+  - `POST /api/users/{user}/revoke-sessions`: Deletes all tokens and active scanner sessions for target user.
+  - `DELETE /api/users/{user}`: Soft-deletes user, revokes tokens and scanner sessions, with guards preventing self-deletion (`self_action`) or owner archiving (`owner_protected`).
+  - `POST /api/users/{user}/restore`: Restores soft-deleted user, enforcing `email_taken` conflict prevention if another active account uses that email.
+- **Frontend Staff UI & Security Polish**:
+  - `frontend/src/features/staff/pages/StaffPage.jsx`:
+    - Status tabs (Active, Inactive, Archived).
+    - SearchInput filtering across name, email, and phone.
+    - Responsive "Add Cashier" modal with radio toggle for "Generate secure password automatically" (default) vs "Set password manually".
+    - Dedicated "Temporary Password Ready" modal with monospaced visual container and instant "Copy Password" button.
+    - Staff table (desktop) and cards (mobile) with avatar, role, last login, sales metrics, and action menu.
+    - Tooltip indicators on disabled actions explaining business rules (`cannotDeactivateSelf`, `cannotDeactivateOwner`, `cannotArchiveSelf`, `cannotArchiveOwner`, `cannotResetSelf`, `cannotResetOwner`).
+    - Staff detail drawer/sheet on row click showing profile, sales aggregates, and quick actions.
+  - `frontend/src/components/layout/MustChangePasswordBanner.jsx`: Top security notification banner alerting user to change temporary password on next login.
+  - `frontend/src/services/api/staffService.js` and `frontend/src/services/mock/staffService.js`: Full 1-to-1 parity across all 9 endpoints and business rules.
+- **Verification**:
+  - Pest suite: `tests/Feature/StaffManagementTest.php` (14/14 tests passing).
+  - Pest full suite: 98/98 tests passing.
+  - Pint: passed with zero styling violations.
+  - Vitest staff suite: `src/features/staff/__tests__/staff.test.jsx` (5/5 tests passing).
+  - Vitest full suite: 17 test files, 199/199 tests passing.
+  - `npm run check:mobile`: passed.
+  - `npm run lint`: 0 errors.
+  - `npm run build`: built in 1.81s.
+
+
 

@@ -128,6 +128,34 @@ export function AuthProvider({ children }) {
     [],
   )
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get('/user')
+      setUser(data)
+      try {
+        localStorage.setItem('tindatrack_user', JSON.stringify(data))
+      } catch {
+        // ignore
+      }
+      return data
+    } catch {
+      return null
+    }
+  }, [])
+
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const updated = typeof patch === 'function' ? patch(prev) : { ...prev, ...patch }
+      try {
+        localStorage.setItem('tindatrack_user', JSON.stringify(updated))
+      } catch {
+        // ignore
+      }
+      return updated
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
@@ -139,8 +167,10 @@ export function AuthProvider({ children }) {
       logout,
       forgotPassword,
       resetPassword,
+      refreshUser,
+      updateUser,
     }),
-    [user, status, login, register, logout, forgotPassword, resetPassword],
+    [user, status, login, register, logout, forgotPassword, resetPassword, refreshUser, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

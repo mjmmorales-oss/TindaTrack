@@ -133,7 +133,13 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         // Staff management
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
-        Route::patch('/users/{user}/toggle-active', [UserController::class, 'toggleActive']);
+        Route::get('/users/{user}', [UserController::class, 'show'])->withTrashed();
+        Route::patch('/users/{user}', [UserController::class, 'update'])->withTrashed();
+        Route::patch('/users/{user}/toggle-active', [UserController::class, 'toggleActive'])->withTrashed();
+        Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->withTrashed();
+        Route::post('/users/{user}/revoke-sessions', [UserController::class, 'revokeSessions'])->withTrashed();
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+        Route::post('/users/{user}/restore', [UserController::class, 'restore'])->withTrashed();
 
         // Store settings
         Route::get('/settings', [SettingsController::class, 'get']);

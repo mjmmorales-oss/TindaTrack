@@ -7,6 +7,8 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { ShortcutsHelpDialog } from '@/components/layout/ShortcutsHelpDialog'
 
+import { MustChangePasswordBanner } from '@/components/layout/MustChangePasswordBanner'
+
 export function AppLayout() {
   const [cmdOpen, setCmdOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -27,6 +29,7 @@ export function AppLayout() {
       <AppSidebar />
       <SidebarInset className="flex min-h-dvh flex-col min-w-0 w-full overflow-x-hidden">
         <Topbar />
+        <MustChangePasswordBanner />
         <main className="flex-1 min-w-0 w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <Outlet />
         </main>

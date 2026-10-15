@@ -27,6 +27,7 @@ class AccountController extends Controller
 
         $user->forceFill([
             'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
         ])->save();
 
         return response()->json([

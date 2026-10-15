@@ -54,7 +54,7 @@ const passwordChangeSchema = z
 export function AccountPage() {
   const { t } = useTranslation(['settings', 'common', 'users'])
   useDocumentTitle(t('settings:accountPageTitle'))
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const { theme, setTheme } = useTheme()
 
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
@@ -76,6 +76,7 @@ export function AccountPage() {
 
   const onSubmitPassword = async (data) => {
     if (import.meta.env.VITE_DATA_SOURCE === 'mock') {
+      updateUser?.({ must_change_password: false })
       notify.info(
         t('settings:mockModeNoticeTitle'),
         t('settings:mockModeNoticeDesc'),
@@ -91,6 +92,7 @@ export function AccountPage() {
         password: data.new_password,
         password_confirmation: data.confirm_password,
       })
+      updateUser?.({ must_change_password: false })
       notify.success(t('settings:passwordChangedSuccess'))
       reset()
     } catch (err) {
