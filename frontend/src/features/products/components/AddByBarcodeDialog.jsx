@@ -1,22 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  ScanBarcode,
-  Sparkles,
-  CheckCircle2,
-  Package,
-  Plus,
   Loader2,
-  ArrowRight,
   ArrowLeft,
-  RotateCcw,
   Camera,
-  Upload,
-  ExternalLink,
   Printer,
   Pencil,
   ArrowDownUp,
-  Image as ImageIcon,
 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -38,7 +28,6 @@ import {
 import { usePermissions } from '@/hooks/usePermissions'
 import { notify } from '@/lib/notify'
 import { resizeImage } from '@/lib/imageResize'
-import { resolveImageUrl } from '@/lib/images'
 
 /**
  * Unified "Add by Barcode" modal dialog.

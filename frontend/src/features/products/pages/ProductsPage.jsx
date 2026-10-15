@@ -39,7 +39,6 @@ import { ProductFormDialog } from '@/features/products/components/ProductFormDia
 import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
-import { barcodeService } from '@/services/barcodeService'
 import {
   useProducts,
   useDeleteProduct,
@@ -49,7 +48,6 @@ import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePermissions } from '@/hooks/usePermissions'
 import { formatRelative } from '@/lib/format'
-import { notify } from '@/lib/notify'
 import { useTranslation } from 'react-i18next'
 
 /**
