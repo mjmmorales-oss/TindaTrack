@@ -2,6 +2,7 @@ import { Copy, Check } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { notify } from '@/lib/notify'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -14,12 +15,13 @@ import { cn } from '@/lib/utils'
  * @returns {React.JSX.Element}
  */
 export function KeyValueList({ items = [], className }) {
+  const { t } = useTranslation()
   const [copiedKey, setCopiedKey] = useState(null)
 
   const handleCopy = (text, label) => {
     navigator.clipboard.writeText(String(text))
     setCopiedKey(label)
-    notify.success('Nakopya sa clipboard', label)
+    notify.success(t('common:copiedToClipboard', 'Copied to clipboard'), label)
     setTimeout(() => setCopiedKey(null), 2000)
   }
 
@@ -45,7 +47,7 @@ export function KeyValueList({ items = [], className }) {
                 size="icon"
                 className="text-muted-foreground hover:text-foreground h-6 w-6"
                 onClick={() => handleCopy(item.value, item.label)}
-                aria-label={`Kopyahin ang ${item.label}`}
+                aria-label={t('common:copyItem', { label: item.label, defaultValue: `Copy ${item.label}` })}
               >
                 {copiedKey === item.label ? (
                   <Check className="text-success h-3.5 w-3.5" />

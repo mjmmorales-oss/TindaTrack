@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { WifiOff, Wifi } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils'
  * @returns {React.JSX.Element|null}
  */
 export function OfflineBanner({ className }) {
+  const { t } = useTranslation()
   const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true,
   )
@@ -56,7 +58,7 @@ export function OfflineBanner({ className }) {
         )}
       >
         <Wifi className="h-4 w-4 shrink-0 animate-bounce" />
-        <span>Nakakonekta na muli sa internet (Back online).</span>
+        <span>{t('common:backOnline', 'Back online. Internet connection restored.')}</span>
       </div>
     )
   }
@@ -72,8 +74,7 @@ export function OfflineBanner({ className }) {
     >
       <WifiOff className="h-4 w-4 shrink-0" />
       <span>
-        Nawalan ng koneksyon sa internet (Offline). Patuloy na gagana ang POS
-        gamit ang lokal na datos.
+        {t('common:offlineNotice', 'Internet connection lost (Offline). POS continues to operate using local data.')}
       </span>
     </div>
   )

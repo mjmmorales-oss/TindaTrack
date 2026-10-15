@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -20,6 +21,8 @@ import { cn } from '@/lib/utils'
  * @returns {React.JSX.Element}
  */
 export function DataTableColumnHeader({ column, title, className }) {
+  const { t } = useTranslation()
+
   if (!column.getCanSort()) {
     return (
       <div
@@ -40,7 +43,7 @@ export function DataTableColumnHeader({ column, title, className }) {
             variant="ghost"
             size="sm"
             className="data-[state=open]:bg-accent hover:bg-muted/50 -ml-3 h-8 text-xs font-semibold"
-            aria-label={`Ayusin ang hanay ayon sa ${title}`}
+            aria-label={t('common:sortColumnBy', { title, defaultValue: `Sort column by ${title}` })}
           >
             <span>{title}</span>
             {isSorted === 'desc' ? (
@@ -55,22 +58,22 @@ export function DataTableColumnHeader({ column, title, className }) {
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
             <ArrowUp className="text-muted-foreground/70 mr-2 h-3.5 w-3.5" />
-            Pataas (Ascending)
+            {t('common:ascending', 'Ascending')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
             <ArrowDown className="text-muted-foreground/70 mr-2 h-3.5 w-3.5" />
-            Pababa (Descending)
+            {t('common:descending', 'Descending')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.clearSorting()}>
             <ArrowUpDown className="text-muted-foreground/70 mr-2 h-3.5 w-3.5" />
-            Alisin ang Ayos (Clear)
+            {t('common:clearSort', 'Clear sort')}
           </DropdownMenuItem>
           {column.getCanHide() && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
                 <EyeOff className="text-muted-foreground/70 mr-2 h-3.5 w-3.5" />
-                Itago ang Hanay (Hide)
+                {t('common:hideColumn', 'Hide column')}
               </DropdownMenuItem>
             </>
           )}

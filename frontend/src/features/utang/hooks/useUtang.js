@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { utangService } from '@/services/utangService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
+import { formatCurrency } from '@/lib/format'
 
 export const utangKeys = {
   all: ['utang'],
@@ -33,12 +35,15 @@ export function useRecordPayment() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       notify.success(
-        'Naitala ang bayad!',
-        `Bayad: ₱${res.data.payment.amount.toFixed(2)} · Natitirang Utang: ₱${res.data.new_balance.toFixed(2)}`,
+        i18n.t('utang:paymentRecordedTitle'),
+        i18n.t('utang:paymentRecordedDetail', {
+          amount: formatCurrency(res.data.payment.amount),
+          balance: formatCurrency(res.data.new_balance),
+        }),
       )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong itala ang bayad.')
+      notify.error(err.message || i18n.t('utang:recordPaymentError'))
     },
   })
 }

@@ -124,9 +124,9 @@ class CustomerController extends Controller
             throw ValidationException::withMessages([
                 'credit_balance' => [
                     sprintf(
-                        'May natitirang utang pa na ₱%s si %s. Kolektahin muna ang bayad bago burahin.',
-                        number_format($customer->credit_balance, 2),
-                        $customer->name
+                        '%s has an outstanding utang balance of ₱%s. Collect the balance before deleting.',
+                        $customer->name,
+                        number_format($customer->credit_balance, 2)
                     ),
                 ],
             ]);
@@ -177,8 +177,8 @@ class CustomerController extends Controller
                 'type' => 'payment',
                 'date' => $payDate->toIso8601String(),
                 'timestamp' => $payDate->timestamp,
-                'title' => 'Pagbabayad ng Utang',
-                'meta' => $p->notes ?: 'Bayad sa tindahan',
+                'title' => 'Utang Payment',
+                'meta' => $p->notes ?: 'Payment recorded',
                 'amount' => -round((float) $p->amount, 2),
                 'amountTone' => 'success',
                 'reference' => "PAY-{$p->id}",

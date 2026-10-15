@@ -78,7 +78,7 @@ export function SettingsPage() {
         address: settings.address || '',
         contact_number: settings.contact_number || '',
         receipt_header: settings.receipt_header || '',
-        receipt_footer: settings.receipt_footer || 'Salamat po! Balik po kayo muli!',
+        receipt_footer: settings.receipt_footer || 'Thank you! Please come again!',
         show_cashier_name: settings.show_cashier_name ?? true,
         default_reorder_level: settings.default_reorder_level || 10,
         low_stock_threshold_percent: settings.low_stock_threshold_percent || 20,
@@ -314,7 +314,7 @@ export function SettingsPage() {
                     store_name: watchedValues.store_name || 'Tindahan ni Aling Nena',
                     address: watchedValues.address || 'Purok 3, Brgy. San Isidro',
                     contact_number: watchedValues.contact_number || '0917-123-4567',
-                    receipt_footer: watchedValues.receipt_footer || 'Salamat po! Balik po kayo muli!',
+                    receipt_footer: watchedValues.receipt_footer || 'Thank you! Please come again!',
                   }}
                   cashier={{
                     name: watchedValues.show_cashier_name ? 'Juan (Kahera)' : 'Cashier',

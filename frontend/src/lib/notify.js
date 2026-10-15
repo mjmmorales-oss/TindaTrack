@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import i18n from '@/i18n'
 
 /**
  * Standard notification helper for the TindaTrack app (wraps Sonner).
@@ -15,7 +16,7 @@ export const notify = {
     const title =
       typeof titleOrError === 'string'
         ? titleOrError
-        : titleOrError?.message || 'May naganap na error'
+        : titleOrError?.message || i18n.t('common:somethingWentWrong', 'An error occurred')
     const opts =
       typeof descriptionOrOptions === 'string'
         ? { description: descriptionOrOptions }
@@ -39,3 +40,5 @@ export const notify = {
   promise: (promise, options) => toast.promise(promise, options),
   dismiss: (id) => toast.dismiss(id),
 }
+
+export default notify

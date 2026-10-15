@@ -19,7 +19,7 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
   const storeName = settings?.store_name || 'Tindahan ni Aling Nena'
   const storeAddress = settings?.address || 'Purok 3, Brgy. San Isidro'
   const storeContact = settings?.contact_number || '0917-123-4567'
-  const receiptFooter = settings?.receipt_footer || 'Salamat po! Balik po kayo!'
+  const receiptFooter = settings?.receipt_footer || t('pos:defaultReceiptFooter', 'Thank you! Please come again!')
 
   const isUtang = sale.payment_type === 'utang'
   const cashierName = cashier?.name || 'Cashier'

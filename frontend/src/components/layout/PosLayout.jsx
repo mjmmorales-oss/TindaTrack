@@ -110,7 +110,7 @@ export function PosLayout() {
             size="icon"
             onClick={() => setShortcutsOpen(true)}
             className="text-muted-foreground hover:text-foreground h-9 w-9"
-            aria-label="Mga Keyboard Shortcut (?)"
+            aria-label="Keyboard Shortcuts (?)"
             title="Keyboard Shortcuts (?)"
           >
             <HelpCircle className="h-4 w-4" />

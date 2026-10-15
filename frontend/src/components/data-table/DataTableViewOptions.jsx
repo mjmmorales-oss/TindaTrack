@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Dropdown menu allowing users to show/hide specific table columns.
@@ -18,6 +19,8 @@ import {
  * @returns {React.JSX.Element}
  */
 export function DataTableViewOptions({ table }) {
+  const { t } = useTranslation()
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -27,12 +30,12 @@ export function DataTableViewOptions({ table }) {
           className="ml-auto hidden h-8 text-xs lg:flex"
         >
           <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
-          Mga Hanay (View)
+          {t('common:view', 'View')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuLabel className="text-xs">
-          Ipakita ang mga Hanay
+          {t('common:toggleColumns', 'Toggle columns')}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {table

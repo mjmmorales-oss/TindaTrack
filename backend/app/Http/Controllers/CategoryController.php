@@ -76,7 +76,7 @@ class CategoryController extends Controller
         if ($category->products()->count() > 0) {
             throw ValidationException::withMessages([
                 'category' => [
-                    'May mga produkto pang nakatalaga sa kategoryang ito. Ilipat o burahin muna ang mga produkto bago mag-delete.',
+                    'This category still has assigned products. Move or delete those products before deleting this category.',
                 ],
             ]);
         }

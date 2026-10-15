@@ -23,7 +23,7 @@ import {
  * @param {string} [props.label] - Field label
  * @param {string} [props.description] - Helper text below select
  * @param {Array<{ value: string, label: string }>} [props.options=[]] - Select options list
- * @param {string} [props.placeholder='Pumili ng isa...'] - Placeholder text
+ * @param {string} [props.placeholder='Select an option...'] - Placeholder text
  * @param {boolean} [props.disabled=false] - Disabled state
  * @param {string} [props.className] - Additional classes
  * @returns {React.JSX.Element}
@@ -34,7 +34,7 @@ export function FormSelect({
   label,
   description,
   options = [],
-  placeholder = 'Pumili ng isa...',
+  placeholder = 'Select an option...',
   disabled = false,
   className,
 }) {

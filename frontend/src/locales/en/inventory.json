@@ -178,5 +178,7 @@
   "totalItemsCount": "{{count}} Total Items",
   "currentStockShort": "Current: {{stock}} · Min: {{reorder}}",
   "buyQuantity": "Buy: {{qty}} {{unit}}",
-  "checklistFooterNote": "TindaTrack Inventory Checklist · Generated for convenient grocery and market shopping"
+  "checklistFooterNote": "TindaTrack Inventory Checklist · Generated for convenient grocery and market shopping",
+  "stockAdjustedSuccess": "Stock adjusted successfully!",
+  "stockRemaining": "{{count}} remaining"
 }

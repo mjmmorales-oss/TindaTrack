@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -42,6 +43,7 @@ export function DataTableFacetedFilter({
   onChange,
   className,
 }) {
+  const { t } = useTranslation()
   const selectedSet = new Set(
     selectedValues instanceof Set ? selectedValues : selectedValues || [],
   )
@@ -110,7 +112,7 @@ export function DataTableFacetedFilter({
           <CommandInput placeholder={title} className="text-base md:text-xs" />
           <CommandList>
             <CommandEmpty className="text-muted-foreground py-2 text-center text-xs">
-              Walang nahanap.
+              {t('common:noResultsFound', 'No results found.')}
             </CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
@@ -154,7 +156,7 @@ export function DataTableFacetedFilter({
                     onSelect={handleClear}
                     className="text-destructive focus:bg-destructive/10 cursor-pointer justify-center text-center text-xs font-medium"
                   >
-                    Linisin ang mga Filter
+                    {t('common:clearFilters', 'Clear filters')}
                   </CommandItem>
                 </CommandGroup>
               </>

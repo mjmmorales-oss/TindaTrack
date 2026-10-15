@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import JsBarcode from 'jsbarcode'
 import { Printer, Minus, Plus } from 'lucide-react'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -50,6 +51,7 @@ export function PrintLabelsDialog({
   onOpenChange,
   product,
 }) {
+  const { t } = useTranslation(['scanner', 'common'])
   const [copies, setCopies] = useState(12)
 
   const handlePrint = () => {
@@ -64,13 +66,15 @@ export function PrintLabelsDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="I-print ang Barcode Labels"
-      description="Mga label para sa sariling gawang paninda (homemade goods)."
+      title={t('scanner:printLabelsTitle', 'Print Barcode Labels')}
+      description={t('scanner:printLabelsDesc', 'Sticker labels for homemade and repacked products.')}
       className="max-w-2xl"
       footer={
         <div className="flex w-full items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium">Bilang ng kopya:</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              {t('scanner:numberOfCopies', 'Number of copies:')}
+            </span>
             <div className="flex items-center gap-1">
               <Button
                 type="button"
@@ -96,11 +100,11 @@ export function PrintLabelsDialog({
 
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Isara
+              {t('common:close', 'Close')}
             </Button>
             <Button type="button" onClick={handlePrint} className="gap-1.5 font-bold">
               <Printer className="h-4 w-4" />
-              I-print (Print)
+              {t('scanner:print', 'Print')}
             </Button>
           </div>
         </div>
@@ -122,7 +126,7 @@ export function PrintLabelsDialog({
                   Tindahan ni Aling Nena
                 </p>
                 <p className="text-xs font-bold text-neutral-900 leading-tight mt-1 line-clamp-1">
-                  {product.name || 'Produkto'}
+                  {product.name || t('common:product', 'Product')}
                 </p>
                 <p className="text-sm font-black font-mono text-neutral-950 mt-0.5">
                   {toMoney(product.price || 0)}

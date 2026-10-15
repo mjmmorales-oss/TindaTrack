@@ -17,6 +17,7 @@ import { DataTablePagination } from '@/components/data-table/DataTablePagination
 import { TableSkeleton } from '@/components/common/TableSkeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -62,9 +63,25 @@ export function DataTable({
   onRowClick,
   enableRowSelection = false,
   emptyState,
+  emptyTitle,
+  emptyDescription,
+  emptyMessage,
+  emptyIcon,
+  emptyAction,
   className,
 }) {
+  const { t } = useTranslation()
   const [rowSelection, setRowSelection] = useState({})
+
+  const resolvedEmptyState = emptyState || (
+    <EmptyState
+      icon={emptyIcon}
+      title={emptyTitle}
+      description={emptyDescription || emptyMessage}
+      action={emptyAction}
+      className="min-h-0 border-none bg-transparent py-8"
+    />
+  )
 
   // Compute sorting state from server sort string (e.g. 'name' -> asc, '-name' -> desc)
   const sorting = useMemo(() => {
@@ -120,8 +137,8 @@ export function DataTable({
       <div className={cn('space-y-4', className)}>
         {toolbar}
         <ErrorState
-          title="Hindi maikarga ang talaan"
-          message="May naganap na suliranin sa pagkarga ng mga tala. Pakisubukang muli."
+          title={t('common:tableLoadError', 'Unable to load table')}
+          message={t('common:tableLoadErrorMessage', 'There was a problem loading records. Please try again.')}
           onRetry={onRetry}
         />
       </div>
@@ -137,7 +154,7 @@ export function DataTable({
       {/* --- MOBILE VIEW: Cards (< md) --- */}
       <div className="block md:hidden">
         {rows.length === 0 ? (
-          emptyState || <EmptyState />
+          resolvedEmptyState
         ) : (
           <div className="space-y-2.5">
             {rows.map((row, index) => {
@@ -243,9 +260,7 @@ export function DataTable({
                   colSpan={columns.length}
                   className="text-muted-foreground h-48 text-center"
                 >
-                  {emptyState || (
-                    <EmptyState className="min-h-0 border-none bg-transparent py-8" />
-                  )}
+                  {resolvedEmptyState}
                 </TableCell>
               </TableRow>
             )}

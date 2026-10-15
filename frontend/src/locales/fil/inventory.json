@@ -178,5 +178,7 @@
   "totalItemsCount": "{{count}} Kabuuang Paninda",
   "currentStockShort": "Stock ngayon: {{stock}} · Min: {{reorder}}",
   "buyQuantity": "Bilihin: {{qty}} {{unit}}",
-  "checklistFooterNote": "TindaTrack Inventory Checklist · Nilikha para sa maayos na pamimili sa palengke"
+  "checklistFooterNote": "TindaTrack Inventory Checklist · Nilikha para sa maayos na pamimili sa palengke",
+  "stockAdjustedSuccess": "Nai-adjust ang stock!",
+  "stockRemaining": "{{count}} natitira"
 }

@@ -93,5 +93,18 @@
   "dontProceed": "Huwag Ituloy",
   "toggleStatusAria": "I-toggle ang active status para kay {{name}}",
   "prototypeNoticeTitle": "Paalala sa Prototayp:",
-  "prototypeNoticeDesc": "Ang mga pagbabago sa staff dito ay pansamantalang nakatala sa local prototype database. Ang mga tunay na multi-user accounts ay pamamahalaan ng central API sa susunod na release."
+  "prototypeNoticeDesc": "Ang mga pagbabago sa staff dito ay pansamantalang nakatala sa local prototype database. Ang mga tunay na multi-user accounts ay pamamahalaan ng central API sa susunod na release.",
+  "staffCreatedSuccess": "Nai-dagdag ang staff!",
+  "staffCreatedError": "Nabigong idagdag ang staff.",
+  "staffUpdatedSuccess": "Na-update ang profile ng staff!",
+  "staffUpdatedError": "Nabigong i-update ang profile ng staff.",
+  "staffStatusError": "Nabigong baguhin ang katayuan ng staff.",
+  "passwordResetSuccess": "Na-reset ang password!",
+  "passwordResetError": "Nabigong i-reset ang password.",
+  "sessionsRevokedSuccess": "Na-revoke ang mga sesyon!",
+  "sessionsRevokedError": "Nabigong i-revoke ang mga sesyon.",
+  "staffArchivedSuccess": "Na-archive ang staff.",
+  "staffArchivedError": "Nabigong i-archive ang staff.",
+  "staffRestoredSuccess": "Na-restore ang staff.",
+  "staffRestoredError": "Nabigong i-restore ang staff."
 }

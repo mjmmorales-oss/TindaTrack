@@ -104,9 +104,9 @@ export function AccountPage() {
         if (backendErrors.password) {
           setError('new_password', { message: backendErrors.password[0] })
         }
-        notify.error('Hindi wastong datos', err.response.data.message || 'Pakisuri ang mga patlang.')
+        notify.error(t('settings:invalidData'), err.response.data.message || t('settings:checkFields'))
       } else {
-        notify.error('Nabigong palitan ang password', err.response?.data?.message || err.message)
+        notify.error(t('settings:passwordChangeFailed'), err.response?.data?.message || err.message)
       }
     } finally {
       setIsSubmittingPassword(false)

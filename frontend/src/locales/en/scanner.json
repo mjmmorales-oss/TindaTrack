@@ -93,5 +93,14 @@
   "turnOnTorch": "Turn on flashlight",
   "switchCamera": "Switch camera",
   "manualEntryBtn": "Type barcode manually",
-  "pressEnterHelper": "Press Enter or the arrow button to submit."
+  "pressEnterHelper": "Press Enter or the arrow button to submit.",
+  "printLabelsTitle": "Print Barcode Labels",
+  "printLabelsDesc": "Sticker labels for homemade and repacked products.",
+  "numberOfCopies": "Number of copies:",
+  "print": "Print",
+  "usbWedgeReady": "USB / Wedge ready",
+  "localhostWarning": "You are accessing on localhost. The phone camera cannot reach this over Wi-Fi. Run npm run dev:lan in the terminal or use the deployed link.",
+  "apiMismatchWarning": "API base is set to localhost while accessing over LAN. The phone cannot reach the server on localhost. Run npm run dev:lan.",
+  "noPairingCodeReturned": "Server did not return a pairing code.",
+  "cannotCreateCode": "Could not create pairing code: {{message}}{{statusText}}"
 }

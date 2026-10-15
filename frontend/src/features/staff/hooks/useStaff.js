@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { staffService } from '@/services/staffService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
 
 export const staffKeys = {
   all: ['staff'],
@@ -31,10 +32,10 @@ export function useCreateStaff() {
     mutationFn: (data) => staffService.create(data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success('Nai-dagdag ang staff!', `${res.data.name} is now registered.`)
+      notify.success(i18n.t('users:staffCreatedSuccess', 'Staff member added successfully.'), `${res.data.name}`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong idagdag ang staff.')
+      notify.error(err.message || i18n.t('users:staffCreatedError', 'Failed to add staff member.'))
     },
   })
 }
@@ -45,10 +46,10 @@ export function useUpdateStaff() {
     mutationFn: ({ id, data }) => staffService.update(id, data),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success('Na-update ang staff!', `${res.data.name} profile updated.`)
+      notify.success(i18n.t('users:staffUpdatedSuccess', 'Staff profile updated successfully.'), `${res.data.name}`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-update ang profile ng staff.')
+      notify.error(err.message || i18n.t('users:staffUpdatedError', 'Failed to update staff profile.'))
     },
   })
 }
@@ -59,13 +60,13 @@ export function useToggleStaffActive() {
     mutationFn: (id) => staffService.toggleActive(id),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success(
-        res.data.is_active ? 'Na-activate ang staff' : 'Na-deactivate ang staff',
-        `${res.data.name} is now ${res.data.is_active ? 'active' : 'inactive'}.`,
-      )
+      const label = res.data.is_active
+        ? i18n.t('users:activatedSuccess', 'Staff member activated.')
+        : i18n.t('users:deactivatedSuccess', 'Staff member deactivated and sessions revoked.')
+      notify.success(label, `${res.data.name}`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong baguhin ang estado ng staff.')
+      notify.error(err.message || i18n.t('users:staffStatusError', 'Failed to change staff status.'))
     },
   })
 }
@@ -76,10 +77,10 @@ export function useResetStaffPassword() {
     mutationFn: ({ id, data }) => staffService.resetPassword(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success('Na-reset ang password!', 'Naitakda ang bagong password ng staff.')
+      notify.success(i18n.t('users:passwordResetSuccess', 'Password reset successfully.'))
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-reset ang password.')
+      notify.error(err.message || i18n.t('users:passwordResetError', 'Failed to reset password.'))
     },
   })
 }
@@ -90,10 +91,10 @@ export function useRevokeStaffSessions() {
     mutationFn: (id) => staffService.revokeSessions(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success('Na-revoke ang mga sesyon!', 'Lahat ng aktibong device at sesyon ay na-sign out.')
+      notify.success(i18n.t('users:sessionsRevokedSuccess', 'All active sessions revoked.'))
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-revoke ang mga sesyon.')
+      notify.error(err.message || i18n.t('users:sessionsRevokedError', 'Failed to revoke sessions.'))
     },
   })
 }
@@ -104,10 +105,10 @@ export function useArchiveStaff() {
     mutationFn: (id) => staffService.archive(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success('Na-archive ang staff', 'Inilipat ang staff sa archived tab.')
+      notify.success(i18n.t('users:staffArchivedSuccess', 'Staff member archived.'))
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-archive ang staff.')
+      notify.error(err.message || i18n.t('users:staffArchivedError', 'Failed to archive staff member.'))
     },
   })
 }
@@ -118,10 +119,10 @@ export function useRestoreStaff() {
     mutationFn: (id) => staffService.restore(id),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all })
-      notify.success('Na-restore ang staff', `${res.data.name} is now restored.`)
+      notify.success(i18n.t('users:staffRestoredSuccess', 'Staff member restored.'), `${res.data.name}`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-restore ang staff.')
+      notify.error(err.message || i18n.t('users:staffRestoredError', 'Failed to restore staff member.'))
     },
   })
 }

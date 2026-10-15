@@ -265,7 +265,7 @@ export function BarcodeCapture({
 
         <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
           <ScanBarcode className="h-3 w-3" />
-          <span>USB / Wedge ready</span>
+          <span>{t('scanner:usbWedgeReady', 'USB / Wedge ready')}</span>
         </span>
       </div>
 

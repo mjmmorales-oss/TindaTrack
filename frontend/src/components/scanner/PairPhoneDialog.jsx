@@ -81,7 +81,7 @@ export function PairPhoneDialog({
         const res = raw?.data ?? raw
 
         if (!res?.pairing_code || !res?.id) {
-          throw new Error('Walang pairing code na ibinalik ang server.')
+          throw new Error(t('scanner:noPairingCodeReturned', 'Server did not return a pairing code.'))
         }
 
         setSession(res)
@@ -109,7 +109,12 @@ export function PairPhoneDialog({
         setTimeLeft(null)
         activeSessionRef.current = null
         const statusText = err?.status ? ` (HTTP ${err.status})` : ''
-        setError(`Hindi makagawa ng code: ${err?.message || 'Network error'}${statusText}`)
+        setError(
+          t('scanner:cannotCreateCode', 'Could not create pairing code: {{message}}{{statusText}}', {
+            message: err?.message || 'Network error',
+            statusText,
+          }),
+        )
       } finally {
         setIsLoading(false)
         isCreatingRef.current = false
@@ -234,8 +239,15 @@ export function PairPhoneDialog({
           <Alert variant="warning" className="border-warning/40 bg-warning/10 text-xs">
             <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
             <AlertDescription className="text-warning-foreground font-medium">
-              Nasa <strong>localhost</strong> ka. Hindi ito mabubuksan ng camera ng phone sa parehong Wi-Fi.
-              Patakbuhin ang <code className="bg-muted px-1 py-0.5 rounded">npm run dev:lan</code> sa terminal o gamitin ang deployed link.
+              {t(
+                'scanner:localhostWarning',
+                'You are accessing on localhost. The phone camera cannot reach this over Wi-Fi. Run npm run dev:lan in the terminal or use the deployed link.',
+              )
+                .split('localhost')
+                .reduce((acc, part, idx) => {
+                  if (idx === 0) return [part]
+                  return [...acc, <strong key={idx}>localhost</strong>, part]
+                }, [])}
             </AlertDescription>
           </Alert>
         )}
@@ -244,9 +256,10 @@ export function PairPhoneDialog({
           <Alert variant="destructive" className="text-xs">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <AlertDescription className="font-medium">
-              Naka-set ang API base sa <strong>localhost</strong> habang binubuksan mo ang app sa LAN.
-              Hindi maaabot ng phone ang server kung localhost ang API. Patakbuhin ang{' '}
-              <code className="bg-muted px-1 py-0.5 rounded">npm run dev:lan</code>.
+              {t(
+                'scanner:apiMismatchWarning',
+                'API base is set to localhost while accessing over LAN. The phone cannot reach the server on localhost. Run npm run dev:lan.',
+              )}
             </AlertDescription>
           </Alert>
         )}

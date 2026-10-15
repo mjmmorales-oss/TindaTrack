@@ -93,5 +93,14 @@
   "turnOnTorch": "Buksan ang flashlight",
   "switchCamera": "Lumipat ng camera",
   "manualEntryBtn": "I-type nang manual ang barcode",
-  "pressEnterHelper": "Pindutin ang Enter o ang arrow button para i-submit."
+  "pressEnterHelper": "Pindutin ang Enter o ang arrow button para i-submit.",
+  "printLabelsTitle": "I-print ang Barcode Labels",
+  "printLabelsDesc": "Mga label para sa sariling gawang paninda (homemade goods).",
+  "numberOfCopies": "Bilang ng kopya:",
+  "print": "I-print",
+  "usbWedgeReady": "USB / Wedge handa",
+  "localhostWarning": "Nasa localhost ka. Hindi ito mabubuksan ng camera ng phone sa parehong Wi-Fi. Patakbuhin ang npm run dev:lan sa terminal o gamitin ang deployed link.",
+  "apiMismatchWarning": "Naka-set ang API base sa localhost habang binubuksan mo ang app sa LAN. Hindi maaabot ng phone ang server kung localhost ang API. Patakbuhin ang npm run dev:lan.",
+  "noPairingCodeReturned": "Walang pairing code na ibinalik ang server.",
+  "cannotCreateCode": "Hindi makagawa ng code: {{message}}{{statusText}}"
 }

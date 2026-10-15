@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/drawer'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useOverlayStore } from '@/stores/overlayStore'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -42,7 +43,7 @@ import { cn } from '@/lib/utils'
  * @param {object} props
  * @param {DateRange} [props.value] - Currently selected date range
  * @param {(range: DateRange | undefined) => void} props.onChange - Selection change callback
- * @param {string} [props.placeholder='Pumili ng petsa (Select date range)'] - Placeholder text
+ * @param {string} [props.placeholder='Select date range...'] - Placeholder text
  * @param {boolean} [props.disabled=false] - Disabled state
  * @param {string} [props.className] - Trigger button class name
  * @param {'left'|'right'|'center'} [props.align='start'] - Popover alignment
@@ -51,39 +52,41 @@ import { cn } from '@/lib/utils'
 export function DateRangePicker({
   value,
   onChange,
-  placeholder = 'Pumili ng petsa (Select dates)',
+  placeholder,
   disabled = false,
   className,
   align = 'start',
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const isMobile = useIsMobile()
+  const effectivePlaceholder = placeholder || t('common:dateRange', 'Select date range')
 
   const presets = [
     {
-      label: 'Ngayon (Today)',
+      label: t('common:today', 'Today'),
       getRange: () => ({ from: startOfToday(), to: endOfToday() }),
     },
     {
-      label: 'Kahapon (Yesterday)',
+      label: t('common:yesterday', 'Yesterday'),
       getRange: () => ({ from: startOfYesterday(), to: endOfYesterday() }),
     },
     {
-      label: 'Huling 7 Araw (Last 7 Days)',
+      label: t('common:last7Days', 'Last 7 days'),
       getRange: () => ({ from: subDays(startOfToday(), 6), to: endOfToday() }),
     },
     {
-      label: 'Huling 30 Araw (Last 30 Days)',
+      label: t('common:last30Days', 'Last 30 days'),
       getRange: () => ({ from: subDays(startOfToday(), 29), to: endOfToday() }),
     },
     {
-      label: 'Buwang Ito (This Month)',
+      label: t('common:thisMonth', 'This month'),
       getRange: () => ({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }),
     },
   ]
 
   const formatRangeLabel = () => {
-    if (!value?.from) return placeholder
+    if (!value?.from) return effectivePlaceholder
     if (!value?.to) return format(value.from, 'MMM d, yyyy')
     return `${format(value.from, 'MMM d')} – ${format(value.to, 'MMM d, yyyy')}`
   }
@@ -176,10 +179,10 @@ export function DateRangePicker({
           <DrawerContent className="max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex flex-col">
             <DrawerHeader className="border-b border-border px-4 py-3 text-left">
               <DrawerTitle className="text-base font-bold text-foreground">
-                Pumili ng Petsa (Date Range)
+                {t('common:dateRange', 'Date Range')}
               </DrawerTitle>
               <DrawerDescription className="text-xs text-muted-foreground">
-                Salain ang mga transaksyon ayon sa petsa.
+                {t('common:filterByDate', 'Filter transactions by date range.')}
               </DrawerDescription>
             </DrawerHeader>
             <div className="flex-1 overflow-y-auto overscroll-contain p-2">
@@ -187,7 +190,7 @@ export function DateRangePicker({
             </div>
             <DrawerFooter className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-xs px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
               <Button type="button" className="w-full h-11" onClick={() => setOpen(false)}>
-                Ilapat ang Petsa
+                {t('common:applyDate', 'Apply Date Range')}
               </Button>
             </DrawerFooter>
           </DrawerContent>

@@ -3,11 +3,11 @@ import { z } from 'zod'
 export const recordPaymentSchema = z.object({
   amount: z.coerce
     .number()
-    .gt(0, 'Kailangan may halaga ang ibabayad (mas mataas sa ₱0).'),
+    .gt(0, 'Payment amount must be greater than ₱0.'),
   payment_date: z.string().optional(),
   notes: z
     .string()
-    .max(250, 'Hanggang 250 titik lamang ang tala sa pagbabayad.')
+    .max(250, 'Payment notes must be 250 characters or less.')
     .optional()
     .or(z.literal('')),
 })

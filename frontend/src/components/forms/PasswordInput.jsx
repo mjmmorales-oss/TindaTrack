@@ -3,14 +3,16 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
  * Calculates a basic 0-4 password strength score.
  * @param {string} pass
+ * @param {Function} [t]
  * @returns {{ score: number, label: string, color: string }}
  */
-function getPasswordStrength(pass = '') {
+function getPasswordStrength(pass = '', t = (k, def) => def) {
   if (!pass) return { score: 0, label: '', color: '' }
   let score = 0
   if (pass.length >= 8) score++
@@ -20,17 +22,17 @@ function getPasswordStrength(pass = '') {
 
   switch (score) {
     case 1:
-      return { score: 25, label: 'Mahina (Weak)', color: 'bg-destructive' }
+      return { score: 25, label: t('common:weak', 'Weak'), color: 'bg-destructive' }
     case 2:
-      return { score: 50, label: 'Katamtaman (Fair)', color: 'bg-warning' }
+      return { score: 50, label: t('common:fair', 'Fair'), color: 'bg-warning' }
     case 3:
-      return { score: 75, label: 'Mabuti (Good)', color: 'bg-info' }
+      return { score: 75, label: t('common:good', 'Good'), color: 'bg-info' }
     case 4:
-      return { score: 100, label: 'Matibay (Strong)', color: 'bg-success' }
+      return { score: 100, label: t('common:strong', 'Strong'), color: 'bg-success' }
     default:
       return {
         score: 15,
-        label: 'Napakalambot (Very weak)',
+        label: t('common:veryWeak', 'Very weak'),
         color: 'bg-destructive',
       }
   }
@@ -49,11 +51,12 @@ function getPasswordStrength(pass = '') {
  */
 export const PasswordInput = forwardRef(
   ({ className, showStrength = false, hasError, value, onChange, ...props }, ref) => {
+    const { t } = useTranslation()
     const [showPassword, setShowPassword] = useState(false)
     const [internalVal, setInternalVal] = useState('')
 
     const currentVal = value !== undefined ? String(value) : internalVal
-    const strengthInfo = showStrength ? getPasswordStrength(currentVal) : null
+    const strengthInfo = showStrength ? getPasswordStrength(currentVal, t) : null
 
     const handleChange = (e) => {
       if (value === undefined) {
@@ -94,7 +97,7 @@ export const PasswordInput = forwardRef(
         {showStrength && currentVal.length > 0 && (
           <div className="space-y-1 pt-1">
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Lakas ng Password:</span>
+              <span className="text-muted-foreground">{t('common:passwordStrength', 'Password strength:')}</span>
               <span className="text-foreground font-medium">
                 {strengthInfo.label}
               </span>

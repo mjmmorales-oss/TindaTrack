@@ -1,4 +1,5 @@
 import { Loader2, Store } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -6,14 +7,16 @@ import { cn } from '@/lib/utils'
  *
  * @component
  * @param {object} props
- * @param {string} [props.label='Naglo-load ng tindahan... (Loading store data...)'] - Loading status text
+ * @param {string} [props.label] - Loading status text
  * @param {string} [props.className] - Container class name
  * @returns {React.JSX.Element}
  */
 export function FullPageLoader({
-  label = 'Naglo-load ng tindahan... (Loading store data...)',
+  label,
   className,
 }) {
+  const { t } = useTranslation()
+  const displayLabel = label || t('common:loadingStore', 'Loading store data...')
   return (
     <div
       role="status"
@@ -37,7 +40,7 @@ export function FullPageLoader({
         TindaTrack
       </h2>
       <p className="text-muted-foreground mt-1.5 animate-pulse text-xs">
-        {label}
+        {displayLabel}
       </p>
       <span className="sr-only">Loading content, please wait...</span>
     </div>

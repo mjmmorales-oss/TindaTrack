@@ -207,5 +207,18 @@
   "printLabels": "Print Labels",
   "addedThisSession": "Added this session ({{count}})",
   "tapToEdit": "Tap to edit",
-  "imageOptimizeError": "Could not process photo."
+  "imageOptimizeError": "Could not process photo.",
+  "createdSuccess": "Product saved successfully!",
+  "createError": "Failed to save product.",
+  "updatedSuccess": "Product updated successfully!",
+  "updateError": "Failed to update product.",
+  "deletedSuccess": "Product removed successfully.",
+  "deleteError": "Failed to remove product.",
+  "stockAdjustedSuccess": "Stock adjusted successfully!",
+  "stockAdjustedError": "Failed to adjust stock.",
+  "imageImportSuccess": "Photo imported successfully!",
+  "imageImportError": "Failed to import photo.",
+  "imageDeleteError": "Failed to remove photo.",
+  "newStock": "New stock",
+  "soldLabel": "Sold"
 }

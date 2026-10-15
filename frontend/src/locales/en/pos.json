@@ -23,7 +23,7 @@
   "utang": "Credit (Utang)",
   "amountDue": "Amount Due",
   "cashReceived": "Cash Received (Tendered)",
-  "change": "Sukli (Change)",
+  "change": "Change (Sukli)",
   "exactAmount": "Exact Amount",
   "quickCash": "Quick Cash:",
   "insufficientCash": "Need ₱{{amount}} more",
@@ -109,5 +109,12 @@
   "saveCustomer": "Save Customer",
   "customerSelectedForUtang": "Selected {{name}} for credit.",
   "resetFilters": "Reset to All",
-  "noProductsSearchDesc": "Try searching for a different name or select another category above."
+  "noProductsSearchDesc": "Try searching for a different name or select another category above.",
+  "saleRecordedSuccess": "Sale recorded successfully!",
+  "saleRecordedDetail": "Receipt {{receipt}} · {{amount}}",
+  "recordSaleError": "Failed to record sale.",
+  "saleVoidedSuccess": "Sale voided successfully!",
+  "saleVoidedDetail": "Receipt {{receipt}} has been voided.",
+  "voidSaleError": "Failed to void sale.",
+  "defaultReceiptFooter": "Thank you! Please come again!"
 }

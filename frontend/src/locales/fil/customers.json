@@ -91,5 +91,17 @@
   "methodCol": "Paraan",
   "totalCol": "Kabuuang Halaga",
   "statusCol": "Katayuan",
-  "actionForCustomer": "Aksyon para kay {{name}}"
+  "actionForCustomer": "Aksyon para kay {{name}}",
+  "createdSuccess": "Nai-save ang bagong suki!",
+  "createError": "Nabigong lumikha ng kustomer.",
+  "updatedSuccess": "Na-update ang detalye ng suki!",
+  "updateError": "Nabigong i-update ang kustomer.",
+  "deletedSuccess": "Nabura ang rekord ng suki.",
+  "deleteError": "Nabigong burahin ang kustomer.",
+  "isNowRegistered": "Rehistrado na si {{name}}.",
+  "hasBeenUpdated": "Na-update na si {{name}}.",
+  "selectCustomer": "Pumili ng suki...",
+  "noCustomerFound": "Walang nahanap na suki.",
+  "addAsNewCustomer": "Idagdag bilang bagong suki",
+  "customersGroup": "Mga Suki"
 }

@@ -73,8 +73,8 @@ export const barcodeService = {
     const normalized = Barcode.normalize(barcode)
     if (!Barcode.isAcceptable(normalized)) {
       throw new ApiError(422, {
-        message: 'Hindi wastong barcode format.',
-        errors: { barcode: ['Hindi wastong barcode format.'] },
+        message: 'Invalid barcode format.',
+        errors: { barcode: ['Invalid barcode format.'] },
       })
     }
 

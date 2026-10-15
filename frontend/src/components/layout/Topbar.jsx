@@ -20,8 +20,10 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { Kbd } from '@/components/ui/kbd'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { useTranslation } from 'react-i18next'
 
 export function Topbar() {
+  const { t } = useTranslation()
   const matches = useMatches()
 
   // Collect breadcrumbs from matched routes
@@ -83,10 +85,10 @@ export function Topbar() {
           size="sm"
           className="border-border/80 bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground hidden h-9 items-center gap-2 rounded-lg px-3 text-xs sm:flex"
           onClick={() => window.dispatchEvent(new Event('app:open-command-palette'))}
-          aria-label="Buksan ang search at command palette"
+          aria-label={t('common:openActionsMenu', 'Open search and command palette')}
         >
           <Search className="h-3.5 w-3.5" />
-          <span>Search tindahan...</span>
+          <span>{t('common:searchStore', 'Search store...')}</span>
           <Kbd className="ml-2 font-semibold">⌘K</Kbd>
         </Button>
 

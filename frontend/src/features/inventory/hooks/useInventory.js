@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { inventoryService } from '@/services/inventoryService'
 import { productService } from '@/services/productService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
 
 export const inventoryKeys = {
   all: ['inventory'],
@@ -40,10 +41,13 @@ export function useAdjustStock() {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.all })
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      notify.success('Nai-adjust ang stock!', `${res.data.name}: ${res.data.stock_quantity} remaining.`)
+      notify.success(
+        i18n.t('inventory:stockAdjustedSuccess'),
+        `${res.data.name}: ${i18n.t('inventory:stockRemaining', { count: res.data.stock_quantity })}`,
+      )
     },
     onError: (err) => {
-      notify.error(err.message || 'Hindi ma-adjust ang stock.')
+      notify.error(err.message || i18n.t('inventory:adjustFailed'))
     },
   })
 }

@@ -93,5 +93,18 @@
   "dontProceed": "Cancel",
   "toggleStatusAria": "Toggle active status for {{name}}",
   "prototypeNoticeTitle": "Prototype Notice:",
-  "prototypeNoticeDesc": "Staff modifications here are simulated in local storage. Multi-user accounts will connect to the central API in production."
+  "prototypeNoticeDesc": "Staff modifications here are simulated in local storage. Multi-user accounts will connect to the central API in production.",
+  "staffCreatedSuccess": "Staff member added successfully.",
+  "staffCreatedError": "Failed to add staff member.",
+  "staffUpdatedSuccess": "Staff profile updated successfully.",
+  "staffUpdatedError": "Failed to update staff profile.",
+  "staffStatusError": "Failed to change staff status.",
+  "passwordResetSuccess": "Password reset successfully.",
+  "passwordResetError": "Failed to reset password.",
+  "sessionsRevokedSuccess": "All active sessions revoked.",
+  "sessionsRevokedError": "Failed to revoke sessions.",
+  "staffArchivedSuccess": "Staff member archived.",
+  "staffArchivedError": "Failed to archive staff member.",
+  "staffRestoredSuccess": "Staff member restored.",
+  "staffRestoredError": "Failed to restore staff member."
 }

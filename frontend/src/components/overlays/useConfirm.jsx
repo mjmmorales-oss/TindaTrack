@@ -28,11 +28,11 @@ export function useConfirm() {
     open: false,
     title: '',
     description: '',
-    confirmText: 'Kumpirmahin',
-    cancelText: 'Kanselahin',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
     tone: 'default',
     requireReason: false,
-    reasonLabel: 'Dahilan',
+    reasonLabel: 'Reason',
     reasonPlaceholder: '',
     minReasonLength: 4,
   })
@@ -44,13 +44,13 @@ export function useConfirm() {
       resolverRef.current = resolve
       setConfig({
         open: true,
-        title: options.title || 'Kumpirmahin ang aksyon (Confirm action)',
+        title: options.title || 'Confirm Action',
         description: options.description || '',
-        confirmText: options.confirmText || 'Kumpirmahin',
-        cancelText: options.cancelText || 'Kanselahin',
+        confirmText: options.confirmText || 'Confirm',
+        cancelText: options.cancelText || 'Cancel',
         tone: options.tone || 'default',
         requireReason: options.requireReason || false,
-        reasonLabel: options.reasonLabel || 'Dahilan',
+        reasonLabel: options.reasonLabel || 'Reason',
         reasonPlaceholder: options.reasonPlaceholder || '',
         minReasonLength: options.minReasonLength || 4,
       })

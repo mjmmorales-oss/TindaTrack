@@ -28,7 +28,7 @@ class CreateSaleAction
     {
         if (empty($cartItems)) {
             throw ValidationException::withMessages([
-                'items' => ['Walang laman ang cart. Pumili ng kahit isang produkto.'],
+                'items' => ['Cart is empty. Select at least one product.'],
             ]);
         }
 

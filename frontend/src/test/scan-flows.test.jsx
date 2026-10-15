@@ -223,7 +223,7 @@ describe('B10: PairPhoneDialog Component', () => {
     })
 
     expect(screen.getByText(/Or enter this code at \/scan|O ilagay ang code na ito sa \/scan/i)).toBeInTheDocument()
-    expect(screen.queryByText(/Hindi makagawa ng code/i)).toBeNull()
+    expect(screen.queryByText(/Hindi makagawa ng code|Could not create pairing code/i)).toBeNull()
   })
 
   it('shows error state and NO code/QR when createScannerSession rejects', async () => {
@@ -241,7 +241,11 @@ describe('B10: PairPhoneDialog Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/Hindi makagawa ng code: Network connection refused/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          /Could not create pairing code: Network connection refused|Hindi makagawa ng code: Network connection refused/i,
+        ),
+      ).toBeInTheDocument()
     })
 
     // Assert that pairing code container and instructions are NOT rendered

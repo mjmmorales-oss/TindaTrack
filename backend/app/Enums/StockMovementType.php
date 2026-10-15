@@ -13,11 +13,11 @@ enum StockMovementType: string
     public function label(): string
     {
         return match ($this) {
-            self::Sale => 'Benta (Sale)',
-            self::Void => 'Kanselado (Void)',
-            self::Restock => 'Dagdag Paninda (Restock)',
-            self::Damage => 'Sira / Bawas (Damage)',
-            self::Correction => 'Pagwawasto (Correction)',
+            self::Sale => 'Sale',
+            self::Void => 'Void',
+            self::Restock => 'Restock',
+            self::Damage => 'Damage',
+            self::Correction => 'Correction',
         };
     }
 }

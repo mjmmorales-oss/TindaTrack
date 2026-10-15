@@ -300,7 +300,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
       const matches = await screen.findAllByText(/I-void ang Resibo/i)
       expect(matches.length).toBeGreaterThan(0)
-      expect(screen.getByPlaceholderText(/Ibigay ang dahilan/i)).toBeInTheDocument()
+      expect(screen.getByPlaceholderText(/Ibigay ang dahilan|Provide a reason/i)).toBeInTheDocument()
     })
   })
 
