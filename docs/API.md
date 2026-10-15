@@ -259,4 +259,178 @@ Authorization: Bearer <sanctum-token>
 **Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
 **Response**: `{ "data": Product }` (with `image_url: null`)
 
+---
+
+## Staff Management & User Account Endpoints Detail
+
+All staff management operations are restricted to store owners (`role:owner`). Standard validation failures return 422 with `{ message, errors }`. Business rule violations return 422 with a structured machine-readable `code` alongside user-facing explanation in `errors`:
+
+| Rule Code | HTTP Status | Description |
+|---|---|---|
+| `self_action` | 422 | Attempted to deactivate, archive, or reset password on currently authenticated account. |
+| `last_owner` | 422 | Action would deactivate or archive the final active owner account, locking the store. |
+| `owner_protected` | 422 | Disallowed modification, deactivation, archiving, or creation of owner roles via staff management. |
+| `email_taken` | 422 | Restoration of archived staff blocked because email address is already claimed by an active user. |
+| `user_archived` | 422 | Action cannot be performed on a soft-deleted staff member until restored. |
+
+### 1. `GET /api/users`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Query Parameters**:
+- `status`: `'active'` (default), `'inactive'`, `'archived'`, `'all'`
+- `search`: string (filters by partial match on `name`, `email`, or `phone`)
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": 2,
+      "name": "Maria Santos",
+      "email": "cashier@tindatrack.test",
+      "phone": "09171234567",
+      "role": "cashier",
+      "role_label": "Cashier",
+      "is_active": true,
+      "must_change_password": false,
+      "last_login_at": "2026-10-15T18:22:10+08:00",
+      "created_at": "2026-10-01T08:00:00+08:00",
+      "deleted_at": null,
+      "sales_count": 48,
+      "sales_total_today": 3250.00
+    }
+  ]
+}
+```
+
+### 2. `POST /api/users`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Request Body**:
+```json
+{
+  "name": "Juan Dela Cruz",
+  "email": "juan@example.com",
+  "phone": "09181234567",
+  "role": "cashier",
+  "generate_password": true
+}
+```
+**Notes**:
+- If `generate_password: true` or `password` is omitted, generates a 12-character high-entropy temporary password, marks `must_change_password: true`, and returns `temporary_password` in the response body.
+- Rejects `role: 'owner'` with 422 `code: "owner_protected"`.
+**Response (201 Created)**:
+```json
+{
+  "data": {
+    "id": 3,
+    "name": "Juan Dela Cruz",
+    "email": "juan@example.com",
+    "phone": "09181234567",
+    "role": "cashier",
+    "role_label": "Cashier",
+    "is_active": true,
+    "must_change_password": true,
+    "created_at": "2026-10-16T08:00:00+08:00"
+  },
+  "message": "Staff member created successfully.",
+  "temporary_password": "xK9#mQ2$pL8v"
+}
+```
+
+### 3. `PATCH /api/users/{id}/toggle-active`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Behavior**: Toggles `is_active`. When deactivating, immediately deletes all active Sanctum tokens (`$user->tokens()->delete()`).
+**Guards**:
+- Self-deactivation: 422 `{ code: "self_action" }`
+- Last active owner: 422 `{ code: "last_owner" }`
+- Target is owner: 422 `{ code: "owner_protected" }`
+- Target is archived: 422 `{ code: "user_archived" }`
+**Response**:
+```json
+{
+  "data": { "id": 2, "is_active": false, ... },
+  "message": "Account for Maria Santos has been deactivated and all sessions revoked."
+}
+```
+
+### 4. `POST /api/users/{id}/reset-password`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Request Body**:
+```json
+{
+  "generate": true
+}
+```
+**Behavior**: Resets password hash, sets `must_change_password: true`, and revokes all active Sanctum tokens.
+**Guards**:
+- Self-reset: 422 `{ code: "self_action" }`
+- Target is owner: 422 `{ code: "owner_protected" }`
+- Target is archived: 422 `{ code: "user_archived" }`
+**Response**:
+```json
+{
+  "data": { "id": 2, "must_change_password": true, ... },
+  "message": "Password for Maria Santos has been reset and all sessions revoked.",
+  "temporary_password": "tP4#vN8$wY2k"
+}
+```
+
+### 5. `POST /api/users/{id}/revoke-sessions`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Behavior**: Revokes all Sanctum personal access tokens and terminates any active scanner sessions (`ended_at = now()`) for the target user.
+**Response**:
+```json
+{
+  "data": { "id": 2, ... },
+  "message": "All active sessions for Maria Santos have been revoked."
+}
+```
+
+### 6. `DELETE /api/users/{id}` (Archive / Soft-Delete)
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Behavior**: Soft-deletes user (`deleted_at = now()`), revokes all active Sanctum tokens, and ends active scanner sessions. All historical sales, utang payments, and stock movements remain intact with `withTrashed()` model associations.
+**Guards**:
+- Self-archive: 422 `{ code: "self_action" }`
+- Last active owner: 422 `{ code: "last_owner" }`
+- Target is owner: 422 `{ code: "owner_protected" }`
+**Response**:
+```json
+{
+  "data": { "id": 2, "deleted_at": "2026-10-16T08:30:00+08:00", ... },
+  "message": "Account for Maria Santos has been archived."
+}
+```
+
+### 7. `POST /api/users/{id}/restore`
+**Auth**: Bearer token (`auth:sanctum`), `active`, `role:owner`
+**Behavior**: Restores soft-deleted user account.
+**Guards**:
+- Email already taken by an active account: 422 `{ code: "email_taken", errors: { email: [...] } }`
+**Response**:
+```json
+{
+  "data": { "id": 2, "deleted_at": null, ... },
+  "message": "Account for Maria Santos has been restored."
+}
+```
+
+### 8. `PUT /api/user/password` (Self Password Update)
+**Auth**: Bearer token (`auth:sanctum`), `active`
+**Role**: `owner,cashier`
+**Request Body**:
+```json
+{
+  "current_password": "xK9#mQ2$pL8v",
+  "password": "NewSecurePassword123",
+  "password_confirmation": "NewSecurePassword123"
+}
+```
+**Behavior**: Verifies current password hash, updates to new hashed password, and clears `must_change_password = false`.
+**Frontend Integration**: When `user.must_change_password === true`, the application renders `MustChangePasswordBanner` across all authenticated views until this endpoint succeeds.
+**Response**:
+```json
+{
+  "message": "Password updated successfully."
+}
+```
+
+
 

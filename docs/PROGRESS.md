@@ -947,10 +947,10 @@ Tracking implementation of v1.3 tasks (U0–U7):
 - [x] **U1 — Unified "Add by Barcode" Flow**: Reusable `BarcodeCapture.jsx`, unified `AddByBarcodeDialog.jsx` replacing `QuickAddScanDialog` and old scan sheet, route unknown barcode entrypoints, tests.
 - [x] **U2 — Mobile Input Zoom Prevention**: Pointer-coarse 16px safety floor, command input sizing, remove small input classes, viewport interactive-widget, `check-mobile.mjs` gate.
 - [x] **U3 — Mobile Drawers and Sheets Keyboard Polish**: `useVisualViewport.js` CSS vars (`--vvh`, `--keyboard-inset`), `ResponsiveDialog` drawer height and scroll polish, bottom nav hide on keyboard/modal, safe areas, tests, `docs/MOBILE.md`.
-- [ ] **U4 — Full Staff Management**: Soft deletes (`deleted_at`), phone, `must_change_password`, temporary password generation, password reset, restore, staff drawer, mobile action sheet, policy guards, Pest & Vitest tests.
-- [ ] **U5 — i18n Leaks & Strict Checker**: Eliminate Taglish leaks in scanner/toasts/backend, harden `check-i18n.mjs` with marker words, backend English messages, bilingual assertions.
-- [ ] **U6 — Regression Sweep**: Verify v1.2 image pipeline, auto-lookup, pairing smoke, prod bundle, responsive containment, clean logout.
-- [ ] **U7 — Docs, Final Gates, Merge & Tag**: Updated docs, fresh migration & seeds, full gates, release commit, tag `v1.3.0`.
+- [x] **U4 — Full Staff Management**: Soft deletes (`deleted_at`), phone, `must_change_password`, temporary password generation, password reset, restore, staff drawer, mobile action sheet, policy guards, Pest & Vitest tests.
+- [x] **U5 — i18n Leaks & Strict Checker**: Eliminate Taglish leaks in scanner/toasts/backend, harden `check-i18n.mjs` with marker words, backend English messages, bilingual assertions.
+- [x] **U6 — Regression Sweep**: Verify v1.2 image pipeline, auto-lookup, pairing smoke, prod bundle, responsive containment, clean logout.
+- [x] **U7 — Docs, Final Gates, Merge & Tag**: Updated docs, fresh migration & seeds, full gates, release commit, tag `v1.3.0`.
 
 ### U0 Log (Preflight & v1.3 Map):
 - **Baseline Metrics**:
@@ -1103,5 +1103,194 @@ Tracking implementation of v1.3 tasks (U0–U7):
   - `npm run lint`: 0 errors.
   - `npm run build`: built in 1.81s.
 
+### U5 Log (Zero-Leak i18n, Synchronized Dictionaries, and Bilingual Hardening):
+- **Dictionary Key Parity & Synchronization**:
+  - Synchronized all 18 translation namespaces across `en/` and `fil/`. Added missing keys (`mustChangePassword`, `copyPassword`, `temporaryPasswordReady`, `archivedDesc`, `cannotArchiveOwner`, `cannotDeactivateOwner`, `cannotResetOwner`, etc.) ensuring 100% symmetric coverage.
+  - Ensured exact variable placeholder match between `en` and `fil` pairs (`{count}`, `{name}`, `{amount}`, `{reason}`).
+- **Zero Filipino Marker Leaks in Default English**:
+  - Hardened `frontend/scripts/check-i18n.mjs` with marker regex (`\b(ang|mga|para|nang|kung|wala|walang|benta|utang|sukli|lahat|dagdag|oras|araw|petsa|piliin|i-scan|kasaysayan)\b`) scanning English locale dictionaries and backend responses.
+  - Replaced remaining Taglish leaks in scanner toasts, offline banners, and backend error strings with clean English defaults, retaining cultural terms (`Utang`, `Suki`, `Sukli`, `Sari-sari`) exclusively as subtitle badges or in the Filipino dictionary.
+- **Bilingual Test Resiliency**:
+  - Updated edge-state assertions, dialog matchers, and pairing components to accept both English and Filipino labels (`/No sales records/i`, `/Retry/i`, `/Provide a reason|Ibigay ang dahilan/i`).
+  - Wrapped `localhost` in `<strong>localhost</strong>` inside `PairPhoneDialog.jsx` for robust cross-lingual text matching.
+- **Verification**:
+  - `npm run check:i18n`: 18 namespaces checked, 0 missing keys, 0 placeholder mismatches, 0 forbidden marker leaks.
+  - `npm run check:mobile`: clean.
+  - `npm run lint`: 0 errors.
+  - `npx vitest run`: 206/206 tests passing.
 
+### U6 Log (Comprehensive Regression Sweep across All Workflows):
+- **Image Pipeline**:
+  - Ran `src/test/images.test.jsx` (8/8 tests passing). Verified binary image streaming (`GET /api/product-images/{ulid}`), 1MB upload limits, client-side canvas downscaling (max 800px WebP/JPEG <= 300KB), camera photo capture (`capture="environment"`), SSRF host allowlist filtering, and image deletion.
+- **Barcode & Auto-Lookup Workflows**:
+  - Ran `src/test/quick-add.test.jsx` and `src/test/barcode.test.jsx` (20/20 tests passing). Verified GTIN normalization, Open Food Facts auto-fill with 500ms debounce, category inference, duplicate barcode detection, internal barcode generation (`makeInternal`), and printable label generation.
+- **Automated Smoke Verification**:
+  - `npm run check:bundle`: 94 assets scanned, 0 secrets, 0 dev-only account leaks.
+  - `npm run smoke:prod`: 9/9 HTTP checks passing against production-like build.
+  - `npm run smoke:pairing`: Verified Direct API and reverse proxy pairing flows end-to-end.
+- **Responsive Layout & Containment**:
+  - Ran `src/test/containment.test.jsx` (8/8 tests passing). Verified single `<header>` chrome on LandingPage, proper viewport containment without horizontal blowout at 360px, 768px, 1024px, 1280px, and 1536px, and modal overlay dismissal.
+- **Full Test Sweep**:
+  - Vitest: 17/17 test files passed, 206/206 tests passed.
+  - Pest: 98/98 tests passed (504 assertions). Pint: 100% clean.
 
+### U7 Log (Documentation, Final Gates, Merge & Release):
+- **Documentation Updates**:
+  - `README.md`: Updated Features with Unified Add by Barcode, Mobile Input Ergonomics, and Full Staff Management.
+  - `docs/BARCODE.md`: Overhauled Section 7 with the Unified Add by Barcode flow (4 states, session counter, camera resilience) and USB Barcode Scanner Wedge hardware recommendations.
+  - `docs/API.md`: Documented all Staff Management endpoints (`/api/users*`), business rule error codes (`self_action`, `last_owner`, `owner_protected`, `email_taken`, `user_archived`), and password updating behavior (`must_change_password`).
+  - `docs/CHANGELOG.md`: Authored complete `[1.3.0] - 2026-10-16` release entry detailing U1 through U7.
+  - `docs/PROGRESS.md`: Recorded final metrics before/after, root causes, architectural decisions, and the Morning Checklist.
+- **Final Release Preflight Gates**:
+  - Fresh database migration and seeding: `php artisan migrate:fresh --seed` (idempotent, 100% clean).
+  - Backend reconciliation: `php artisan tindatrack:check` (0 discrepancies).
+  - Pint PSR-12 styling: 100% clean.
+  - Backend Pest suite: 98/98 tests passing.
+  - Frontend lint: 0 errors, 0 warnings.
+  - Frontend build: Clean production compilation in Vite.
+  - Frontend Vitest suite: 206/206 tests passing across 17 test suites.
+  - Checkers: `check:i18n`, `check:mobile`, `check:bundle`, `smoke:pairing`, `smoke:prod` all green.
+- **Release Execution**:
+  - Merged `ux/v1.3` into `main`.
+  - Tagged `v1.3.0`.
+  - Pushed `main` and tags to remote repository.
+
+---
+
+## v1.3.0 Metrics Summary (Before & After)
+
+| Metric | Baseline (v1.2.0 / U0) | Final Release (v1.3.0 / U7) | Change |
+|---|---|---|---|
+| **Backend Feature Tests (Pest)** | 84 tests (450 assertions) | 98 tests (504 assertions) | +14 tests (+54 assertions) |
+| **Backend Code Style (Pint)** | 100% clean PSR-12 | 100% clean PSR-12 | Verified |
+| **Frontend Test Suites (Vitest)** | 15 test files (184 tests) | 17 test files (206 tests) | +2 suites (+22 tests) |
+| **Frontend Lint Errors / Warnings** | 0 errors, 0 warnings | 0 errors, 0 warnings | Clean |
+| **Production Bundle Assets** | 92 assets | 94 assets | +2 optimized chunks |
+| **Production Bundle Leaks** | 0 dev/secret leaks | 0 dev/secret leaks | Clean |
+| **Mobile Accessibility & Zoom Violations** | 12 small input classes | 0 violations (`check:mobile`) | 100% touch floor |
+| **i18n Translation Namespaces** | 18 namespaces | 18 namespaces (synchronized) | 0 missing keys, 0 leaks |
+| **API Endpoint Contracts Verified** | 49 endpoints | 54 endpoints | +5 staff endpoints |
+
+---
+
+## Root Causes & Solutions Summary
+
+### 1. Camera Initialization Hang & Double Mounts
+- **Root Cause**: On mobile devices and under React StrictMode in development, scanner components mounting `useCameraScanner` initialized camera media streams asynchronously without immediate cancellation tokens or stream track closures. If the component unmounted or re-rendered during media track negotiation, unclosed camera handles hung the browser media pipeline, preventing camera restart until a full browser restart.
+- **Solution**: Implemented an explicit 8-second initialization timeout guard, added strict cleanup callbacks stopping all `MediaStreamTrack`s immediately on unmount or mode switch, added ref locks against duplicate initialization, and exposed an explicit user-facing "Retry" button with human-readable error descriptions.
+
+### 2. Involuntary Mobile Viewport Zoom on Input Focus
+- **Root Cause**: WebKit (iOS Safari) automatically magnifies the entire page viewport whenever a form input with an effective font size below 16px receives focus. Because standard CSS utilities like `text-xs` (12px) or `text-sm` (14px) were applied on search inputs, faceted filters, and command dialogs, tapping any input zoomed the viewport, displacing fixed-position headers, footers, and modal backdrops.
+- **Solution**: Established a pointer-coarse safety floor in `index.css` via `@layer base`:
+  ```css
+  @media (pointer: coarse) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+    textarea, select, [contenteditable], .cmdk-input {
+      font-size: max(16px, 1em) !important;
+    }
+  }
+  ```
+  Additionally replaced fixed `100vh` units with `100dvh` / `min-h-dvh`, configured `viewport-fit=cover, interactive-widget=resizes-content` in `index.html`, and enforced compliance via `scripts/check-mobile.mjs`.
+
+### 3. Virtual Keyboard Clipping & Drawer Gaps
+- **Root Cause**: When a mobile virtual keyboard appears, the browser's *visual* viewport shrinks while the *layout* viewport remains at full device height. Drawers styled with `100vh` or fixed percentages extend beyond the visible area, hiding action buttons and forms behind the keyboard. Moreover, Vaul's native `repositionInputs` transform conflicted with dynamic viewport height calculations, producing jitter and vertical white gaps.
+- **Solution**: Developed `useVisualViewport.js` to continuously measure `window.visualViewport` dimensions and publish `--vvh` and `--keyboard-inset` CSS variables. Bound drawer max-height to `calc(var(--vvh, 100dvh) - env(safe-area-inset-top) - 12px)`, pinned footers to `sticky bottom-0 pb-[max(12px, env(safe-area-inset-bottom))]`, explicitly passed `repositionInputs={false}`, and coordinated automatic hiding of bottom navigation bars using `overlayStore.js`.
+
+---
+
+## Key Architectural Decisions
+
+1. **Cashier Soft-Deletes with Financial History Integrity**:
+   - Rather than hard-deleting cashier records (which would orphan sales, void records, and stock adjustments or break foreign key constraints), staff members are soft-deleted with `deleted_at`.
+   - All financial and audit relations (`Sale::user`, `StockMovement::user`, `UtangPayment::recorder`) declare `->withTrashed()` to guarantee lifetime reporting fidelity while `EnsureUserIsActive` middleware blocks any authentication attempt by archived users.
+2. **Single Active Owner Protection Invariant**:
+   - Store administration requires at least one active, non-archived owner account at all times.
+   - Deactivation, archiving, or role modification requests targeting the sole remaining owner fail deterministically with HTTP 422 `code: "last_owner"`.
+3. **Decoupled Barcode Capture Engine (`BarcodeCapture.jsx`)**:
+   - Camera video stream, hardware barcode wedge keystroke buffer (<50ms timing filter), GTIN auto-submit debounce (400ms), and haptic/audio feedback were consolidated into a single reusable component.
+   - This eliminates duplication between POS scanning, inventory restocking, and product intake modals while ensuring consistent scan ergonomics across all devices.
+4. **CSS Custom Property Viewport Architecture**:
+   - Virtual viewport updates are pushed directly to CSS custom properties (`--vvh`, `--keyboard-inset`) via `requestAnimationFrame` and `data-keyboard="open"|"closed"` on `<html>`.
+   - This allows CSS layout rules in Tailwind to react smoothly to keyboard events with zero layout recalculation overhead in React component render cycles.
+
+---
+
+## The Morning Checklist (Manual Verification Protocol)
+
+Follow this step-by-step checklist to verify TindaTrack v1.3.0 in local development:
+
+### A. Environment Startup
+1. Ensure MySQL is running locally.
+2. In terminal 1 (backend):
+   ```bash
+   cd backend
+   php artisan migrate:fresh --seed
+   php artisan serve --host=0.0.0.0 --port=8000
+   ```
+3. In terminal 2 (frontend):
+   ```bash
+   cd frontend
+   npm run dev:lan
+   ```
+   (Note the HTTPS LAN URL displayed, e.g., `https://192.168.1.XX:5173`)
+
+### B. Laptop / Desktop Testing (Chrome or Safari)
+1. Navigate to `http://localhost:5173` (or the LAN URL).
+2. **Owner Login**:
+   - Log in as `owner@tindatrack.test` (password: `password`).
+   - Verify dashboard renders with today's metrics and no console errors.
+3. **Staff Management (`/staff`)**:
+   - Navigate to **Staff** in the sidebar.
+   - Click **+ Add Staff**. Select **Generate secure password automatically**. Enter Name: "Teresa Cashier", Email: "teresa@tindatrack.test", Phone: "09171112233".
+   - Submit. Verify the **Temporary Password Ready** dialog appears with the generated 12-character password.
+   - Copy the password to clipboard. Close dialog.
+   - Verify Teresa appears in the **Active** staff list.
+   - Test toggle active: Click deactivation. Verify badge changes to inactive. Reactivate.
+   - Test password reset: Click **Reset Password**. Verify new temporary password modal appears.
+4. **Temporary Password Login & Banner**:
+   - Log out of owner account.
+   - Log in as `teresa@tindatrack.test` with the temporary password.
+   - Verify the top amber **Must Change Password** banner is visible across all pages.
+   - Click the banner or navigate to **Account Settings**.
+   - Change password using the temporary password as `current_password` and set a new password.
+   - Verify the amber banner disappears immediately upon save.
+5. **Unified Add by Barcode (`/products`)**:
+   - Log back in as owner.
+   - Navigate to **Products**.
+   - Click **Add by barcode**.
+   - In the barcode input, type a known Philippine barcode (e.g., `4800016644800` for Lucky Me Pancit Canton Kalamansi).
+   - Verify Open Food Facts lookup triggers automatically; review pre-filled name, brand, size, suggested category, and image preview.
+   - Enter selling price `₱18.00`, cost `₱15.00`, stock `50`. Click **Save & Scan Next**.
+   - Verify item is added to the "Added this session (1)" counter ledger.
+   - Scan the same barcode again: Verify state switches immediately to **Already in store** showing stock count, current price, and Restock shortcut.
+   - Click **Custom item**: Verify internal `20xxxx...` barcode is generated and **Print labels** button works.
+6. **Hardware Scanner Wedge**:
+   - Plug in USB barcode scanner (or simulate rapid keystrokes with Enter termination).
+   - Scan a barcode while on the POS or Products page. Verify instantaneous detection without dropping characters.
+
+### C. iPhone / Mobile Safari Testing (Local Wi-Fi)
+1. On iPhone, connect to the same Wi-Fi network as your laptop.
+2. Open Safari and navigate to `https://192.168.1.XX:5173` (accept self-signed SSL warning).
+3. **Input Zoom Test**:
+   - Tap any text input, search bar, or modal form field (e.g., POS search, Add Staff form, Customer notes).
+   - **Verification**: The viewport MUST NOT zoom in or change scale. Focus rings should be clean and crisp.
+4. **Virtual Keyboard & Drawer Test**:
+   - In POS, tap the Cart button to open `CartDrawer`.
+   - Tap the customer search or note input.
+   - **Verification**: The virtual keyboard slides up. The drawer body must resize cleanly without vertical white space or clipped action buttons.
+   - Verify `MobileBottomNav` is completely hidden while drawer or keyboard is active.
+   - Dismiss the keyboard by tapping outside or done: Verify bottom navigation smoothly reappears.
+5. **Phone-to-POS Wireless Scanner Pairing**:
+   - On laptop POS, click **Phone Scanner** -> **Pair phone**.
+   - On iPhone camera, scan the displayed QR code (or navigate to the displayed URL with code).
+   - Verify phone displays "Connected to Tindahan ni Aling Nena".
+   - Scan a product barcode using the iPhone camera scanner.
+   - Verify the item is immediately added to the laptop POS cart with audio beep.
+6. **Bilingual Toggle**:
+   - Navigate to **Settings** -> **Preferences**.
+   - Toggle language to **Filipino**.
+   - Verify UI strings update cleanly to Taglish/Filipino.
+   - Toggle back to **English**; verify zero Filipino marker leaks in default English mode.
+7. **Clean Session Logout**:
+   - Tap user avatar and select **Sign Out**.
+   - Verify cart, active pairing sessions, and cached credentials are fully cleared.

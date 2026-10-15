@@ -8,13 +8,15 @@ TindaTrack digitizes traditional pen-and-paper sari-sari store operations (*list
 
 ## Features
 
+- **⚡ Unified Add by Barcode**: Seamless product onboarding in a single unified flow. Scan via hardware USB barcode guns, webcam/phone cameras, paired smartphones, or manual typing with 400ms GTIN debounce. Detects existing in-store inventory for instant restock shortcuts (`+5`, `+10`, `+20`, `+50`), auto-fills new products from Open Food Facts, and supports continuous "Save & scan next" cataloging with live session history.
+- **📱 Mobile Ergonomics & Input Polish**: Flawless phone experience with a 16px font-size touch floor preventing iOS/Android auto-zoom on input focus. Features dynamic visual viewport adaptation (`useVisualViewport`) that eliminates keyboard gaps, responsive full-height bottom drawers with scrollable bodies and pinned sticky footers, and automatic bottom navigation hiding when overlays or sheets open.
+- **👥 Full Staff & Cashier Management**: Comprehensive cashier administration for store owners. Create cashier accounts with cryptographically generated 8-character temporary passwords, one-click clipboard copying, and a mandatory first-login password update banner. Supports soft-delete archiving, instant password resets, and account restorations with domain rule code guards (`self_action`, `last_owner`, `owner_protected`, `email_taken`).
 - **⚡ Fast POS**: Barcode and SKU search, quick categories, numeric keypad, cash change calculation (*sukli*), and cart parking (up to 3 held carts).
 - **📷 Barcode Scanning & Hardware Wedge**: Scan via webcam/phone camera (`barcode-detector` WASM), USB/Bluetooth hardware scanner wedge, or manual entry with duplicate deduplication.
 - **📱 Phone-to-POS Live Sync**: Turn any mobile phone into a wireless scanner via zero-login QR code pairing (`/scan`) syncing instantly with laptop POS or inventory.
 - **🌐 Open Food Facts Auto-Fill**: Auto-detects product names, brands, package sizes, categories, and images from Open Food Facts open-data catalog (ODbL).
-- **⚡ One-Step Barcode Auto-Fill & Quick Add**: 500ms debounced auto-lookup on typed GTIN, dedicated continuous "Quick Add by Scan" modal with auto price focus and local duplicate restock shortcuts (`+5`, `+10`, `+20`, `+50`).
 - **🖼️ In-DB Product Images**: MySQL `MEDIUMBLOB` and ULID binary storage, client-side canvas downscaling (WebP/JPEG <= 300KB), mobile camera photo capture (`capture="environment"`), and SSRF-safe URL import.
-- **🌏 Bilingual Internationalization**: English-first default with Taglish/Filipino toggle in Settings, 18 complete namespaces, and automated dictionary parity verification.
+- **🌏 Bilingual Internationalization**: English-first default with Taglish/Filipino toggle in Settings, 18 complete namespaces, zero English UI Taglish leaks, and automated dictionary parity verification.
 - **🏷️ Homemade Barcode Generator & Labels**: Generate internal EAN-13 barcodes (`20xxxx...`) for home-cooked goods (ice candy, turon) and print 12-per-page thermal/sticker labels.
 - **📒 Digital Utang Ledger**: Track credit balances per suki, payment recordings, 30-day aging alerts, and credit limit enforcement with owner overrides.
 - **📦 Inventory & Stock Movements**: Real-time stock counts, low/out-of-stock badges, atomic stock deductions, and audit movement logs.

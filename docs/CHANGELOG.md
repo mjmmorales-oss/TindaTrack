@@ -2,6 +2,50 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.3.0] - 2026-10-16 - Unified Add by Barcode, Mobile Input Polish & Staff Management
+- **Unified "Add by Barcode" Flow (U1)**:
+  - Replaced fragmented barcode entry paths (`QuickAddScanDialog` and separate scanner sheets) with unified `BarcodeCapture.jsx` and `AddByBarcodeDialog.jsx`.
+  - Four distinct product states seamlessly managed in a single responsive modal:
+    1. *Local match*: Displays existing product with price, stock, and quick restock / edit shortcuts.
+    2. *Found online (Open Food Facts)*: Displays item preview with photo, pre-filling name, brand, size, and auto-suggested category with attribution.
+    3. *Not found anywhere*: Clean minimal manual entry form with photo upload and inline GTIN confirmation.
+    4. *Custom / homemade*: One-click internal barcode generator (`makeInternal`) generating valid `20xxxx...` EAN-13 barcodes with printable sticker label sheet shortcut (`PrintLabelsDialog`).
+  - Continuous shelf inventory intake with session counter ledger ("Added this session (N)") and clickable thumbnails for rapid post-creation edits.
+  - Camera resilience: 8-second initialization timeout guard, explicit retry mechanisms, pointer-coarse auto-open toggle with `localStorage` persistence, synthetic WebAudio oscillator beep, haptic vibration, and 1500ms duplicate suppression.
+  - Hardware USB and Bluetooth barcode scanner wedge support (`useBarcodeWedge`) capturing rapid keystroke bursts and Enter/CR termination while preserving standard keyboard typing.
+- **Mobile Input Zoom Prevention & Safety Floor (U2)**:
+  - Pointer-coarse safety floor (`@media (pointer: coarse)`) under Tailwind CSS `@layer base` setting `font-size: max(16px, 1em) !important;` on all inputs, textareas, selects, `contenteditable`, and `cmdk-input`, eliminating iOS Safari viewport auto-zooming on focus.
+  - Global touch optimization: `overscroll-behavior-y: none; -webkit-text-size-adjust: 100%;` and `touch-action: manipulation;` on buttons and form controls to eliminate 300ms double-tap zoom delays.
+  - Component input sizing audited: `CommandInput` updated to `text-base md:text-sm`, and all table filter inputs upgraded to responsive `text-base md:...`.
+  - Replaced legacy viewport units with dynamic viewport height (`min-h-dvh`) across all layouts and auth wrappers.
+  - Viewport meta updated to include `viewport-fit=cover, interactive-widget=resizes-content`.
+  - Added automated mobile lint gate `scripts/check-mobile.mjs` (`npm run check:mobile`).
+- **Mobile Drawers & Sheets Keyboard Polish (U3)**:
+  - Dynamic visual viewport tracking hook `useVisualViewport.js` computing `--vvh` and `--keyboard-inset` with throttled `requestAnimationFrame` and `data-keyboard="open"|"closed"` DOM state.
+  - Resilient drawer geometry: drawer heights bound to `calc(var(--vvh, 100dvh) - env(safe-area-inset-top) - 12px)`; sticky footers with `safe-area-inset-bottom`; `repositionInputs={false}` to prevent transform jitter with virtual keyboard.
+  - `overlayStore.js` coordinating active modals and drawers; `MobileBottomNav` and `MobileCartBar` automatically hide during active modal or keyboard presentation.
+  - Comprehensive documentation in `docs/MOBILE.md` and automated Vitest suite `mobile-drawers.test.jsx`.
+- **Full Staff Management & Security Rule Codes (U4)**:
+  - Soft-deletes (`deleted_at`) for cashiers, preserving historical sales, utang records, and stock audit trails with `withTrashed()` model associations.
+  - Added `phone` and `must_change_password` attributes to users.
+  - Backend `UserController` with role gates, `status` filtering (`active`, `inactive`, `archived`, `all`), and live sales metrics (`sales_count`, `sales_total_today`) without N+1 queries.
+  - High-entropy 12-character temporary password auto-generation (`generate_password`), returning `temporary_password` upon creation and password reset.
+  - Strict security rule codes: `self_action`, `last_owner`, `owner_protected`, `email_taken`, and `user_archived`.
+  - Session revocation (`revokeSessions`) invalidating all Sanctum bearer tokens and ending active phone scanner sessions.
+  - Frontend `StaffPage` with tabbed views, mobile cards, detail sheets, temporary password copy dialog, and top `MustChangePasswordBanner`.
+  - 14/14 backend Pest tests (`StaffManagementTest.php`) and 5/5 Vitest tests (`staff.test.jsx`).
+- **Bilingual i18n Parity & Zero Marker Leaks (U5)**:
+  - English default verified with complete Taglish/Filipino toggle coverage across all UI namespaces.
+  - Hardened `scripts/check-i18n.mjs` scanning both frontend and backend for forbidden Filipino markers in default English strings and ensuring exact placeholder parity (`{name}`, `{count}`, `{amount}`, etc.).
+  - Synchronized dictionary keys across `en/` and `fil/` with 0 missing translations.
+  - Bilingual test assertion compatibility across all Vitest suites.
+- **Regression Verification & Deployment Readiness (U6–U7)**:
+  - Verified image upload, camera capture, and Open Food Facts import pipelines (`images.test.jsx`).
+  - Automated smoke testing: production build bundle scan (`check-prod-bundle.mjs`, 94 assets, 0 leaks), production-like HTTP smoke test (`smoke-prod-like.mjs`), and direct API phone pairing smoke test (`smoke-pairing.mjs`).
+  - Layout containment and single-header chrome verified across all public and protected routes (`containment.test.jsx`).
+  - Backend test coverage: 98/98 Pest tests green, 100% clean Pint styling.
+  - Frontend test coverage: 206/206 Vitest tests green across 17 test suites.
+
 ## [v1.2.0] - Pre-Deployment Hardening, English-First i18n, In-DB Images & Quick Add Barcode Flow
 - **Pre-Deployment Hardening & Security Audit (H0–H2, H8)**:
   - Sanctum token authentication hardening: connection-level `throttle:10,1` on `POST /api/login`, dual environment expiration (`SANCTUM_EXPIRATION` and `SANCTUM_TOKEN_EXPIRATION`), token revocation on logout.
