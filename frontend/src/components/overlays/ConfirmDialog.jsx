@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Confirmation dialog built on AlertDialog with semantic tone styling,
@@ -23,12 +24,12 @@ import { Label } from '@/components/ui/label'
  * @param {(open: boolean) => void} props.onOpenChange - Open state change handler
  * @param {React.ReactNode} props.title - Dialog title
  * @param {React.ReactNode} [props.description] - Dialog descriptive warning/explanation
- * @param {string} [props.confirmText='Kumpirmahin (Confirm)'] - Confirm button label
- * @param {string} [props.cancelText='Kanselahin (Cancel)'] - Cancel button label
+ * @param {string} [props.confirmText='Confirm'] - Confirm button label
+ * @param {string} [props.cancelText='Cancel'] - Cancel button label
  * @param {'default'|'destructive'} [props.tone='default'] - Visual tone of the action
  * @param {boolean} [props.requireReason=false] - Whether a text reason must be provided
- * @param {string} [props.reasonLabel='Dahilan (Reason)'] - Label for the reason textarea
- * @param {string} [props.reasonPlaceholder='Ibigay ang dahilan... (Provide a reason)'] - Reason placeholder
+ * @param {string} [props.reasonLabel='Reason'] - Label for the reason textarea
+ * @param {string} [props.reasonPlaceholder='Provide a reason...'] - Reason placeholder
  * @param {number} [props.minReasonLength=4] - Minimum characters required for reason
  * @param {(reason?: string) => Promise<void> | void} props.onConfirm - Callback triggered on confirmation
  * @param {boolean} [props.isLoading=false] - Optional controlled loading state
@@ -39,16 +40,22 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmText = 'Kumpirmahin (Confirm)',
-  cancelText = 'Kanselahin (Cancel)',
+  confirmText,
+  cancelText,
   tone = 'default',
   requireReason = false,
-  reasonLabel = 'Dahilan (Reason)',
-  reasonPlaceholder = 'Ibigay ang dahilan... (Provide a reason)',
+  reasonLabel,
+  reasonPlaceholder,
   minReasonLength = 4,
   onConfirm,
   isLoading = false,
 }) {
+  const { t } = useTranslation()
+  const effectiveConfirmText = confirmText || t('common:confirm', 'Confirm')
+  const effectiveCancelText = cancelText || t('common:cancel', 'Cancel')
+  const effectiveReasonLabel = reasonLabel || t('common:reason', 'Reason')
+  const effectiveReasonPlaceholder = reasonPlaceholder || t('common:provideReason', 'Provide a reason...')
+
   const [reason, setReason] = useState('')
   const [internalLoading, setInternalLoading] = useState(false)
 
@@ -112,21 +119,21 @@ export function ConfirmDialog({
               htmlFor="confirm-reason"
               className="text-foreground text-xs font-semibold"
             >
-              {reasonLabel}{' '}
+              {effectiveReasonLabel}{' '}
               <span className="text-destructive font-normal">*</span>
             </Label>
             <Textarea
               id="confirm-reason"
-              placeholder={reasonPlaceholder}
+              placeholder={effectiveReasonPlaceholder}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               disabled={loading}
-              className="min-h-[72px] resize-none text-sm"
+              className="min-h-[72px] resize-none text-base md:text-sm"
             />
             {reason.trim().length > 0 &&
               reason.trim().length < minReasonLength && (
                 <p className="text-destructive text-xs">
-                  Kailangan ng hindi bababa sa {minReasonLength} mga karakter (
+                  {t('common:minCharactersRequired', { count: minReasonLength, defaultValue: `Requires at least ${minReasonLength} characters` })} (
                   {reason.trim().length}/{minReasonLength}).
                 </p>
               )}
@@ -139,7 +146,7 @@ export function ConfirmDialog({
             onClick={() => onOpenChange?.(false)}
             className="h-10"
           >
-            {cancelText}
+            {effectiveCancelText}
           </AlertDialogCancel>
           <Button
             type="button"
@@ -149,7 +156,7 @@ export function ConfirmDialog({
             className="h-10 min-w-28 gap-2"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {confirmText}
+            {effectiveConfirmText}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { saleService } from '@/services/saleService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
+import { formatCurrency } from '@/lib/format'
 
 export const saleKeys = {
   all: ['sales'],
@@ -39,12 +41,15 @@ export function useCreateSale() {
       queryClient.invalidateQueries({ queryKey: ['utang'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       notify.success(
-        'Matagumpay na naitala ang benta!',
-        `Resibo ${res.data.sale_no} · ₱${res.data.total_amount.toFixed(2)}`,
+        i18n.t('pos:saleRecordedSuccess'),
+        i18n.t('pos:saleRecordedDetail', {
+          receipt: res.data.sale_no,
+          amount: formatCurrency(res.data.total_amount),
+        }),
       )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong itala ang benta.')
+      notify.error(err.message || i18n.t('pos:recordSaleError'))
     },
   })
 }
@@ -61,10 +66,13 @@ export function useVoidSale() {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['utang'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
-      notify.success('Nai-void ang benta!', `Resibo ${res.data.sale_no} has been voided.`)
+      notify.success(
+        i18n.t('pos:saleVoidedSuccess'),
+        i18n.t('pos:saleVoidedDetail', { receipt: res.data.sale_no }),
+      )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-void ang benta.')
+      notify.error(err.message || i18n.t('pos:voidSaleError'))
     },
   })
 }

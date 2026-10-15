@@ -21,7 +21,7 @@ export const settingsService = {
    * Reset is only supported in mock mode.
    */
   async resetDemoData() {
-    throw new Error('Ang reset ng database ay para lamang sa mock data mode.')
+    throw new Error('Database reset is only available in mock data mode.')
   },
 }
 

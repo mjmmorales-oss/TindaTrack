@@ -95,5 +95,14 @@
   "signedOutSuccess": "You have signed out successfully.",
   "today": "Today",
   "autoBarcodeLookup": "Automatically look up scanned barcodes online",
-  "autoBarcodeLookupDesc": "When an unknown barcode is scanned or typed, search Open Food Facts to automatically fill in the product name, photo, and category."
+  "autoBarcodeLookupDesc": "When an unknown barcode is scanned or typed, search Open Food Facts to automatically fill in the product name, photo, and category.",
+  "invalidData": "Invalid data",
+  "checkFields": "Please check the entered fields.",
+  "passwordChangeFailed": "Failed to update password.",
+  "settingsSavedSuccess": "Store settings saved successfully!",
+  "settingsUpdatedDetail": "Store info has been updated.",
+  "saveSettingsError": "Failed to save settings.",
+  "demoResetSuccess": "Demo data reset successfully!",
+  "demoResetDetail": "All data has been restored to default seeds.",
+  "demoResetError": "Failed to reset demo data."
 }

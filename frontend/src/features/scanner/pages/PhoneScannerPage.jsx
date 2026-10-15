@@ -13,7 +13,7 @@ import {
   ScanLine,
   RefreshCw,
 } from 'lucide-react'
-import { CameraScanner } from '@/components/scanner/CameraScanner'
+import { BarcodeCapture } from '@/components/scanner/BarcodeCapture'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -400,11 +400,13 @@ export function PhoneScannerPage() {
         ) : (
           /* PAIRED STATE */
           <div className="flex-1 flex flex-col space-y-4">
-            {/* Camera Viewfinder */}
-            <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm">
-              <CameraScanner
-                onDetected={handleDetected}
-                className="w-full aspect-[4/3] sm:aspect-video"
+            {/* Camera Viewfinder & Barcode Capture */}
+            <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
+              <BarcodeCapture
+                onCode={(code) => handleDetected(code)}
+                cameraDefault="on"
+                continuous={true}
+                placeholder={t('scanner:typeBarcodePlaceholder', 'Type barcode here...')}
               />
             </div>
 

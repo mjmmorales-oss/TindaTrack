@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { api, TOKEN_KEY } from '@/lib/api'
 import { useCartStore } from '@/stores/cartStore'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
 
 export const AuthContext = createContext(null)
 
@@ -77,15 +78,15 @@ export function AuthProvider({ children }) {
     const handleUnauthorized = (e) => {
       clearSession()
       notify.error(
-        'Sesyon Nag-expire (401)',
-        e.detail || 'Nag-expire ang iyong sesyon. Mag-sign in muli upang magpatuloy.',
+        i18n.t('errors:sessionExpired', 'Session Expired (401)'),
+        e.detail || i18n.t('errors:unauthorized', 'Your session has expired. Please sign in again.'),
       )
     }
 
     const handleForbidden = (e) => {
       notify.error(
-        'Walang Pahintulot (403)',
-        e.detail || 'Bawal ang aksyong ito sa iyong kasalukuyang tungkulin.',
+        i18n.t('errors:accessDeniedBadge', 'Access Denied (403)'),
+        e.detail || i18n.t('errors:forbidden', 'You do not have permission to perform this action.'),
       )
     }
 
@@ -128,6 +129,34 @@ export function AuthProvider({ children }) {
     [],
   )
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get('/user')
+      setUser(data)
+      try {
+        localStorage.setItem('tindatrack_user', JSON.stringify(data))
+      } catch {
+        // ignore
+      }
+      return data
+    } catch {
+      return null
+    }
+  }, [])
+
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const updated = typeof patch === 'function' ? patch(prev) : { ...prev, ...patch }
+      try {
+        localStorage.setItem('tindatrack_user', JSON.stringify(updated))
+      } catch {
+        // ignore
+      }
+      return updated
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
@@ -139,8 +168,10 @@ export function AuthProvider({ children }) {
       logout,
       forgotPassword,
       resetPassword,
+      refreshUser,
+      updateUser,
     }),
-    [user, status, login, register, logout, forgotPassword, resetPassword],
+    [user, status, login, register, logout, forgotPassword, resetPassword, refreshUser, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

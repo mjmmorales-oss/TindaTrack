@@ -435,10 +435,10 @@ export function ProductDetailPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Receipt className="h-4 w-4 text-primary" />
-              Benta sa Nakalipas na 30 Araw (Sales Volume)
+              {t('products:sales30DaysTitle', '30-Day Sales Volume')}
             </CardTitle>
             <CardDescription className="text-xs">
-              Bilang ng naibentang piraso bawat araw
+              {t('products:sales30DaysDesc', 'Units sold per calendar day')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -468,7 +468,7 @@ export function ProductDetailPage() {
                           <div className="rounded-lg border border-border bg-popover p-2 shadow-md text-xs space-y-0.5">
                             <p className="font-semibold text-popover-foreground">{item.date}</p>
                             <p className="text-primary font-mono font-bold">
-                              Naibenta: {item.quantity} {product.unit || 'pcs'}
+                              {t('products:soldLabel', 'Sold')}: {item.quantity} {product.unit || 'pcs'}
                             </p>
                           </div>
                         )
@@ -493,10 +493,10 @@ export function ProductDetailPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <ShoppingCart className="h-4 w-4 text-primary" />
-            Mga Kamakailang Transaksyon (Recent Sales)
+            {t('products:recentTransactionsTitle', 'Recent Sales Transactions')}
           </CardTitle>
           <CardDescription className="text-xs">
-            Mga pinakabagong resibo kung saan kasama ang panindang ito
+            {t('products:recentTransactionsDesc', 'Recent orders containing this product')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -534,7 +534,7 @@ export function ProductDetailPage() {
             </div>
           ) : (
             <p className="text-xs text-muted-foreground py-6 text-center">
-              Wala pang naitalang transaksyon para sa produktong ito kamakailan.
+              {t('products:noSalesRecorded', 'No sales recorded yet for this product.')}
             </p>
           )}
         </CardContent>

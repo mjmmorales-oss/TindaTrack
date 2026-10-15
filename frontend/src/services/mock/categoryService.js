@@ -126,7 +126,7 @@ export const categoryService = {
         message: 'Cannot delete category that still has products assigned to it.',
         errors: {
           category: [
-            'May mga produkto pang nakatalaga sa kategoryang ito. Ilipat o burahin muna ang mga produkto bago mag-delete.',
+            'This category still has assigned products. Move or delete those products before deleting this category.',
           ],
         },
       })

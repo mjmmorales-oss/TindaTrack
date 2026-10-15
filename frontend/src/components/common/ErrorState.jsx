@@ -1,6 +1,7 @@
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -8,7 +9,7 @@ import { cn } from '@/lib/utils'
  *
  * @component
  * @param {object} props
- * @param {string} [props.title='May naganap na error'] - Error title
+ * @param {string} [props.title] - Error title
  * @param {string} [props.message] - Explanatory error message
  * @param {Error|object|string} [props.error] - Error object or string
  * @param {() => void} [props.onRetry] - Callback invoked when the user clicks Retry
@@ -16,7 +17,7 @@ import { cn } from '@/lib/utils'
  * @returns {React.JSX.Element}
  */
 export function ErrorState({
-  title = 'May naganap na error',
+  title,
   message,
   description,
   error,
@@ -25,14 +26,16 @@ export function ErrorState({
   onAction,
   className,
 }) {
+  const { t } = useTranslation()
+  const displayTitle = title || t('common:error', 'An error occurred')
   const errorMessage =
     message ||
     description ||
     (typeof error === 'string' ? error : error?.message) ||
-    'Hindi maikarga ang datos. Subukang muli.'
+    t('common:somethingWentWrongDesc', 'Could not load data. Please try again.')
 
   const handleAction = onRetry || onAction
-  const actionLabel = actionText || 'Subukan Muli (Retry)'
+  const actionLabel = actionText || t('common:retry', 'Retry')
 
   return (
     <Alert
@@ -48,7 +51,7 @@ export function ErrorState({
           aria-hidden="true"
         />
         <div className="space-y-1">
-          <AlertTitle className="text-sm font-semibold">{title}</AlertTitle>
+          <AlertTitle className="text-sm font-semibold">{displayTitle}</AlertTitle>
           <AlertDescription className="text-xs opacity-90">
             {errorMessage}
           </AlertDescription>

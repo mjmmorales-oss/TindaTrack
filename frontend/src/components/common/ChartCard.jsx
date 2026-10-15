@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -32,6 +33,8 @@ export function ChartCard({
   empty = false,
   className,
 }) {
+  const { t } = useTranslation()
+
   return (
     <Card className={cn('flex flex-col', className)}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
@@ -56,8 +59,8 @@ export function ChartCard({
         ) : empty ? (
           <div className="flex h-[240px] items-center justify-center">
             <EmptyState
-              title="Walang datos sa panahong ito"
-              description="Walang naitalang transaksyon para sa napiling petsa."
+              title={t('common:noDataInPeriod', 'No data for this period')}
+              description={t('common:noTransactionsForDate', 'No transactions recorded for the selected period.')}
               className="min-h-0 border-none bg-transparent p-0"
             />
           </div>

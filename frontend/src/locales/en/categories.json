@@ -57,5 +57,11 @@
   "saveChanges": "Save Changes",
   "saveError": "Failed to save category.",
   "colorSwatchesLabel": "Category Color (8 Preset Swatches)",
-  "iconPickerLabel": "Category Icon (12 Lucide Icons)"
+  "iconPickerLabel": "Category Icon (12 Lucide Icons)",
+  "createdSuccess": "Category saved successfully.",
+  "createError": "Failed to create category.",
+  "updatedSuccess": "Category updated successfully.",
+  "updateError": "Failed to update category.",
+  "deletedSuccess": "Category deleted successfully.",
+  "deleteError": "Failed to delete category."
 }

@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/input-group'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -30,7 +31,7 @@ export const SearchInput = forwardRef(function SearchInput(
     value = '',
     onChange,
     onClear,
-    placeholder = 'Maghanap...',
+    placeholder,
     showKbdHint = true,
     debounceMs = 300,
     className,
@@ -39,6 +40,8 @@ export const SearchInput = forwardRef(function SearchInput(
   },
   ref,
 ) {
+  const { t } = useTranslation()
+  const effectivePlaceholder = placeholder || t('common:search', 'Search...')
   const [localValue, setLocalValue] = useState(value)
   const [debouncedValue] = useDebounce(localValue, debounceMs)
 
@@ -72,7 +75,7 @@ export const SearchInput = forwardRef(function SearchInput(
         ref={inputRef || ref}
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
-        placeholder={placeholder}
+        placeholder={effectivePlaceholder}
         className="text-xs"
         {...props}
       />
@@ -85,7 +88,7 @@ export const SearchInput = forwardRef(function SearchInput(
             size="icon"
             className="text-muted-foreground hover:text-foreground h-5 w-5 p-0 hover:bg-transparent"
             onClick={handleClear}
-            aria-label="Linisin ang paghahanap"
+            aria-label={t('common:clearSearch', 'Clear search')}
           >
             <X className="h-3.5 w-3.5" />
           </Button>

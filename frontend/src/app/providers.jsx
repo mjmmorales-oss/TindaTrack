@@ -6,7 +6,13 @@ import { ThemeProvider } from '@/context/ThemeProvider'
 import { AuthProvider } from '@/context/AuthContext'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
+import { useVisualViewport } from '@/hooks/useVisualViewport'
 import { OfflineBanner } from '@/components/system/OfflineBanner'
+
+function VisualViewportWatcher() {
+  useVisualViewport()
+  return null
+}
 
 export function Providers({ children }) {
   const [queryClient] = useState(
@@ -28,6 +34,7 @@ export function Providers({ children }) {
         <AuthProvider>
           <TooltipProvider delayDuration={200}>
             <MotionConfig reducedMotion="user">
+              <VisualViewportWatcher />
               <OfflineBanner />
               {children}
               <Toaster richColors position="top-right" />

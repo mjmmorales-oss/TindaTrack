@@ -12,7 +12,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check:bundle": "node ../scripts/check-prod-bundle.mjs",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:mobile": "node scripts/check-mobile.mjs"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",

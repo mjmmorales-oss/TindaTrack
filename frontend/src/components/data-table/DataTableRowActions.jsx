@@ -12,6 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -32,6 +33,7 @@ import { cn } from '@/lib/utils'
  * @returns {React.JSX.Element}
  */
 export function DataTableRowActions({ row, actions = [], className }) {
+  const { t } = useTranslation()
   if (!actions.length) return null
 
   return (
@@ -45,14 +47,14 @@ export function DataTableRowActions({ row, actions = [], className }) {
                 'data-[state=open]:bg-muted h-8 w-8 p-0',
                 className,
               )}
-              aria-label="Buksan ang menu ng aksyon"
+              aria-label={t('common:openActionsMenu', 'Open actions menu')}
             >
               <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">Buksan ang menu</span>
+              <span className="sr-only">{t('common:openMenu', 'Open menu')}</span>
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>Mga Aksyon</TooltipContent>
+        <TooltipContent>{t('common:actions', 'Actions')}</TooltipContent>
       </Tooltip>
 
       <DropdownMenuContent align="end" className="w-[160px]">

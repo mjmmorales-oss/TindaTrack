@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router'
 import {
   LayoutDashboard,
@@ -8,16 +8,47 @@ import {
   ScanBarcode,
 } from 'lucide-react'
 import { MoreSheet } from '@/components/layout/MoreSheet'
+import { useVisualViewport } from '@/hooks/useVisualViewport'
+import { useOverlayStore } from '@/stores/overlayStore'
 import { cn } from '@/lib/utils'
 
 export function MobileBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false)
+  const isAnyModalOpen = useOverlayStore((s) => s.activeModalCount > 0)
+  const { isKeyboardOpen: isKeyboardFromHook } = useVisualViewport()
+
+  const [isKeyboardFromDataset, setIsKeyboardFromDataset] = useState(() => {
+    return (
+      typeof document !== 'undefined' &&
+      document.documentElement.dataset.keyboard === 'open'
+    )
+  })
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const check = () => {
+      setIsKeyboardFromDataset(document.documentElement.dataset.keyboard === 'open')
+    }
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-keyboard'],
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  const isHidden = isKeyboardFromHook || isKeyboardFromDataset || isAnyModalOpen
 
   return (
     <>
       <nav
         aria-label="Mobile navigation"
-        className="border-border/80 bg-background/95 fixed right-0 bottom-0 left-0 z-40 border-t pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-md md:hidden"
+        data-state={isHidden ? 'hidden' : 'visible'}
+        className={cn(
+          'border-border/80 bg-background/95 fixed right-0 bottom-0 left-0 z-40 border-t pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-md transition-all duration-200 md:hidden',
+          isHidden && 'hidden pointer-events-none opacity-0 translate-y-full',
+        )}
       >
         <div className="flex h-16 items-center justify-around px-2">
           {/* Home */}
@@ -103,3 +134,5 @@ export function MobileBottomNav() {
     </>
   )
 }
+
+export default MobileBottomNav

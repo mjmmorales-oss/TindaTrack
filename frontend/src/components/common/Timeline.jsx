@@ -1,5 +1,6 @@
 import { CircleDot } from 'lucide-react'
 import { Money } from '@/components/common/Money'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 const toneIconColors = {
@@ -30,10 +31,11 @@ const toneIconColors = {
  * @returns {React.JSX.Element}
  */
 export function Timeline({ items = [], className }) {
+  const { t } = useTranslation()
   if (!items.length) {
     return (
       <p className="text-muted-foreground py-4 text-center text-xs">
-        Walang naitalang kasaysayan.
+        {t('common:noHistoryRecorded', 'No history recorded.')}
       </p>
     )
   }

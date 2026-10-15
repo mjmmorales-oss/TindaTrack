@@ -95,5 +95,14 @@
   "signedOutSuccess": "Naka-sign out ka na.",
   "today": "Ngayon",
   "autoBarcodeLookup": "Kusang hanapin sa internet ang na-scan na barcode",
-  "autoBarcodeLookupDesc": "Kapag may na-scan o nai-type na bagong barcode, hanapin sa Open Food Facts para kusang mapunan ang pangalan, litrato, at kategorya."
+  "autoBarcodeLookupDesc": "Kapag may na-scan o nai-type na bagong barcode, hanapin sa Open Food Facts para kusang mapunan ang pangalan, litrato, at kategorya.",
+  "invalidData": "Hindi wastong datos",
+  "checkFields": "Pakisuri ang mga patlang.",
+  "passwordChangeFailed": "Nabigong palitan ang password.",
+  "settingsSavedSuccess": "Nai-save ang mga setting!",
+  "settingsUpdatedDetail": "Na-update ang tindahan info.",
+  "saveSettingsError": "Nabigong i-save ang mga setting.",
+  "demoResetSuccess": "Na-reset ang demo data!",
+  "demoResetDetail": "Lahat ng datos ay ibinalik sa panimulang estado.",
+  "demoResetError": "Nabigong i-reset ang demo data."
 }

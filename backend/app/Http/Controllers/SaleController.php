@@ -70,7 +70,7 @@ class SaleController extends Controller
     {
         $user = $request->user();
         if ($user->hasRole('cashier') && $sale->user_id !== $user->id) {
-            abort(403, 'Hindi mo maaaring tingnan ang resibo ng ibang kahera.');
+            abort(403, 'You cannot view receipts belonging to another cashier.');
         }
 
         return response()->json([

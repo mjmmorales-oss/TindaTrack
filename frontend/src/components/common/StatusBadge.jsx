@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 const STATUS_CONFIGS = {
@@ -38,18 +39,21 @@ const STATUS_CONFIGS = {
 
   // Sale Status
   'sale:completed': {
-    label: 'Kumpleto',
+    label: 'Completed',
+    i18nKey: 'common:statusCompleted',
     icon: CheckCircle2,
     className:
       'bg-success/15 text-success dark:bg-success/20 border-success/30',
   },
   'sale:voided': {
-    label: 'Na-void',
+    label: 'Voided',
+    i18nKey: 'common:statusVoided',
     icon: Ban,
     className: 'bg-muted text-muted-foreground border-border line-through',
   },
   'sale:pending': {
-    label: 'Nakabinbin',
+    label: 'Pending',
+    i18nKey: 'common:statusPending',
     icon: Clock,
     className:
       'bg-warning/15 text-warning dark:bg-warning/20 border-warning/30',
@@ -57,13 +61,15 @@ const STATUS_CONFIGS = {
 
   // Payment Method
   'payment:cash': {
-    label: 'Cash (Bayad)',
+    label: 'Cash',
+    i18nKey: 'common:statusCash',
     icon: Banknote,
     className:
       'bg-primary/15 text-primary dark:bg-primary/20 border-primary/30',
   },
   'payment:utang': {
-    label: 'Utang (Credit)',
+    label: 'Utang',
+    i18nKey: 'common:statusUtang',
     icon: BookOpen,
     className:
       'bg-utang/15 text-utang dark:bg-utang/20 border-utang/30 font-semibold',
@@ -71,38 +77,44 @@ const STATUS_CONFIGS = {
 
   // User Role
   'role:owner': {
-    label: 'May-ari (Owner)',
+    label: 'Owner',
+    i18nKey: 'common:statusOwner',
     icon: Crown,
     className: 'bg-primary text-primary-foreground font-semibold shadow-xs',
   },
   'role:cashier': {
-    label: 'Tindero (Cashier)',
+    label: 'Cashier',
+    i18nKey: 'common:statusCashier',
     icon: User,
     className: 'bg-secondary text-secondary-foreground font-medium',
   },
 
   // Active Status
   'active:active': {
-    label: 'Aktibo',
+    label: 'Active',
+    i18nKey: 'common:statusActive',
     icon: ShieldCheck,
     className:
       'bg-success/15 text-success dark:bg-success/20 border-success/30',
   },
   'active:inactive': {
-    label: 'Hindi Aktibo',
+    label: 'Inactive',
+    i18nKey: 'common:statusInactive',
     icon: Ban,
     className: 'bg-muted text-muted-foreground border-border',
   },
 
   // Credit Status
   'credit:good': {
-    label: 'Magandang Rekord',
+    label: 'Good Standing',
+    i18nKey: 'common:statusGoodStanding',
     icon: Check,
     className:
       'bg-success/15 text-success dark:bg-success/20 border-success/30',
   },
   'credit:overdue': {
-    label: 'Lagpas sa Takdang Araw',
+    label: 'Overdue',
+    i18nKey: 'common:statusOverdue',
     icon: AlertCircle,
     className:
       'bg-destructive/15 text-destructive dark:bg-destructive/20 border-destructive/30',
@@ -123,6 +135,7 @@ const STATUS_CONFIGS = {
  * @returns {React.JSX.Element}
  */
 export function StatusBadge({ type, status, label, count, className }) {
+  const { t } = useTranslation()
   const key = `${type}:${status}`
   const config = STATUS_CONFIGS[key] || {
     label: label || status,
@@ -131,7 +144,7 @@ export function StatusBadge({ type, status, label, count, className }) {
   }
 
   const Icon = config.icon
-  const displayLabel = label || config.label
+  const displayLabel = label || (config.i18nKey ? t(config.i18nKey, config.label) : config.label)
 
   return (
     <Badge

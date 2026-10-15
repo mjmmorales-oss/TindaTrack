@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsService } from '@/services/settingsService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
 
 export const settingsKeys = {
   all: ['settings'],
@@ -19,10 +20,13 @@ export function useUpdateSettings() {
     mutationFn: (data) => settingsService.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
-      notify.success('Nai-save ang mga setting!', 'Na-update ang tindahan info.')
+      notify.success(
+        i18n.t('settings:settingsSavedSuccess'),
+        i18n.t('settings:settingsUpdatedDetail'),
+      )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-save ang mga setting.')
+      notify.error(err.message || i18n.t('settings:saveSettingsError'))
     },
   })
 }
@@ -33,10 +37,13 @@ export function useResetDemoData() {
     mutationFn: () => settingsService.resetDemoData(),
     onSuccess: () => {
       queryClient.clear()
-      notify.success('Na-reset ang demo data!', 'Lahat ng datos ay ibinalik sa panimulang estado.')
+      notify.success(
+        i18n.t('settings:demoResetSuccess'),
+        i18n.t('settings:demoResetDetail'),
+      )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-reset ang demo data.')
+      notify.error(err.message || i18n.t('settings:demoResetError'))
     },
   })
 }

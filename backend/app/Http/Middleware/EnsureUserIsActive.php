@@ -17,7 +17,7 @@ class EnsureUserIsActive
     {
         $user = $request->user();
 
-        if ($user && ! $user->is_active) {
+        if ($user && (! $user->is_active || $user->trashed())) {
             $user->tokens()->delete();
 
             return response()->json([

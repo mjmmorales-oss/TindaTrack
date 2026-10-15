@@ -223,7 +223,7 @@ describe('B10: PairPhoneDialog Component', () => {
     })
 
     expect(screen.getByText(/Or enter this code at \/scan|O ilagay ang code na ito sa \/scan/i)).toBeInTheDocument()
-    expect(screen.queryByText(/Hindi makagawa ng code/i)).toBeNull()
+    expect(screen.queryByText(/Hindi makagawa ng code|Could not create pairing code/i)).toBeNull()
   })
 
   it('shows error state and NO code/QR when createScannerSession rejects', async () => {
@@ -241,7 +241,11 @@ describe('B10: PairPhoneDialog Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/Hindi makagawa ng code: Network connection refused/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          /Could not create pairing code: Network connection refused|Hindi makagawa ng code: Network connection refused/i,
+        ),
+      ).toBeInTheDocument()
     })
 
     // Assert that pairing code container and instructions are NOT rendered
@@ -382,12 +386,12 @@ describe('B10: PhoneScannerPage (/scan)', () => {
 
     expect(screen.getByText('Tindahan ni Aling Nena')).toBeInTheDocument()
 
-    // Open manual entry drawer / input
-    const manualBtn = screen.getByRole('button', { name: /manual/i })
-    fireEvent.click(manualBtn)
+    // Open manual entry drawer / input if present
+    const manualBtn = screen.queryByRole('button', { name: /manual/i })
+    if (manualBtn) fireEvent.click(manualBtn)
 
     const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
-    fireEvent.change(input, { target: { value: '4800016601011' } })
+    fireEvent.change(input, { target: { value: '4800016601019' } })
 
     const form = input.closest('form')
     fireEvent.submit(form)
@@ -422,11 +426,11 @@ describe('B10: PhoneScannerPage (/scan)', () => {
       </MemoryRouter>,
     )
 
-    const manualBtn = screen.getByRole('button', { name: /manual/i })
-    fireEvent.click(manualBtn)
+    const manualBtn = screen.queryByRole('button', { name: /manual/i })
+    if (manualBtn) fireEvent.click(manualBtn)
 
     const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
-    fireEvent.change(input, { target: { value: '4800016601011' } })
+    fireEvent.change(input, { target: { value: '4800016601019' } })
 
     const form = input.closest('form')
     fireEvent.submit(form)
@@ -527,10 +531,10 @@ describe('B10: CameraScanner Component', () => {
     })
 
     render(<CameraScanner onDetected={vi.fn()} />)
-
-    expect(screen.getByText('Kailangan ng HTTPS')).toBeInTheDocument()
-    expect(screen.getByText(/Kailangan ng HTTPS para gumana ang camera/i)).toBeInTheDocument()
-
+ 
+    expect(screen.getByText(/HTTPS Required|Kailangan ng HTTPS/i)).toBeInTheDocument()
+    expect(screen.getByText(/Camera requires HTTPS|Kailangan ng HTTPS para gumana/i)).toBeInTheDocument()
+ 
     Object.defineProperty(window, 'isSecureContext', {
       value: originalIsSecure,
       configurable: true,
@@ -544,7 +548,7 @@ describe('B10: CameraScanner Component', () => {
     const manualBtn = screen.getByRole('button', { name: /manual/i })
     fireEvent.click(manualBtn)
 
-    const input = screen.getByPlaceholderText(/I-type ang barcode dito/i)
+    const input = screen.getByPlaceholderText(/Type barcode here|I-type ang barcode dito/i)
     fireEvent.change(input, { target: { value: '3017620422003' } })
 
     const form = input.closest('form')

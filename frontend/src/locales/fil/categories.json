@@ -25,7 +25,7 @@
   "createCategoryTitle": "Bagong Kategorya",
   "createModalDesc": "Ilagay ang pangalan, deskripsyon, kulay, at icon para sa kategorya.",
   "editModalTitle": "I-edit ang Kategorya: {{name}}",
-  "editCategoryTitle": "I-edit ang Kategorya: {{name}}",
+  "editCategoryTitle": "I-edit ang Kategorya",
   "editModalDesc": "Baguhin ang impormasyon, kulay, o icon ng kategorya.",
   "nameLabel": "Pangalan ng Kategorya",
   "namePlaceholder": "hal. Mga Delata, Instant Noodles, Inumin",
@@ -57,5 +57,11 @@
   "saveChanges": "I-save ang Pagbabago",
   "saveError": "Nabigong i-save ang kategorya.",
   "colorSwatchesLabel": "Kulay ng Kategorya (8 Preset Swatches)",
-  "iconPickerLabel": "Icon ng Kategorya (12 Lucide Icons)"
+  "iconPickerLabel": "Icon ng Kategorya (12 Lucide Icons)",
+  "createdSuccess": "Nai-save ang kategorya!",
+  "createError": "Nabigong lumikha ng kategorya.",
+  "updatedSuccess": "Na-update ang kategorya!",
+  "updateError": "Nabigong i-update ang kategorya.",
+  "deletedSuccess": "Nabura ang kategorya.",
+  "deleteError": "Nabigong burahin ang kategorya."
 }

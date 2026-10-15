@@ -75,5 +75,8 @@
   "recordingPayment": "Recording...",
   "exceedsBalanceError": "Payment cannot exceed current balance of {{amount}}.",
   "paymentRecordedSuccess": "Payment of {{amount}} recorded for {{name}}",
-  "defaultNotes": "Store credit payment"
+  "defaultNotes": "Store credit payment",
+  "paymentRecordedTitle": "Payment recorded successfully!",
+  "paymentRecordedDetail": "Paid: {{amount}} · Remaining Utang: {{balance}}",
+  "recordPaymentError": "Failed to record payment."
 }

@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Money } from '@/components/common/Money'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -38,7 +39,7 @@ import { cn } from '@/lib/utils'
  * @param {(customerId: string|number, customer: Customer | null) => void} props.onChange - Selection change callback
  * @param {Customer[]} [props.customers=[]] - List of store customers
  * @param {() => void} [props.onAddNew] - Callback fired when clicking "+ New suki"
- * @param {string} [props.placeholder='Pumili ng suki (Select customer)...'] - Placeholder text
+ * @param {string} [props.placeholder='Select customer...'] - Placeholder text
  * @param {boolean} [props.disabled=false] - Disabled state
  * @param {string} [props.className] - Button trigger class name
  * @returns {React.JSX.Element}
@@ -48,11 +49,13 @@ export function CustomerCombobox({
   onChange,
   customers = [],
   onAddNew,
-  placeholder = 'Pumili ng suki (Select customer)...',
+  placeholder,
   disabled = false,
   className,
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const effectivePlaceholder = placeholder || t('customers:selectCustomer', 'Select a customer...')
 
   const selectedCustomer = useMemo(
     () => customers.find((c) => String(c.id) === String(value)),
@@ -80,7 +83,7 @@ export function CustomerCombobox({
           aria-label={
             selectedCustomer
               ? `Selected: ${selectedCustomer.name}`
-              : placeholder
+              : effectivePlaceholder
           }
           disabled={disabled}
           className={cn(
@@ -101,7 +104,7 @@ export function CustomerCombobox({
                 )}
               </span>
             ) : (
-              <span>{placeholder}</span>
+              <span>{effectivePlaceholder}</span>
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -112,11 +115,11 @@ export function CustomerCombobox({
         align="start"
       >
         <Command>
-          <CommandInput placeholder="Maghanap ng pangalan o suki..." />
+          <CommandInput placeholder={t('customers:searchPlaceholder', 'Search customer name or nickname...')} />
           <CommandList className="max-h-[280px]">
             <CommandEmpty className="px-3 py-4 text-center text-sm">
               <p className="text-muted-foreground mb-2">
-                Walang nahanap na suki.
+                {t('customers:noCustomerFound', 'No customer found.')}
               </p>
               {onAddNew && (
                 <Button
@@ -130,7 +133,7 @@ export function CustomerCombobox({
                   }}
                 >
                   <UserPlus className="h-3.5 w-3.5" />
-                  Idagdag bilang bagong suki
+                  {t('customers:addAsNewCustomer', 'Add as new customer')}
                 </Button>
               )}
             </CommandEmpty>
@@ -148,15 +151,14 @@ export function CustomerCombobox({
                       onAddNew()
                     }}
                   >
-                    <UserPlus className="h-3.5 w-3.5" />+ Bagong suki (Add new
-                    suki)
+                    <UserPlus className="h-3.5 w-3.5" />+ {t('customers:addCustomer', 'Add Customer')}
                   </Button>
                 </div>
                 <CommandSeparator />
               </>
             )}
 
-            <CommandGroup heading="Mga Suki">
+            <CommandGroup heading={t('customers:customersGroup', 'Customers')}>
               {customers.map((customer) => {
                 const isSelected = String(customer.id) === String(value)
                 const hasUtang = (customer.credit_balance || 0) > 0

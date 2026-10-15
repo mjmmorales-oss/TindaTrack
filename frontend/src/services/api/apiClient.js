@@ -15,7 +15,7 @@ export async function handleRequest(requestPromise) {
       throw new ApiError(status, data)
     }
     throw new ApiError(500, {
-      message: error.message || 'Hindi maabot ang server (Network error).',
+      message: error.message || 'Could not reach server (Network error).',
       errors: {},
     })
   }

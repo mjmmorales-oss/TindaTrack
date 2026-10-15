@@ -30,7 +30,7 @@ async function handleDeviceRequest(promise) {
       throw new ApiError(error.response.status, error.response.data)
     }
     throw new ApiError(500, {
-      message: error.message || 'Hindi maabot ang scanner server.',
+      message: error.message || 'Could not reach scanner server.',
       errors: {},
     })
   }

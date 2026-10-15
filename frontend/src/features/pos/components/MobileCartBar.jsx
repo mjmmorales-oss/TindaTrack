@@ -1,11 +1,14 @@
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ShoppingBag, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Money } from '@/components/common/Money'
+import { useVisualViewport } from '@/hooks/useVisualViewport'
+import { useOverlayStore } from '@/stores/overlayStore'
 
 /**
  * Bottom sticky cart bar for mobile & tablet (< lg).
- * Hidden when cart is empty.
+ * Hidden when cart is empty, when keyboard is open, or when any modal/drawer is open.
  *
  * @param {object} props
  * @param {number} props.itemCount - Total items in cart
@@ -20,8 +23,33 @@ export function MobileCartBar({
   onOpenPayment,
 }) {
   const { t } = useTranslation(['pos', 'common'])
+  const isAnyModalOpen = useOverlayStore((s) => s.activeModalCount > 0)
+  const { isKeyboardOpen: isKeyboardFromHook } = useVisualViewport()
 
-  if (itemCount <= 0) return null
+  const [isKeyboardFromDataset, setIsKeyboardFromDataset] = useState(() => {
+    return (
+      typeof document !== 'undefined' &&
+      document.documentElement.dataset.keyboard === 'open'
+    )
+  })
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const check = () => {
+      setIsKeyboardFromDataset(document.documentElement.dataset.keyboard === 'open')
+    }
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-keyboard'],
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  const isHidden = isKeyboardFromHook || isKeyboardFromDataset || isAnyModalOpen
+
+  if (itemCount <= 0 || isHidden) return null
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/80 bg-background/95 px-4 pt-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg backdrop-blur-md lg:hidden print:hidden">

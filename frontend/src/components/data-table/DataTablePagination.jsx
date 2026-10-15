@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -43,6 +44,7 @@ export function DataTablePagination({
   onPerPageChange,
   className,
 }) {
+  const { t } = useTranslation()
   const currentPage = meta.current_page || 1
   const lastPage = meta.last_page || 1
   const perPage = meta.per_page || 15
@@ -63,16 +65,18 @@ export function DataTablePagination({
       {/* Total and range description */}
       <div className="flex items-center gap-2">
         <span className="text-foreground font-medium">
-          {total > 0 ? `${from}–${to} ng ${total}` : '0 aytem'}
+          {total > 0
+            ? t('common:rangeOf', { from, to, total, defaultValue: `${from}–${to} of ${total}` })
+            : t('common:zeroItems', '0 items')}
         </span>
-        <span>mga rekord</span>
+        <span>{t('common:records', 'records')}</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 sm:gap-6">
         {/* Page size picker */}
         {onPerPageChange && (
           <div className="flex items-center space-x-2">
-            <span className="whitespace-nowrap">Bawat pahina:</span>
+            <span className="whitespace-nowrap">{t('common:perPage', 'Per page:')}</span>
             <Select
               value={String(perPage)}
               onValueChange={(val) => onPerPageChange(Number(val))}
@@ -97,7 +101,7 @@ export function DataTablePagination({
 
         {/* Page counter indicator */}
         <div className="flex items-center justify-center font-medium">
-          Pahina {currentPage} ng {lastPage}
+          {t('common:pageOf', { current: currentPage, total: lastPage, defaultValue: `Page ${currentPage} of ${lastPage}` })}
         </div>
 
         {/* Navigation buttons */}
@@ -109,12 +113,12 @@ export function DataTablePagination({
                 className="h-8 w-8 p-0"
                 onClick={() => onPageChange(1)}
                 disabled={!canPrev}
-                aria-label="Pumunta sa unang pahina"
+                aria-label={t('common:firstPage', 'First page')}
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Unang pahina</TooltipContent>
+            <TooltipContent>{t('common:firstPage', 'First page')}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -124,12 +128,12 @@ export function DataTablePagination({
                 className="h-8 w-8 p-0"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={!canPrev}
-                aria-label="Pumunta sa nakaraang pahina"
+                aria-label={t('common:prevPage', 'Previous page')}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Nakaraang pahina</TooltipContent>
+            <TooltipContent>{t('common:prevPage', 'Previous page')}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -139,12 +143,12 @@ export function DataTablePagination({
                 className="h-8 w-8 p-0"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!canNext}
-                aria-label="Pumunta sa susunod na pahina"
+                aria-label={t('common:nextPage', 'Next page')}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Susunod na pahina</TooltipContent>
+            <TooltipContent>{t('common:nextPage', 'Next page')}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -154,12 +158,12 @@ export function DataTablePagination({
                 className="h-8 w-8 p-0"
                 onClick={() => onPageChange(lastPage)}
                 disabled={!canNext}
-                aria-label="Pumunta sa huling pahina"
+                aria-label={t('common:lastPage', 'Last page')}
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Huling pahina</TooltipContent>
+            <TooltipContent>{t('common:lastPage', 'Last page')}</TooltipContent>
           </Tooltip>
         </div>
       </div>

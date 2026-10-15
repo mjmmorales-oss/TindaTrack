@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { customerService } from '@/services/customerService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
 
 export const customerKeys = {
   all: ['customers'],
@@ -43,10 +44,13 @@ export function useCreateCustomer() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: customerKeys.all })
       queryClient.invalidateQueries({ queryKey: ['utang'] })
-      notify.success('Nai-save ang bagong suki!', `${res.data.name} is now registered.`)
+      notify.success(
+        i18n.t('customers:createdSuccess'),
+        i18n.t('customers:isNowRegistered', { name: res.data.name }),
+      )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong lumikha ng kustomer.')
+      notify.error(err.message || i18n.t('customers:createError'))
     },
   })
 }
@@ -58,10 +62,13 @@ export function useUpdateCustomer() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: customerKeys.all })
       queryClient.invalidateQueries({ queryKey: ['utang'] })
-      notify.success('Na-update ang detalye ng suki!', `${res.data.name} has been updated.`)
+      notify.success(
+        i18n.t('customers:updatedSuccess'),
+        i18n.t('customers:hasBeenUpdated', { name: res.data.name }),
+      )
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-update ang kustomer.')
+      notify.error(err.message || i18n.t('customers:updateError'))
     },
   })
 }
@@ -73,10 +80,10 @@ export function useDeleteCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.all })
       queryClient.invalidateQueries({ queryKey: ['utang'] })
-      notify.success('Nabura ang rekord ng suki.')
+      notify.success(i18n.t('customers:deletedSuccess'))
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong burahin ang kustomer.')
+      notify.error(err.message || i18n.t('customers:deleteError'))
     },
   })
 }

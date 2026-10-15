@@ -39,7 +39,7 @@ export const settingsService = {
     await delay(600)
     const fresh = useMockDb.getState().resetDemoData()
     return {
-      message: 'Matagumpay na naibalik ang demo data sa orihinal na estado.',
+      message: 'Demo data has been restored to default.',
       data: fresh,
     }
   },

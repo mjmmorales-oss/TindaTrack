@@ -174,7 +174,7 @@ export const saleService = {
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
       throw new ApiError(422, {
         message: 'Cart cannot be empty.',
-        errors: { cart: ['Maglagay ng kahit isang produkto sa cart.'] },
+        errors: { cart: ['Cart is empty. Select at least one product.'] },
       })
     }
 
@@ -195,7 +195,7 @@ export const saleService = {
 
       if (!prod.is_active) {
         errors[`cart.${idx}.is_active`] = [
-          `Ang "${prod.name}" ay hindi na aktibo at hindi maaaring ibenta.`,
+          `Product "${prod.name}" is inactive.`,
         ]
         continue
       }
@@ -208,7 +208,7 @@ export const saleService = {
 
       if (qty > prod.stock_quantity) {
         errors[`cart.${idx}.stock`] = [
-          `Kulang ang stock para sa "${prod.name}". Mayroon na lamang ${prod.stock_quantity} pcs.`,
+          `Insufficient stock for "${prod.name}". Current stock: ${prod.stock_quantity}.`,
         ]
         continue
       }
@@ -236,18 +236,18 @@ export const saleService = {
     if (paymentType === 'cash') {
       if (isNaN(amountPaid) || amountPaid < computedTotal) {
         errors.amount_paid = [
-          `Kulang ang perang ibinayad. Kailangan ng hindi bababa sa ₱${computedTotal.toFixed(2)}.`,
+          `Insufficient payment. Total amount: ₱${computedTotal.toFixed(2)}.`,
         ]
       } else {
         changeAmount = toMoney(amountPaid - computedTotal)
       }
     } else if (paymentType === 'utang') {
       if (!payment.customer_id) {
-        errors.customer_id = ['Pumili ng suki para sa pagpapalista ng utang.']
+        errors.customer_id = ['A customer must be selected for credit (utang) sales.']
       } else {
         const customer = state.customers.find((c) => c.id === Number(payment.customer_id))
         if (!customer) {
-          errors.customer_id = ['Hindi nahanap ang kustomer.']
+          errors.customer_id = ['Customer not found.']
         } else {
           targetCustomerId = customer.id
           if (amountPaid < 0) amountPaid = 0
@@ -350,7 +350,7 @@ export const saleService = {
     // Business rule: only owner can void
     if (userRole !== 'owner') {
       throw new ApiError(403, {
-        message: 'Tanging Store Owner lamang ang may permiso na mag-void ng resibo.',
+        message: 'Only the store owner is authorized to void a receipt.',
       })
     }
 
@@ -358,7 +358,7 @@ export const saleService = {
       throw new ApiError(422, {
         message: 'A void reason is required.',
         errors: {
-          reason: ['Kailangan ng hindi bababa sa 4 na karakter para sa dahilan ng pag-void.'],
+          reason: ['Void reason must be at least 4 characters.'],
         },
       })
     }
@@ -374,7 +374,7 @@ export const saleService = {
     if (sale.status === 'voided') {
       throw new ApiError(422, {
         message: 'This sale has already been voided.',
-        errors: { status: ['Nai-void na ang transaksyong ito dati.'] },
+        errors: { status: ['This sale has already been voided.'] },
       })
     }
 

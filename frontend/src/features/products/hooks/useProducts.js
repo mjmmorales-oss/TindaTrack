@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { productService } from '@/services/productService'
 import { scannerService } from '@/services/scannerService'
 import { notify } from '@/lib/notify'
+import i18n from '@/i18n'
 
 export const productKeys = {
   all: ['products'],
@@ -52,10 +53,10 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['scanner', 'unknown-barcodes'] })
-      notify.success('Nai-save ang produkto!', `${res.data.name} has been added.`)
+      notify.success(i18n.t('products:createdSuccess'), `${res.data.name} has been added.`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-save ang produkto.')
+      notify.error(err.message || i18n.t('products:createError'))
     },
   })
 }
@@ -69,10 +70,10 @@ export function useUpdateProduct() {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      notify.success('Na-update ang produkto!', `${res.data.name} has been updated.`)
+      notify.success(i18n.t('products:updatedSuccess'), `${res.data.name} has been updated.`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-update ang produkto.')
+      notify.error(err.message || i18n.t('products:updateError'))
     },
   })
 }
@@ -86,10 +87,10 @@ export function useDeleteProduct() {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      notify.success('Nabura ang produkto.')
+      notify.success(i18n.t('products:deletedSuccess'))
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong burahin ang produkto.')
+      notify.error(err.message || i18n.t('products:deleteError'))
     },
   })
 }
@@ -102,10 +103,10 @@ export function useAdjustStock() {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      notify.success('Na-adjust ang stock!', `Bagong stock: ${res.data.stock_quantity}`)
+      notify.success(i18n.t('products:stockAdjustedSuccess'), `${i18n.t('products:newStock')}: ${res.data.stock_quantity}`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-adjust ang stock.')
+      notify.error(err.message || i18n.t('products:stockAdjustedError'))
     },
   })
 }
@@ -116,10 +117,10 @@ export function useUploadProductImage() {
     mutationFn: ({ id, file, source }) => productService.uploadImage(id, file, source),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      notify.success('Nai-upload ang larawan!', `${res.data.name} image updated.`)
+      notify.success(i18n.t('products:imageUploadSuccess'), `${res.data.name} image updated.`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-upload ang larawan.')
+      notify.error(err.message || i18n.t('products:imageOptimizeError'))
     },
   })
 }
@@ -130,10 +131,10 @@ export function useImportProductImage() {
     mutationFn: ({ id, url }) => productService.importImage(id, url),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      notify.success('Na-import ang larawan!', `${res.data.name} image imported.`)
+      notify.success(i18n.t('products:imageImportSuccess'), `${res.data.name} image imported.`)
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong i-import ang larawan.')
+      notify.error(err.message || i18n.t('products:imageImportError'))
     },
   })
 }
@@ -144,10 +145,10 @@ export function useDeleteProductImage() {
     mutationFn: (id) => productService.deleteImage(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      notify.success('Nabura ang larawan.')
+      notify.success(i18n.t('products:imageDeleteSuccess'))
     },
     onError: (err) => {
-      notify.error(err.message || 'Nabigong burahin ang larawan.')
+      notify.error(err.message || i18n.t('products:imageDeleteError'))
     },
   })
 }

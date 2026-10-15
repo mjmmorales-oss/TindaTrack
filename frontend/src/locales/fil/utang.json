@@ -75,5 +75,8 @@
   "recordingPayment": "Itinatala...",
   "exceedsBalanceError": "Hindi maaaring lumampas sa kasalukuyang utang na ₱{{amount}}.",
   "paymentRecordedSuccess": "Matagumpay na naitala ang bayad na ₱{{amount}} para kay {{name}}",
-  "defaultNotes": "Bayad sa tindahan"
+  "defaultNotes": "Bayad sa tindahan",
+  "paymentRecordedTitle": "Naitala ang bayad!",
+  "paymentRecordedDetail": "Bayad: {{amount}} · Natitirang Utang: {{balance}}",
+  "recordPaymentError": "Nabigong itala ang bayad."
 }

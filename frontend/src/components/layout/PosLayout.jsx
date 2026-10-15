@@ -43,7 +43,7 @@ export function PosLayout() {
   })
 
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="bg-background flex min-h-dvh flex-col">
       {/* Slim Focus Header */}
       <header className="border-border/80 bg-background/95 sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-md print:hidden">
         <div className="flex items-center gap-3">
@@ -110,7 +110,7 @@ export function PosLayout() {
             size="icon"
             onClick={() => setShortcutsOpen(true)}
             className="text-muted-foreground hover:text-foreground h-9 w-9"
-            aria-label="Mga Keyboard Shortcut (?)"
+            aria-label="Keyboard Shortcuts (?)"
             title="Keyboard Shortcuts (?)"
           >
             <HelpCircle className="h-4 w-4" />

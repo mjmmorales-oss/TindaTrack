@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Filter, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,8 @@ import {
 import { SearchInput } from '@/components/forms/SearchInput'
 import { DataTableFacetedFilter } from '@/components/data-table/DataTableFacetedFilter'
 import { DataTableViewOptions } from '@/components/data-table/DataTableViewOptions'
+import { useOverlayStore } from '@/stores/overlayStore'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -40,7 +42,7 @@ import { cn } from '@/lib/utils'
  */
 export function DataTableToolbar({
   table,
-  searchPlaceholder = 'Maghanap...',
+  searchPlaceholder,
   searchValue = '',
   onSearchChange,
   filters = [],
@@ -49,7 +51,33 @@ export function DataTableToolbar({
   children,
   className,
 }) {
+  const { t } = useTranslation()
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const effectivePlaceholder = searchPlaceholder || t('common:search', 'Search...')
+
+  useEffect(() => {
+    if (mobileDrawerOpen) {
+      const unregister = useOverlayStore.getState().registerModal()
+      return unregister
+    }
+  }, [mobileDrawerOpen])
+
+  const handleBodyFocusIn = (e) => {
+    const target = e.target
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      setTimeout(() => {
+        if (target && typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }
+      }, 250)
+    }
+  }
 
   const activeFiltersCount = filters.reduce((acc, f) => {
     const count = f.selectedValues ? (Array.isArray(f.selectedValues) ? f.selectedValues.length : f.selectedValues.size || 0) : 0
@@ -69,7 +97,7 @@ export function DataTableToolbar({
           {onSearchChange && (
             <div className="w-full md:w-auto">
               <SearchInput
-                placeholder={searchPlaceholder}
+                placeholder={effectivePlaceholder}
                 value={searchValue}
                 onChange={onSearchChange}
                 className="w-full md:w-[260px] lg:w-[320px]"
@@ -95,7 +123,7 @@ export function DataTableToolbar({
                 onClick={onReset}
                 className="text-muted-foreground hover:text-foreground h-8 px-2 text-xs lg:px-3"
               >
-                I-reset
+                {t('common:reset', 'Reset')}
                 <X className="ml-1.5 h-3.5 w-3.5" />
               </Button>
             )}
@@ -115,7 +143,7 @@ export function DataTableToolbar({
                 className="h-9 gap-1.5 text-xs font-semibold"
               >
                 <Filter className="h-3.5 w-3.5 text-primary" />
-                Mga Filter
+                {t('common:filters', 'Filters')}
                 {activeFiltersCount > 0 && (
                   <Badge variant="default" className="ml-1 h-5 px-1.5 font-mono text-[10px]">
                     {activeFiltersCount}
@@ -131,7 +159,7 @@ export function DataTableToolbar({
                 onClick={onReset}
                 className="text-muted-foreground h-9 px-2 text-xs"
               >
-                Reset
+                {t('common:reset', 'Reset')}
               </Button>
             )}
           </div>
@@ -149,13 +177,13 @@ export function DataTableToolbar({
       </div>
 
       {/* Mobile Filters Drawer (< md) */}
-      <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
-        <DrawerContent className="max-h-[85dvh] flex flex-col">
+      <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen} repositionInputs={false}>
+        <DrawerContent className="max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex flex-col">
           <DrawerHeader className="border-b border-border px-4 py-3 text-left">
             <div className="flex items-center justify-between">
               <DrawerTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-primary" />
-                Mga Filter at Opsyon
+                {t('common:filtersAndOptions', 'Filters & Options')}
               </DrawerTitle>
               {isFiltered && onReset && (
                 <Button
@@ -167,16 +195,19 @@ export function DataTableToolbar({
                   }}
                   className="text-xs text-muted-foreground hover:text-destructive h-7 px-2"
                 >
-                  I-clear Lahat
+                  {t('common:clearAll', 'Clear all')}
                 </Button>
               )}
             </div>
             <DrawerDescription className="text-xs text-muted-foreground">
-              Pumili ng mga kategorya o katayuan para masala ang talaan.
+              {t('common:filterTableDescription', 'Select filters to refine table records.')}
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4"
+            onFocus={handleBodyFocusIn}
+          >
             {filters.map((filter) => (
               <div key={filter.columnId} className="space-y-1.5">
                 <span className="text-xs font-bold text-foreground uppercase tracking-wider">
@@ -197,20 +228,20 @@ export function DataTableToolbar({
             {table && (
               <div className="pt-2 border-t border-border">
                 <span className="text-xs font-bold text-foreground uppercase tracking-wider block mb-2">
-                  Mga Kolum
+                  {t('common:columns', 'Columns')}
                 </span>
                 <DataTableViewOptions table={table} className="w-full justify-between" />
               </div>
             )}
           </div>
 
-          <DrawerFooter className="border-t border-border bg-card p-4">
+          <DrawerFooter className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-xs px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
             <Button
               type="button"
               className="w-full h-11 text-sm font-bold shadow-md"
               onClick={() => setMobileDrawerOpen(false)}
             >
-              Ilapat ang mga Filter ({activeFiltersCount})
+              {t('common:applyFilters', { count: activeFiltersCount, defaultValue: `Apply Filters (${activeFiltersCount})` })}
             </Button>
           </DrawerFooter>
         </DrawerContent>

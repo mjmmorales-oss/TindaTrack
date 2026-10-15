@@ -14,7 +14,7 @@ export function AuthLayout() {
   const { t } = useTranslation()
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-dvh w-full">
       {/* Brand panel on lg+ */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-emerald-950 p-12 text-white lg:flex">
         {/* Subtle decorative dot pattern overlay */}

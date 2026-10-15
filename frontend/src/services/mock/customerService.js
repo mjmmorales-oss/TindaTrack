@@ -220,7 +220,7 @@ export const customerService = {
         message: 'Cannot delete a customer who still has an unpaid utang balance.',
         errors: {
           credit_balance: [
-            `May natitirang utang pa na ₱${customer.credit_balance.toFixed(2)} si ${customer.name}. Kolektahin muna ang bayad bago burahin.`,
+            `${customer.name} has an outstanding utang balance of ₱${customer.credit_balance.toFixed(2)}. Collect the balance before deleting.`,
           ],
         },
       })
@@ -262,7 +262,7 @@ export const customerService = {
         type: 'sale',
         date: s.created_at,
         title: `Utang Sale (${s.sale_no})`,
-        meta: `${s.items.length} items · Resibo ${s.sale_no}`,
+        meta: `${s.items.length} items · Receipt ${s.sale_no}`,
         amount: netDebt,
         amountTone: 'utang',
         reference: s.sale_no,
@@ -275,8 +275,8 @@ export const customerService = {
         id: `payment-${p.id}`,
         type: 'payment',
         date: p.payment_date,
-        title: 'Pagbabayad ng Utang',
-        meta: p.notes || 'Bayad sa tindahan',
+        title: 'Utang Payment',
+        meta: p.notes || 'Payment recorded',
         amount: -p.amount,
         amountTone: 'success',
         reference: `PAY-${p.id}`,

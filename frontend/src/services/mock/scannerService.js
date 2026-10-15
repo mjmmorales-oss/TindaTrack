@@ -120,7 +120,7 @@ export const scannerService = {
     const sessions = loadSessions()
     const session = sessions.find((s) => s.id === id)
     if (!session) {
-      throw new ApiError(404, { message: 'Hindi nahanap ang scanner session.' })
+      throw new ApiError(404, { message: 'Scanner session not found.' })
     }
 
     const isOnline = Boolean(
@@ -144,7 +144,7 @@ export const scannerService = {
     const sessions = loadSessions()
     const session = sessions.find((s) => s.id === id)
     if (!session) {
-      throw new ApiError(404, { message: 'Hindi nahanap ang scanner session.' })
+      throw new ApiError(404, { message: 'Scanner session not found.' })
     }
     if (session.ended_at) {
       throw new ApiError(401, { message: 'Scanner session ended' })
@@ -217,24 +217,24 @@ export const scannerService = {
     if (!session) {
       throw new ApiError(422, {
         reason: 'not_found',
-        message: 'Hindi nahanap ang pairing code. Tiyaking tama ang code mula sa POS.',
-        errors: { pairing_code: ['Hindi nahanap ang pairing code.'] },
+        message: 'Pairing code not found. Please verify the code from the POS.',
+        errors: { pairing_code: ['Pairing code not found.'] },
       })
     }
 
     if (session.paired_at) {
       throw new ApiError(422, {
         reason: 'used',
-        message: 'Nagamit na ang pairing code na ito. Humingi ng bago sa POS.',
-        errors: { pairing_code: ['Nagamit na ang pairing code na ito.'] },
+        message: 'This pairing code has already been used. Please request a new code from the POS.',
+        errors: { pairing_code: ['This pairing code has already been used.'] },
       })
     }
 
     if (session.ended_at || new Date() > new Date(session.pairing_expires_at)) {
       throw new ApiError(422, {
         reason: 'expired',
-        message: 'Paso na ang pairing code. Humingi ng bago sa POS.',
-        errors: { pairing_code: ['Paso na ang pairing code.'] },
+        message: 'Pairing code has expired. Please request a new code from the POS.',
+        errors: { pairing_code: ['Pairing code has expired.'] },
       })
     }
 
@@ -271,8 +271,8 @@ export const scannerService = {
 
     if (!Barcode.isAcceptable(normalized)) {
       throw new ApiError(422, {
-        message: 'Hindi wastong barcode format.',
-        errors: { barcode: ['Hindi wastong barcode format.'] },
+        message: 'Invalid barcode format.',
+        errors: { barcode: ['Invalid barcode format.'] },
       })
     }
 

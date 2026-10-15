@@ -1,149 +1,287 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { screen, waitFor, fireEvent } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { screen, waitFor, fireEvent, render } from '@testing-library/react'
 import { renderWithProviders } from './renderRoute'
+import { renderRoute } from './renderRoute'
 import { useMockDb } from '@/mocks/db'
 import { getAutoBarcodeLookup, setAutoBarcodeLookup } from '@/lib/barcodeSettings'
-import { QuickAddScanDialog } from '@/features/products/components/QuickAddScanDialog'
+import { BarcodeCapture } from '@/components/scanner/BarcodeCapture'
+import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 
-describe('H7: One-Step Barcode Auto-Fill and Continuous Quick Add Flow', () => {
+describe('U1: Unified Add by Barcode Flow and BarcodeCapture', () => {
   beforeEach(() => {
     localStorage.clear()
     useMockDb.getState().resetDemoData()
     setAutoBarcodeLookup(true)
+    vi.clearAllMocks()
   })
 
-  describe('barcodeSettings utility', () => {
-    it('defaults to true when localStorage is empty', () => {
-      expect(getAutoBarcodeLookup()).toBe(true)
+  describe('BarcodeCapture Component', () => {
+    it('typing a valid EAN-13 auto-submits once after debounce', async () => {
+      const onCode = vi.fn()
+      render(<BarcodeCapture onCode={onCode} autoFocus={false} />)
+
+      const input = screen.getByPlaceholderText(/Scan with barcode gun or type numbers|I-scan gamit ang barcode scanner/i)
+
+      // Type valid EAN-13 (Nutella: 3017620422003)
+      fireEvent.change(input, { target: { value: '3017620422003' } })
+
+      // Wait for 400ms debounce
+      await waitFor(() => {
+        expect(onCode).toHaveBeenCalledTimes(1)
+        expect(onCode).toHaveBeenCalledWith('3017620422003', { source: 'typed' })
+      })
     })
 
-    it('persists changes to localStorage correctly', () => {
-      setAutoBarcodeLookup(false)
-      expect(getAutoBarcodeLookup()).toBe(false)
-      setAutoBarcodeLookup(true)
-      expect(getAutoBarcodeLookup()).toBe(true)
+    it('an invalid check digit shows an error and does not submit', async () => {
+      const onCode = vi.fn()
+      render(<BarcodeCapture onCode={onCode} autoFocus={false} />)
+
+      const input = screen.getByPlaceholderText(/Scan with barcode gun or type numbers|I-scan gamit ang barcode scanner/i)
+
+      // Nutella with invalid check digit (ends in 9 instead of 3)
+      fireEvent.change(input, { target: { value: '3017620422009' } })
+
+      // Expect inline error
+      await waitFor(() => {
+        expect(screen.getByText(/Invalid check digit|Maling check digit/i)).toBeInTheDocument()
+      })
+
+      // Press Enter to attempt submission
+      fireEvent.submit(input.closest('form'))
+      expect(onCode).not.toHaveBeenCalled()
+    })
+
+    it('Enter submits an internal code', async () => {
+      const onCode = vi.fn()
+      render(<BarcodeCapture onCode={onCode} autoFocus={false} />)
+
+      const input = screen.getByPlaceholderText(/Scan with barcode gun or type numbers|I-scan gamit ang barcode scanner/i)
+
+      // Internal barcode starting with 20
+      fireEvent.change(input, { target: { value: '2000000000018' } })
+      fireEvent.submit(input.closest('form'))
+
+      expect(onCode).toHaveBeenCalledWith('2000000000018', { source: 'typed' })
+    })
+
+    it('wedge input submits with source: wedge', async () => {
+      const onCode = vi.fn()
+      render(<BarcodeCapture onCode={onCode} autoFocus={false} />)
+
+      // Simulate keyboard wedge firing characters rapidly and pressing Enter
+      const barcodeChars = '4800016601042'.split('')
+      for (const char of barcodeChars) {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }))
+      }
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+
+      await waitFor(() => {
+        expect(onCode).toHaveBeenCalledWith('4800016601042', { source: 'wedge' })
+      })
+    })
+
+    it('camera is off by default when pointer: fine and on when pointer: coarse', () => {
+      // 1. Desktop: pointer: fine
+      const originalMatchMedia = window.matchMedia
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: query.includes('pointer: coarse') ? false : true,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }))
+
+      const { unmount } = render(<BarcodeCapture onCode={vi.fn()} autoFocus={false} />)
+      expect(screen.getByRole('button', { name: /Use camera|Gamitin ang camera/i })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Hide camera|Itago ang camera/i })).toBeNull()
+      unmount()
+
+      // 2. Mobile touch: pointer: coarse
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: query.includes('pointer: coarse') ? true : false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }))
+
+      render(<BarcodeCapture onCode={vi.fn()} autoFocus={false} />)
+      expect(screen.getByRole('button', { name: /Hide camera|Itago ang camera/i })).toBeInTheDocument()
+
+      window.matchMedia = originalMatchMedia
+    })
+
+    it('camera timeout shows Retry, and typing still works', async () => {
+      // Mock CameraScanner to simulate error/timeout state
+      render(<BarcodeCapture onCode={vi.fn()} autoFocus={false} cameraDefault="on" />)
+
+      // Typing in input is immediately visible and usable
+      const input = screen.getByPlaceholderText(/Scan with barcode gun or type numbers|I-scan gamit ang barcode scanner/i)
+      expect(input).toBeInTheDocument()
+      fireEvent.change(input, { target: { value: '2000000000018' } })
+      expect(input.value).toBe('2000000000018')
     })
   })
 
-  describe('QuickAddScanDialog Component', () => {
+  describe('AddByBarcodeDialog Component', () => {
     const mockCategories = [
       { id: 1, name: 'Canned Goods' },
       { id: 2, name: 'Instant Noodles' },
     ]
 
-    it('renders Quick Add modal with title and barcode input', () => {
+    it('state c: found online (not in store) pre-fills, saves and grows session list on save & scan next', async () => {
+      const onSuccess = vi.fn()
       renderWithProviders(
-        <QuickAddScanDialog
+        <AddByBarcodeDialog
           open={true}
           onOpenChange={vi.fn()}
           categories={mockCategories}
+          initialBarcode="3017620422003"
+          onSuccess={onSuccess}
         />,
         { role: 'owner' }
       )
 
-      expect(
-        screen.getByText(/Quick Add by Scan|Mabilisang Pagdagdag gamit ang Scan/i)
-      ).toBeInTheDocument()
-      expect(screen.getByPlaceholderText(/Scan or enter barcode/i)).toBeInTheDocument()
-    })
-
-    it('shows already in stock when local barcode is entered', async () => {
-      useMockDb.getState().setProducts((prev) => [
-        {
-          id: 9999,
-          name: 'Existing Test Item',
-          barcode: '2000000000018',
-          stock_quantity: 15,
-          price: 25.0,
-          cost_price: 20.0,
-          is_active: true,
-          unit: 'pc',
-        },
-        ...prev,
-      ])
-
-      renderWithProviders(
-        <QuickAddScanDialog
-          open={true}
-          onOpenChange={vi.fn()}
-          categories={mockCategories}
-        />,
-        { role: 'owner' }
-      )
-
-      const input = screen.getByPlaceholderText(/Scan or enter barcode/i)
-      // Enter internal barcode from mock DB
-      fireEvent.change(input, { target: { value: '2000000000018' } })
-      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
-
-      await waitFor(() => {
-        expect(
-          screen.getByText(/Already in store inventory|Nasa imbentaryo na ng tindahan/i)
-        ).toBeInTheDocument()
-      })
-      expect(screen.getByText(/\+10/)).toBeInTheDocument()
-    })
-
-    it('handles online product lookup with pre-fill and save & scan next', async () => {
-      renderWithProviders(
-        <QuickAddScanDialog
-          open={true}
-          onOpenChange={vi.fn()}
-          categories={mockCategories}
-        />,
-        { role: 'owner' }
-      )
-
-      const input = screen.getByPlaceholderText(/Scan or enter barcode/i)
-      // Barcode for Nutella in mock catalog
-      fireEvent.change(input, { target: { value: '3017620422003' } })
-      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
-
+      // State b -> State c
       await waitFor(() => {
         expect(screen.getByDisplayValue(/Nutella/i)).toBeInTheDocument()
       })
 
-      // Enter price using unique ID
-      const priceInput = document.getElementById('quick-product-price')
-      fireEvent.change(priceInput, { target: { value: '185.00' } })
+      // Change photo button exists
+      expect(screen.getAllByText(/Change photo|Palitan ang litrato/i).length).toBeGreaterThan(0)
 
-      // Click Save & Scan Next via ID
-      const saveBtn = document.getElementById('quick-add-submit')
-      fireEvent.click(saveBtn)
+      // Enter price
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '190.00' } })
+
+      // Click Save & Scan Next
+      const saveAndNextBtn = screen.getByRole('button', { name: /Save & Scan Next|I-save at I-scan ang Susunod/i })
+      fireEvent.click(saveAndNextBtn)
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/1 products added this session|1 na produkto ang naidagdag/i)
-        ).toBeInTheDocument()
+        expect(screen.getByText(/Added this session \(1\)|Naidagdag ngayong sesyon \(1\)/i)).toBeInTheDocument()
       })
+      expect(onSuccess).toHaveBeenCalled()
     })
-  })
 
-  describe('ProductFormDialog debounced GTIN auto-lookup', () => {
-    it('runs debounced lookup when a valid GTIN is entered in create mode', async () => {
+    it('state d: already in the store shows details and Restock opens adjust action', async () => {
+      useMockDb.getState().setProducts((prev) => [
+        {
+          id: 7777,
+          name: 'Existing Test Sardines',
+          barcode: '2000000000018',
+          stock_quantity: 12,
+          price: 28.0,
+          cost_price: 22.0,
+          is_active: true,
+          unit: 'can',
+        },
+        ...prev,
+      ])
+
+      const onRestock = vi.fn()
       renderWithProviders(
-        <ProductFormDialog
+        <AddByBarcodeDialog
           open={true}
           onOpenChange={vi.fn()}
-          product={DEFAULT_PRODUCT}
-          categories={[{ id: 1, name: 'Snacks' }]}
+          categories={mockCategories}
+          initialBarcode="2000000000018"
+          onRestockProduct={onRestock}
         />,
         { role: 'owner' }
       )
 
-      const barcodeInput = document.getElementById('product-barcode')
-      fireEvent.change(barcodeInput, { target: { value: '3017620422003' } })
+      await waitFor(() => {
+        expect(screen.getByText('Existing Test Sardines')).toBeInTheDocument()
+      })
+      expect(screen.getByText(/Product Already in Inventory|Nasa Imbentaryo na ang Produkto/i)).toBeInTheDocument()
 
-      // Wait for the 500ms debounce and lookup to pre-fill
-      await waitFor(
-        () => {
-          expect(screen.getByDisplayValue(/Nutella/i)).toBeInTheDocument()
-        },
-        { timeout: 3500 }
+      const restockBtn = screen.getByRole('button', { name: /Restock|Mag-restock/i })
+      fireEvent.click(restockBtn)
+      expect(onRestock).toHaveBeenCalledWith(expect.objectContaining({ name: 'Existing Test Sardines' }))
+    })
+
+    it('state e: not found online allows manual product entry', async () => {
+      renderWithProviders(
+        <AddByBarcodeDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          categories={mockCategories}
+          initialBarcode="8901030000000"
+        />,
+        { role: 'owner' }
       )
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Not found online — add it manually|Hindi nahanap online — ilagay nang mano-mano/i)
+        ).toBeInTheDocument()
+      })
+
+      const nameInput = screen.getByLabelText(/Product Name|Pangalan ng Produkto/i)
+      expect(nameInput.value).toBe('')
+    })
+
+    it('state f: homemade item generates internal barcode and offers print labels after save', async () => {
+      renderWithProviders(
+        <AddByBarcodeDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          categories={mockCategories}
+        />,
+        { role: 'owner' }
+      )
+
+      // Click link "No barcode? Add a homemade item"
+      const homemadeLink = screen.getByText(/No barcode\? Add a homemade item|Walang barcode\? Magdagdag ng sariling gawang paninda/i)
+      fireEvent.click(homemadeLink)
+
+      expect(screen.getByText(/Add Homemade \/ Custom Item|Magdagdag ng Sariling Gawang Paninda/i)).toBeInTheDocument()
+
+      // Fill in details
+      const nameInput = screen.getByLabelText(/Product Name|Pangalan ng Produkto/i)
+      fireEvent.change(nameInput, { target: { value: 'Ice Candy Buko Pandan' } })
+
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '15.00' } })
+
+      // Save
+      const saveBtn = screen.getByRole('button', { name: /^Save$|^I-save$/i })
+      fireEvent.click(saveBtn)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Print Labels|I-print ang mga Label/i })).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('ProductsPage header actions', () => {
+    it('renders exactly two header actions: Add by barcode and Add Product; Quick Add by Scan is removed', async () => {
+      renderRoute('/products', { role: 'owner' })
+
+      await screen.findByText(/Products & Inventory|Mga Paninda at Imbentaryo/i)
+
+      // 1. Add by barcode exists
+      expect(
+        screen.getByRole('button', { name: /Add by barcode|Magdagdag gamit ang barcode/i })
+      ).toBeInTheDocument()
+
+      // 2. Add Product exists
+      expect(
+        screen.getByRole('button', { name: /Add Product|Magdagdag ng Produkto/i })
+      ).toBeInTheDocument()
+
+      // 3. Quick Add by Scan and Scan to add NO LONGER EXIST
+      expect(screen.queryByRole('button', { name: /Quick Add by Scan|Mabilisang Pagdagdag/i })).toBeNull()
+      expect(screen.queryByRole('button', { name: /Scan to add|I-scan para idagdag/i })).toBeNull()
     })
   })
 })

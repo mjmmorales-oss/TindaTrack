@@ -67,7 +67,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
             setName(e.target.value)
             if (nameError) setNameError('')
           }}
-          className="h-9 text-xs"
+          className="h-9 text-base md:text-xs"
           autoFocus
         />
         {nameError && (
@@ -85,7 +85,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
             placeholder="Mang Juan"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
-            className="h-9 text-xs"
+            className="h-9 text-base md:text-xs"
           />
         </div>
 
@@ -98,7 +98,7 @@ export function NewCustomerMiniForm({ onSuccess, onCancel }) {
             placeholder="0912 345 6789"
             value={contactNumber}
             onChange={(e) => setContactNumber(e.target.value)}
-            className="h-9 text-xs"
+            className="h-9 text-base md:text-xs"
           />
         </div>
       </div>

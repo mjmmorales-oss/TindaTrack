@@ -40,7 +40,7 @@ export function SaleDetailPage() {
   const storeName = settings?.store_name || 'Tindahan ni Aling Nena'
   const storeAddress = settings?.address || 'Purok 3, Brgy. San Isidro'
   const storeContact = settings?.contact_number || '0917-123-4567'
-  const receiptFooter = settings?.receipt_footer || 'Salamat po! Balik po kayo muli!'
+  const receiptFooter = settings?.receipt_footer || t('pos:defaultReceiptFooter', 'Thank you! Please come again!')
   const voidMutation = useVoidSale()
 
   const [voidDialogOpen, setVoidDialogOpen] = useState(false)

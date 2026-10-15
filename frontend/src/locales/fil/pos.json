@@ -109,5 +109,12 @@
   "saveCustomer": "I-save ang Suki",
   "customerSelectedForUtang": "Napili si {{name}} para sa utang.",
   "resetFilters": "Ibalik sa Lahat",
-  "noProductsSearchDesc": "Subukang maghanap ng ibang pangalan o pumili ng ibang kategorya sa itaas."
+  "noProductsSearchDesc": "Subukang maghanap ng ibang pangalan o pumili ng ibang kategorya sa itaas.",
+  "saleRecordedSuccess": "Matagumpay na naitala ang benta!",
+  "saleRecordedDetail": "Resibo {{receipt}} · {{amount}}",
+  "recordSaleError": "Nabigong itala ang benta.",
+  "saleVoidedSuccess": "Nai-void ang benta!",
+  "saleVoidedDetail": "Na-void na ang resibo {{receipt}}.",
+  "voidSaleError": "Nabigong i-void ang benta.",
+  "defaultReceiptFooter": "Salamat po! Balik po kayo muli!"
 }

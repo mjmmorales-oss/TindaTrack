@@ -11,7 +11,8 @@
     "smoke:pairing": "node scripts/smoke-pairing.mjs",
     "smoke:prod": "node scripts/smoke-prod-like.mjs",
     "check:bundle": "node scripts/check-prod-bundle.mjs",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:mobile": "node frontend/scripts/check-mobile.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

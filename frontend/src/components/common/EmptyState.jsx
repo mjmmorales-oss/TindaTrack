@@ -9,6 +9,7 @@ import {
   EmptyMedia,
 } from '@/components/ui/empty'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -18,8 +19,8 @@ import { cn } from '@/lib/utils'
  * @param {object} props
  * @param {React.ComponentType<{ className?: string }>} [props.icon=FolderSearch] - Lucide icon component
  * @param {string} [props.illustration] - Optional image URL or SVG path for illustration
- * @param {string} [props.title='Walang nahanap'] - Main heading
- * @param {string} [props.description='Walang tala o rekord na maipakita sa ngayon.'] - Explanatory message
+ * @param {string} [props.title] - Main heading
+ * @param {string} [props.description] - Explanatory message
  * @param {React.ReactNode} [props.action] - Action button or CTA slot
  * @param {string} [props.className] - Additional classes
  * @returns {React.JSX.Element}
@@ -27,13 +28,16 @@ import { cn } from '@/lib/utils'
 export function EmptyState({
   icon: Icon = FolderSearch,
   illustration,
-  title = 'Walang nahanap',
-  description = 'Walang tala o rekord na maipakita sa ngayon.',
+  title,
+  description,
   action,
   actionText,
   onAction,
   className,
 }) {
+  const { t } = useTranslation()
+  const displayTitle = title || t('common:noRecords', 'No records found')
+  const displayDescription = description || t('common:noRecordsDesc', 'No records to display at this time.')
   const ctaAction =
     action ||
     (actionText ? (
@@ -64,10 +68,10 @@ export function EmptyState({
             <Icon className="h-5 w-5" aria-hidden="true" />
           </EmptyMedia>
         )}
-        <EmptyTitle className="text-base font-semibold">{title}</EmptyTitle>
-        {description && (
+        <EmptyTitle className="text-base font-semibold">{displayTitle}</EmptyTitle>
+        {displayDescription && (
           <EmptyDescription className="text-muted-foreground max-w-xs text-xs">
-            {description}
+            {displayDescription}
           </EmptyDescription>
         )}
       </EmptyHeader>

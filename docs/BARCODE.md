@@ -193,18 +193,36 @@ Ang script na ito ay awtomatikong maglo-login bilang store owner, gagawa ng pair
 
 ---
 
-## 7. Continuous Quick Add by Scan Flow
+## 7. Unified "Add by Barcode" Flow & USB Scanner Wedge
 
-Para sa mabilisang pagpapasok ng bagong stocks sa tindahan (*shelf-stocking intake*):
-1. **Buksan ang Mabilisang Pagdagdag (`QuickAddScanDialog`)**:
-   - I-click ang **Quick Add by Scan** button (may kidlat / `Zap` icon) sa header ng Pahina ng mga Produkto (`/products`).
-2. **Mag-scan o Mag-type ng Barcode**:
-   - Maaaring mag-scan gamit ang mobile phone, USB hardware wedge, o webcam camera.
-   - Awtomatikong tinitingnan kung may umiiral nang produkto sa tindahan:
-     - **Kung nasa imbentaryo na**: Magpapakita ng notification at instant restock shortcut pills (`+5`, `+10`, `+20`, `+50`) upang mabilisang maidagdag ang dami nang hindi muling gumagawa ng duplicate item.
-     - **Kung bago**: Awtomatikong kukunin ang pangalan, tatak, laki, at imahe mula sa Open Food Facts catalog, at awtomatikong ifo-focus ang input ng presyo ng benta.
-3. **Save & Scan Next (Enter)**:
-   - Sa pag-pindot ng `Enter` o pag-click sa **Save & Scan Next**, naitatala ang produkto at awtomatikong lumilipat sa susunod na item nang hindi sumasara ang modal. May session counter badge na nagpapakita ng bilang ng mga produktong naipasok sa sesyon.
+In TindaTrack v1.3.0, product onboarding and barcode scanning are unified under a single, seamless component: `AddByBarcodeDialog` (powered by `BarcodeCapture`).
+
+### 1. Unified Dialog Workflow (`AddByBarcodeDialog`)
+- **Access Point**: Accessible directly from the Products Page (`/products`) via the primary **"Add by barcode"** action (with barcode icon). The former redundant `QuickAddScanDialog` has been completely unified into this flow.
+- **Multimodal Scanning Inputs**:
+  - **USB / Bluetooth Hardware Barcode Gun**: Acts as a high-speed HID keyboard wedge.
+  - **Webcam / Built-in Camera**: Uses WebAssembly barcode detection.
+  - **Paired Mobile Phone**: Scans via the zero-login `/scan` phone companion.
+  - **Manual Keyboard Entry**: Numeric input with instant checksum validation and 400ms debounce.
+- **Dynamic Product States**:
+  1. **State A — Barcode Capture**: Ready for scan or input with active wedge listener.
+  2. **State B — In-Store Product Match**: If the scanned barcode already exists in your store's inventory, TindaTrack highlights the existing item, displays current stock and selling price, and provides instant restock shortcut pills (`+5`, `+10`, `+20`, `+50`) with atomic stock adjustments without duplicating product rows.
+  3. **State C — Found Online (Open Food Facts)**: Automatically pre-fills product name, brand, volume/weight size, suggested category, and remote image. The cursor automatically focuses on the selling price field (`price`).
+  4. **State D — Unregistered / Homemade Barcode**: Pre-fills the scanned barcode into a clean registration form, enabling custom photo upload/camera capture and immediate category assignment.
+- **Continuous "Save & Scan Next" Loop**:
+  - Pressing `Enter` or clicking **"Save & scan next"** saves the current product or stock adjustment, increments the session counter badge, adds the item to the session summary list, and immediately resets the scanner input ready for the next barcode.
+- **Session Scan Ledger**:
+  - Displays a collapsible live counter and list of all items registered or restocked during the active session.
+
+### 2. USB Barcode Scanner Wedge Tips & Best Practices
+- **Plug-and-Play HID**: Standard USB handheld laser and 2D barcode scanners require no drivers. They act as standard USB HID keyboards.
+- **Trailing Enter (Carriage Return)**:
+  - Most barcode guns send a trailing `Enter` (`\r` or `\n`) after reading a barcode. `BarcodeCapture` listens for the `submit` event to instantly process the code without waiting for the input debounce.
+  - If your scanner does not send Enter, `BarcodeCapture` automatically evaluates valid EAN-13 barcodes after a 400ms idle debounce.
+- **Input Focus**:
+  - When opening `AddByBarcodeDialog`, the barcode input receives automatic autofocus, so you can pick up the USB scanner gun and begin scanning immediately without touching the mouse.
+- **Scanner Configuration Tip**:
+  - Configure your barcode scanner to send a standard Carriage Return (`CR`) or Line Feed (`LF`) suffix (this is usually the factory default setting found in the scanner's user manual barcode setup sheet).
 
 ---
 

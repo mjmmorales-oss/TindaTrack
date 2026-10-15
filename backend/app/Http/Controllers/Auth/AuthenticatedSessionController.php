@@ -35,6 +35,7 @@ class AuthenticatedSessionController extends Controller
         return response()->json([
             'user' => new UserResource($user),
             'token' => $token,
+            'must_change_password' => (bool) $user->must_change_password,
         ]);
     }
 

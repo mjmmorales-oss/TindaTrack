@@ -146,7 +146,7 @@ export const utangService = {
     if (isNaN(amount) || amount <= 0) {
       throw new ApiError(422, {
         message: 'Invalid payment amount.',
-        errors: { amount: ['Ilagay ang wastong halaga ng ibabayad.'] },
+        errors: { amount: ['Payment amount must be greater than zero.'] },
       })
     }
 
@@ -157,7 +157,7 @@ export const utangService = {
         message: 'Payment exceeds outstanding balance.',
         errors: {
           amount: [
-            `Hindi maaaring lumampas ang bayad sa kasalukuyang utang na ₱${currentCreditBalance.toFixed(2)}.`,
+            `Payment amount cannot exceed current outstanding debt of ₱${currentCreditBalance.toFixed(2)}.`,
           ],
         },
       })
@@ -174,7 +174,7 @@ export const utangService = {
       sale_id: data.sale_id ? Number(data.sale_id) : null,
       amount: paymentAmount,
       payment_date: nowIso,
-      notes: data.notes?.trim() || 'Bayad sa tindahan',
+      notes: data.notes?.trim() || 'Store credit payment',
       recorded_by: currentUser.id,
     }
 

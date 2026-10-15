@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Camera,
   Flashlight,
@@ -8,6 +9,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Keyboard,
+  RotateCcw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +30,9 @@ export function CameraScanner({
   onDetected,
   paused = false,
   className,
+  showManualFallback = true,
 }) {
+  const { t } = useTranslation(['scanner', 'common'])
   const [manualCode, setManualCode] = useState('')
   const [showManual, setShowManual] = useState(false)
 
@@ -46,6 +50,7 @@ export function CameraScanner({
     isTorchOn,
     toggleTorch,
     switchCamera,
+    retry,
   } = useCameraScanner({
     onDetected: handleScanSuccess,
     paused,
@@ -104,7 +109,7 @@ export function CameraScanner({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/90 p-4 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
             <p className="text-sm font-medium text-slate-300">
-              Sinisimulan ang camera...
+              {t('scanner:startingCamera', 'Starting camera...')}
             </p>
           </div>
         )}
@@ -112,9 +117,11 @@ export function CameraScanner({
         {status === 'insecure' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/95 p-6 text-center">
             <AlertTriangle className="h-10 w-10 text-amber-400" />
-            <h4 className="font-semibold text-slate-100">Kailangan ng HTTPS</h4>
+            <h4 className="font-semibold text-slate-100">
+              {t('scanner:insecureTitle', 'HTTPS Required')}
+            </h4>
             <p className="text-xs text-slate-300">
-              {error || 'Kailangan ng HTTPS para gumana ang camera. Gamitin ang deployed link o npm run dev:lan.'}
+              {error || t('scanner:insecureDesc', 'Camera requires HTTPS or localhost. Please use a secure connection.')}
             </p>
           </div>
         )}
@@ -122,19 +129,33 @@ export function CameraScanner({
         {status === 'denied' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/95 p-6 text-center">
             <Camera className="h-10 w-10 text-rose-400" />
-            <h4 className="font-semibold text-slate-100">Camera Access Blocked</h4>
+            <h4 className="font-semibold text-slate-100">
+              {t('scanner:deniedTitle', 'Camera Access Blocked')}
+            </h4>
             <p className="text-xs text-slate-300">
-              {error || 'Pakibuksan ang camera permissions sa iyong browser settings para makapag-scan.'}
+              {error || t('scanner:deniedDesc', 'Please allow camera permissions in your browser settings to scan barcodes.')}
             </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={retry}
+              className="mt-1 h-8 gap-1.5 border-slate-700 bg-slate-900 text-xs text-white hover:bg-slate-800"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t('common:retry', 'Retry')}
+            </Button>
           </div>
         )}
 
         {status === 'unsupported' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/95 p-6 text-center">
             <AlertTriangle className="h-10 w-10 text-amber-400" />
-            <h4 className="font-semibold text-slate-100">Hindi Suportado</h4>
+            <h4 className="font-semibold text-slate-100">
+              {t('scanner:unsupportedTitle', 'Not Supported')}
+            </h4>
             <p className="text-xs text-slate-300">
-              {error || 'Hindi suportado ng browser ang video camera capture.'}
+              {error || t('scanner:unsupportedDesc', 'Video camera capture is not supported on this browser.')}
             </p>
           </div>
         )}
@@ -142,8 +163,22 @@ export function CameraScanner({
         {status === 'error' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/95 p-6 text-center">
             <AlertTriangle className="h-10 w-10 text-rose-400" />
-            <h4 className="font-semibold text-slate-100">Camera Error</h4>
-            <p className="text-xs text-slate-300">{error}</p>
+            <h4 className="font-semibold text-slate-100">
+              {t('scanner:errorTitle', "Camera didn't start")}
+            </h4>
+            <p className="text-xs text-slate-300">
+              {error || t('scanner:defaultError', "Camera didn't start within 8 seconds.")}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={retry}
+              className="mt-1 h-8 gap-1.5 border-slate-700 bg-slate-900 text-xs text-white hover:bg-slate-800"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t('common:retry', 'Retry')}
+            </Button>
           </div>
         )}
 
@@ -157,7 +192,11 @@ export function CameraScanner({
                 size="icon"
                 onClick={toggleTorch}
                 className="h-9 w-9 rounded-full bg-slate-900/80 text-white backdrop-blur-md hover:bg-slate-800"
-                aria-label={isTorchOn ? 'Patayin ang flashlight' : 'Buksan ang flashlight'}
+                aria-label={
+                  isTorchOn
+                    ? t('scanner:turnOffTorch', 'Turn off flashlight')
+                    : t('scanner:turnOnTorch', 'Turn on flashlight')
+                }
               >
                 {isTorchOn ? (
                   <FlashlightOff className="h-4 w-4 text-amber-400" />
@@ -173,7 +212,7 @@ export function CameraScanner({
               size="icon"
               onClick={switchCamera}
               className="h-9 w-9 rounded-full bg-slate-900/80 text-white backdrop-blur-md hover:bg-slate-800"
-              aria-label="Lumipat ng camera"
+              aria-label={t('scanner:switchCamera', 'Switch camera')}
             >
               <FlipHorizontal className="h-4 w-4" />
             </Button>
@@ -182,44 +221,49 @@ export function CameraScanner({
       </div>
 
       {/* Manual Entry Fallback Section */}
-      <div className="w-full border-t border-slate-800/80 bg-slate-900/90 p-4">
-        {!showManual ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowManual(true)}
-            className="w-full text-xs text-slate-400 hover:text-white"
-          >
-            <Keyboard className="mr-1.5 h-3.5 w-3.5" />
-            I-type nang manual ang barcode
-          </Button>
-        ) : (
-          <form onSubmit={handleManualSubmit} className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-                placeholder="I-type ang barcode dito..."
-                className="h-9 bg-slate-950 text-white placeholder:text-slate-500"
-                autoFocus
-              />
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!manualCode.trim()}
-                className="bg-emerald-600 text-white hover:bg-emerald-500"
-              >
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-center text-[11px] text-slate-400">
-              Pindutin ang Enter o ang arrow button para i-submit.
-            </p>
-          </form>
-        )}
-      </div>
+      {showManualFallback && (
+        <div className="w-full border-t border-slate-800/80 bg-slate-900/90 p-4">
+          {!showManual ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManual(true)}
+              className="w-full text-xs text-slate-400 hover:text-white"
+            >
+              <Keyboard className="mr-1.5 h-3.5 w-3.5" />
+              {t('scanner:manualEntryBtn', 'Type barcode manually')}
+            </Button>
+          ) : (
+            <form onSubmit={handleManualSubmit} className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  placeholder={t('scanner:typeBarcodePlaceholder', 'Type barcode here...')}
+                  className="h-9 bg-slate-950 text-white placeholder:text-slate-500"
+                  data-barcode-input
+                  autoFocus
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!manualCode.trim()}
+                  className="bg-emerald-600 text-white hover:bg-emerald-500"
+                  aria-label={t('common:submit', 'Submit')}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-center text-[11px] text-slate-400">
+                {t('scanner:pressEnterHelper', 'Press Enter or the arrow button to submit.')}
+              </p>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   )
 }
+

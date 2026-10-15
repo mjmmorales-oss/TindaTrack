@@ -415,7 +415,7 @@ export function PaymentDialog({
                   placeholder={t('pos:notesPlaceholder', 'e.g. Will pay on payday')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="h-10 text-xs"
+                  className="h-10 text-base md:text-xs"
                 />
               </div>
 

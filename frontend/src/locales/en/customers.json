@@ -91,5 +91,17 @@
   "methodCol": "Method",
   "totalCol": "Total Amount",
   "statusCol": "Status",
-  "actionForCustomer": "Actions for {{name}}"
+  "actionForCustomer": "Actions for {{name}}",
+  "createdSuccess": "Customer registered successfully!",
+  "createError": "Failed to register customer.",
+  "updatedSuccess": "Customer details updated successfully!",
+  "updateError": "Failed to update customer.",
+  "deletedSuccess": "Customer record removed.",
+  "deleteError": "Failed to remove customer.",
+  "isNowRegistered": "{{name}} is now registered.",
+  "hasBeenUpdated": "{{name}} has been updated.",
+  "selectCustomer": "Select a customer...",
+  "noCustomerFound": "No customer found.",
+  "addAsNewCustomer": "Add as new customer",
+  "customersGroup": "Customers"
 }
