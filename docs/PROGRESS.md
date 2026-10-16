@@ -1457,3 +1457,47 @@ Tracking implementation of v1.4 tasks (P0–P6):
   6. *Cart Store Item Shape* (`src/stores/cartStore.js`):
      - `newItem` in `useCartStore.add` currently stores `{ product_id, name, price, quantity, stock, sku, unit }` but omits `image_url`. Must be updated to retain `image_url` so cart rows and mobile cart bars can display thumbnail previews.
 
+---
+
+## TindaTrack v2.0.0 Progress Tracker
+
+Tracking implementation of v2.0.0 tasks (A0–A10):
+- [x] **A0 — Preflight**: Branch `feat/ai-v2`, verified baselines, AI feature map recorded.
+- [ ] **A1 — Backend AI Foundation**: `config/ai.php`, `VisionProvider` interface, `GeminiVisionProvider` + REST integration, `MockVisionProvider`, `AiService`, `php artisan ai:ping`, Pest tests.
+- [ ] **A2 — Database for AI Scans, Feedback, Metrics & Embeddings**: Migrations for `ai_scans`, `ai_scan_feedback`, `ai_scan_images`, `product_embeddings`, `ai_experiments`, `ai_experiment_cases`; `sale_items.add_method`, `sales.cart_started_at`, `sales.cart_duration_ms`; Settings keys; models, casts, factories.
+- [ ] **A3 — AI Endpoints**: `/api/ai/status`, `/api/ai/basket-scan`, `/api/ai/product-scan`, `/api/ai/scans/{scan}/feedback`, `/api/ai/scans`, `/api/ai/scans/{scan}/image`, `/api/ai/metrics`, `/api/ai/metrics/export.csv`, `/api/scanner/ai-basket`, `/api/products/embeddings`, `/api/products/bulk`; Pest tests.
+- [ ] **A4 — Frontend AI Capture & POS Basket Scan**: `imagePrep.js`, `AiCapture.jsx`, `services/ai.js`, `BasketReviewSheet.jsx`, POS sparkles button, phone `/scan` Basket photo mode, cart timing & `add_method` tracking.
+- [ ] **A5 — AI Bulk Product Add**: Products page header dropdown menu, `AiProductReviewTable.jsx`, duplicate detection & warning chips, crop upload & bulk create.
+- [ ] **A6 — On-Device Visual Search**: Transformers.js, Web Worker (`embedder.worker.js`), `BarcodeCapture` Visual tab, visual index builder in Settings, correction learning loop.
+- [ ] **A7 — AI Lab & Research**: Route `/ai-lab`, metrics cards & charts, experiment runner with ground truth evaluation, CSV export, `docs/RESEARCH.md`.
+- [ ] **A8 — Settings, Privacy & Cashier Safety**: Settings AI Card, first-use consent modal, cashier vs owner permission checks, accessibility.
+- [ ] **A9 — Documentation**: `docs/AI.md`, `docs/RESEARCH.md`, updated `docs/DEPLOY.md`, `README.md`, `docs/API.md`, `docs/CHANGELOG.md`.
+- [ ] **A10 — Final Hardening, Merging & Tagging**: `docs/AUDIT-v2.md`, `smoke-ai.mjs`, all gates clean, merge `feat/ai-v2` to `main`, tag `v2.0.0`.
+
+### A0 Log (Preflight & AI Feature Map):
+- **Baseline Metrics (Recorded at v1.4.0 on `main` / `feat/ai-v2`)**:
+  - Git Branch: `feat/ai-v2` (cut from `main` at `v1.4.0`).
+  - Backend Suite (`./vendor/bin/pest`): 103 passed (103), 548 assertions.
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Backend Reconciliation (`php artisan tindatrack:check`): 100% reconciled (1,600 sales, 4,181 movements).
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production bundle compiled (94 assets).
+  - Frontend Suite (`npx vitest run`): 18 test files passed, 215 passed tests.
+  - Verification Scripts:
+    - `check-i18n.mjs`: 18 namespaces clean, 1,571 `t(...)` calls validated, 0 leaks.
+    - `check-mobile.mjs`: 0 violations, touch floor verified.
+    - `check-prod-bundle.mjs`: 94 assets scanned, 0 secrets/dev leaks.
+    - `check-pwa.mjs`: All PWA checks passed.
+    - `smoke-pairing.mjs`: 6/6 passed.
+    - `smoke-prod-like.mjs`: 9/9 passed.
+- **AI Feature Map**:
+  - **POS**: `PosPage.jsx` integrates "AI Scan" button (sparkles icon) beside barcode scan, and mobile tab in scanner sheet. `BasketReviewSheet.jsx` presents bounding boxes and item rows. `cartStore.js` records `cart_started_at` on first item, `add_method` (`tap`, `search`, `barcode`, `wedge`, `phone`, `ai_basket`, `visual`) on each line, and computes `cart_duration_ms` on checkout.
+  - **Products**: `ProductsPage.jsx` consolidates header actions into unified Add menu: "Add by barcode", "Add from photo (AI)", and "Add product". `AiProductReviewTable.jsx` enables bulk intake of up to 5 items with automated bounding box crops, duplicate detection, and category prefill.
+  - **Scanner Suite**: `BarcodeCapture.jsx` incorporates three mode tabs: Barcode | Visual | AI basket. Phone `/scan` (`PhoneScannerPage.jsx`) provides "Barcode | Basket photo" mode and submits to `/api/scanner/ai-basket`.
+  - **Sync & Realtime**: `ScannerDeviceController.php` processes `/api/scanner/ai-basket` using device token authentication and dispatches `ScannerItemScanned` with `type: 'ai_basket'`.
+  - **Enrichment**: `ProductLookupService.php` powers GTIN enrichment for detected barcodes in AI product scan.
+  - **Settings & Privacy**: `Setting.php` adds `ai_enabled`, `ai_save_scan_images`, `ai_research_mode`, and `visual_search_enabled`. First-use consent dialog explains Gemini cloud analysis and strict privacy rules (no faces).
+  - **Sales & Timing**: `CreateSaleAction.php` persists `add_method` on `SaleItem` and `cart_started_at` / `cart_duration_ms` on `Sale`.
+  - **Research & Evaluation**: `/ai-lab` presents research metrics (precision, recall, quantity error, latency, checkout speed comparisons), ground truth experiment runner (`ai_experiments`, `ai_experiment_cases`), and CSV export.
+
+
