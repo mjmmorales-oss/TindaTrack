@@ -144,5 +144,6 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         // Store settings
         Route::get('/settings', [SettingsController::class, 'get']);
         Route::put('/settings', [SettingsController::class, 'update']);
+        Route::post('/settings/restore-demo-images', [SettingsController::class, 'restoreDemoImages']);
     });
 });

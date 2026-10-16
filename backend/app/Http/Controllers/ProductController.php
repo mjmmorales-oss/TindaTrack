@@ -88,7 +88,22 @@ class ProductController extends Controller
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'image_url' => ['nullable', 'string', 'max:2048'],
+            'image_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    $isValidUrl = filter_var($value, FILTER_VALIDATE_URL) !== false;
+                    $isDemoPath = (bool) preg_match('#^/demo-products/[a-z0-9-]+\.svg$#', $value);
+                    $isApiImage = str_starts_with($value, '/api/product-images/');
+                    if (! $isValidUrl && ! $isDemoPath && ! $isApiImage) {
+                        $fail("The {$attribute} must be a valid URL, /api/product-images/ path, or demo product SVG path.");
+                    }
+                },
+            ],
             'brand' => ['nullable', 'string', 'max:255'],
             'size' => ['nullable', 'string', 'max:100'],
             'source' => ['nullable', 'string', Rule::in(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts'])],
@@ -167,7 +182,22 @@ class ProductController extends Controller
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'image_url' => ['nullable', 'string', 'max:2048'],
+            'image_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    $isValidUrl = filter_var($value, FILTER_VALIDATE_URL) !== false;
+                    $isDemoPath = (bool) preg_match('#^/demo-products/[a-z0-9-]+\.svg$#', $value);
+                    $isApiImage = str_starts_with($value, '/api/product-images/');
+                    if (! $isValidUrl && ! $isDemoPath && ! $isApiImage) {
+                        $fail("The {$attribute} must be a valid URL, /api/product-images/ path, or demo product SVG path.");
+                    }
+                },
+            ],
             'brand' => ['nullable', 'string', 'max:255'],
             'size' => ['nullable', 'string', 'max:100'],
             'source' => ['nullable', 'string', Rule::in(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts'])],

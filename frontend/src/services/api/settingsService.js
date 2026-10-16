@@ -23,6 +23,14 @@ export const settingsService = {
   async resetDemoData() {
     throw new Error('Database reset is only available in mock data mode.')
   },
+
+  /**
+   * Restores demo product packshots for products without images.
+   * POST /api/settings/restore-demo-images
+   */
+  async restoreDemoImages() {
+    return apiClient.post('/settings/restore-demo-images')
+  },
 }
 
 export default settingsService

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\SettingResource;
+use App\Models\Product;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,37 @@ class SettingsController extends Controller
         return response()->json([
             'data' => new SettingResource($setting->fresh()),
             'message' => 'Store settings updated successfully.',
+        ]);
+    }
+
+    public function restoreDemoImages(): JsonResponse
+    {
+        $path = database_path('data/products.json');
+        if (! file_exists($path)) {
+            return response()->json(['updated' => 0]);
+        }
+
+        $demoProducts = json_decode(file_get_contents($path), true) ?: [];
+        $demoMap = [];
+        foreach ($demoProducts as $dp) {
+            if (! empty($dp['sku']) && ! empty($dp['image_url'])) {
+                $demoMap[strtoupper(trim($dp['sku']))] = $dp['image_url'];
+            }
+        }
+
+        $updated = 0;
+        $products = Product::whereNull('image_url')->orWhere('image_url', '')->get();
+        foreach ($products as $product) {
+            $sku = strtoupper(trim($product->sku));
+            if (isset($demoMap[$sku])) {
+                $product->update(['image_url' => $demoMap[$sku]]);
+                $updated++;
+            }
+        }
+
+        return response()->json([
+            'updated' => $updated,
+            'message' => "Restored {$updated} demo product images.",
         ]);
     }
 }

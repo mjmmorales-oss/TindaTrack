@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "check:bundle": "node ../scripts/check-prod-bundle.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "check:mobile": "node scripts/check-mobile.mjs"
+    "check:mobile": "node scripts/check-mobile.mjs",
+    "gen:demo-art": "node scripts/generate-demo-product-art.mjs"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",

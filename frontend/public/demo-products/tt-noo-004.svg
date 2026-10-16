@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="none" />
+  <g id="packshot">
+    <!-- Base Ground Shadow -->
+      <ellipse cx="256" cy="460" rx="115" ry="22" fill="black" opacity="0.13" />
+
+      <!-- Tapered Cup Body -->
+      <path d="M146 110 L366 110 L326 430 C326 444 186 444 186 430 Z" fill="url(#cupGrad)" />
+
+      <!-- Cup Rim & Foil Lid -->
+      <ellipse cx="256" cy="110" rx="115" ry="26" fill="#e5e7eb" stroke="#9ca3af" stroke-width="2" />
+      <ellipse cx="256" cy="107" rx="108" ry="22" fill="#ffffff" />
+      <ellipse cx="256" cy="107" rx="90" ry="16" fill="#9dee2b" opacity="0.3" />
+
+      <!-- Center Label Wrap -->
+      <path d="M156 190 L356 190 L341 330 L171 330 Z" fill="#ffffff" />
+      <rect x="156" y="190" width="200" height="8" fill="#9dee2b" />
+      <rect x="171" y="322" width="170" height="8" fill="#9dee2b" />
+
+      <!-- Text -->
+      <text x="256" y="246" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#111827" text-anchor="middle">Nissin Cup</text>
+      <text x="256" y="278" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="19" fill="#4b5563" text-anchor="middle">Noodles Seafood</text>
+      
+
+      <defs>
+        <linearGradient id="cupGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7d6212" />
+          <stop offset="25%" stop-color="#ddb640" />
+          <stop offset="70%" stop-color="#b8921e" />
+          <stop offset="100%" stop-color="#7d6212" />
+        </linearGradient>
+      </defs>
+  </g>
+</svg>

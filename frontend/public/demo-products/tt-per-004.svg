@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="none" />
+  <g id="packshot">
+    <!-- Base Ground Shadow -->
+      <ellipse cx="256" cy="450" rx="140" ry="24" fill="black" opacity="0.12" />
+
+      <!-- Soap Bar Body -->
+      <rect x="136" y="140" width="240" height="280" rx="40" fill="url(#barGrad)" />
+
+      <!-- Bevel Edge Emboss -->
+      <rect x="156" y="160" width="200" height="240" rx="30" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.4" />
+
+      <!-- Center Brand Band -->
+      <rect x="136" y="220" width="240" height="120" fill="#ffffff" opacity="0.9" />
+      <rect x="136" y="220" width="240" height="6" fill="#ee2b2b" />
+      <rect x="136" y="334" width="240" height="6" fill="#ee2b2b" />
+
+      <!-- Text -->
+      <text x="256" y="272" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="26" fill="#1f2937" text-anchor="middle">Hapee Toothpaste</text>
+      
+      
+        <rect x="211" y="360" width="90" height="24" rx="12" fill="#b81e85" />
+        <text x="256" y="377" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle">50ml</text>
+      
+
+      <defs>
+        <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#dd40a9" />
+          <stop offset="50%" stop-color="#b81e85" />
+          <stop offset="100%" stop-color="#7d1259" />
+        </linearGradient>
+      </defs>
+  </g>
+</svg>

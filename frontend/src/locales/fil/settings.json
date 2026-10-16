@@ -104,5 +104,16 @@
   "saveSettingsError": "Nabigong i-save ang mga setting.",
   "demoResetSuccess": "Na-reset ang demo data!",
   "demoResetDetail": "Lahat ng datos ay ibinalik sa panimulang estado.",
-  "demoResetError": "Nabigong i-reset ang demo data."
+  "demoResetError": "Nabigong i-reset ang demo data.",
+  "restoreDemoImagesCardTitle": "Mga Demo Product Packshot",
+  "restoreDemoImagesCardDesc": "Ibalik ang mga SVG illustration para sa mga karaniwang demo item",
+  "restoreDemoImagesBody": "Hahanapin nito ang mga karaniwang demo product na walang litrato at ibabalik ang kanilang mga vector illustration nang hindi binabago ang iyong mga custom photo.",
+  "restoreDemoImagesButton": "Ibalik ang mga demo image",
+  "confirmRestoreDemoImagesTitle": "Ibalik ang mga Demo Packshot?",
+  "confirmRestoreDemoImagesDesc": "Lalagyan nito ng demo illustration ang lahat ng tugmang paninda na kasalukuyang walang litrato. HINDI babaguhin ang iyong mga custom na ini-upload na litrato.",
+  "confirmRestoreDemoImagesButton": "Oo, Ibalik ang mga Litrato",
+  "cancelRestoreDemoImagesButton": "Kanselahin",
+  "restoreDemoImagesSuccess": "Matagumpay na naibalik ang mga demo image!",
+  "restoreDemoImagesDetail": "Na-update ang {{count}} (na) paninda.",
+  "restoreDemoImagesError": "Nabigong ibalik ang mga demo image."
 }

@@ -12,7 +12,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-001.svg"
   },
   {
     "id": 2,
@@ -27,7 +28,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-002.svg"
   },
   {
     "id": 3,
@@ -42,7 +44,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-003.svg"
   },
   {
     "id": 4,
@@ -57,7 +60,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-004.svg"
   },
   {
     "id": 5,
@@ -72,7 +76,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-005.svg"
   },
   {
     "id": 6,
@@ -87,7 +92,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-006.svg"
   },
   {
     "id": 7,
@@ -102,7 +108,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-drk-007.svg"
   },
   {
     "id": 8,
@@ -117,7 +124,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cof-001.svg"
   },
   {
     "id": 9,
@@ -132,7 +140,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cof-002.svg"
   },
   {
     "id": 10,
@@ -147,7 +156,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cof-003.svg"
   },
   {
     "id": 11,
@@ -162,7 +172,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cof-004.svg"
   },
   {
     "id": 12,
@@ -177,7 +188,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cof-005.svg"
   },
   {
     "id": 13,
@@ -192,7 +204,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-noo-001.svg"
   },
   {
     "id": 14,
@@ -207,7 +220,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-noo-002.svg"
   },
   {
     "id": 15,
@@ -222,7 +236,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-noo-003.svg"
   },
   {
     "id": 16,
@@ -237,7 +252,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-noo-004.svg"
   },
   {
     "id": 17,
@@ -252,7 +268,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-noo-005.svg"
   },
   {
     "id": 18,
@@ -267,7 +284,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-can-001.svg"
   },
   {
     "id": 19,
@@ -282,7 +300,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-can-002.svg"
   },
   {
     "id": 20,
@@ -297,7 +316,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-can-003.svg"
   },
   {
     "id": 21,
@@ -312,7 +332,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-can-004.svg"
   },
   {
     "id": 22,
@@ -327,7 +348,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-can-005.svg"
   },
   {
     "id": 23,
@@ -342,7 +364,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-can-006.svg"
   },
   {
     "id": 24,
@@ -357,7 +380,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-001.svg"
   },
   {
     "id": 25,
@@ -372,7 +396,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-002.svg"
   },
   {
     "id": 26,
@@ -387,7 +412,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-003.svg"
   },
   {
     "id": 27,
@@ -402,7 +428,8 @@
     "reorder_level": 8,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-004.svg"
   },
   {
     "id": 28,
@@ -417,7 +444,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-005.svg"
   },
   {
     "id": 29,
@@ -432,7 +460,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-006.svg"
   },
   {
     "id": 30,
@@ -447,7 +476,8 @@
     "reorder_level": 15,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-007.svg"
   },
   {
     "id": 31,
@@ -462,7 +492,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-008.svg"
   },
   {
     "id": 32,
@@ -477,7 +508,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-sna-009.svg"
   },
   {
     "id": 33,
@@ -492,7 +524,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-brd-001.svg"
   },
   {
     "id": 34,
@@ -507,7 +540,8 @@
     "reorder_level": 3,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-brd-002.svg"
   },
   {
     "id": 35,
@@ -522,7 +556,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-brd-003.svg"
   },
   {
     "id": 36,
@@ -537,7 +572,8 @@
     "reorder_level": 8,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-001.svg"
   },
   {
     "id": 37,
@@ -552,7 +588,8 @@
     "reorder_level": 8,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-002.svg"
   },
   {
     "id": 38,
@@ -567,7 +604,8 @@
     "reorder_level": 5,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-003.svg"
   },
   {
     "id": 39,
@@ -582,7 +620,8 @@
     "reorder_level": 4,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-004.svg"
   },
   {
     "id": 40,
@@ -597,7 +636,8 @@
     "reorder_level": 30,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-005.svg"
   },
   {
     "id": 41,
@@ -612,7 +652,8 @@
     "reorder_level": 20,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-006.svg"
   },
   {
     "id": 42,
@@ -627,7 +668,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-cnd-007.svg"
   },
   {
     "id": 43,
@@ -642,7 +684,8 @@
     "reorder_level": 15,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-rce-001.svg"
   },
   {
     "id": 44,
@@ -657,7 +700,8 @@
     "reorder_level": 8,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-rce-002.svg"
   },
   {
     "id": 45,
@@ -672,7 +716,8 @@
     "reorder_level": 8,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-rce-003.svg"
   },
   {
     "id": 46,
@@ -687,7 +732,8 @@
     "reorder_level": 30,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-rce-004.svg"
   },
   {
     "id": 47,
@@ -702,7 +748,8 @@
     "reorder_level": 6,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-per-001.svg"
   },
   {
     "id": 48,
@@ -717,7 +764,8 @@
     "reorder_level": 24,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-per-002.svg"
   },
   {
     "id": 49,
@@ -732,7 +780,8 @@
     "reorder_level": 24,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-per-003.svg"
   },
   {
     "id": 50,
@@ -747,7 +796,8 @@
     "reorder_level": 5,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-per-004.svg"
   },
   {
     "id": 51,
@@ -762,7 +812,8 @@
     "reorder_level": 15,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-001.svg"
   },
   {
     "id": 52,
@@ -777,7 +828,8 @@
     "reorder_level": 15,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-002.svg"
   },
   {
     "id": 53,
@@ -792,7 +844,8 @@
     "reorder_level": 15,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-003.svg"
   },
   {
     "id": 54,
@@ -807,7 +860,8 @@
     "reorder_level": 12,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-004.svg"
   },
   {
     "id": 55,
@@ -822,7 +876,8 @@
     "reorder_level": 5,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-005.svg"
   },
   {
     "id": 56,
@@ -837,7 +892,8 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-006.svg"
   },
   {
     "id": 57,
@@ -852,7 +908,8 @@
     "reorder_level": 15,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-007.svg"
   },
   {
     "id": 58,
@@ -867,6 +924,7 @@
     "reorder_level": 10,
     "is_active": true,
     "created_at": "2026-01-01T00:00:00.000Z",
-    "updated_at": "2026-01-01T00:00:00.000Z"
+    "updated_at": "2026-01-01T00:00:00.000Z",
+    "image_url": "/demo-products/tt-hou-008.svg"
   }
 ]

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="none" />
+  <g id="packshot">
+    <!-- Base Ground Shadow -->
+      <ellipse cx="256" cy="460" rx="125" ry="20" fill="black" opacity="0.12" />
+
+      <!-- Sachet Body -->
+      <rect x="146" y="70" width="220" height="370" rx="10" fill="url(#sachetGrad)" />
+
+      <!-- Crimped Top & Bottom Seams -->
+      <path d="M146 70 L366 70 L366 100 L146 100 Z" fill="#7d3912" opacity="0.6" />
+      <path d="M146 70 L366 70" stroke="#ffffff" stroke-width="2" stroke-dasharray="6,4" opacity="0.7" />
+      <path d="M146 85 L366 85" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5" />
+      <path d="M146 410 L366 410 L366 440 L146 440 Z" fill="#7d3912" opacity="0.6" />
+      <path d="M146 425 L366 425" stroke="#ffffff" stroke-width="2" stroke-dasharray="6,4" opacity="0.7" />
+
+      <!-- Tear Notch on Top Left -->
+      <polygon points="146,82 156,86 146,90" fill="#ffffff" opacity="0.9" />
+
+      <!-- Diagonal Gloss Sheen -->
+      <path d="M150 110 L270 110 L200 400 L150 400 Z" fill="#ffffff" opacity="0.18" />
+
+      <!-- Center Brand Badge -->
+      <rect x="166" y="170" width="180" height="170" rx="16" fill="#ffffff" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))" />
+      <rect x="176" y="180" width="160" height="6" rx="3" fill="#e7ee2b" />
+
+      <!-- Text -->
+      <text x="256" y="235" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="24" fill="#111827" text-anchor="middle">Nescafé Original</text>
+      <text x="256" y="268" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="18" fill="#4b5563" text-anchor="middle">3-in-1</text>
+      
+
+      <defs>
+        <linearGradient id="sachetGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#dd7a40" />
+          <stop offset="60%" stop-color="#b8571e" />
+          <stop offset="100%" stop-color="#7d3912" />
+        </linearGradient>
+      </defs>
+  </g>
+</svg>

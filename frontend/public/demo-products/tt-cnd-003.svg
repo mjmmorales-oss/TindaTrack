@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="none" />
+  <g id="packshot">
+    <!-- Base Ground Shadow -->
+      <ellipse cx="256" cy="466" rx="100" ry="20" fill="black" opacity="0.13" />
+
+      <!-- Bottle Body & Neck -->
+      <path d="M232 50 L280 50 L280 110 C280 140 336 170 336 215 L336 430 C336 448 256 456 256 456 C256 456 176 448 176 430 L176 215 C176 170 232 140 232 110 Z" fill="url(#bottleGrad)" />
+
+      <!-- Bottle Cap -->
+      <rect x="230" y="36" width="52" height="20" rx="3" fill="#e5e7eb" stroke="#9ca3af" stroke-width="2" />
+      <line x1="230" y1="42" x2="282" y2="42" stroke="#6b7280" stroke-width="1.5" />
+      <line x1="230" y1="48" x2="282" y2="48" stroke="#6b7280" stroke-width="1.5" />
+      <rect x="232" y="28" width="48" height="10" rx="4" fill="#eed12b" />
+
+      <!-- Label Wrap -->
+      <rect x="176" y="240" width="160" height="140" fill="#ffffff" />
+      <rect x="176" y="240" width="160" height="8" fill="#b83a1e" />
+      <rect x="176" y="372" width="160" height="8" fill="#b83a1e" />
+
+      <!-- Specular Highlight Sheen -->
+      <path d="M200 135 C190 150 190 180 190 220 L190 435 C185 433 182 430 180 425 L180 215 C180 175 190 145 200 135 Z" fill="#ffffff" opacity="0.4" />
+
+      <!-- Label Text -->
+      <text x="256" y="288" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="24" fill="#1f2937" text-anchor="middle">UFC Banana</text>
+      <text x="256" y="318" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="18" fill="#4b5563" text-anchor="middle">Catsup</text>
+      
+        <rect x="211" y="336" width="90" height="24" rx="12" fill="#eed12b" />
+        <text x="256" y="353" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle">320g</text>
+      
+
+      <defs>
+        <linearGradient id="bottleGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7d2512" />
+          <stop offset="30%" stop-color="#dd5d40" />
+          <stop offset="70%" stop-color="#b83a1e" />
+          <stop offset="100%" stop-color="#7d2512" />
+        </linearGradient>
+      </defs>
+  </g>
+</svg>
