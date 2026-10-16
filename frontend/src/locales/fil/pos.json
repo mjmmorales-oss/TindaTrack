@@ -68,6 +68,8 @@
   "notRegisteredBarcode": "Barcode: {{barcode}}",
   "stockEmptyWarning": "Ubos na ang stock ng \"{{name}}\".",
   "addedToCart": "Naidagdag: {{name}}",
+  "removedFromCart": "Inalis ang {{name}}",
+  "undo": "Ibalik",
   "phoneDisconnected": "Naidiskonekta ang phone scanner.",
   "sessionEnded": "Natapos na ang phone scanner session.",
   "scanSheetTitle": "Mag-scan ng Barcode sa POS",

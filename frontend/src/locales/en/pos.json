@@ -68,6 +68,8 @@
   "notRegisteredBarcode": "Barcode: {{barcode}}",
   "stockEmptyWarning": "Out of stock for \"{{name}}\".",
   "addedToCart": "Added: {{name}}",
+  "removedFromCart": "Removed {{name}}",
+  "undo": "Undo",
   "phoneDisconnected": "Phone scanner disconnected.",
   "sessionEnded": "Phone scanner session has ended.",
   "scanSheetTitle": "Scan Barcode in POS",

@@ -525,6 +525,7 @@ export function PosPage() {
 
       {/* MOBILE STICKY CART BAR (< lg) */}
       <MobileCartBar
+        items={items}
         itemCount={itemCount}
         total={cartTotal}
         onOpenDrawer={() => setIsDrawerOpen(true)}
