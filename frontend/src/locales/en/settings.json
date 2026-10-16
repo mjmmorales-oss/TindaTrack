@@ -115,5 +115,15 @@
   "cancelRestoreDemoImagesButton": "Cancel",
   "restoreDemoImagesSuccess": "Demo images restored successfully!",
   "restoreDemoImagesDetail": "Updated {{count}} product(s).",
-  "restoreDemoImagesError": "Failed to restore demo images."
+  "restoreDemoImagesError": "Failed to restore demo images.",
+  "installAppTitle": "Install TindaTrack App",
+  "installAppDesc": "Add to home screen for faster checkout and full-screen experience",
+  "installButton": "Install App",
+  "installIosTitle": "How to install on iPhone/iPad",
+  "installIosStep1": "Tap the Share button in Safari's bottom toolbar",
+  "installIosStep2": "Scroll down and tap 'Add to Home Screen'",
+  "alreadyInstalled": "App Installed",
+  "close": "Close",
+  "newVersionAvailable": "A new version is available",
+  "reload": "Reload"
 }

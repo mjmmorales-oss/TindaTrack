@@ -26,6 +26,7 @@ import { Slider } from '@/components/ui/slider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
+import { PwaInstallCard } from '@/components/common/PwaInstallPrompt'
 import { ReceiptView } from '@/features/pos/components/ReceiptView'
 import {
   useSettings,
@@ -227,6 +228,7 @@ export function SettingsPage() {
             </form>
           </Card>
 
+          <PwaInstallCard className="mt-6" />
           <LanguageSwitcher variant="card" className="mt-6" />
         </TabsContent>
 

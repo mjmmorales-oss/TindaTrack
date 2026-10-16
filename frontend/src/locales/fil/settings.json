@@ -115,5 +115,15 @@
   "cancelRestoreDemoImagesButton": "Kanselahin",
   "restoreDemoImagesSuccess": "Matagumpay na naibalik ang mga demo image!",
   "restoreDemoImagesDetail": "Na-update ang {{count}} (na) paninda.",
-  "restoreDemoImagesError": "Nabigong ibalik ang mga demo image."
+  "restoreDemoImagesError": "Nabigong ibalik ang mga demo image.",
+  "installAppTitle": "I-install ang TindaTrack App",
+  "installAppDesc": "I-save sa home screen para mas mabilis at full-screen ang pag-tinda",
+  "installButton": "I-install ang App",
+  "installIosTitle": "Paano i-install sa iPhone/iPad",
+  "installIosStep1": "Pindutin ang Share button sa ibaba ng Safari",
+  "installIosStep2": "Mag-scroll pababa at piliin ang 'Add to Home Screen'",
+  "alreadyInstalled": "Naka-install na",
+  "close": "Isara",
+  "newVersionAvailable": "May bagong bersyon na available",
+  "reload": "I-reload"
 }
