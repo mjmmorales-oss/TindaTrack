@@ -34,6 +34,7 @@ export const useCartStore = create(
               ...currentItem,
               quantity: newQty,
               stock,
+              image_url: currentItem.image_url ?? product.image_url ?? null,
             }
             return { items: updatedItems }
           }
@@ -46,6 +47,7 @@ export const useCartStore = create(
             stock,
             sku: product.sku,
             unit: product.unit || 'pc',
+            image_url: product.image_url ?? null,
           }
 
           return { items: [...state.items, newItem] }

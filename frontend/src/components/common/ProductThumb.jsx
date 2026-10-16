@@ -33,7 +33,8 @@ function getProductInitials(name = '') {
  * @param {string} [props.categoryColor='bg-primary/15 text-primary'] - Category background/text classes
  * @param {React.ComponentType<{ className?: string }>} [props.categoryIcon] - Optional category icon
  * @param {string} [props.initials] - Custom initials override
- * @param {'sm'|'md'|'lg'|'xl'} [props.size='md'] - Dimensions
+ * @param {'sm'|'md'|'lg'|'xl'} [props.size='md'] - Dimensions for standard thumbnails
+ * @param {'default'|'cover'} [props.variant='default'] - Display variant ('cover' fills parent aspect-square container)
  * @param {string} [props.className] - Additional classes
  * @returns {React.JSX.Element}
  */
@@ -44,6 +45,7 @@ export function ProductThumb({
   categoryIcon: CategoryIcon,
   initials,
   size = 'md',
+  variant = 'default',
   className,
 }) {
   const [imgError, setImgError] = useState(false)
@@ -55,6 +57,48 @@ export function ProductThumb({
 
   const letters = initials || getProductInitials(name)
   const defaultColors = 'bg-primary/10 text-primary border border-primary/20'
+  const isSvg = typeof resolvedUrl === 'string' && (resolvedUrl.endsWith('.svg') || resolvedUrl.includes('.svg'))
+
+  if (variant === 'cover') {
+    if (resolvedUrl && !imgError) {
+      return (
+        <div
+          className={cn(
+            'relative flex w-full aspect-square shrink-0 items-center justify-center overflow-hidden bg-muted/20 select-none',
+            className,
+          )}
+          aria-hidden="true"
+        >
+          <img
+            src={resolvedUrl}
+            alt={name}
+            className={cn(
+              'h-full w-full transition-transform duration-200 group-hover:scale-105',
+              isSvg ? 'object-contain p-2' : 'object-cover',
+            )}
+            onError={() => setImgError(true)}
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className={cn(
+          'relative flex w-full aspect-square shrink-0 items-center justify-center overflow-hidden font-bold tracking-tight select-none bg-gradient-to-br from-primary/10 via-muted/20 to-muted/40 text-primary',
+          className,
+        )}
+        aria-hidden="true"
+      >
+        {CategoryIcon ? (
+          <CategoryIcon className="h-10 w-10 opacity-70 mb-1" />
+        ) : (
+          <span className="font-mono text-xl uppercase tracking-wider">{letters}</span>
+        )}
+      </div>
+    )
+  }
 
   if (resolvedUrl && !imgError) {
     return (
@@ -69,7 +113,10 @@ export function ProductThumb({
         <img
           src={resolvedUrl}
           alt={name}
-          className="h-full w-full object-cover"
+          className={cn(
+            'h-full w-full',
+            isSvg ? 'object-contain p-1' : 'object-cover',
+          )}
           onError={() => setImgError(true)}
           loading="lazy"
         />

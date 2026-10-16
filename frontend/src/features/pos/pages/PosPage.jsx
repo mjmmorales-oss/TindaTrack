@@ -3,6 +3,8 @@ import {
   X,
   ScanBarcode,
   Smartphone,
+  LayoutGrid,
+  List,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -58,6 +60,12 @@ export function PosPage() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem('tindatrack-pos-view-mode') || 'grid'
+    }
+    return 'grid'
+  })
 
   // Modals state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -432,6 +440,26 @@ export function PosPage() {
                   {t('pos:clearCart', 'Clear')}
                 </Button>
               )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const next = viewMode === 'grid' ? 'list' : 'grid'
+                  setViewMode(next)
+                  localStorage.setItem('tindatrack-pos-view-mode', next)
+                }}
+                className="h-10 w-10 shrink-0"
+                title={viewMode === 'grid' ? t('pos:listView', 'Compact list view') : t('pos:gridView', 'Grid view')}
+                aria-label={viewMode === 'grid' ? t('pos:listView', 'Compact list view') : t('pos:gridView', 'Grid view')}
+              >
+                {viewMode === 'grid' ? (
+                  <List className="h-4 w-4" />
+                ) : (
+                  <LayoutGrid className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           </div>
 
@@ -471,6 +499,7 @@ export function PosPage() {
           <ProductGrid
             products={filteredProducts}
             isLoading={isLoadingProducts}
+            viewMode={viewMode}
             onAddToCart={handleAddToCart}
             onViewProduct={handleViewProduct}
             onClearFilter={() => {
