@@ -8,6 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { useVisualViewport } from '@/hooks/useVisualViewport'
 import { OfflineBanner } from '@/components/system/OfflineBanner'
+import { PwaUpdatePrompt } from '@/components/common/PwaUpdatePrompt'
 
 function VisualViewportWatcher() {
   useVisualViewport()
@@ -36,6 +37,7 @@ export function Providers({ children }) {
             <MotionConfig reducedMotion="user">
               <VisualViewportWatcher />
               <OfflineBanner />
+              <PwaUpdatePrompt />
               {children}
               <Toaster richColors position="top-right" />
               {import.meta.env.DEV && (

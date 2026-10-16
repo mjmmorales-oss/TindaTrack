@@ -26,11 +26,24 @@ describe('Product Image Utilities & Services', () => {
       expect(resolveImageUrl(blobUrl)).toBe(blobUrl)
     })
 
-    it('resolves relative /api paths correctly', () => {
+    it('resolves relative /api paths correctly against API origin', () => {
       const relative = '/api/product-images/01JM7T4K8W2NZR5C3T99V0EF1G'
       const resolved = resolveImageUrl(relative)
       expect(resolved).toBeTruthy()
       expect(resolved).toContain('/api/product-images/01JM7T4K8W2NZR5C3T99V0EF1G')
+    })
+
+    it('resolves /demo-products/ paths against window.location.origin, not API origin', () => {
+      const demoPath = '/demo-products/tt-drk-001.svg'
+      const resolved = resolveImageUrl(demoPath)
+      expect(resolved).toBe(`${window.location.origin}/demo-products/tt-drk-001.svg`)
+      expect(resolved).not.toContain(':8000') // Not backend port
+    })
+
+    it('resolves any non-/api/ root-relative path against window.location.origin', () => {
+      const staticAsset = '/logo.svg'
+      const resolved = resolveImageUrl(staticAsset)
+      expect(resolved).toBe(`${window.location.origin}/logo.svg`)
     })
   })
 

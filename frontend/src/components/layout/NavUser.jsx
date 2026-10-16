@@ -29,6 +29,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/context/ThemeProvider'
 import { getAvatarUrl, getInitials } from '@/lib/avatar'
 
+import { PwaInstallMenuItem } from '@/components/common/PwaInstallPrompt'
+
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { user, logout } = useAuth()
@@ -101,6 +103,7 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <PwaInstallMenuItem />
               <DropdownMenuItem asChild>
                 <Link
                   to="/account"

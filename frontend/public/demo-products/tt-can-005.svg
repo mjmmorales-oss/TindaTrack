@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="none" />
+  <g id="packshot">
+    <!-- Base Ground Shadow -->
+      <ellipse cx="256" cy="460" rx="130" ry="24" fill="black" opacity="0.12" />
+
+      <!-- Can Cylinder Bottom Rim -->
+      <ellipse cx="256" cy="420" rx="115" ry="32" fill="#9ca3af" />
+      <ellipse cx="256" cy="417" rx="114" ry="30" fill="#7d1219" />
+
+      <!-- Can Body -->
+      <path d="M141 120 C141 120 141 417 141 417 C141 435 256 447 256 447 C256 447 371 435 371 417 L371 120 Z" fill="url(#bodyGrad)" />
+
+      <!-- Label Wrap -->
+      <path d="M141 180 C141 180 141 360 141 360 C180 375 332 375 371 360 L371 180 C332 195 180 195 141 180 Z" fill="#ffffff" />
+      <path d="M141 190 C180 205 332 205 371 190 L371 196 C332 211 180 211 141 196 Z" fill="#eea02b" opacity="0.8" />
+      <path d="M141 345 C180 360 332 360 371 345 L371 351 C332 366 180 366 141 351 Z" fill="#eea02b" opacity="0.8" />
+
+      <!-- Can Top Rim -->
+      <path d="M141 120 C141 102 256 90 256 90 C256 90 371 102 371 120 C371 138 256 150 256 150 C256 150 141 138 141 120 Z" fill="url(#silverTop)" />
+      <ellipse cx="256" cy="120" rx="100" ry="22" fill="#d1d5db" />
+      <ellipse cx="256" cy="119" rx="94" ry="19" fill="#f3f4f6" />
+      <ellipse cx="256" cy="119" rx="80" ry="14" fill="#e5e7eb" />
+      <!-- Pull Tab -->
+      <path d="M246 114 C246 110 266 110 266 114 L264 128 L248 128 Z" fill="#9ca3af" />
+      <circle cx="256" cy="117" r="4" fill="#6b7280" />
+
+      <!-- Specular Highlight Curve -->
+      <path d="M175 135 L175 425 C170 423 166 420 162 418 L162 130 C166 132 170 134 175 135 Z" fill="#ffffff" opacity="0.35" />
+
+      <!-- Label Text -->
+      <text x="256" y="240" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="28" fill="#1f2937" text-anchor="middle">Century Tuna</text>
+      <text x="256" y="275" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="22" fill="#4b5563" text-anchor="middle">Flakes in</text>
+      
+        <rect x="206" y="298" width="100" height="26" rx="13" fill="#b81e28" />
+        <text x="256" y="316" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="15" fill="#ffffff" text-anchor="middle">155g</text>
+      
+
+      <defs>
+        <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7d1219" />
+          <stop offset="25%" stop-color="#dd404b" />
+          <stop offset="70%" stop-color="#b81e28" />
+          <stop offset="100%" stop-color="#7d1219" />
+        </linearGradient>
+        <linearGradient id="silverTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f9fafb" />
+          <stop offset="50%" stop-color="#9ca3af" />
+          <stop offset="100%" stop-color="#4b5563" />
+        </linearGradient>
+      </defs>
+  </g>
+</svg>

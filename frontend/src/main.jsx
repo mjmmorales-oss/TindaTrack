@@ -7,6 +7,9 @@ import '@fontsource-variable/plus-jakarta-sans'
 import '@fontsource-variable/geist-mono'
 import '@/i18n'
 import './index.css'
+import { initStandaloneMode } from '@/lib/standalone'
+
+initStandaloneMode()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -47,3 +47,22 @@ export function useResetDemoData() {
     },
   })
 }
+
+export function useRestoreDemoImages() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => settingsService.restoreDemoImages(),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      const count = res?.updated ?? res?.data?.updated ?? 0
+      notify.success(
+        i18n.t('settings:restoreDemoImagesSuccess'),
+        i18n.t('settings:restoreDemoImagesDetail', { count }),
+      )
+    },
+    onError: (err) => {
+      notify.error(err.message || i18n.t('settings:restoreDemoImagesError'))
+    },
+  })
+}
+

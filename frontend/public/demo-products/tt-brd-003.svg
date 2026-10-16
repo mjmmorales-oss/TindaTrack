@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="none" />
+  <g id="packshot">
+    <!-- Base Ground Shadow -->
+      <ellipse cx="256" cy="460" rx="130" ry="24" fill="black" opacity="0.12" />
+
+      <!-- Kraft Paper / Bakery Bag -->
+      <path d="M146 110 L366 110 L356 440 L156 440 Z" fill="#d97706" opacity="0.85" />
+      <!-- Serrated bag top -->
+      <path d="M146 110 L166 95 L186 110 L206 95 L226 110 L246 95 L266 110 L286 95 L306 110 L326 95 L346 110 L366 95 L366 110 Z" fill="#b45309" />
+
+      <!-- Center Stamp Label -->
+      <rect x="176" y="190" width="160" height="180" rx="16" fill="#fffbeb" stroke="#92400e" stroke-width="2" />
+      <circle cx="256" cy="240" r="32" fill="#fde68a" />
+      <path d="M236 240 Q256 220 276 240" stroke="#92400e" stroke-width="3" fill="none" />
+
+      <!-- Text -->
+      <text x="256" y="296" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#78350f" text-anchor="middle">Monay</text>
+  </g>
+</svg>

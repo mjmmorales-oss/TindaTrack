@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Eye, Plus, ShoppingCart } from 'lucide-react'
+import { motion } from 'motion/react'
+import { Eye, ShoppingCart } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,11 +10,12 @@ import {
 } from '@/components/ui/context-menu'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { Money } from '@/components/common/Money'
-import { StatusBadge } from '@/components/common/StatusBadge'
+import { useCartStore } from '@/stores/cartStore'
 import { cn } from '@/lib/utils'
 
 /**
- * Interactive POS product tile with touch feedback, stock badge, and desktop context menu.
+ * Image-first POS product tile with aspect-square cover, floating in-cart & stock badges,
+ * and high-contrast price display.
  *
  * @param {object} props
  * @param {object} props.product - Product object
@@ -23,6 +25,10 @@ import { cn } from '@/lib/utils'
 export function ProductTile({ product, onAddToCart, onViewProduct }) {
   const { t } = useTranslation(['pos', 'common'])
   const [isPressed, setIsPressed] = useState(false)
+  const inCartQty = useCartStore((state) =>
+    state.items.find((i) => i.product_id === product.id)?.quantity ?? 0
+  )
+
   const isOutOfStock = (product.stock_quantity ?? 0) <= 0
   const isLowStock =
     !isOutOfStock && product.stock_quantity <= (product.reorder_level ?? 5)
@@ -30,81 +36,97 @@ export function ProductTile({ product, onAddToCart, onViewProduct }) {
   const handleClick = () => {
     if (isOutOfStock) return
     setIsPressed(true)
-    setTimeout(() => setIsPressed(false), 200)
+    setTimeout(() => setIsPressed(false), 150)
     onAddToCart?.(product)
   }
 
-  const stockVariant = isOutOfStock ? 'out' : isLowStock ? 'low' : 'in'
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleClick()
+    }
+  }
+
+  const stockLabel = isOutOfStock
+    ? t('pos:outOfStockBadge', 'Ubos na')
+    : isLowStock
+      ? t('pos:lowStockBadge', '{{count}} left', { count: product.stock_quantity })
+      : `${product.stock_quantity} in stock`
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <button
-          type="button"
-          disabled={isOutOfStock}
+        <div
+          role="button"
+          tabIndex={isOutOfStock ? -1 : 0}
           onClick={handleClick}
+          onKeyDown={handleKeyDown}
+          data-sku={product.sku}
           className={cn(
-            'group relative flex flex-col justify-between rounded-xl border border-border/80 bg-card p-3 text-left shadow-xs transition-all outline-none',
-            'min-h-[148px] select-none',
+            'group relative flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card text-card-foreground shadow-xs transition-all duration-150 active:scale-[0.98] select-none touch-manipulation text-left',
             isOutOfStock
-              ? 'opacity-50 cursor-not-allowed bg-muted/30'
-              : 'hover:border-primary/50 hover:shadow-sm active:scale-[0.98] cursor-pointer focus-visible:ring-2 focus-visible:ring-primary',
+              ? 'opacity-60 grayscale-[30%] cursor-not-allowed bg-muted/20'
+              : 'cursor-pointer hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             isPressed && 'ring-2 ring-primary bg-primary/5',
           )}
-          aria-label={`${product.name}, ₱${product.price}, ${isOutOfStock ? 'Out of stock' : `${product.stock_quantity} in stock`}`}
+          aria-label={`${product.name}, ₱${product.price}, ${stockLabel}`}
         >
-          {/* Top Row: Thumbnail & Stock Pill */}
-          <div className="flex items-start justify-between gap-2 w-full">
+          {/* Top visual area: full-width aspect-square packshot with floating badges */}
+          <div className="relative w-full aspect-square overflow-hidden bg-muted/20">
             <ProductThumb
               name={product.name}
               imageUrl={product.image_url}
-              size="md"
-              className="shrink-0 transition-transform group-hover:scale-105"
+              variant="cover"
             />
-            <div className="shrink-0">
-              <StatusBadge
-                type="stock"
-                variant={stockVariant}
-                className="text-[10px] px-1.5 py-0.5"
-              />
-            </div>
+
+            {/* In-cart quantity badge (top-right) */}
+            {inCartQty > 0 && (
+              <motion.span
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                className="absolute top-2 right-2 z-10 rounded-full bg-primary px-1.5 py-0.5 text-xs font-bold text-primary-foreground shadow-md pointer-events-none select-none"
+              >
+                ×{inCartQty}
+              </motion.span>
+            )}
+
+            {/* Stock chip (top-left) - only rendered on low or out-of-stock */}
+            {isOutOfStock && (
+              <span className="absolute top-2 left-2 z-10 rounded-md bg-destructive/90 px-1.5 py-0.5 text-[10px] font-semibold text-destructive-foreground backdrop-blur-xs pointer-events-none select-none shadow-xs">
+                {t('pos:outOfStockBadge', 'Ubos na')}
+              </span>
+            )}
+            {isLowStock && (
+              <span className="absolute top-2 left-2 z-10 rounded-md bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-xs pointer-events-none select-none shadow-xs">
+                {t('pos:lowStockBadge', '{{count}} left', { count: product.stock_quantity })}
+              </span>
+            )}
           </div>
 
-          {/* Middle: Product Name */}
-          <div className="my-2 flex-1 min-w-0">
+          {/* Content area below image */}
+          <div className="p-2.5 flex flex-col justify-between flex-1">
             <h3
-              className="text-foreground line-clamp-2 text-xs font-semibold leading-snug sm:text-sm"
+              className="line-clamp-2 text-xs font-medium text-foreground/90 leading-snug min-h-[2.4em] sm:text-sm"
               title={product.name}
             >
               {product.name}
             </h3>
-            {product.sku && (
-              <p className="text-muted-foreground mt-0.5 truncate text-[10px] font-mono">
-                {product.sku}
-              </p>
-            )}
-          </div>
 
-          {/* Bottom Row: Price & Quick Action indicator */}
-          <div className="flex items-center justify-between border-t border-border/50 pt-2 w-full">
-            <Money
-              amount={product.price}
-              size="sm"
-              tone="default"
-              className="font-bold text-sm sm:text-base text-foreground"
-            />
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] text-muted-foreground font-mono">
-                {product.stock_quantity} {product.unit || 'pc'}
-              </span>
-              {!isOutOfStock && (
-                <span className="hidden sm:inline-flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Plus className="h-3 w-3" />
+            <div className="mt-2 flex items-baseline justify-between pt-1 border-t border-border/40">
+              <div className="flex items-baseline">
+                <Money
+                  amount={product.price}
+                  size="sm"
+                  className="text-base font-bold text-foreground"
+                />
+                <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                  / {product.unit || 'pc'}
                 </span>
-              )}
+              </div>
             </div>
           </div>
-        </button>
+        </div>
       </ContextMenuTrigger>
 
       <ContextMenuContent className="w-48">

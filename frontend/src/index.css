@@ -268,3 +268,48 @@
     top: 50% !important;
   }
 }
+
+/* Standalone PWA and Native App Shell Polish */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Standalone Status Bar Safe-Area Inset */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  header.sticky {
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  }
+}
+
+[data-standalone="true"] header.sticky {
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+
+button,
+[role="button"],
+nav,
+aside,
+[data-tile="true"] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+

@@ -10,6 +10,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Loader2,
+  Image as ImageIcon,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -25,11 +26,13 @@ import { Slider } from '@/components/ui/slider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
+import { PwaInstallCard } from '@/components/common/PwaInstallPrompt'
 import { ReceiptView } from '@/features/pos/components/ReceiptView'
 import {
   useSettings,
   useUpdateSettings,
   useResetDemoData,
+  useRestoreDemoImages,
 } from '@/features/settings/hooks/useSettings'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getAutoBarcodeLookup, setAutoBarcodeLookup } from '@/lib/barcodeSettings'
@@ -42,8 +45,10 @@ export function SettingsPage() {
   const settings = settingsRes?.data
   const updateMutation = useUpdateSettings()
   const resetMutation = useResetDemoData()
+  const restoreImagesMutation = useRestoreDemoImages()
 
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
   const [autoLookup, setAutoLookup] = useState(() => getAutoBarcodeLookup())
 
   // React Hook Form for settings
@@ -143,12 +148,10 @@ export function SettingsPage() {
               <Boxes className="h-4 w-4" />
               {t('settings:inventoryTab')}
             </TabsTrigger>
-            {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
-              <TabsTrigger value="data" className="flex-1 sm:flex-none gap-2">
-                <Database className="h-4 w-4" />
-                {t('settings:resetDataTab')}
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="data" className="flex-1 sm:flex-none gap-2">
+              <Database className="h-4 w-4" />
+              {t('settings:resetDataTab')}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -225,6 +228,7 @@ export function SettingsPage() {
             </form>
           </Card>
 
+          <PwaInstallCard className="mt-6" />
           <LanguageSwitcher variant="card" className="mt-6" />
         </TabsContent>
 
@@ -415,9 +419,41 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 4: Data Management & Reset Demo Data (Mock fallback only) */}
-        {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
-          <TabsContent value="data">
+        {/* TAB 4: Data Management & Demo Data */}
+        <TabsContent value="data" className="space-y-6">
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-primary" />
+                {t('settings:restoreDemoImagesCardTitle')}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {t('settings:restoreDemoImagesCardDesc')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                {t('settings:restoreDemoImagesBody')}
+              </p>
+            </CardContent>
+            <CardFooter className="flex justify-end border-t border-border/70 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setRestoreDialogOpen(true)}
+                className="gap-2 w-full sm:w-auto"
+                disabled={restoreImagesMutation.isPending}
+              >
+                {restoreImagesMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-4 w-4" />
+                )}
+                {t('settings:restoreDemoImagesButton')}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2 text-destructive">
@@ -447,9 +483,26 @@ export function SettingsPage() {
                 </Button>
               </CardFooter>
             </Card>
-          </TabsContent>
-        )}
+          )}
+        </TabsContent>
       </Tabs>
+
+      {/* Confirm Restore Demo Images Dialog */}
+      <ConfirmDialog
+        open={restoreDialogOpen}
+        onOpenChange={setRestoreDialogOpen}
+        title={t('settings:confirmRestoreDemoImagesTitle')}
+        description={t('settings:confirmRestoreDemoImagesDesc')}
+        confirmText={t('settings:confirmRestoreDemoImagesButton')}
+        cancelText={t('settings:cancelRestoreDemoImagesButton')}
+        tone="default"
+        onConfirm={() => {
+          restoreImagesMutation.mutate(undefined, {
+            onSettled: () => setRestoreDialogOpen(false),
+          })
+        }}
+        isLoading={restoreImagesMutation.isPending}
+      />
 
       {/* Confirm Reset Dialog */}
       {import.meta.env.VITE_DATA_SOURCE === 'mock' && (

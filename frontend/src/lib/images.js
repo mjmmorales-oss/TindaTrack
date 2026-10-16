@@ -26,19 +26,29 @@ export function resolveImageUrl(url) {
     return trimmed
   }
 
-  const apiBase = getApiBaseUrl() || '/api'
-  if (apiBase.startsWith('http://') || apiBase.startsWith('https://')) {
-    try {
-      const parsed = new URL(apiBase)
-      const origin = parsed.origin
-      const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
-      return `${origin}${cleanPath}`
-    } catch {
-      // Fallback to relative
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+
+  // Only paths starting with /api/ resolve against the backend API origin
+  if (cleanPath.startsWith('/api/')) {
+    const apiBase = getApiBaseUrl() || '/api'
+    if (apiBase.startsWith('http://') || apiBase.startsWith('https://')) {
+      try {
+        const parsed = new URL(apiBase)
+        return `${parsed.origin}${cleanPath}`
+      } catch {
+        // Fallback to relative
+      }
     }
+    return cleanPath
   }
 
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  // Static frontend assets (e.g. /demo-products/...) resolve against window.location.origin
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${cleanPath}`
+  }
+
+  return cleanPath
 }
 
 export default resolveImageUrl
+

@@ -235,3 +235,29 @@ test('auto-import triggers when creating or updating product with Open Food Fact
     $img = ProductImage::where('product_id', $newProduct->id)->first();
     expect($img->source_url)->toBe($offUrl2);
 });
+
+test('product store and update accept relative demo product SVG path', function () {
+    $demoPath = '/demo-products/coke-mismo.svg';
+
+    $createRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->postJson('/api/products', [
+            'name' => 'Demo Packshot Product',
+            'sku' => 'DEMO-SVG-001',
+            'category_id' => $this->category->id,
+            'price' => 30.0,
+            'cost_price' => 25.0,
+            'image_url' => $demoPath,
+        ]);
+
+    $createRes->assertStatus(201);
+    expect($createRes->json('data.image_url'))->toBe($demoPath);
+
+    $productId = $createRes->json('data.id');
+    $updateRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->putJson("/api/products/{$productId}", [
+            'image_url' => '/demo-products/sprite-mismo.svg',
+        ]);
+
+    $updateRes->assertStatus(200);
+    expect($updateRes->json('data.image_url'))->toBe('/demo-products/sprite-mismo.svg');
+});

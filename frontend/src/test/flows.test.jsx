@@ -493,6 +493,11 @@ describe('End-to-End User Flows Against Mock Database', () => {
     const { data: updated } = await settingsService.get()
     expect(updated.store_name).toBe('Tindahan ni Aling Nena - Updated')
     expect(updated.receipt_footer).toBe('Maraming salamat sa inyong pagtangkilik!')
+
+    // Test restoreDemoImages
+    const restoreRes = await settingsService.restoreDemoImages()
+    expect(restoreRes).toBeDefined()
+    expect(typeof restoreRes.updated).toBe('number')
   })
 
   // Flow 13: Filter, search, sort and paginate on /products and /sales
