@@ -14,7 +14,8 @@
     "check:bundle": "node ../scripts/check-prod-bundle.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:mobile": "node scripts/check-mobile.mjs",
-    "gen:demo-art": "node scripts/generate-demo-product-art.mjs"
+    "gen:demo-art": "node scripts/generate-demo-product-art.mjs",
+    "gen:icons": "pwa-assets-generator"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
@@ -90,6 +91,7 @@
     "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
+    "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "cross-env": "^10.1.0",

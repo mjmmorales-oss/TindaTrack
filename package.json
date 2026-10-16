@@ -13,7 +13,8 @@
     "check:bundle": "node scripts/check-prod-bundle.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:mobile": "node frontend/scripts/check-mobile.mjs",
-    "gen:demo-art": "npm --prefix frontend run gen:demo-art"
+    "gen:demo-art": "npm --prefix frontend run gen:demo-art",
+    "gen:icons": "npm --prefix frontend run gen:icons"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
