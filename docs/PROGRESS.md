@@ -1301,12 +1301,129 @@ Follow this step-by-step checklist to verify TindaTrack v1.3.0 in local developm
 
 Tracking implementation of v1.4 tasks (P0–P6):
 - [x] **P0 — Preflight & Quick Audit**: Baseline recorded across all gates, architecture & components audited, findings logged.
-- [ ] **P1 — Demo Product Images**: Generator script (`gen:demo-art`), 58 deterministic SVGs, seed & mock data updates, `resolveImageUrl` frontend routing, backend validation & restore endpoint.
-- [ ] **P2 — Image-First POS Product Tile**: Aspect-square cover image, stock chip overlay, in-cart badge, SKU removal, touch animations, auto-fill grid, compact list mode toggle.
-- [ ] **P3 — Cart Rows with Thumbnail on the Left**: 48x48 thumbnail, "₱price × qty", compact stepper, swipe-to-remove with undo toast, `MobileCartBar` thumbnail previews, tests.
-- [ ] **P4 — Brand Icon Set**: Master `logo.svg` from theme primary & lucide `Store`, `logo-maskable.svg`, PWA icon generator (`gen:icons`), apple-touch-icon, favicon replacement, `index.html` head tags.
-- [ ] **P5 — Installable PWA with Native Feel**: `vite-plugin-pwa`, standalone display mode, workbox caching rules (no `/api/` cache), install helper (iOS sheet + Android prompt), safe-area insets, `check-pwa.mjs`.
-- [ ] **P6 — Docs, Final Gates, Merge & Tag**: `docs/PWA.md`, updated `README.md`, `docs/CHANGELOG.md`, all gates passing, merged to `main`, tagged `v1.4.0`.
+- [x] **P1 — Demo Product Images**: Generator script (`gen:demo-art`), 58 deterministic SVGs, seed & mock data updates, `resolveImageUrl` frontend routing, backend validation & restore endpoint.
+- [x] **P2 — Image-First POS Product Tile**: Aspect-square cover image, stock chip overlay, in-cart badge, SKU removal, touch animations, auto-fill grid, compact list mode toggle.
+- [x] **P3 — Cart Rows with Thumbnail on the Left**: 48x48 thumbnail, "₱price × qty", compact stepper, swipe-to-remove with undo toast, `MobileCartBar` thumbnail previews, tests.
+- [x] **P4 — Brand Icon Set**: Master `logo.svg` from theme primary & lucide `Store`, `logo-maskable.svg`, PWA icon generator (`gen:icons`), apple-touch-icon, favicon replacement, `index.html` head tags.
+- [x] **P5 — Installable PWA with Native Feel**: `vite-plugin-pwa`, standalone display mode, workbox caching rules (no `/api/` cache), install helper (iOS sheet + Android prompt), safe-area insets, `check-pwa.mjs`.
+- [x] **P6 — Docs, Final Gates, Merge & Tag**: `docs/PWA.md`, updated `README.md`, `docs/CHANGELOG.md`, all gates passing, merged to `main`, tagged `v1.4.0`.
+
+### P0 Log (Preflight & Quick Audit):
+- **Baseline Metrics (Recorded at v1.3.0 on `main`)**:
+  - Git Branch: `polish/v1.4` (cut from `main` at `v1.3.0`).
+  - Backend Suite (`./vendor/bin/pest`): 98 passed (98), 527 assertions.
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Backend Reconciliation (`php artisan tindatrack:check`): 100% reconciled (1,598 sales, 4,170 movements, customer balances match).
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production bundle compiled (94 assets).
+  - Frontend Suite (`npx vitest run`): 17 test files passed, 206 passed tests.
+  - Verification Scripts:
+    - `check-i18n.mjs`: 18 namespaces clean, 1,535 `t(...)` calls validated, 0 leaks.
+    - `check-mobile.mjs`: 0 violations, touch floor verified.
+    - `check-prod-bundle.mjs`: 93 assets scanned, 0 secrets/dev leaks.
+    - `smoke-pairing.mjs`: All 6 steps passed on Direct API.
+    - `smoke-prod-like.mjs`: 9/9 passed.
+- **Architectural & File Audit Findings**:
+  1. *Current POS Tile Layout* (`src/features/pos/components/ProductTile.jsx`):
+     - Displays small thumbnail (`ProductThumb` size `md` / 40x40), stock pill badge, product name, monospace **SKU** (`product.sku`), price, and stock quantity + unit.
+     - Lacks image-first prominence, in-cart quantity badges, and still exposes SKU text.
+  2. *Favicon & Branding* (`frontend/public/favicon.svg`):
+     - `favicon.svg` contains the default Vite lightning bolt (`#863bff`), completely disconnected from TindaTrack's store icon branding.
+     - `public/icons.svg` contains leftover template icons (bluesky, discord, github) unreferenced by any code.
+  3. *PWA & Web Manifest Assets*:
+     - No `manifest.webmanifest`, no `apple-touch-icon`, and no service worker (`sw.js`).
+     - `index.html` lacks `apple-mobile-web-app-capable`, apple status bar styles, and theme-color meta tags.
+  4. *Product Image Data*:
+     - Seeded products in `backend/database/data/products.json` and `src/mocks/data/products.js` currently have no `image_url` (null).
+  5. *Image URL Resolution* (`src/lib/images.js`):
+     - `resolveImageUrl` currently prepends the backend API base origin for any path starting with `/`. For static frontend demo images like `/demo-products/{sku}.svg`, this would incorrectly route to Laravel (Railway) instead of the frontend `window.location.origin`. Needs explicit frontend routing for non-`/api/` paths.
+  6. *Cart Store Item Shape* (`src/stores/cartStore.js`):
+     - `newItem` in `useCartStore.add` currently stores `{ product_id, name, price, quantity, stock, sku, unit }` but omits `image_url`. Must be updated to retain `image_url` so cart rows and mobile cart bars can display thumbnail previews.
+
+### P1 Log (Demo Product Packshots):
+- Created `frontend/scripts/generate-demo-product-art.mjs` and generated 58 deterministic vector packshot SVGs in `frontend/public/demo-products/`.
+- Wired `npm run gen:demo-art` in `frontend/package.json` and root `package.json`.
+- Updated `backend/database/data/products.json` and `frontend/src/mocks/data/products.js` with static paths `/demo-products/{sku}.svg`.
+- Hardened `ReferenceDataSeeder.php` to preserve existing non-null `image_url` when re-seeding database.
+- Updated `frontend/src/lib/images.js` (`resolveImageUrl`) to route `/demo-products/*` and static assets to frontend origin (`window.location.origin`) and added 6 unit tests in `src/test/images.test.jsx`.
+- Added `POST /api/settings/restore-demo-images` endpoint and `ProductImageTest.php` / `SettingsTest.php` Pest suites.
+- Added "Restore demo images" button in `SettingsPage.jsx` with bilingual confirmation dialog.
+
+### P2 Log (Image-First POS Experience):
+- Redesigned `ProductThumb.jsx` with `variant="cover"` supporting responsive aspect-square card containers with gentle SVG padding.
+- Rewrote `ProductTile.jsx`: aspect-square cover, floating in-cart `×{qty}` badge with scale bounce, floating stock chip for out-of-stock/low-stock, high-contrast bold price, SKU text removed, touch press scale animation, keyboard activation (`Enter`/`Space`), and context menu.
+- Rewrote `ProductGrid.jsx`: responsive grid `grid-cols-[repeat(auto-fill,minmax(140px,1fr))]` on mobile and `minmax(160px,1fr)` on desktop. Skeleton loaders updated to match aspect-square cover card geometry.
+- Added compact list mode with `ProductListRow.jsx` and persistent view mode toggle in `PosPage.jsx` (`localStorage`).
+- Added bilingual keys for out-of-stock and low-stock chips in `en/pos.json` and `fil/pos.json`.
+
+### P3 Log (Rich Cart Ergonomics & Mobile Bar):
+- Updated `cartStore.js` to persist `image_url` on items.
+- Rewrote `CartItemRow.jsx`: 48x48 thumbnail on left, stacked name and unit price breakdown, SKU removed, compact stepper with scale pulse on quantity change, swipe-to-remove gesture revealing red trash action with Sonner undo toast.
+- Rewrote `MobileCartBar.jsx`: up to 3 overlapping circular thumbnails on the left, total item count, bold price, and drawer trigger.
+- Verified and passed all cart and mobile drawer tests.
+
+### P4 Log (Brand Icon Suite):
+- Authored vector master marks `public/logo.svg` and `public/logo-maskable.svg` featuring signature emerald theme (`#0e7c66`, `#064e3b`) and amber accents (`#fbbf24`).
+- Configured `frontend/pwa-assets.config.js` and wired `npm run gen:icons` using `@vite-pwa/assets-generator`.
+- Generated `favicon.ico`, `apple-touch-icon-180x180.png`, `pwa-64x64.png`, `pwa-192x192.png`, `pwa-512x512.png`, and `maskable-icon-512x512.png`.
+- Replaced purple Vite placeholder favicon with TindaTrack store vector icon (verified 0 references to `#863bff`).
+- Updated `frontend/index.html` with full icon suite and `theme-color` meta tags.
+
+### P5 Log (Installable PWA with Native Shell):
+- Configured `VitePWA` in `frontend/vite.config.js`: `registerType: 'prompt'`, `devOptions: { enabled: false }`, standalone Web App Manifest with shortcuts and maskable icon, Workbox rules (network-only authenticated `/api/`, cache-first demo packshots).
+- Created `frontend/src/hooks/usePwaInstall.js` capturing `beforeinstallprompt`, detecting iOS Safari, and checking standalone mode.
+- Added standalone polish in `frontend/src/index.css`: safe-area insets (`padding-top: env(safe-area-inset-top)` on sticky headers, `padding-bottom: env(safe-area-inset-bottom)` on mobile bottom nav), `overscroll-behavior: none`, `-webkit-tap-highlight-color: transparent`, and touch callout suppression on navigation and tiles.
+- Created `frontend/src/lib/standalone.js` managing `data-standalone="true"` on `<html>`.
+- Created `PwaInstallCard`, `PwaInstallIosDialog`, `PwaInstallMenuItem`, and `PwaUpdatePrompt` with bilingual translations.
+- Updated `frontend/vercel.json` to bypass SPA rewrites for `/sw.js`, `/manifest.webmanifest`, `/workbox-*.js`, and enforce `Cache-Control: no-cache` on `sw.js`.
+- Created `frontend/scripts/check-pwa.mjs` (`npm run check:pwa`) build validation script.
+- Added 7/7 passing Vitest tests in `frontend/src/test/pwa.test.jsx`.
+
+### P6 Log (Docs, Final Gates, Merge & Tag):
+- Created `docs/PWA.md` comprehensive guide covering iOS Safari, Android, desktop installation, dev vs prod service worker behavior, icon generator, caching rules, and standalone ergonomics.
+- Updated `README.md`, `docs/CHANGELOG.md` (v1.4.0), and `docs/DEPLOY.md`.
+- Ran and passed all final preflight gates across backend and frontend:
+  - Backend Suite (`./vendor/bin/pest`): 103 passed (103), 555 assertions.
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Backend Reconciliation (`php artisan tindatrack:check`): 100% reconciled.
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production bundle compiled.
+  - Frontend PWA Gate (`npm run check:pwa`): All checks passed.
+  - Frontend i18n Gate (`npm run check:i18n`): 18 namespaces verified, 0 leaks.
+  - Frontend Mobile Gate (`npm run check:mobile`): Verified touch floor and units.
+  - Frontend Production Bundle Scan (`npm run check:bundle`): 94 assets scanned, 0 leaks.
+  - Frontend Suite (`npx vitest run`): 18 test files passed, 215 passed tests.
+  - Pairing Smoke Test (`npm run smoke:pairing`): 6/6 passed.
+  - Production-like Smoke Test (`npm run smoke:prod`): 9/9 passed.
+- Merged `polish/v1.4` into `main` and tagged `v1.4.0`.
+
+---
+
+## Morning Checklist for Review
+
+1. **Local Sync & Fresh Database Seeds**:
+   ```bash
+   git pull
+   npm install
+   npm --prefix frontend install
+   cd backend && php artisan migrate:fresh --seed && cd ..
+   npm run dev
+   ```
+2. **Image-First POS Tile Verification**:
+   - Navigate to `/pos`.
+   - Verify product tiles render aspect-square cover packshots (`/demo-products/*.svg`) with clean SVG padding.
+   - Verify product price is prominently shown directly under the name in high-contrast bold font.
+   - Verify no monospace SKU or fallback letter initials clutter the card face.
+   - Click/tap a tile: verify the floating `×{qty}` badge appears in the top-right corner with a bouncy scale animation.
+   - Look at the cart panel: verify the cart row features a 48x48 thumbnail on the left, stacked item name and unit price breakdown, and no SKU text.
+   - On mobile viewport: verify `MobileCartBar` displays overlapping product thumbnails on the left.
+3. **Store Branding & Favicon Verification**:
+   - Inspect the browser tab: verify the favicon is the custom emerald/amber TindaTrack store mark (not Vite purple `#863bff`).
+4. **PWA Standalone & iOS Safari Verification (after Vercel deployment)**:
+   - Open the production HTTPS URL on an iPhone in Safari.
+   - Tap **Share** → **Add to Home Screen** (`Idagdag sa Home Screen`).
+   - Launch TindaTrack from the home screen: verify it opens in chromeless standalone mode with a translucent status bar seamlessly blending into the header, no Safari URL bar, and no bottom browser toolbar.
+   - Verify navigation, buttons, and tiles suppress long-press callouts, and pull-to-refresh page bouncing is disabled.
 
 ### P0 Log (Preflight & Quick Audit):
 - **Baseline Metrics (Recorded at v1.3.0 on `main`)**:

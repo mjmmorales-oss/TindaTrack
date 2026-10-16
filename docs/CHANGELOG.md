@@ -2,6 +2,41 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v1.4.0] - 2026-10-17 - Packshot Demo Catalog, Image-First POS & Installable PWA
+- **Deterministic Demo Packshot Catalog (P1)**:
+  - 58 deterministic vector SVG packshots (`frontend/public/demo-products/*.svg`) crafted specifically for traditional Philippine sari-sari items across 8 categories (Beverages, Instant Noodles, Canned Goods, Snacks, Condiments & Cooking, Coffee & Milk, Personal Care, and Household & Cleaning).
+  - Scripted reproducibility: `npm run gen:demo-art` (`frontend/scripts/generate-demo-product-art.mjs`) generates all 58 packshots deterministically from seed product data.
+  - Seeder & Mock Data synchronization: `backend/database/data/products.json` and `frontend/src/mocks/data/products.js` mapped to `/demo-products/*.svg`.
+  - Image URL resolution: `resolveImageUrl` updated to map `/demo-products/*` and root-relative static assets against frontend origin (`window.location.origin`), keeping them independent of the backend API host.
+  - Image preservation on re-seeding: `ReferenceDataSeeder.php` preserves existing non-null `image_url` on re-seeds, protecting uploaded photos.
+  - Demo packshot restoration: Added `POST /api/settings/restore-demo-images` endpoint and frontend Settings action ("Restore demo images") guarded with `ConfirmDialog` to restore demo packshots for standard products missing an image without altering custom uploads.
+- **Image-First POS Experience (P2)**:
+  - Redesigned `ProductTile.jsx`: aspect-square cover container with subtle padding for SVG packshots (`ProductThumb variant="cover"`), high-contrast bold price below the title, floating stock chips only for low-stock and out-of-stock states, floating in-cart quantity badge (`×{qty}`) animated via `motion/react`, and removed cluttered SKU and category tags.
+  - Tactile card micro-interactions: `active:scale-[0.98]` press feedback, keyboard `Enter`/`Space` activation, and context-menu inspection.
+  - Responsive auto-fill grid: `ProductGrid.jsx` migrated to `grid-cols-[repeat(auto-fill,minmax(140px,1fr))]` on mobile and `minmax(160px,1fr)` on desktop. Skeleton loaders updated to match aspect-square cover cards.
+  - Compact List Mode: Added optional list row layout (`ProductListRow.jsx`) with 48x48 thumbnail, stock indicator, price, and quick-add button.
+  - View mode toggle: Grid vs. List toggle in POS header, persisted in `localStorage('tindatrack-pos-view-mode')`.
+- **Rich Cart Ergonomics & Mobile Bar (P3)**:
+  - Cart item thumbnails: `CartItemRow.jsx` now renders a 48x48 rounded thumbnail on the left, stacked item name and unit price breakdown, and hides SKU text.
+  - Quantity Stepper: Compact stepper with micro-scale pulse animation (`scale: [1, 1.25, 1]`) on quantity modification.
+  - Swipe-to-Remove gesture: Touch swipe gesture on mobile reveals an underlying red trash action; swiping past threshold removes the item and triggers a Sonner toast with an "Undo" action.
+  - Mobile Cart Bar: `MobileCartBar.jsx` renders overlapping circular thumbnails (up to 3 items) alongside the item count, total price, and checkout trigger.
+- **Brand Icon Suite & Asset Generator (P4)**:
+  - Unified vector brand identity: Vector source marks `public/logo.svg` and `public/logo-maskable.svg` with emerald theme (`#0e7c66`, `#064e3b`) and amber accents (`#fbbf24`).
+  - Automated asset generation: Configured `pwa-assets.config.js` and wired `npm run gen:icons` (`pwa-assets-generator`) generating `favicon.ico`, `apple-touch-icon-180x180.png`, `pwa-64x64.png`, `pwa-192x192.png`, `pwa-512x512.png`, and `maskable-icon-512x512.png`.
+  - Replaced purple Vite placeholder favicon with TindaTrack store vector icon (verified 0 references to `#863bff` or `vite.svg`).
+  - Added theme-color and apple-touch-icon metadata to `index.html`.
+- **Installable Progressive Web App (PWA) with Native Feel (P5)**:
+  - `vite-plugin-pwa` integration: `registerType: 'prompt'`, `devOptions: { enabled: false }` (disabled in development to prevent stale caches and cert issues).
+  - Web App Manifest: `display: standalone`, `display_override: ['standalone', 'minimal-ui']`, `start_url: '/?source=pwa'`, brand theme colors, maskable icon, and shortcuts for POS, Inventory, and Scan to add.
+  - Workbox Caching Rules: App shell precaching (JS, CSS, HTML, Wasm, fonts), CacheFirst for `/demo-products/*` and `/api/product-images/*` (30 days), and strictly **NetworkOnly** for all authenticated `/api/**` business routes.
+  - Standalone Polish: CSS rules for safe-area insets (`padding-top: env(safe-area-inset-top)` on sticky headers, `padding-bottom: env(safe-area-inset-bottom)` on mobile bottom nav), `overscroll-behavior: none` to prevent pull-to-refresh bounce, `-webkit-tap-highlight-color: transparent`, and touch callout suppression on navigation and tiles.
+  - `usePwaInstall` hook: Captures `beforeinstallprompt` on Android/Chrome, detects iOS Safari standalone state, and suppresses installation UI once installed.
+  - Install helpers: `PwaInstallCard` in Settings Profile, `PwaInstallMenuItem` in user dropdown menu, and `PwaInstallIosDialog` with step-by-step Safari instructions (Share → Add to Home Screen).
+  - Update Prompt: `PwaUpdatePrompt` mounts `useRegisterSW` and displays an unobtrusive Sonner toast ("A new version is available") with a "Reload" button when an update is waiting.
+  - Automated gate: `scripts/check-pwa.mjs` (`npm run check:pwa`) verifying manifest, service worker, disk icons, meta tags, and absence of legacy Vite branding.
+  - Vitest coverage: 7/7 automated tests in `src/test/pwa.test.jsx`.
+
 ## [v1.3.0] - 2026-10-16 - Unified Add by Barcode, Mobile Input Polish & Staff Management
 - **Unified "Add by Barcode" Flow (U1)**:
   - Replaced fragmented barcode entry paths (`QuickAddScanDialog` and separate scanner sheets) with unified `BarcodeCapture.jsx` and `AddByBarcodeDialog.jsx`.

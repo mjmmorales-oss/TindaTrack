@@ -176,3 +176,13 @@ Once both services are running:
 - [ ] **Utang Sale**: Create an utang sale for an existing suki customer. Verify customer balance increased and sale recorded.
 - [ ] **Void Sale**: Go to `/sales`, open the cash sale created above, click **"I-void ang Benta"**, provide a reason (≥ 5 chars), and confirm. Verify items returned to stock.
 - [ ] **Reports Reconciliation**: Go to `/reports` and `/sales`. Ensure sales totals and payment breakdowns match the summary numbers.
+- [ ] **PWA & Packshots**: Ensure product cards render demo packshots (`/demo-products/*.svg`), the favicon displays the store logo (not Vite purple), and the browser offers the install prompt or iOS "Add to Home Screen" instructions.
+- [ ] **Service Worker Freshness**: Verify `https://<YOUR-VERCEL-DOMAIN>/sw.js` returns HTTP 200 with `Cache-Control: no-cache, no-store, must-revalidate`.
+
+---
+
+## Part 5: v1.4 Progressive Web App Notes
+
+- **Zero New Environment Variables**: TindaTrack v1.4.0 requires no additional environment variables for Railway or Vercel.
+- **Vercel Headers & Routing**: `frontend/vercel.json` explicitly preserves `/sw.js`, `/manifest.webmanifest`, and `/workbox-*.js` bypassing the SPA rewrite rule, and serves `/sw.js` with `no-cache, no-store, must-revalidate` so client updates trigger promptly without edge caching.
+- **Service Worker in Dev**: In development (`npm run dev` or `npm run dev:lan`), the service worker is disabled (`devOptions.enabled: false`) to prevent stale caches and self-signed SSL errors. PWA capabilities should be validated on the deployed Vercel HTTPS URL.
