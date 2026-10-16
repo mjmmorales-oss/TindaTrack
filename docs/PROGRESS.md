@@ -1294,3 +1294,49 @@ Follow this step-by-step checklist to verify TindaTrack v1.3.0 in local developm
 7. **Clean Session Logout**:
    - Tap user avatar and select **Sign Out**.
    - Verify cart, active pairing sessions, and cached credentials are fully cleared.
+
+---
+
+## TindaTrack v1.4 Progress Tracker
+
+Tracking implementation of v1.4 tasks (P0–P6):
+- [x] **P0 — Preflight & Quick Audit**: Baseline recorded across all gates, architecture & components audited, findings logged.
+- [ ] **P1 — Demo Product Images**: Generator script (`gen:demo-art`), 58 deterministic SVGs, seed & mock data updates, `resolveImageUrl` frontend routing, backend validation & restore endpoint.
+- [ ] **P2 — Image-First POS Product Tile**: Aspect-square cover image, stock chip overlay, in-cart badge, SKU removal, touch animations, auto-fill grid, compact list mode toggle.
+- [ ] **P3 — Cart Rows with Thumbnail on the Left**: 48x48 thumbnail, "₱price × qty", compact stepper, swipe-to-remove with undo toast, `MobileCartBar` thumbnail previews, tests.
+- [ ] **P4 — Brand Icon Set**: Master `logo.svg` from theme primary & lucide `Store`, `logo-maskable.svg`, PWA icon generator (`gen:icons`), apple-touch-icon, favicon replacement, `index.html` head tags.
+- [ ] **P5 — Installable PWA with Native Feel**: `vite-plugin-pwa`, standalone display mode, workbox caching rules (no `/api/` cache), install helper (iOS sheet + Android prompt), safe-area insets, `check-pwa.mjs`.
+- [ ] **P6 — Docs, Final Gates, Merge & Tag**: `docs/PWA.md`, updated `README.md`, `docs/CHANGELOG.md`, all gates passing, merged to `main`, tagged `v1.4.0`.
+
+### P0 Log (Preflight & Quick Audit):
+- **Baseline Metrics (Recorded at v1.3.0 on `main`)**:
+  - Git Branch: `polish/v1.4` (cut from `main` at `v1.3.0`).
+  - Backend Suite (`./vendor/bin/pest`): 98 passed (98), 527 assertions.
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Backend Reconciliation (`php artisan tindatrack:check`): 100% reconciled (1,598 sales, 4,170 movements, customer balances match).
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production bundle compiled (94 assets).
+  - Frontend Suite (`npx vitest run`): 17 test files passed, 206 passed tests.
+  - Verification Scripts:
+    - `check-i18n.mjs`: 18 namespaces clean, 1,535 `t(...)` calls validated, 0 leaks.
+    - `check-mobile.mjs`: 0 violations, touch floor verified.
+    - `check-prod-bundle.mjs`: 93 assets scanned, 0 secrets/dev leaks.
+    - `smoke-pairing.mjs`: All 6 steps passed on Direct API.
+    - `smoke-prod-like.mjs`: 9/9 passed.
+- **Architectural & File Audit Findings**:
+  1. *Current POS Tile Layout* (`src/features/pos/components/ProductTile.jsx`):
+     - Displays small thumbnail (`ProductThumb` size `md` / 40x40), stock pill badge, product name, monospace **SKU** (`product.sku`), price, and stock quantity + unit.
+     - Lacks image-first prominence, in-cart quantity badges, and still exposes SKU text.
+  2. *Favicon & Branding* (`frontend/public/favicon.svg`):
+     - `favicon.svg` contains the default Vite lightning bolt (`#863bff`), completely disconnected from TindaTrack's store icon branding.
+     - `public/icons.svg` contains leftover template icons (bluesky, discord, github) unreferenced by any code.
+  3. *PWA & Web Manifest Assets*:
+     - No `manifest.webmanifest`, no `apple-touch-icon`, and no service worker (`sw.js`).
+     - `index.html` lacks `apple-mobile-web-app-capable`, apple status bar styles, and theme-color meta tags.
+  4. *Product Image Data*:
+     - Seeded products in `backend/database/data/products.json` and `src/mocks/data/products.js` currently have no `image_url` (null).
+  5. *Image URL Resolution* (`src/lib/images.js`):
+     - `resolveImageUrl` currently prepends the backend API base origin for any path starting with `/`. For static frontend demo images like `/demo-products/{sku}.svg`, this would incorrectly route to Laravel (Railway) instead of the frontend `window.location.origin`. Needs explicit frontend routing for non-`/api/` paths.
+  6. *Cart Store Item Shape* (`src/stores/cartStore.js`):
+     - `newItem` in `useCartStore.add` currently stores `{ product_id, name, price, quantity, stock, sku, unit }` but omits `image_url`. Must be updated to retain `image_url` so cart rows and mobile cart bars can display thumbnail previews.
+
