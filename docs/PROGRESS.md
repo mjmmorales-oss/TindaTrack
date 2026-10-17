@@ -1661,6 +1661,225 @@ When starting work on TindaTrack v2.0.0:
    - In **Settings** → **AI**, toggle **"Research Mode"** ON.
    - Open `/ai-lab` from the sidebar navigation to inspect real-time precision/recall telemetry and run evaluation benchmark experiments.
 
+---
 
+## v2.0.1 Fix Release Progress Tracker
 
+### F0 Log (Preflight & Baseline Audit):
+- **Branch**: Cut `fix/v2.0.1` from `main` (clean at `v2.0.0`).
+- **Baseline Gates Verified**:
+  - Backend Suite (`./vendor/bin/pest`): 136 passed (136), 704 assertions (7.28s).
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production build (102 assets).
+  - Frontend Tests (`npx vitest run`): 24 test suites passed, 247 passed tests.
+  - Verification Scripts:
+    - `check:i18n`: 19 namespaces, 1,834 `t(...)` calls validated, 0 leaks.
+    - `check:mobile`: 0 violations, touch floor verified.
+    - `check:pwa`: PWA manifest, service worker, icons valid.
+    - `check-services`: 13 service pairs, all mock/api contracts matched.
+    - `check-contract`: 49 API endpoint contracts matched registered Laravel routes.
+    - `check-mockdata`: Discrepancy ₱0.0000.
+    - `check-prod-bundle`: 102 assets scanned, 0 secrets, 0 dev leaks.
+    - `smoke:pairing`: Passed.
+    - `smoke:prod`: 9/9 passed.
+    - `smoke:ai`: 12/12 passed.
+
+### F1 Log (SKU Auto-Generation & Optional Constraints Across All Create Paths):
+- **Root Cause**: `ProductController@store` enforced `'sku' => ['required', ...]`. In *Add by barcode → Found online — Quick Add*, the UI deliberately did not render an SKU field, expecting the backend to generate one. Furthermore, `ProductBulkController` independently generated random `prefix-RANDOM6` strings instead of matching the seeded `TT-{CAT}-{NNN}` format.
+- **Architectural Fix**:
+  - Implemented `App\Support\SkuGenerator`:
+    - Canonical 3-letter category prefixes derived from category definitions: DRK (Drinks), COF (Coffee & Milk), NOO/NDL (Instant Noodles), CAN (Canned Goods), SNA (Snacks), BRD (Bread), CND (Condiments), RCE (Rice & Cooking), PER/PRC (Personal Care), HOU/HSH (Household). Fallback to first 3 letters of category slug uppercase, or `GEN` if uncategorized.
+    - Suffix extraction: queries existing `TT-{CAT}-%` SKUs, finds highest numeric suffix, increments by 1 with 3+ zero-padding.
+    - Robustness: `SkuGenerator::create` provides automated retry loop (up to 5 attempts) on unique SKU constraint collision.
+  - Backend controllers:
+    - `ProductController@store`: validation changed to `'sku' => ['nullable', 'string', 'max:50', 'unique:products,sku']`. Uses `SkuGenerator::create`.
+    - `ProductController@update`: `'sku' => ['sometimes', 'nullable', ...]`. Blanked/empty values are stripped, safely preserving existing product SKU.
+    - `ProductBulkController@bulk`: uses `SkuGenerator::create` with optional per-row custom SKU support.
+  - Frontend:
+    - `ProductFormDialog`: SKU placeholder updated to "Auto-generated if empty" / "Kusang bubuuin kung bakante" across `en` and `fil` locales.
+    - `useCreateProduct`: success toast shows generated SKU ("Saved {name} · {sku}"). Removed duplicate toast in `AddByBarcodeDialog`.
+    - Mock services: updated `mock/productService.js` and `mock/aiService.js` to auto-generate `TT-{CAT}-{NNN}` SKUs and preserve existing SKU on update.
+- **Verification**:
+  - Pest unit & feature tests: `SkuGeneratorTest` (5 passed), `ProductSkuTest` (6 passed). Full backend suite passing (147 passed, 744 assertions).
+  - Pint: Clean.
+  - Vitest: 13 passed in `quick-add.test.jsx`, including SKU auto-generation via Quick Add and ProductFormDialog.
+  - All check scripts and smoke tests passing cleanly.
+
+### F2 Log (Category Guesser Expansion & Eliminate Silent Category Defaults):
+- **Root Cause**: `AddByBarcodeDialog` used `Number(categoryId) || Number(categories[0]?.id) || 1`. When barcode lookup had no suggested category, the system silently picked the first category in the array without user consent. Furthermore, `CategoryGuesser` lacked heuristics for breakfast cereals, oats, and common Philippine staples, causing items like "Koko Krunch" to be miscategorized.
+- **Architectural Fix**:
+  - `CategoryGuesser`:
+    - Prioritizes exact and high-confidence product name matches over broad Open Food Facts tags.
+    - Added comprehensive heuristics for:
+      - Cereals / oats / granola / chips / cookies / crackers / confectionery / chocolates -> Snacks ("Koko Krunch", "Skyflakes")
+      - Powdered milk / dairy / 3-in-1 coffee -> Coffee & Milk ("Bear Brand")
+      - Instant noodles / pancit canton / ramen -> Instant Noodles ("Lucky Me Pancit Canton")
+      - Soaps / shampoos / toothpastes -> Personal Care ("Safeguard")
+      - Detergents / bleaches / dishwashing -> Household ("Surf")
+    - Confidently returns `null` when neither product name nor tags match, without forcing a fallback.
+  - Frontend:
+    - Removed every `categories[0]` and `|| 1` default across `AddByBarcodeDialog`, `AiProductReviewTable`, and mock services.
+    - Category select renders `<option value="">Select category</option>` placeholder and requires explicit user selection.
+    - Shows inline destructive error ("Please select a category." / "Pumili ng kategorya.") if save is attempted without category.
+    - Renamed hardcoded "OFF Catalog" badge to localized "Online catalog" with an informative Tooltip explaining "Data from Open Food Facts (ODbL)".
+- **Verification**:
+  - Pest unit tests: `CategoryGuesserTest` with 8 tests passing real-world Philippine staples ("Koko Krunch", "Skyflakes", "Bear Brand", "Lucky Me Pancit Canton", "Safeguard", "Surf", tags, null). Total backend suite: 155 passed, 759 assertions.
+  - Pint: Clean.
+  - Vitest: 15 passed in `quick-add.test.jsx`, including validation blocking save when category is omitted and online catalog badge rendering.
+  - All check scripts and smoke tests passing cleanly.
+
+### F3 Log (Form ↔ API Contract Audit, Fixtures, and Error UX):
+- **Contract Audit**:
+  - Audited all 50 write endpoints in `docs/AUDIT-v2.0.1.md` documenting HTTP method, URI, exact payload shape, optional fields, form source, and validation behavior.
+  - Authored 28 canonical JSON request fixtures in `contracts/payloads/*.json` matching the real forms in production.
+- **Backend Fixes**:
+  - `CategoryController`: Widened `color` validation from `max:30` to `max:100` to support Tailwind swatch class strings; updated migration `2026_10_08_000001_create_categories_table.php` and created incremental migration `2026_10_17_000009_widen_category_color_column.php`.
+  - `ProductBulkController`: Normalized legacy keys (`initial_stock` -> `stock_quantity`, `cost` -> `cost_price`) and enforced `products.*.category_id` required.
+  - `SettingsController`: Added fillable support for `ai_enabled`, `ai_save_scan_images`, `ai_research_mode`, `visual_search_enabled`, `owner_name`, `contact_number`, `show_cashier_name`, `low_stock_threshold_percent` and stripped non-fillable attributes before model update.
+- **Frontend Error UX & Fixture Tests**:
+  - Created `frontend/src/lib/formErrors.js` with `applyServerErrors(error, setErrorOrForm, { fieldMap, visibleFields })` and `formatFieldName`.
+  - Added flat validation error translation keys in `frontend/src/locales/en/errors.json` and `frontend/src/locales/fil/errors.json`.
+  - Adopted `applyServerErrors` across `ProductFormDialog.jsx`, `CustomerFormDialog.jsx`, `RecordPaymentDialog.jsx`, `StaffPage.jsx`, `AccountPage.jsx`, and `CategoryFormDialog.jsx`.
+  - Updated `frontend/src/features/products/schemas.js` to allow `.nullable()` on optional string fields.
+  - Created `frontend/src/test/contracts.test.jsx`: 18 tests passing.
+  - Created `backend/tests/Feature/FormContractAuditTest.php`: 18 tests passing.
+- **Verification**:
+  - Pest test suite: 173 passed, 800 assertions.
+  - Pint: Clean.
+  - Vitest: 269 passed across 25 test files.
+  - ESLint: 0 errors.
+  - Vite build: Clean.
+  - Check scripts: `check-i18n.mjs`, `check-contract.mjs`, `check-mockdata.mjs`, `check-services.mjs` all passing with zero errors.
+
+### F4 Log (PWA Installability Diagnosis, Preview, Banner UX, and Assets):
+- **Root Cause Diagnosis**:
+  - Dev server (`npm run dev`/`dev:lan`) intentionally disables the service worker (`devOptions.enabled: false`) to prevent development caching bugs, and untrusted local certs block Chrome/Safari service worker registration.
+  - Production build was missing a plain root `/apple-touch-icon.png` (iOS Safari often requests `/apple-touch-icon.png` directly and falls back to a screenshot if absent).
+  - Verified `apple-touch-icon-180x180.png` and `apple-touch-icon.png` binary headers (width 180, height 180, colorType 3, zero alpha channel / tRNS).
+  - Updated `frontend/index.html` title to "TindaTrack — POS & Inventory for Sari-Sari Stores" and added `<link rel="apple-touch-icon" href="/apple-touch-icon.png">`.
+- **Vite Preview Proxy & CLI Scripts**:
+  - Added `preview` block in `frontend/vite.config.js` with proxy (`/api` -> `http://127.0.0.1:8000`).
+  - Added `pwa:preview` (`cross-env VITE_API_URL=/api VITE_DATA_SOURCE=api vite build && vite preview --port 4173 --host`), `pwa:tunnel` (`npx cloudflared tunnel --url http://localhost:4173`), `check:pwa`, and `smoke:pwa` in root and frontend `package.json`.
+- **Install Discoverability & UI**:
+  - Built `PwaInstallTopBarButton` in `frontend/src/components/common/PwaInstallPrompt.jsx` and rendered in `Topbar.jsx` (displays when `beforeinstallprompt` fires on supported browsers, hidden in standalone mode).
+  - Built `PwaDashboardBanner` and rendered on `DashboardPage.jsx` (one-time dismissible banner with install action for Android/Chrome and Share -> Add to Home Screen instructions for iOS Safari, persisted in localStorage).
+  - Added DEV notice in `PwaInstallCard` explaining that PWA install is enabled in production builds (`npm run pwa:preview`).
+  - Added translation keys `settings:pwaDevNotice` in `en` and `fil`.
+- **Vercel Headers & Caching**:
+  - Updated `frontend/vercel.json` with immutable 1-year cache for `/pwa-*`, `/maskable-icon-*`, `/apple-touch-icon*`, `/favicon*`; `no-cache` for `/sw.js`; and `application/manifest+json; charset=utf-8` for `/manifest.webmanifest`.
+- **Automated Verification**:
+  - Built `scripts/check-pwa.mjs`: asserts HTML manifest/meta links, manifest JSON structure, icon PNG header dimensions, 180x180 opaque icon, sw.js API exclusions, and bundle registration.
+  - Built `scripts/smoke-pwa.mjs`: tests preview routes (`/`, `/manifest.webmanifest`, `/sw.js`, `/apple-touch-icon-180x180.png`, `/apple-touch-icon.png`, `/pwa-512x512.png`, `/api/up`).
+  - Extended `frontend/src/test/pwa.test.jsx`: 11 tests passing (standalone detection, install triggers, TopBar button, Dashboard banner dismissal, and Vercel regex rewrite/headers).
+  - Full Vitest suite: 273 tests passing across 25 files.
+  - Rewrote `docs/PWA.md` with environment comparison table, step-by-step guides, and diagnostics.
+
+### F5 Log (Functional Audit Sweep Across Owner/Cashier, Visual Search, and Gemini Error Handling):
+- **Barcode & Visual on Products Page**:
+  - Enhanced `BarcodeCapture.jsx` with `hideAiBasket` prop and dynamic grid column styling (`grid-cols-2` when AI basket is hidden, `grid-cols-3` when enabled in POS).
+  - In `AddByBarcodeDialog.jsx`, passed `hideAiBasket={true}` and attached `onProductSelect={(product) => { setLookupResult({ local_product: product }); setActiveBarcode(product.barcode || ''); setDialogState('already_in_store'); }}`. Visual camera matching on catalog products opens the item directly in Edit/Restock mode instead of adding to a cart.
+- **AI Paths, Metrics & Mock Fallback**:
+  - Verified checkout preserves `add_method` ('ai', 'visual', 'manual') across `cartStore`, `PaymentDialog`, and backend `sale_items`.
+  - Verified `cart_duration_ms` tracking and persistence in `sales`.
+  - Confirmed `AiMetricsTab.jsx` and `AiMetricsService.php` use nullish coalescing and division guards (`> 0 ? ... : 0`) so zero data never produces divide-by-zero or `NaN`.
+- **Gemini Vision Provider Error Classification & Tests**:
+  - Enhanced `AiProviderException` to retain HTTP status codes.
+  - Upgraded `GeminiVisionProvider.php` to classify API failures into actionable categories: `invalid_key` (400/403), `model_not_found` (404, recommending GEMINI_MODEL changes), `quota_exceeded` (429), and `network_failure`.
+  - Updated `AiPingCommand.php` to output recommendation hints.
+  - Added Pest feature tests in `backend/tests/Feature/AiPingCommandTest.php` testing 400, 404, 429, timeout, and 200 responses with HTTP fakes.
+- **Logout Cache Purge**:
+  - Updated `AuthContext.jsx` `clearSession` to purge cart store (`useCartStore.getState().reset()`), scanner session storage (`tt-scanner-event`, `tindatrack_mock_scanner_sessions`, `tt_scanner_info`, `tt_ai_review_queue`), React Query cache (`queryClient.clear()`), and visual search in-memory embedding cache (`invalidateVisualIndex()`, `terminateVisualWorker()`).
+  - Added automated assertions to `frontend/src/test/auth.test.jsx`.
+- **Cashier Navigation & Route Guards Sweep**:
+  - Verified cashier permissions in `config/permissions.js`: Cashier has `pos.use`, `products.view`, `customers.view`, `customers.manage`, `utang.record_payment`, `account.manage`.
+  - Confirmed `nav.js`, `NavMain.jsx`, and `MoreSheet.jsx` filter out owner-only links (`/categories`, `/inventory`, `/reports`, `/staff`, `/settings`, `/ai-lab`).
+  - Confirmed `RoleRoute.jsx` redirects unauthorized visits to `/403`.
+  - Documented findings in `docs/AUDIT-v2.0.1.md`.
+
+### F6 Log (Deployment Readiness Double-Check & Beginner Checklist):
+- **Deployment Configuration Audit**:
+  - Re-verified `backend/nixpacks.toml`: PHP 8.4 runtime, required extensions (`pdo_mysql`, `bcmath`, `mbstring`, `fileinfo`), upload limits (`upload_max_filesize = 10M`, `post_max_size = 12M`), and public root `/app/public`.
+  - Re-verified `backend/railway.toml`: NIXPACKS builder, start command on `0.0.0.0:$PORT`, pre-deploy commands (`migrate --force`, `db:seed --force`, `config/route/view:cache`), health check `/up`, restart policy.
+  - Re-verified `frontend/vercel.json`: SPA rewrites excluding assets, manifest, sw.js, and icons; headers with 1-year immutable caching for static bundles and `no-cache` for `/sw.js`.
+- **Deploy Guide Rewrite (`docs/DEPLOY.md`)**:
+  - Added Beginner Click-by-Click Deploy-Day Checklist at the top in exact click order (1. Railway MySQL, 2. Railway backend repo/root, 3. Variables, 4. Domain, 5. Deploy & /up check, 6. Seed command, 7. Vercel frontend import & deploy, 8. Railway CORS sync, 9. Smoke test).
+  - Listed every environment variable with exact example values and descriptions across Railway and Vercel.
+- **Production-Like Verification**:
+  - Executed `composer install --no-dev --dry-run`: 52 dev packages cleanly excluded.
+  - Executed `php artisan config:cache && php artisan route:cache` successfully, followed by clearing caches.
+  - Executed `npm run build`: built clean 184 precache entries.
+  - Executed `node scripts/check-prod-bundle.mjs`: 103 built assets verified clean with 0 leaked secrets or dev credentials.
+  - Executed `node scripts/check-pwa.mjs`: all PWA asset, manifest, and service worker checks passed.
+
+---
+
+## TindaTrack v2.0.1 Final Release Summary (F7)
+
+### 1. Root Cause Post-Mortems
+- **SKU Auto-Generation**:
+  - *Cause*: `ProductController@store` enforced `'sku' => ['required', ...]`. In Quick Add, the UI intentionally omitted the SKU input, expecting automatic generation. Bulk intake generated uncoordinated random strings instead of standard store formats.
+  - *Fix*: Created `App\Support\SkuGenerator` implementing the seeded `TT-{CAT}-{NNN}` scheme with sequential zero-padded suffixing and collision retry loops. Made `sku` nullable in backend store validation and auto-generated across all creation paths.
+- **Silent Category Defaulting**:
+  - *Cause*: `AddByBarcodeDialog` used `Number(categoryId) || Number(categories[0]?.id) || 1`. Unmatched lookups silently defaulted to the first category ("Bread"). In addition, `CategoryGuesser` lacked heuristics for Philippine breakfast cereals, powdered milk, and household goods.
+  - *Fix*: Expanded `CategoryGuesser` with brand and product name heuristics prioritizing exact food staples over Open Food Facts broad tags. Removed all fallback defaults; the UI now enforces explicit category selection with user-friendly validation.
+- **PWA Installation & Assets**:
+  - *Cause*: The Vite dev server intentionally disables the service worker (`devOptions.enabled: false`) to avoid development caching bugs, and untrusted local self-signed certs block browser registration. Furthermore, the root `/apple-touch-icon.png` was missing, causing iOS Safari to take screen captures instead of using the app icon.
+  - *Fix*: Added a Vite preview proxy mirroring `/api` to the local backend, allowing complete offline/PWA testing via `npm run pwa:preview` (or HTTPS on iPhone via `npm run pwa:tunnel`). Placed a verified 180×180 opaque `apple-touch-icon.png` at root, added the TopBar install button and mobile dashboard banner, and updated Vercel caching headers.
+
+### 2. Audit Summary
+- **50 Write Paths Audited**: Documented in `docs/AUDIT-v2.0.1.md` with HTTP methods, required roles, payload structures, and form bindings.
+- **28 Canonical JSON Fixtures**: Authored in `contracts/payloads/*.json` matching real forms and tested in both backend (`FormContractAuditTest.php`) and frontend (`contracts.test.jsx`).
+- **Error UX**: Created `applyServerErrors` in `@/lib/formErrors.js` mapping backend validation errors to visible form fields with friendly translated messages.
+- **Role & Route Guards**: Verified Cashier permissions strictly hide Owner modules (`/categories`, `/inventory`, `/reports`, `/staff`, `/settings`, `/ai-lab`) in desktop sidebar and mobile bottom sheet, with `/403` navigation guards and API middleware enforcement.
+- **Gemini Error Handling**: Upgraded `GeminiVisionProvider` and `ai:ping` with structured actionable recommendations for 400/403 (invalid key), 404 (model not found), 429 (quota exceeded), and network failures.
+
+### 3. Test Counts (Before vs After)
+| Test Suite | Before v2.0.1 | After v2.0.1 | Change |
+|---|---|---|---|
+| **Backend Pest Tests** | 142 passed (686 assertions) | 178 passed (817 assertions) | **+36 tests (+131 assertions)** |
+| **Backend Pint** | Passed | Passed (0 style violations) | Clean |
+| **Database Reconciliation (`tindatrack:check`)** | 100% Passing | 100% Passing (0 discrepancies) | Clean |
+| **Frontend Vitest Tests** | 247 passed (22 files) | 273 passed (25 files) | **+26 tests (+3 suites)** |
+| **Frontend ESLint** | 0 errors | 0 errors | Clean |
+| **Contract Checks (`check-contract.mjs`)** | 49 endpoints matched | 49 endpoints matched | Clean |
+| **Service Checks (`check-services.mjs`)** | 13 service pairs matched | 13 service pairs matched | Clean |
+| **Production Bundle Audit (`check-prod-bundle.mjs`)** | Clean | Clean (103 assets, 0 leaks) | Clean |
+| **PWA Audit (`check-pwa.mjs`)** | Passed | Passed (all icons, manifest, SW) | Clean |
+| **End-to-End Smoke Tests** | Passed | Passed (`pairing`, `prod`, `ai`) | Clean |
+
+---
+
+### 4. Morning Checklist for the User
+When opening the project in the morning, verify everything with these 5 quick steps:
+
+1. **Pull & Start Dev Servers**:
+   ```bash
+   git pull
+   composer install
+   npm install && cd frontend && npm install && cd ..
+   cd backend && php artisan migrate && cd ..
+   npm run dev
+   ```
+2. **Verify SKU Auto-Generation & Category Guesser**:
+   - Go to **Products** → Click **"Add by barcode"** (or scan barcode).
+   - Enter `9556001257321` (Nestle Koko Krunch).
+   - Verify: Quick Add detects product, category is not silently forced to "Bread", and clicking save generates an automatic SKU formatted like `TT-SNA-001` with a success toast.
+3. **Verify Desktop PWA Installation**:
+   - Run `npm run pwa:preview`.
+   - Open `http://localhost:4173` in Google Chrome or Microsoft Edge.
+   - Verify the "Install app" icon appears in the browser address bar (and in the TindaTrack TopBar). Install the app and verify it launches in standalone mode with the TindaTrack icon.
+4. **Verify iPhone PWA Add to Home Screen (Optional)**:
+   - Run `npm run pwa:tunnel` to obtain a trusted HTTPS public URL via Cloudflare tunnel.
+   - Open the URL in Safari on your iPhone.
+   - Tap **Share** (square with up arrow) → Tap **"Add to Home Screen"**.
+   - Verify the icon appears crisp without white margins and the app launches full-screen as a standalone native app.
+5. **Set Up Google Gemini Vision (Optional)**:
+   - Obtain a free API key from [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
+   - Add it to `backend/.env`: `GEMINI_API_KEY=your_key_here`.
+   - Test connectivity from the terminal:
+     ```bash
+     cd backend && php artisan ai:ping
+     ```
+   - It will report `Status: SUCCESS - Connected to Google Gemini Vision API successfully.`
 

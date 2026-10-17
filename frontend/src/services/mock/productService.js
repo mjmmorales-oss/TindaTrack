@@ -119,11 +119,26 @@ export const productService = {
     const nextId = state.nextIds.product
     const now = new Date().toISOString()
 
+    const category = state.categories?.find((c) => c.id === Number(data.category_id))
+    const catCode = category?.code || 'GEN'
+    const prefix = `TT-${catCode}`
+    let maxNum = 0
+    state.products.forEach((p) => {
+      if (p.sku && p.sku.startsWith(`${prefix}-`)) {
+        const m = p.sku.match(new RegExp(`^${prefix}-(\\d+)$`))
+        if (m) {
+          const num = parseInt(m[1], 10)
+          if (num > maxNum) maxNum = num
+        }
+      }
+    })
+    const generatedSku = `${prefix}-${String(maxNum + 1).padStart(3, '0')}`
+
     const newProduct = {
       id: nextId,
       category_id: Number(data.category_id),
       name: data.name.trim(),
-      sku: data.sku?.trim() || `TT-GEN-${String(nextId).padStart(3, '0')}`,
+      sku: data.sku?.trim() || generatedSku,
       barcode: data.barcode?.trim() || undefined,
       unit: data.unit || 'pc',
       price: Math.round(Number(data.price) * 100) / 100,
@@ -210,9 +225,14 @@ export const productService = {
       throw new ApiError(422, { message: 'The given data was invalid.', errors })
     }
 
+    const cleanData = { ...data }
+    if (cleanData.sku !== undefined && !cleanData.sku?.trim()) {
+      delete cleanData.sku // cannot be blanked; preserve existing SKU
+    }
+
     const updated = {
       ...product,
-      ...data,
+      ...cleanData,
       price: data.price !== undefined ? Math.round(Number(data.price) * 100) / 100 : product.price,
       cost_price:
         data.cost_price !== undefined

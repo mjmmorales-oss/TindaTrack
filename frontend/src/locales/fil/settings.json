@@ -124,6 +124,7 @@
   "installIosStep2": "Mag-scroll pababa at piliin ang 'Add to Home Screen'",
   "alreadyInstalled": "Naka-install na",
   "close": "Isara",
+  "pwaDevNotice": "Magagamit ang pag-install sa production build (npm run pwa:preview) o sa naka-deploy na website.",
   "newVersionAvailable": "May bagong bersyon na available",
   "reload": "I-reload",
   "aiTab": "AI at Vision",

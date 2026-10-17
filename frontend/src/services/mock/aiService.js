@@ -304,15 +304,33 @@ export const aiService = {
 
   async bulkCreateProducts(products) {
     await delay(120)
-    const { addProduct, nextIds } = useMockDb.getState()
+    const state = useMockDb.getState()
+    const { addProduct, nextIds, categories = [] } = state
     const created = []
     for (const p of products) {
       const id = nextIds ? nextIds.product++ : Date.now()
+      const category = categories.find((c) => c.id === Number(p.category_id))
+      const code = category?.code || 'GEN'
+      const prefix = `TT-${code}`
+      let maxNum = 0
+      const allCurrent = [...(state.products || []), ...created]
+      allCurrent.forEach((prod) => {
+        if (prod.sku && prod.sku.startsWith(`${prefix}-`)) {
+          const m = prod.sku.match(new RegExp(`^${prefix}-(\\d+)$`))
+          if (m) {
+            const num = parseInt(m[1], 10)
+            if (num > maxNum) maxNum = num
+          }
+        }
+      })
+      const sku = p.sku || `${prefix}-${String(maxNum + 1).padStart(3, '0')}`
+
       const newProduct = {
         id,
         name: p.name,
+        sku,
         barcode: p.barcode || null,
-        category_id: p.category_id || 1,
+        category_id: p.category_id ? Number(p.category_id) : null,
         price: Number(p.price || 0),
         cost: Number(p.cost || 0),
         stock: Number(p.stock || p.initial_stock || 0),
@@ -324,7 +342,6 @@ export const aiService = {
       if (typeof addProduct === 'function') {
         addProduct(newProduct)
       } else {
-        const state = useMockDb.getState()
         state.products = [...(state.products || []), newProduct]
       }
       created.push(newProduct)

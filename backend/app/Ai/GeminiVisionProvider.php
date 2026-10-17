@@ -133,13 +133,34 @@ class GeminiVisionProvider implements VisionProvider
             ];
         } catch (\Throwable $e) {
             $elapsedMs = (int) round((hrtime(true) - $startTime) / 1e6);
+            $msg = $e->getMessage();
+            $code = $e->getCode();
+
+            $errorType = 'unknown';
+            $actionableHint = '';
+
+            if ($e instanceof AiRateLimitedException || $code === 429 || str_contains($msg, '429') || str_contains(strtolower($msg), 'quota') || str_contains(strtolower($msg), 'rate limit')) {
+                $errorType = 'quota_exceeded';
+                $actionableHint = 'Quota exceeded or rate limited (HTTP 429). Please check your Google AI Studio plan quota or wait before retrying.';
+            } elseif ($code === 404 || str_contains($msg, '404') || str_contains(strtolower($msg), 'not found')) {
+                $errorType = 'model_not_found';
+                $actionableHint = 'Model not found (HTTP 404). Suggest changing GEMINI_MODEL in backend/.env to a supported model (e.g. gemini-2.5-flash or gemini-1.5-flash).';
+            } elseif ($code === 400 || $code === 403 || str_contains($msg, '400') || str_contains($msg, '403') || str_contains(strtolower($msg), 'api key') || str_contains(strtolower($msg), 'permission')) {
+                $errorType = 'invalid_key';
+                $actionableHint = 'Invalid API key or unauthorized (HTTP 400/403). Please verify that GEMINI_API_KEY in backend/.env is valid and active.';
+            } elseif ($e instanceof ConnectionException || $e instanceof AiTimeoutException || str_contains(strtolower($msg), 'connection') || str_contains(strtolower($msg), 'timed out')) {
+                $errorType = 'network_failure';
+                $actionableHint = 'Network failure or connection timeout. Please check internet connectivity and DNS resolution.';
+            }
 
             return [
                 'ok' => false,
                 'provider' => 'gemini',
                 'model' => $this->primaryModel,
                 'latency_ms' => $elapsedMs,
-                'message' => 'Gemini API ping failed: '.$e->getMessage(),
+                'error_type' => $errorType,
+                'hint' => $actionableHint,
+                'message' => $actionableHint ?: 'Gemini API ping failed: '.$msg,
             ];
         }
     }
@@ -176,7 +197,7 @@ class GeminiVisionProvider implements VisionProvider
             try {
                 $response = $this->executeRequest($model, $promptText, $imageBytes, $mime, $schema);
             } catch (ConnectionException $e2) {
-                throw new AiTimeoutException('AI vision request timed out.', $e2);
+                throw new AiTimeoutException('AI vision request timed out or connection failed.', $e2);
             }
         }
 
@@ -188,7 +209,8 @@ class GeminiVisionProvider implements VisionProvider
 
         if (! $response->successful()) {
             throw new AiProviderException(
-                "Gemini vision call failed with status {$response->status()}: ".substr($response->body(), 0, 200)
+                "Gemini vision call failed with status {$response->status()}: ".substr($response->body(), 0, 200),
+                $response->status()
             );
         }
 

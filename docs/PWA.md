@@ -1,115 +1,140 @@
-# Progressive Web App (PWA) Guide
+# Progressive Web App (PWA) Guide & Installation Diagnosis
 
-TindaTrack v1.4.0 transforms the web application into an installable Progressive Web App (PWA) designed to feel like a native mobile application on iOS, Android, and desktop operating systems.
-
----
-
-## 1. Installation Guide
-
-### iPhone and iPad (iOS / iPadOS Safari)
-1. Open TindaTrack in **Safari** on your iOS device.
-2. Tap the **Share** button (box with an upward arrow) in the bottom toolbar.
-3. Scroll down the share sheet and tap **Add to Home Screen** (`Idagdag sa Home Screen`).
-4. Tap **Add** in the top right corner.
-5. Launch TindaTrack directly from your home screen. It will open in **full-screen standalone mode** with no Safari URL bar or bottom navigation bar, styled with a translucent status bar seamlessly blending into the emerald header.
-
-> [!NOTE]
-> On iOS, third-party browsers (Chrome, Firefox, Edge) use WebKit but only Safari has permission to add PWAs to the home screen with full standalone display mode support.
-
-### Android (Chrome / Chromium)
-1. Open TindaTrack in **Google Chrome** on your Android device.
-2. Either tap the **Install** banner that appears, or open the Chrome menu (three dots) and tap **Install App** / **Add to Home screen**.
-3. Alternatively, navigate to **Settings → Store Profile** or click your avatar in the app and choose **Install app**.
-4. Confirm installation. The TindaTrack icon will appear in your app drawer and home screen.
-
-### Desktop (Chrome / Edge)
-1. Open TindaTrack in Chrome, Edge, or Brave.
-2. Click the install icon in the right side of the address bar, or go to **Settings → Store Profile → Install TindaTrack App**.
-3. TindaTrack launches in its own dedicated, chromeless desktop window with OS taskbar/dock integration and app shortcuts.
+TindaTrack transforms into an installable Progressive Web App (PWA) designed to operate like a native mobile application on iOS, Android, and desktop devices.
 
 ---
 
-## 2. Development vs. Production Behavior
+## 1. Quick Reference: Install Availability by Environment
 
-### Service Worker is Disabled in Development
-In `vite.config.js`, `devOptions.enabled` is explicitly set to `false`:
-- Avoids stale cache confusion during active development.
-- Prevents service worker registration failures and self-signed certificate errors when testing over local network (`npm run dev:lan`).
-- Fast refresh (HMR) operates cleanly without service worker interception.
-
-### Production Testing on Deployed HTTPS (Vercel)
-- Progressive Web App service workers and Web App Manifest installation **require a valid HTTPS context**.
-- iOS Safari strictly refuses to register service workers or prompt for PWA installation over untrusted or self-signed certificates.
-- Always test installation and service worker lifecycle on the deployed Vercel production HTTPS URL.
+| Mode | Install? | Why |
+| :--- | :---: | :--- |
+| `npm run dev` / `dev:lan` | ❌ | Service worker is explicitly disabled (`devOptions.enabled: false`) to avoid stale development caches, and self-signed certificates prevent Chrome and Safari from registering service workers. |
+| `npm run pwa:preview` on laptop | ✅ Chrome / Edge | Serves the production build over `http://localhost:4173`, which Chromium treats as a trusted secure origin. The manifest is active, the service worker is registered, and the install button appears in the browser address bar and top bar. |
+| `npm run pwa:tunnel` on iPhone / Android | ✅ Safari / Chrome | Exposes the local production preview over a trusted public Cloudflare HTTPS tunnel without certificate warnings. Allows testing real iOS Safari "Add to Home Screen" with official icons before deploying to production. |
+| Deployed on Vercel | ✅ All platforms | Fully trusted production HTTPS context. Service worker, manifest, long-term asset caching, and native standalone modes are 100% active. |
 
 ---
 
-## 3. Brand Assets & Icon Generation
+## 2. Step-by-Step Instructions per Mode
 
-TindaTrack uses a unified vector brand mark (`public/logo.svg` and `public/logo-maskable.svg`) featuring the signature emerald gradient (`#0e7c66` → `#064e3b`) and warm amber accent (`#fbbf24`).
+### Mode A: Local Production Preview (`npm run pwa:preview`)
+Use this mode to test PWA installation directly on your development machine (laptop / desktop).
 
-### Generating PWA Icons
-Whenever the brand logo or maskable background is modified, regenerate all production icons with:
-```bash
-# In frontend directory or workspace root:
-npm run gen:icons
-```
-This script leverages `@vite-pwa/assets-generator` and `pwa-assets.config.js` to create:
-- `public/favicon.ico` (multi-resolution 16x16, 32x32, 48x48)
-- `public/favicon.svg` (crisp vector tab icon, zero Vite purple)
-- `public/apple-touch-icon-180x180.png` (iOS home screen icon)
-- `public/pwa-64x64.png`
-- `public/pwa-192x192.png` (Android home screen icon)
-- `public/pwa-512x512.png` (Splash screen & install dialogue)
-- `public/maskable-icon-512x512.png` (Adaptive icons for Android adaptive launcher icons)
-
----
-
-## 4. Caching & Offline Strategy
-
-TindaTrack's service worker is generated with Workbox via `vite-plugin-pwa` with strict security boundaries:
-
-| Asset Type | Cache Strategy | Expiration / Notes |
-| :--- | :--- | :--- |
-| **App Shell** (JS, CSS, HTML, Wasm, Fonts) | Precached (`generateSW`) | Automatically version-hashed on build; instant startup |
-| **Demo Packshots** (`/demo-products/*.svg`) | `CacheFirst` | 30 days, max 100 entries; immutable SVG illustrations |
-| **Uploaded Product Images** (`/api/product-images/*`) | `CacheFirst` | 30 days, max 100 entries; immutable UUID storage |
-| **Google Fonts** (`fonts.googleapis.com`, `gstatic.com`) | `CacheFirst` | 1 year, max 10 entries |
-| **Business API Endpoints** (`/api/**`) | **`NetworkOnly`** | **NEVER CACHED**. Preserves real-time accuracy and prevents leaking authenticated multi-user business data |
-
-### Workbox Configuration Highlights
-- `registerType: 'prompt'`: Displays a gentle sonner toast (`"A new version is available"`) with a `"Reload"` action when an updated service worker is waiting in the background.
-- `navigateFallbackDenylist: [/^\/api\//]`: Guarantees API calls will never fallback to `index.html` during transient offline or error states.
-- `cleanupOutdatedCaches: true`: Cleans up legacy cache versions immediately upon activation.
+1. Ensure the local Laravel backend is running:
+   ```bash
+   cd backend && php artisan serve
+   ```
+2. In the workspace root, run:
+   ```bash
+   npm run pwa:preview
+   ```
+   *This compiles the production frontend bundle with `VITE_API_URL=/api` and launches Vite Preview on port `4173` with the backend API proxy.*
+3. Open `http://localhost:4173` in **Google Chrome** or **Microsoft Edge**.
+4. Observe the install indicator:
+   - In Chrome's address bar (omnibox), click the **Install TindaTrack** icon on the right.
+   - Alternatively, click the **Install App** button with the download icon in the TindaTrack top bar.
+5. Click **Install**. The application launches in a standalone, dedicated desktop window with OS taskbar integration.
 
 ---
 
-## 5. Standalone Display & Native Polish
+### Mode B: Mobile Testing with Cloudflare Tunnel (`npm run pwa:tunnel`)
+Use this mode to test "Add to Home Screen" on an iPhone (iOS Safari) or Android phone before deploying to production.
 
-When running in standalone mode (`@media (display-mode: standalone)` or `[data-standalone="true"]`):
-1. **Status Bar & Safe Areas:**
-   - `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">` ensures the interface extends beneath the iPhone dynamic island / notch.
-   - Sticky headers apply `padding-top: env(safe-area-inset-top)` and height compensation.
-   - Bottom navigation bars apply `padding-bottom: env(safe-area-inset-bottom)`.
-2. **Native App Touch Behaviors:**
-   - `overscroll-behavior: none` prevents undesirable pull-to-refresh page bouncing.
-   - `-webkit-tap-highlight-color: transparent` eliminates gray flash on taps.
-   - Long-press selection and callouts are suppressed on navigation, buttons, and product tiles (`-webkit-touch-callout: none; user-select: none`), while standard inputs and text areas preserve text selection.
-3. **Chromeless Back Navigation:**
-   - Since standalone mode eliminates browser back buttons, detail pages (`/products/:id`, `/sales/:id`, `/customers/:id`, `/pos`) include explicit in-page back navigation buttons.
-   - Any external links open in a separate tab (`target="_blank" rel="noopener"`) to prevent trapping the user inside third-party domains.
+1. Start the preview server in one terminal:
+   ```bash
+   npm run pwa:preview
+   ```
+2. In a second terminal, launch the tunnel:
+   ```bash
+   npm run pwa:tunnel
+   ```
+   *If `cloudflared` is not globally installed, `npx cloudflared` will automatically run it without requiring an account.*
+3. Copy the generated HTTPS tunnel URL (e.g. `https://random-subdomain.trycloudflare.com`).
+4. **On iPhone (iOS Safari):**
+   1. Open the HTTPS URL in **Safari** (must be Safari; iOS WebKit restrictions block install from Chrome/Firefox).
+   2. Tap the **Share** button (square with upward arrow) in Safari's bottom toolbar.
+   3. Scroll down the sheet and select **Add to Home Screen** (`Idagdag sa Home Screen`).
+   4. Verify the icon preview shows the official green/gold TindaTrack icon (not a web page screenshot).
+   5. Tap **Add**. Open TindaTrack from your home screen. It will launch in full-screen standalone mode.
+5. **On Android (Google Chrome):**
+   1. Open the HTTPS URL in **Google Chrome**.
+   2. Tap the in-app **Install TindaTrack App** mobile banner on the dashboard or open the Chrome menu (⋮) → **Install App**.
+   3. The app will install with its adaptive maskable icon into your launcher.
 
 ---
 
-## 6. Verification
+### Mode C: Production Deployment (Vercel)
+The standard production workflow:
 
-Run the automated PWA build verification gate anytime:
+1. Push your changes to GitHub and deploy to Vercel.
+2. Ensure Vercel environment variables are configured:
+   - `VITE_API_URL`: Your production Railway backend URL (e.g., `https://api.tindatrack.ph/api`).
+   - `VITE_DATA_SOURCE`: `api`.
+3. Open your production domain in Safari or Chrome.
+4. Install prompts and banners will automatically offer installation to all visitors.
+
+---
+
+## 3. PWA Diagnostics & Verification (`npm run check:pwa`)
+
+TindaTrack includes an automated pre-flight audit script to verify PWA installability rules:
+
 ```bash
 npm run check:pwa
 ```
-This tests:
-1. Manifest validity (`display: standalone`, `start_url`, maskable icon, shortcuts).
-2. Physical existence of all generated icon PNGs on disk.
-3. Service worker generation and absence of cached `/api/` endpoints.
-4. Meta tags in `index.html` (`apple-touch-icon`, `apple-mobile-web-app-capable`, `theme-color`).
-5. Absence of legacy Vite placeholder assets or colors.
+
+This script verifies:
+1. `dist/index.html` contains `<link rel="manifest" href="/manifest.webmanifest">`.
+2. `dist/index.html` contains `<meta name="theme-color">` and `<link rel="apple-touch-icon">`.
+3. `dist/manifest.webmanifest` exists, is valid JSON, and has:
+   - `display: "standalone"`
+   - `start_url` with `source=pwa` query parameter
+   - Valid `id` and `scope`
+   - Required standard icons (`192x192` and `512x512`)
+   - Adaptive maskable icon (`512x512`, `purpose: "maskable"`)
+4. **PNG Header Dimensions:** Directly parses the binary PNG header bytes (IHDR chunk) of every declared icon to guarantee the real image dimensions match the manifest declaration.
+5. **iOS Icon Opacity:** Verifies that `apple-touch-icon-180x180.png` and `apple-touch-icon.png` have no alpha transparency (iOS Safari will display transparency as black or fallback to a screenshot if an icon is transparent or broken).
+6. **Service Worker:** Checks that `dist/sw.js` exists, is non-empty, and does not precache any `/api/` endpoints.
+7. **Bundle Registration:** Confirms that service worker registration logic (`registerSW`) is compiled into production JS assets.
+
+---
+
+## 4. Smoke Testing Preview Server (`npm run smoke:pwa`)
+
+To smoke test the running preview server via curl/fetch:
+
+```bash
+# In terminal 1:
+npm run pwa:preview
+
+# In terminal 2:
+npm run smoke:pwa
+```
+
+Checks that:
+- `GET /` returns HTTP 200 with HTML shell and manifest links.
+- `GET /manifest.webmanifest` returns HTTP 200 with `application/manifest+json` content-type.
+- `GET /sw.js` returns HTTP 200 service worker script.
+- `GET /apple-touch-icon-180x180.png` and `GET /apple-touch-icon.png` return HTTP 200 PNG images.
+- `GET /pwa-512x512.png` returns HTTP 200 PNG image.
+- `GET /api/up` returns HTTP 200 through the Vite preview proxy.
+
+---
+
+## 5. Caching & Security Architecture
+
+TindaTrack uses Workbox via `vite-plugin-pwa` with strict boundaries:
+
+| Asset Type | Strategy | Caching Rule |
+| :--- | :--- | :--- |
+| **App Shell** (JS, CSS, HTML, Wasm) | Precached (`generateSW`) | Cache-first, version-hashed per deployment |
+| **Demo Illustrations** (`/demo-products/*.svg`) | `CacheFirst` | 30 days, max 100 entries |
+| **Product Images** (`/api/product-images/*`) | `CacheFirst` | 30 days, max 100 entries |
+| **Google Fonts** (`fonts.googleapis.com`) | `CacheFirst` | 1 year, max 10 entries |
+| **Business API Endpoints** (`/api/**`) | **`NetworkOnly`** | **NEVER CACHED**. Guarantees zero stale business data and prevents leaking multi-tenant financial data across user logins. |
+
+### Vercel Edge Headers (`frontend/vercel.json`)
+- `sw.js`: `Cache-Control: no-cache, no-store, must-revalidate` (clients always receive service worker updates immediately).
+- `manifest.webmanifest`: `Content-Type: application/manifest+json; charset=utf-8` and `Cache-Control: public, max-age=0, must-revalidate`.
+- Static icons (`/pwa-*.png`, `/apple-touch-icon*.png`): `Cache-Control: public, max-age=31536000, immutable`.
+- SPA rewrites explicitly exclude manifest, service workers, and icons.

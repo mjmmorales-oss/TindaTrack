@@ -73,7 +73,10 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['scanner', 'unknown-barcodes'] })
-      notify.success(i18n.t('products:createdSuccess'), `${res.data.name} has been added.`)
+      const subtitle = res?.data?.sku
+        ? `Saved ${res.data.name} · ${res.data.sku}`
+        : `${res?.data?.name || ''} has been added.`
+      notify.success(i18n.t('products:createdSuccess'), subtitle)
     },
     onError: (err) => {
       notify.error(err.message || i18n.t('products:createError'))

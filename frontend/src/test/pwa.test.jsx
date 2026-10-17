@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 import { initStandaloneMode } from '@/lib/standalone'
-import { PwaInstallCard } from '@/components/common/PwaInstallPrompt'
+import { PwaInstallCard, PwaInstallTopBarButton, PwaDashboardBanner } from '@/components/common/PwaInstallPrompt'
 import { PwaUpdatePrompt } from '@/components/common/PwaUpdatePrompt'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
+import fs from 'node:fs'
+import path from 'node:path'
 
 // Mock virtual:pwa-register/react
 let mockNeedRefresh = false
@@ -153,6 +156,117 @@ describe('PWA Specifications & Native Shell', () => {
 
       expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument()
       expect(screen.getByText('App Installed')).toBeInTheDocument()
+    })
+
+    it('TopBar button appears only when beforeinstallprompt fires and hides in standalone', async () => {
+      window.matchMedia = mockMedia(false)
+      const { rerender } = render(
+        <TooltipProvider>
+          <PwaInstallTopBarButton />
+        </TooltipProvider>,
+      )
+
+      // Initially no beforeinstallprompt, so button is null
+      expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument()
+
+      // Fire beforeinstallprompt
+      const event = new Event('beforeinstallprompt')
+      event.prompt = vi.fn().mockResolvedValue(undefined)
+      event.userChoice = Promise.resolve({ outcome: 'accepted' })
+      event.preventDefault = vi.fn()
+
+      act(() => {
+        window.dispatchEvent(event)
+      })
+
+      rerender(
+        <TooltipProvider>
+          <PwaInstallTopBarButton />
+        </TooltipProvider>,
+      )
+
+      const btn = screen.getByRole('button', { name: /install/i })
+      expect(btn).toBeInTheDocument()
+
+      // When app is installed, button disappears
+      act(() => {
+        window.dispatchEvent(new Event('appinstalled'))
+      })
+
+      rerender(
+        <TooltipProvider>
+          <PwaInstallTopBarButton />
+        </TooltipProvider>,
+      )
+      expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument()
+    })
+
+    it('Dashboard banner renders on installable browser and handles dismissal', async () => {
+      window.matchMedia = mockMedia(false)
+      localStorage.removeItem('tindatrack_pwa_banner_dismissed')
+
+      const { rerender } = render(<PwaDashboardBanner />)
+
+      const event = new Event('beforeinstallprompt')
+      event.prompt = vi.fn().mockResolvedValue(undefined)
+      event.preventDefault = vi.fn()
+
+      act(() => {
+        window.dispatchEvent(event)
+      })
+
+      expect(await screen.findByText('Install TindaTrack App')).toBeInTheDocument()
+
+      // Click dismiss
+      const closeBtn = screen.getByRole('button', { name: /close/i })
+      fireEvent.click(closeBtn)
+
+      expect(localStorage.getItem('tindatrack_pwa_banner_dismissed')).toBe('true')
+      expect(screen.queryByText('Install TindaTrack App')).not.toBeInTheDocument()
+
+      // Rerender stays dismissed
+      rerender(<PwaDashboardBanner />)
+      expect(screen.queryByText('Install TindaTrack App')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Vercel Rewrites & Headers Verification', () => {
+    it('verifies vercel.json rewrites SPA routes and excludes assets and manifests', () => {
+      const vercelJsonPath = path.resolve(__dirname, '../../vercel.json')
+      const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf8'))
+
+      const spaRewrite = vercelConfig.rewrites.find((r) => r.destination === '/index.html')
+      expect(spaRewrite).toBeDefined()
+
+      const regex = new RegExp(`^${spaRewrite.source}$`)
+
+      // Must rewrite standard app SPA pages to /index.html
+      expect(regex.test('/dashboard')).toBe(true)
+      expect(regex.test('/pos')).toBe(true)
+      expect(regex.test('/products/123')).toBe(true)
+      expect(regex.test('/reports')).toBe(true)
+
+      // Must NOT rewrite static assets, manifest, service worker, or touch icons
+      expect(regex.test('/manifest.webmanifest')).toBe(false)
+      expect(regex.test('/sw.js')).toBe(false)
+      expect(regex.test('/apple-touch-icon-180x180.png')).toBe(false)
+      expect(regex.test('/apple-touch-icon.png')).toBe(false)
+      expect(regex.test('/pwa-512x512.png')).toBe(false)
+      expect(regex.test('/maskable-icon-512x512.png')).toBe(false)
+      expect(regex.test('/assets/index.js')).toBe(false)
+    })
+
+    it('verifies vercel.json headers for sw.js no-cache and manifest content-type', () => {
+      const vercelJsonPath = path.resolve(__dirname, '../../vercel.json')
+      const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf8'))
+
+      const swHeader = vercelConfig.headers.find((h) => h.source === '/sw.js')
+      expect(swHeader).toBeDefined()
+      expect(swHeader.headers.some((header) => header.key === 'Cache-Control' && header.value.includes('no-cache'))).toBe(true)
+
+      const manifestHeader = vercelConfig.headers.find((h) => h.source === '/manifest.webmanifest')
+      expect(manifestHeader).toBeDefined()
+      expect(manifestHeader.headers.some((header) => header.key === 'Content-Type' && header.value.includes('manifest+json'))).toBe(true)
     })
   })
 

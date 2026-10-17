@@ -135,6 +135,7 @@ describe('U1: Unified Add by Barcode Flow and BarcodeCapture', () => {
     const mockCategories = [
       { id: 1, name: 'Canned Goods' },
       { id: 2, name: 'Instant Noodles' },
+      { id: 4, name: 'Spreads & Condiments' },
     ]
 
     it('state c: found online (not in store) pre-fills, saves and grows session list on save & scan next', async () => {
@@ -253,6 +254,10 @@ describe('U1: Unified Add by Barcode Flow and BarcodeCapture', () => {
       const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
       fireEvent.change(priceInput, { target: { value: '15.00' } })
 
+      // Explicitly select category (no silent fallback)
+      const categorySelect = screen.getByLabelText(/Category|Kategorya/i)
+      fireEvent.change(categorySelect, { target: { value: '1' } })
+
       // Save
       const saveBtn = screen.getByRole('button', { name: /^Save$|^I-save$/i })
       fireEvent.click(saveBtn)
@@ -284,4 +289,166 @@ describe('U1: Unified Add by Barcode Flow and BarcodeCapture', () => {
       expect(screen.queryByRole('button', { name: /Scan to add|I-scan para idagdag/i })).toBeNull()
     })
   })
+
+  describe('F1: SKU auto-generation and optional field tests', () => {
+    it('Quick Add saves product without SKU and auto-generates TT-{CAT}-{NNN}', async () => {
+      const onSuccess = vi.fn()
+      const mockCategories = [
+        { id: 4, name: 'Canned Goods', code: 'CAN' },
+      ]
+      renderWithProviders(
+        <AddByBarcodeDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          categories={mockCategories}
+          initialBarcode="3017620422003"
+          onSuccess={onSuccess}
+        />,
+        { role: 'owner' }
+      )
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue(/Nutella/i)).toBeInTheDocument()
+      })
+
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '185.00' } })
+
+      const saveBtn = screen.getByRole('button', { name: /^Save$|^I-save$/i })
+      fireEvent.click(saveBtn)
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled()
+      })
+
+      const saved = useMockDb.getState().products.find((p) => p.name.includes('Nutella'))
+      expect(saved).toBeDefined()
+      expect(saved.sku).toMatch(/^TT-(CAN|GEN)-\d{3,}$/)
+    })
+
+    it('ProductFormDialog accepts an empty SKU and generates a valid SKU', async () => {
+      const onSuccess = vi.fn()
+      renderWithProviders(
+        <ProductFormDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          product={{ category_id: 5, unit: 'pc' }}
+          onSuccess={onSuccess}
+        />,
+        { role: 'owner' }
+      )
+
+      // Fill in Name, Price
+      const nameInput = screen.getByLabelText(/Product Name|Pangalan ng Produkto/i)
+      fireEvent.change(nameInput, { target: { value: 'Choco Mallows' } })
+
+      // Leave SKU empty (it should have placeholder Auto-generated if empty)
+      const skuInput = screen.getByPlaceholderText(/Auto-generated if empty|Kusang bubuuin kung bakante/i)
+      expect(skuInput).toBeInTheDocument()
+      expect(skuInput.value).toBe('')
+
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '25.00' } })
+
+      // Save via Add Product button or submit form
+      const saveBtn = screen.getByRole('button', { name: /Add Product|Idagdag ang Produkto/i })
+      fireEvent.click(saveBtn)
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled()
+      })
+
+      const saved = useMockDb.getState().products.find((p) => p.name === 'Choco Mallows')
+      expect(saved).toBeDefined()
+      expect(saved.sku).toMatch(/^TT-(SNA|GEN)-\d{3,}$/)
+    })
+  })
+
+  describe('F2: Category selection without silent fallbacks', () => {
+    it('shows placeholder Select category and prevents saving when category is not selected', async () => {
+      const onSuccess = vi.fn()
+      const mockCategories = [
+        { id: 1, name: 'Drinks' },
+        { id: 2, name: 'Snacks' },
+      ]
+
+      renderWithProviders(
+        <AddByBarcodeDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          categories={mockCategories}
+          initialBarcode="8901030000000"
+          onSuccess={onSuccess}
+        />,
+        { role: 'owner' }
+      )
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Not found online — add it manually|Hindi nahanap online — ilagay nang mano-mano/i)
+        ).toBeInTheDocument()
+      })
+
+      // Fill in Name and Price
+      const nameInput = screen.getByLabelText(/Product Name|Pangalan ng Produkto/i)
+      fireEvent.change(nameInput, { target: { value: 'Mysterious Item' } })
+
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '50.00' } })
+
+      // Category select should be empty (no silent fallback to categories[0] or 1)
+      const categorySelect = screen.getByLabelText(/Category|Kategorya/i)
+      expect(categorySelect.value).toBe('')
+
+      // Click Save
+      const saveBtn = screen.getByRole('button', { name: /^Save$|^I-save$/i })
+      fireEvent.click(saveBtn)
+
+      // Shows inline error and does NOT call onSuccess
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Please select a category|Pumili ng kategorya/i)
+        ).toBeInTheDocument()
+      })
+      expect(onSuccess).not.toHaveBeenCalled()
+
+      // Select category and save again
+      fireEvent.change(categorySelect, { target: { value: '2' } })
+      fireEvent.click(saveBtn)
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled()
+      })
+
+      const saved = useMockDb.getState().products.find((p) => p.name === 'Mysterious Item')
+      expect(saved).toBeDefined()
+      expect(saved.category_id).toBe(2)
+    })
+
+    it('renders Online catalog badge with tooltip attribution when found online', async () => {
+      const mockCategories = [
+        { id: 4, name: 'Canned Goods' },
+      ]
+
+      renderWithProviders(
+        <AddByBarcodeDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          categories={mockCategories}
+          initialBarcode="3017620422003"
+        />,
+        { role: 'owner' }
+      )
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue(/Nutella/i)).toBeInTheDocument()
+      })
+
+      // Badge is "Online catalog" instead of raw "OFF Catalog"
+      expect(screen.getByText(/Online catalog/i)).toBeInTheDocument()
+      expect(screen.queryByText('OFF Catalog')).toBeNull()
+    })
+  })
 })
+
+

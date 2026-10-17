@@ -21,19 +21,20 @@ export const productSchema = z.object({
     .coerce
     .number()
     .min(1, 'Please select a category for this product.'),
-  sku: z.string().max(50, 'SKU must be 50 characters or less.').optional().or(z.literal('')),
+  sku: z.string().max(50, 'SKU must be 50 characters or less.').optional().nullable().or(z.literal('')),
   barcode: z
     .string()
     .refine((val) => !val || isAcceptable(val.trim()), {
       message: 'Invalid barcode format.',
     })
     .optional()
+    .nullable()
     .or(z.literal('')),
-  brand: z.string().max(255, 'Brand must be 255 characters or less.').optional().or(z.literal('')),
-  size: z.string().max(100, 'Size must be 100 characters or less.').optional().or(z.literal('')),
-  image_url: z.string().max(2048, 'Image URL is too long.').optional().or(z.literal('')),
+  brand: z.string().max(255, 'Brand must be 255 characters or less.').optional().nullable().or(z.literal('')),
+  size: z.string().max(100, 'Size must be 100 characters or less.').optional().nullable().or(z.literal('')),
+  image_url: z.string().max(2048, 'Image URL is too long.').optional().nullable().or(z.literal('')),
   source: z.enum(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts']).default('manual'),
-  source_ref: z.string().max(255).optional().or(z.literal('')),
+  source_ref: z.string().max(255).optional().nullable().or(z.literal('')),
   unit: z.enum(['pc', 'pack', 'sachet', 'bottle', 'can', 'cup', 'kg', 'L'], {
     errorMap: () => ({ message: 'Please select a valid unit.' }),
   }),
@@ -42,7 +43,7 @@ export const productSchema = z.object({
   stock_quantity: z.coerce.number().int().min(0, 'Stock cannot be negative.').default(0),
   reorder_level: z.coerce.number().int().min(0, 'Reorder level cannot be negative.').default(10),
   is_active: z.boolean().default(true),
-  description: z.string().max(500, 'Description must be 500 characters or less.').optional().or(z.literal('')),
+  description: z.string().max(500, 'Description must be 500 characters or less.').optional().nullable().or(z.literal('')),
 })
 
 export const adjustStockSchema = z.object({

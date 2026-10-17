@@ -60,6 +60,11 @@ class AiPingCommand extends Command
         $this->error("  Status:   FAILED - {$result['message']}");
         $this->line('');
 
+        if (! empty($result['hint']) && $result['hint'] !== $result['message']) {
+            $this->warn("  Recommendation: {$result['hint']}");
+            $this->line('');
+        }
+
         if ($result['provider'] === 'gemini' && empty(config('ai.gemini_api_key'))) {
             $this->warn('--- Setup Instructions ---');
             $this->line('1. Obtain an API key from Google AI Studio (free tier):');

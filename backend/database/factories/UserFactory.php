@@ -48,6 +48,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the user is a cashier.
+     */
+    public function cashier(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Cashier,
+        ]);
+    }
+
+    /**
      * Indicate that the user is inactive.
      */
     public function inactive(): static

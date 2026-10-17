@@ -14,65 +14,210 @@ class CategoryGuesser
     protected static ?array $categoryCache = null;
 
     /**
-     * Guesses the matching category ID based on categories tags and product name.
+     * Resets the category cache (useful for testing).
+     */
+    public static function clearCache(): void
+    {
+        self::$categoryCache = null;
+    }
+
+    /**
+     * Guesses the matching category ID based on product name and category tags.
+     * Prefers high-confidence matches on product name over broad OFF tags.
+     * Returns null when nothing matches confidently.
      *
      * @param  array<int, string>  $categoriesTags
      */
     public static function guess(array $categoriesTags, string $productName = ''): ?int
     {
-        $tagsText = strtolower(implode(' ', $categoriesTags));
-        $nameText = strtolower($productName);
-        $haystack = $tagsText.' '.$nameText;
+        $nameText = strtolower(trim($productName));
 
-        // Specific rules in order of priority:
-        // 1. Drinks / Beverages
-        if (self::matches($haystack, ['beverage', 'drink', 'soda', 'juice', 'water', 'tea', 'energy-drink', 'soft-drink', 'cola'])) {
-            return self::getCategoryId('Drinks');
+        // 1. Prefer matches on the product name over broad OFF tags
+        if ($nameText !== '') {
+            $nameCategory = self::matchName($nameText);
+            if ($nameCategory !== null) {
+                return self::getCategoryId($nameCategory);
+            }
         }
 
-        // 2. Coffee & Milk
-        if (self::matches($haystack, ['coffee', 'kape', 'milk', 'dairy', 'powdered-milk', 'creamer', 'cocoa', 'latte', 'cappuccino'])) {
-            return self::getCategoryId('Coffee & Milk');
+        // 2. Match based on categories tags if name didn't confidently match
+        if (! empty($categoriesTags)) {
+            $tagsText = strtolower(implode(' ', $categoriesTags));
+            $tagCategory = self::matchTags($tagsText);
+            if ($tagCategory !== null) {
+                return self::getCategoryId($tagCategory);
+            }
         }
 
-        // 3. Instant Noodles
-        if (self::matches($haystack, ['instant-noodle', 'noodle', 'ramen', 'pancit', 'mami', 'pasta', 'cup-noodle'])) {
-            return self::getCategoryId('Instant Noodles');
+        return null;
+    }
+
+    /**
+     * Checks product name against curated keyword and brand patterns.
+     */
+    protected static function matchName(string $name): ?string
+    {
+        // Cereals / Biscuits / Crackers / Cookies / Chips / Chocolate / Candy -> Snacks
+        if (self::matches($name, [
+            'koko krunch', 'coco crunch', 'cereal', 'cereals', 'breakfast cereal', 'corn flakes',
+            'cornflakes', 'oats', 'granola', 'muesli', 'froot loops', 'frosties', 'cheerios',
+            'skyflakes', 'fita', 'piattos', 'nova', 'chippy', 'oishi', 'roller coaster', 'chichirya',
+            'biscuit', 'biscuits', 'cracker', 'crackers', 'cookie', 'cookies', 'chip', 'chips',
+            'chocolate', 'chocolates', 'candy', 'candies', 'confectionery', 'wafer', 'wafers',
+            'snack', 'snacks', 'peanut', 'peanuts', 'mani', 'cheetos', 'lays', 'doritos', 'pringles',
+            'clover chips', 'nagaraya', 'ding dong', 'rebisco', 'hansel', 'oreo', 'chocnut',
+        ])) {
+            return 'Snacks';
         }
 
-        // 4. Canned Goods
-        if (self::matches($haystack, ['canned', 'canned-good', 'sardine', 'tuna', 'corned-beef', 'corned beef', 'meat', 'spam', 'liver spread', 'luncheon'])) {
-            return self::getCategoryId('Canned Goods');
+        // Instant Noodles
+        if (self::matches($name, [
+            'lucky me', 'pancit canton', 'instant noodle', 'instant noodles', 'noodle', 'noodles',
+            'ramen', 'mami', 'cup noodle', 'cup noodles', 'yakisoba', 'payless', 'nissin', 'maggi noodle',
+            'samyang', 'shin ramyun', 'indomie', 'mi goreng', 'bihon', 'sotanghon', 'spaghetti',
+        ])) {
+            return 'Instant Noodles';
         }
 
-        // 5. Snacks
-        if (self::matches($haystack, ['snack', 'chip', 'biscuit', 'cookie', 'chichirya', 'cracker', 'chocolate', 'candy', 'sweet', 'wafer', 'peanut', 'nut'])) {
-            return self::getCategoryId('Snacks');
+        // Coffee & Milk / 3-in-1 / powdered milk
+        if (self::matches($name, [
+            'bear brand', 'nescafe', 'great taste', 'kopiko', 'milo', '3-in-1', '3 in 1', '3in1',
+            'coffee', 'kape', 'powdered milk', 'milk drink', 'milk powder', 'creamer', 'dairy',
+            'condensed milk', 'evaporated milk', 'latte', 'cappuccino', 'espresso', 'chocomilk',
+            'birch tree', 'alaska', 'nido', 'carnation', 'swiss miss', 'ovaltine',
+        ])) {
+            return 'Coffee & Milk';
         }
 
-        // 6. Bread
-        if (self::matches($haystack, ['bread', 'bakery', 'pastry', 'bun', 'toast', 'pandesal', 'monay'])) {
-            return self::getCategoryId('Bread');
+        // Drinks / Beverages / Juice drinks / Powdered drinks
+        if (self::matches($name, [
+            'coca-cola', 'coca cola', 'coke', 'pepsi', 'sprite', 'royal', 'mountain dew', 'mirinda',
+            '7up', '7-up', 'rc cola', 'sting', 'cobra', 'red bull', 'monster energy', 'gatorade',
+            'pocari', 'c2', 'tang', 'zesto', 'powdered drink', 'juice drink', 'juice', 'juices',
+            'soft drink', 'soft drinks', 'softdrink', 'softdrinks', 'soda', 'sodas', 'energy drink',
+            'bottled water', 'mineral water', 'iced tea', 'ice tea', 'beverage', 'beverages',
+            'del monte juice', 'minute maid', 'smart c', 'san miguel beer', 'red horse',
+        ])) {
+            return 'Drinks';
         }
 
-        // 7. Condiments
-        if (self::matches($haystack, ['condiment', 'sauce', 'vinegar', 'soy sauce', 'toyo', 'suka', 'patis', 'catsup', 'ketchup', 'seasoning', 'mayonnaise', 'dip'])) {
-            return self::getCategoryId('Condiments');
+        // Canned Goods
+        if (self::matches($name, [
+            'sardine', 'sardines', 'tuna', 'corned beef', 'corned-beef', 'canned', 'spam', 'meat loaf',
+            'meatloaf', 'liver spread', 'luncheon meat', 'vienna sausage', 'maling', 'san marino',
+            'century tuna', 'mega sardine', '555', 'ligo', 'argentina', 'purefoods corned',
+        ])) {
+            return 'Canned Goods';
         }
 
-        // 8. Rice & Cooking
-        if (self::matches($haystack, ['rice', 'bigas', 'cooking oil', 'oil', 'mantika', 'sugar', 'flour', 'egg', 'grain'])) {
-            return self::getCategoryId('Rice & Cooking');
+        // Bread / Pandesal / Buns
+        if (self::matches($name, [
+            'pandesal', 'pan de sal', 'sliced bread', 'loaf bread', 'monay', 'ensaymada', 'bun',
+            'buns', 'bread', 'breads', 'bakery', 'pastry', 'pastries', 'gardenia', 'marby',
+        ])) {
+            return 'Bread';
         }
 
-        // 9. Personal Care
-        if (self::matches($haystack, ['soap', 'shampoo', 'toothpaste', 'conditioner', 'body wash', 'deodorant', 'personal care', 'sabon', 'hygiene', 'cosmetic', 'lotion'])) {
-            return self::getCategoryId('Personal Care');
+        // Condiments
+        if (self::matches($name, [
+            'vinegar', 'suka', 'soy sauce', 'toyo', 'fish sauce', 'patis', 'catsup', 'ketchup',
+            'seasoning', 'magic sarap', 'ajinomoto', 'knorr cube', 'sinigang mix', 'mayonnaise',
+            'bagoong', 'silver swan', 'datu puti', 'maggi savor', 'mang tomas', 'ufc',
+        ])) {
+            return 'Condiments';
         }
 
-        // 10. Household
-        if (self::matches($haystack, ['household', 'detergent', 'bleach', 'dishwashing', 'cleaner', 'laundry', 'match', 'candle', 'fabric softener', 'disinfectant'])) {
-            return self::getCategoryId('Household');
+        // Rice & Cooking / Cooking oil / Sugar / Salt
+        if (self::matches($name, [
+            'rice', 'bigas', 'sinandomeng', 'dinorado', 'jasmine rice', 'cooking oil', 'mantika',
+            'vegetable oil', 'palm oil', 'canola oil', 'sugar', 'asukal', 'salt', 'asin',
+            'flour', 'itlog', 'egg', 'eggs', 'minola', 'golden fiesta',
+        ])) {
+            return 'Rice & Cooking';
+        }
+
+        // Personal Care (Soap / Shampoo / Toothpaste)
+        if (self::matches($name, [
+            'soap', 'sabon', 'shampoo', 'toothpaste', 'toothbrush', 'conditioner', 'deodorant',
+            'body wash', 'safeguard', 'palmolive', 'colgate', 'close up', 'close-up',
+            'head & shoulders', 'head and shoulders', 'creamsilk', 'cream silk', 'rejoice',
+            'sunsilk', 'pantene', 'rexona', 'axe', 'bioderm', 'protex', 'modess', 'whisper',
+        ])) {
+            return 'Personal Care';
+        }
+
+        // Household (Detergent / Dishwashing)
+        if (self::matches($name, [
+            'detergent', 'dishwashing', 'bleach', 'fabric softener', 'surf', 'ariel', 'tide',
+            'breeze', 'pride', 'champion', 'downy', 'zonrox', 'joy dishwashing', 'joy',
+            'axion', 'posporo', 'matches', 'candle', 'kandila',
+        ])) {
+            return 'Household';
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks OFF category tags.
+     */
+    protected static function matchTags(string $tags): ?string
+    {
+        // Cereals & Snacks
+        if (self::matches($tags, [
+            'breakfast-cereals', 'breakfast-cereal', 'cereals', 'cereal', 'oats', 'granola', 'muesli',
+            'snacks', 'biscuits', 'crackers', 'cookies', 'chips', 'crisps',
+            'chocolates', 'confectioneries', 'candies', 'wafers',
+        ])) {
+            return 'Snacks';
+        }
+
+        // Instant noodles
+        if (self::matches($tags, ['instant-noodles', 'noodles', 'ramen', 'pastas'])) {
+            return 'Instant Noodles';
+        }
+
+        // Coffee & Milk
+        if (self::matches($tags, ['coffees', 'coffee', 'milks', 'milk', 'dairy', 'creamers'])) {
+            return 'Coffee & Milk';
+        }
+
+        // Drinks
+        if (self::matches($tags, [
+            'beverages', 'drinks', 'sodas', 'carbonated-drinks', 'fruit-juices',
+            'energy-drinks', 'waters', 'iced-teas',
+        ])) {
+            return 'Drinks';
+        }
+
+        // Canned goods
+        if (self::matches($tags, ['canned-foods', 'canned-goods', 'canned-fishes', 'canned-meats', 'sardines', 'tunas'])) {
+            return 'Canned Goods';
+        }
+
+        // Bread
+        if (self::matches($tags, ['breads', 'bread', 'buns', 'bakery-products', 'pastries'])) {
+            return 'Bread';
+        }
+
+        // Condiments
+        if (self::matches($tags, ['condiments', 'sauces', 'vinegars', 'soy-sauces', 'spices', 'seasonings'])) {
+            return 'Condiments';
+        }
+
+        // Rice & Cooking
+        if (self::matches($tags, ['rices', 'rice', 'cooking-oils', 'vegetable-oils', 'sugars', 'salts'])) {
+            return 'Rice & Cooking';
+        }
+
+        // Personal Care
+        if (self::matches($tags, ['soaps', 'shampoos', 'dentifrices', 'toothpastes', 'body-care', 'hygiene'])) {
+            return 'Personal Care';
+        }
+
+        // Household
+        if (self::matches($tags, ['detergents', 'cleaning-products', 'laundry', 'dishwashing-products'])) {
+            return 'Household';
         }
 
         return null;

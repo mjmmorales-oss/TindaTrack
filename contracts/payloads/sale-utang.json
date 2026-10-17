@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 1,
+      "add_method": "manual"
+    }
+  ],
+  "payment_type": "utang",
+  "customer_id": 1,
+  "amount_paid": 0.0,
+  "notes": "Pay next week"
+}

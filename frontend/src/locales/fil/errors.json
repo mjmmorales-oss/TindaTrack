@@ -20,5 +20,11 @@
   "accessDeniedCashierDesc": "Ang pahinang ito ay para lamang sa store owner. Ang iyong cashier account ay may limitadong access upang maprotektahan ang mga ulat at settings.",
   "accessDeniedGeneralDesc": "Wala kang pahintulot na tingnan o pamahalaan ang bahaging ito.",
   "goToPos": "Pumunta sa POS Terminal",
-  "backToDashboard": "Bumalik sa Dashboard"
+  "backToDashboard": "Bumalik sa Dashboard",
+  "validationCheckFields": "Pakisuri ang mga nakamarkang field",
+  "validationUnmappedNotice": "Pakisuri ang mga sumusunod na field: {{fields}}",
+  "validationRequired": "Kailangan punan ang field na ito.",
+  "validationNumeric": "Dapat numero ang ilagay dito.",
+  "validationUnique": "Nagamit na ang halagang ito.",
+  "validationInvalid": "Hindi wasto ang inilagay na halaga."
 }

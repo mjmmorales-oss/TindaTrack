@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('code', 20)->nullable();
             $table->text('description')->nullable();
-            $table->string('color', 30)->default('#0E7C66');
+            $table->string('color', 100)->default('#0E7C66');
             $table->string('icon', 50)->default('Package');
             $table->timestamps();
         });

@@ -1,205 +1,158 @@
 # TindaTrack Deployment Guide (Railway + Vercel)
 
-This step-by-step guide walks you through deploying TindaTrack with a **Laravel API + MySQL on Railway** and a **React SPA on Vercel**.
+This guide walks you through deploying TindaTrack with a **Laravel 13 API + MySQL on Railway** and a **React 19 SPA on Vercel**.
 
 ---
 
-## Architecture Overview
+## Deploy-Day Checklist (Beginner Click-by-Click)
 
-- **Backend & Database**: Railway
-  - **API Service**: Laravel 13, Root Directory = `backend`
-  - **Database Service**: MySQL 8.x
-- **Frontend**: Vercel
-  - **SPA Service**: React 19 + Vite 8, Root Directory = `frontend`
-- **Networking**:
-  - Railway routes HTTPS API calls to Laravel and provides an internal private network connection (`DB_URL`) to MySQL.
-  - Vercel serves static assets with client-side routing rewrites (`vercel.json`), calling the Railway backend API via HTTPS.
+Follow these exact steps in order on deploy day:
+
+1. **Railway: Provision Database**
+   - Go to [railway.com](https://railway.com) → Log in with GitHub.
+   - Click **"+ New Project"** → select **"Database"** → click **"Add MySQL"**.
+2. **Railway: Add Backend Service**
+   - In the same Railway canvas, click **"+ Create"** → select **"GitHub Repo"** → pick `TindaTrack`.
+   - Click on the new service card → **Settings**:
+     - Service Name: `tindatrack-api`
+     - Root Directory: `/backend`
+3. **Railway: Set Environment Variables**
+   - Click the `tindatrack-api` card → go to the **Variables** tab → click **"RAW Editor"**.
+   - Paste the Railway Environment Variables block from the reference table below (be sure to generate a fresh `APP_KEY` and set your `DEMO_*` passwords).
+4. **Railway: Generate Domain**
+   - Under `tindatrack-api` → **Settings** → **Networking** → click **"Generate Domain"** (e.g. `tindatrack-api-production.up.railway.app`).
+   - Copy this URL. Your API URL is `https://<YOUR-RAILWAY-DOMAIN>/api`.
+5. **Railway: Deploy & Healthcheck**
+   - Click **Deploy** (or trigger redeploy).
+   - Once deployed, visit `https://<YOUR-RAILWAY-DOMAIN>/up` in your browser. It must return HTTP 200 `OK`.
+6. **Railway: Run Production Seed Once**
+   - In Railway, open the `tindatrack-api` service → open the **Deployments** tab or **Terminal** / **Shell**.
+   - If `preDeployCommand` ran automatically, verify tables are populated. To run seed manually:
+     ```bash
+     php artisan db:seed --force
+     ```
+7. **Vercel: Import & Deploy Frontend**
+   - Go to [vercel.com](https://vercel.com) → Log in with GitHub → click **"Add New..."** → **"Project"**.
+   - Import the `TindaTrack` repository.
+   - Configure project:
+     - Framework Preset: **Vite**
+     - Root Directory: click **Edit** → select `frontend`
+   - In **Environment Variables**, add:
+     - `VITE_API_URL` = `https://<YOUR-RAILWAY-DOMAIN>/api`
+     - `VITE_DATA_SOURCE` = `api`
+     - `VITE_REALTIME_DRIVER` = `polling`
+     - `VITE_PUBLIC_APP_URL` = `https://<YOUR-VERCEL-DOMAIN>.vercel.app` (or your initial custom domain)
+   - Click **Deploy**.
+8. **Railway: Connect CORS & Redeploy**
+   - Copy your assigned Vercel production URL (e.g. `https://tindatrack.vercel.app`).
+   - Go back to Railway → `tindatrack-api` → **Variables**.
+   - Update:
+     ```ini
+     FRONTEND_URL=https://tindatrack.vercel.app
+     CORS_ALLOWED_ORIGINS=https://tindatrack.vercel.app
+     ```
+   - Railway will automatically redeploy with the updated CORS configuration.
+9. **Final Smoke Verification**
+   - [ ] Log in as Owner (`owner@tindatrack.test` / your production owner password).
+   - [ ] Create a cash sale and check thermal receipt preview.
+   - [ ] Add product by barcode (`9556001257321` or camera scan).
+   - [ ] Upload or import a product photo.
+   - [ ] Open Phone Scanner pairing QR code (`/scanner/pair`).
+   - [ ] Test AI Vision scan (`ai:ping` returns SUCCESS).
+   - [ ] Test PWA install prompt on desktop Chrome and "Add to Home Screen" on iPhone Safari.
 
 ---
 
-## Part 1: Deploy Backend & Database on Railway
+## Complete Environment Variable Reference
 
-### Step 1: Create a Railway Project
-1. Log in to [Railway](https://railway.com) (sign in with your GitHub account).
-2. Click **"+ New Project"**.
-3. Choose **"Deploy from GitHub repo"**.
-4. Select your **TindaTrack** repository.
+### 1. Railway (Backend API) Environment Variables
 
-### Step 2: Configure the Backend Service
-1. In the newly created service card in the Railway canvas, click on it and navigate to **Settings**.
-2. **Service Name**: Rename it to `tindatrack-api` (or similar).
-3. **Root Directory**: Change Root Directory to `/backend`.
-4. Railway will automatically detect `backend/railway.toml` and `backend/nixpacks.toml`.
+| Variable | Example Value | Description |
+|---|---|---|
+| `APP_NAME` | `TindaTrack` | Application name displayed in emails and receipts |
+| `APP_ENV` | `production` | Environment mode (`production` enables optimizations and disables debug traces) |
+| `APP_KEY` | `base64:YOUR_GENERATED_APP_KEY` | 32-byte encryption key. Generate locally with `php artisan key:generate --show` |
+| `APP_DEBUG` | `false` | Must be `false` in production to prevent stack trace leaks |
+| `APP_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` | Public canonical base URL of the API |
+| `APP_TIMEZONE` | `Asia/Manila` | Local time zone for sales and inventory timestamps |
+| `DB_CONNECTION` | `mysql` | Database driver |
+| `DB_URL` | `${{MySQL.DATABASE_URL}}` | Railway MySQL connection string referencing the managed database service |
+| `FRONTEND_URL` | `https://your-app.vercel.app` | Canonical URL of the frontend SPA (without trailing slash) |
+| `CORS_ALLOWED_ORIGINS` | `https://your-app.vercel.app` | Comma-separated list of allowed CORS origins |
+| `CORS_ALLOWED_ORIGIN_PATTERNS` | `^https:\/\/.*\.vercel\.app$` | Regex pattern allowing Vercel preview branch deployments |
+| `SESSION_DRIVER` | `database` | Session storage driver |
+| `MAIL_MAILER` | `log` | Mail driver (`log` for local/school demo, or `smtp` for production) |
+| `LOG_CHANNEL` | `stderr` | Standard container logging channel for Railway stdout/stderr |
+| `SANCTUM_EXPIRATION` | `10080` | Sanctum API bearer token lifespan in minutes (10080 = 7 days) |
+| `PRODUCT_LOOKUP_ENABLED` | `true` | Enables Open Food Facts live barcode lookup |
+| `OFF_USER_AGENT` | `"TindaTrack/2.0 (contact@yourstore.ph)"` | Required identifying user-agent for Open Food Facts API terms |
+| `DEMO_HISTORY_DAYS` | `60` | Days of demo transaction history generated during seeding |
+| `DEMO_OWNER_PASSWORD` | `your-secure-production-owner-password` | Initial password for `owner@tindatrack.test` created by production seeder |
+| `DEMO_CASHIER_PASSWORD` | `your-secure-production-cashier-password` | Initial password for `cashier@tindatrack.test` created by production seeder |
+| `DEMO_OWNER_EMAIL` | `owner@tindatrack.test` | *(optional)* Override email for the primary owner account |
+| `DEMO_CASHIER_EMAIL` | `cashier@tindatrack.test` | *(optional)* Override email for the cashier account |
+| `AI_PROVIDER` | `gemini` | AI vision provider: `gemini` or `mock` (defaults to `gemini` if API key is set) |
+| `GEMINI_API_KEY` | `AIzaSy...` | Google AI Studio Gemini API key. Obtained free from [aistudio.google.com](https://aistudio.google.com) |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Primary Gemini multimodal vision model |
+| `GEMINI_FALLBACK_MODEL` | `gemini-1.5-flash` | Automated fallback model if primary model experiences 429 rate limit or 404 |
+| `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta` | Google Generative Language REST API base endpoint |
+| `AI_TIMEOUT` | `30` | Request timeout in seconds for AI vision scans |
+| `AI_PER_USER_PER_MINUTE` | `6` | Rate limiting guardrail to stay within Google AI Studio free tier limits |
+| `AI_DAILY_LIMIT` | `500` | Maximum daily scan requests across the store |
+| `AI_MAX_IMAGE_KB` | `1500` | Maximum uploaded image payload size for AI analysis in KB |
+| `AI_SAVE_SCAN_IMAGES` | `false` | Whether to persist raw scan photos in storage |
+| `BROADCAST_CONNECTION` | `log` | *(optional)* `pusher` if using Pusher WebSockets; otherwise defaults to polling |
+| `PUSHER_APP_ID` | `your-app-id` | *(optional)* Pusher App ID if `BROADCAST_CONNECTION=pusher` |
+| `PUSHER_APP_KEY` | `your-key` | *(optional)* Pusher App Key |
+| `PUSHER_APP_SECRET` | `your-secret` | *(optional)* Pusher App Secret |
+| `PUSHER_APP_CLUSTER` | `ap1` | *(optional)* Pusher cluster (e.g. `ap1`, `mt1`) |
 
-### Step 3: Add a MySQL Database
-1. In the Railway project canvas, click **"+ Create"** (or press `Cmd/Ctrl + K` and type "Database").
-2. Select **"Database"** -> **"Add MySQL"**.
-3. Railway will provision a MySQL service in your project within seconds.
+### 2. Vercel (Frontend React SPA) Environment Variables
 
-### Step 4: Configure Backend Environment Variables
-1. Click on the `tindatrack-api` service card.
-2. Go to the **Variables** tab.
-3. Click **"New Variable"** (or **"RAW Editor"**) and add the following variables:
+| Variable | Example Value | Description |
+|---|---|---|
+| `VITE_API_URL` | `https://tindatrack-api.up.railway.app/api` | Railway backend API endpoint (must end in `/api`) |
+| `VITE_DATA_SOURCE` | `api` | Production data driver (`api` connects to Laravel backend; `mock` is offline demo fallback) |
+| `VITE_REALTIME_DRIVER` | `polling` | Realtime sync driver (`polling` requires zero background workers; `pusher` for WebSockets) |
+| `VITE_PUBLIC_APP_URL` | `https://tindatrack.vercel.app` | Public canonical origin of the SPA, used in phone scanner QR code generation |
+| `VITE_PUSHER_APP_KEY` | *(optional)* | Pusher public key if `VITE_REALTIME_DRIVER=pusher` |
+| `VITE_PUSHER_APP_CLUSTER` | *(optional)* | Pusher cluster (e.g. `ap1`) |
 
-```ini
-APP_NAME=TindaTrack
-APP_ENV=production
-APP_KEY=base64:YOUR_GENERATED_APP_KEY
-APP_DEBUG=false
-APP_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
-APP_TIMEZONE=Asia/Manila
+---
 
-# Connects to Railway MySQL service
-DB_CONNECTION=mysql
-DB_URL=${{MySQL.DATABASE_URL}}
+## Production Build & Cache Verification
 
-# Client & CORS
-FRONTEND_URL=https://your-tindatrack.vercel.app
-CORS_ALLOWED_ORIGINS=https://your-tindatrack.vercel.app
-CORS_ALLOWED_ORIGIN_PATTERNS=^https:\/\/.*\.vercel\.app$
+Before deploying, you can verify your build locally using production-like commands:
 
-SESSION_DRIVER=database
-MAIL_MAILER=log
-LOG_CHANNEL=stderr
-DEMO_HISTORY_DAYS=60
+```bash
+# 1. Backend dry-run and configuration caching
+cd backend
+composer install --no-dev --dry-run
+php artisan config:cache && php artisan route:cache
+php artisan config:clear && php artisan route:clear
 
-# Production Seed Credentials (Required if you want demo accounts in production)
-DEMO_OWNER_PASSWORD=your-secure-production-owner-password
-DEMO_CASHIER_PASSWORD=your-secure-production-cashier-password
-# Optional overrides (defaults to owner@tindatrack.test / cashier@tindatrack.test):
-# DEMO_OWNER_EMAIL=owner@yourdomain.com
-# DEMO_CASHIER_EMAIL=cashier@yourdomain.com
-# DEMO_RESET_PASSWORDS=false
-
-# Sanctum Token Expiration (minutes, 10080 = 7 days)
-SANCTUM_EXPIRATION=10080
-
-# Barcode Scanning & Open Food Facts Lookup
-PRODUCT_LOOKUP_ENABLED=true
-OFF_USER_AGENT="TindaTrack/1.2 (your-email@example.com)"
-
-# TindaTrack v2.0.0 AI & Computer Vision Configuration
-AI_PROVIDER=gemini
-GEMINI_API_KEY=your_google_gemini_api_key_here
-GEMINI_MODEL=gemini-2.5-flash
-GEMINI_FALLBACK_MODEL=gemini-2.5-flash-lite
-AI_TIMEOUT=30
-AI_PER_USER_PER_MINUTE=6
-AI_DAILY_LIMIT=500
-AI_MAX_IMAGE_KB=1500
-AI_SAVE_SCAN_IMAGES=false
-
-# Optional Realtime Broadcasting (no worker required; polling is used by default)
-# BROADCAST_CONNECTION=pusher
-# PUSHER_APP_ID=
-# PUSHER_APP_KEY=
-# PUSHER_APP_SECRET=
-# PUSHER_APP_CLUSTER=mt1
+# 2. Frontend production build and bundle audit
+cd ../frontend
+npm run build
+node ../scripts/check-prod-bundle.mjs
+node ../scripts/check-pwa.mjs
 ```
 
-> **Note on AI Configuration & Upload Limits**:
-> - `GEMINI_API_KEY` is kept strictly on the backend. The frontend never accesses or bundles API keys.
-> - PHP upload limits (`upload_max_filesize = 10M` and `post_max_size = 12M`) are pre-configured in `backend/nixpacks.toml` and `backend/public/.user.ini`.
-> - If `GEMINI_API_KEY` is not provided, TindaTrack automatically operates in deterministic mock vision mode with zero network requests.
-> - **Frontend (Vercel)**: No new Vercel environment variables are needed for v2.0.0. The existing `VITE_API_URL` and `VITE_DATA_SOURCE` remain unchanged.
-
-> **Note on Broadcasting**: No extra Railway background worker or Redis container is required. TindaTrack uses synchronous HTTP polling out of the box with zero external dependencies. If you opt into Pusher WebSockets, `ScannerItemScanned` implements `ShouldBroadcastNow`, which broadcasts synchronously during the HTTP request without a queue worker.
-
-> **Tip for `APP_KEY`**: If you need a fresh key, run `php artisan key:generate --show` locally and paste the output.
->
-> **Tip for `DB_URL`**: Using Railway's reference `${{MySQL.DATABASE_URL}}` automatically resolves to MySQL's internal private connection string without exposing database credentials to the public internet.
-
-### Step 5: Generate a Public Domain
-1. In `tindatrack-api` -> **Settings** -> **Networking**.
-2. Under **Public Networking**, click **"Generate Domain"** (e.g. `tindatrack-api-production.up.railway.app`).
-3. Note this domain: your API base URL will be `https://tindatrack-api-production.up.railway.app/api`.
-
-### Step 6: Deploy & Verify Logs
-1. Click **Deploy** (or trigger a redeploy if already started).
-2. The `preDeployCommand` in `backend/railway.toml` will run:
-   ```bash
-   php artisan migrate --force && php artisan db:seed --force
-   ```
-   This creates all tables and runs idempotent seeders (`ReferenceDataSeeder` and `DemoHistorySeeder`).
-3. Click the **Deployments** tab and view the deployment logs to ensure the build succeeded and the server is healthy (`/up` healthcheck passes).
-
 ---
 
-## Part 2: Deploy Frontend on Vercel
+## Architecture & Hosting Details
 
-### Step 1: Import Repository
-1. Log in to [Vercel](https://vercel.com) with GitHub.
-2. Click **"Add New..."** -> **"Project"**.
-3. Find and import the **TindaTrack** repository.
-
-### Step 2: Configure Project Settings
-1. **Project Name**: `tindatrack` (or custom name).
-2. **Framework Preset**: Vite (detected automatically).
-3. **Root Directory**: Click **Edit** and choose `frontend`.
-4. **Build and Output Settings**: Defaults (`npm run build`, output directory `dist`).
-
-### Step 3: Add Frontend Environment Variables
-Expand **Environment Variables** and add:
-
-| Key | Value | Description |
-|---|---|---|
-| `VITE_API_URL` | `https://<YOUR-RAILWAY-DOMAIN>/api` | Railway API endpoint (with `/api`) |
-| `VITE_DATA_SOURCE` | `api` | Connects directly to the Laravel backend |
-| `VITE_REALTIME_DRIVER` | `polling` | Realtime driver (`polling` default, or `pusher`) |
-| `VITE_PUBLIC_APP_URL` | `https://your-tindatrack.vercel.app` | Public origin used in phone pairing QR codes |
-| `VITE_PUSHER_APP_KEY` | *(optional)* | Only needed if `VITE_REALTIME_DRIVER=pusher` |
-| `VITE_PUSHER_APP_CLUSTER` | *(optional)* | Pusher cluster (e.g. `ap1` or `mt1`) |
-
-> **IMPORTANT**: In production, the demo credentials switcher buttons are completely stripped from the built JavaScript bundle (`scripts/check-prod-bundle.mjs` verifies this).
->
-> On Railway, set `DEMO_OWNER_PASSWORD` and `DEMO_CASHIER_PASSWORD` in the environment variables, and share them privately with your instructor. If these variables are not set in production, demo accounts will NOT be created and a warning will be logged.
-
-### Local Development Credentials (Seeded locally only)
-
-| Role | Email | Password | Access |
-|---|---|---|---|
-| **Store Owner** | `owner@tindatrack.test` | `password` | Complete access: Dashboard, POS, Sales, Products, Categories, Stock, Customers, Utang, Reports, Staff, Settings |
-| **Cashier** | `cashier@tindatrack.test` | `password` | Operational access: POS checkout, Customers, Utang payments, own sales |
-
-### Step 4: Deploy
-1. Click **"Deploy"**.
-2. Vercel will install dependencies and run `vite build`.
-3. When finished, Vercel gives you your production URL (e.g. `https://tindatrack.vercel.app`).
-
----
-
-## Part 3: Connect CORS & Redeploy
-
-1. Copy your Vercel production URL (e.g., `https://tindatrack.vercel.app`).
-2. Go back to Railway -> `tindatrack-api` -> **Variables**.
-3. Update `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` to match your Vercel URL exactly (no trailing slash):
-   ```ini
-   FRONTEND_URL=https://tindatrack.vercel.app
-   CORS_ALLOWED_ORIGINS=https://tindatrack.vercel.app
-   ```
-4. Railway will automatically trigger a rolling redeploy with the updated CORS configuration.
-
----
-
-## Part 4: Post-Deployment Smoke Test Checklist
-
-Once both services are running:
-
-- [ ] **Health Endpoint**: Visit `https://<YOUR-RAILWAY-DOMAIN>/up` — returns HTTP 200.
-- [ ] **Root API Endpoint**: Visit `https://<YOUR-RAILWAY-DOMAIN>/` — returns `{"name":"TindaTrack","status":"ok"}`.
-- [ ] **Frontend Load**: Open your Vercel URL in a browser. The landing page and login modal should appear cleanly with no console errors and no visible demo switcher buttons.
-- [ ] **Login as Owner**: Log in using `owner@tindatrack.test` / `password`. Verify dashboard loads with real metrics.
-- [ ] **Cash Sale**: Navigate to `/pos`, add 2 items to the cart, checkout with Cash, print thermal receipt preview, and check stock decremented.
-- [ ] **Utang Sale**: Create an utang sale for an existing suki customer. Verify customer balance increased and sale recorded.
-- [ ] **Void Sale**: Go to `/sales`, open the cash sale created above, click **"I-void ang Benta"**, provide a reason (≥ 5 chars), and confirm. Verify items returned to stock.
-- [ ] **Reports Reconciliation**: Go to `/reports` and `/sales`. Ensure sales totals and payment breakdowns match the summary numbers.
-- [ ] **PWA & Packshots**: Ensure product cards render demo packshots (`/demo-products/*.svg`), the favicon displays the store logo (not Vite purple), and the browser offers the install prompt or iOS "Add to Home Screen" instructions.
-- [ ] **Service Worker Freshness**: Verify `https://<YOUR-VERCEL-DOMAIN>/sw.js` returns HTTP 200 with `Cache-Control: no-cache, no-store, must-revalidate`.
-
----
-
-## Part 5: v1.4 Progressive Web App Notes
-
-- **Zero New Environment Variables**: TindaTrack v1.4.0 requires no additional environment variables for Railway or Vercel.
-- **Vercel Headers & Routing**: `frontend/vercel.json` explicitly preserves `/sw.js`, `/manifest.webmanifest`, and `/workbox-*.js` bypassing the SPA rewrite rule, and serves `/sw.js` with `no-cache, no-store, must-revalidate` so client updates trigger promptly without edge caching.
-- **Service Worker in Dev**: In development (`npm run dev` or `npm run dev:lan`), the service worker is disabled (`devOptions.enabled: false`) to prevent stale caches and self-signed SSL errors. PWA capabilities should be validated on the deployed Vercel HTTPS URL.
+- **Railway Nixpacks (`backend/nixpacks.toml`)**:
+  - PHP 8.4 runtime with required extensions: `pdo_mysql`, `bcmath`, `mbstring`, `fileinfo`.
+  - PHP upload limits configured to `upload_max_filesize = 10M` and `post_max_size = 12M` for camera packshot photos.
+  - Public directory rooted to `/app/public` with `/index.php` fallback.
+- **Railway Configuration (`backend/railway.toml`)**:
+  - `startCommand`: `php artisan serve --host=0.0.0.0 --port=$PORT`
+  - `preDeployCommand`: `php artisan migrate --force && php artisan db:seed --force && php artisan config:cache && php artisan route:cache && php artisan view:cache`
+  - `healthcheckPath`: `/up`
+- **Vercel Headers & Routing (`frontend/vercel.json`)**:
+  - Single-Page Application rewrites route all non-asset URLs to `/index.html`.
+  - Static assets (`/assets/*`, icons, manifest) bypass the SPA rewrite.
+  - `/sw.js` is served with `Cache-Control: no-cache, no-store, must-revalidate` to ensure immediate service worker updates upon deployment.
+  - `/manifest.webmanifest` is served with `Content-Type: application/manifest+json; charset=utf-8`.
+  - Icons and bundles receive long-term immutable caching (`max-age=31536000, immutable`).

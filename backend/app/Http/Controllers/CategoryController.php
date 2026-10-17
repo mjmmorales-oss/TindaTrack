@@ -26,7 +26,7 @@ class CategoryController extends Controller
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
             'code' => ['nullable', 'string', 'max:20'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'color' => ['nullable', 'string', 'max:30'],
+            'color' => ['nullable', 'string', 'max:100'],
             'icon' => ['nullable', 'string', 'max:50'],
         ]);
 
@@ -53,7 +53,7 @@ class CategoryController extends Controller
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($category->id)],
             'code' => ['nullable', 'string', 'max:20'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'color' => ['nullable', 'string', 'max:30'],
+            'color' => ['nullable', 'string', 'max:100'],
             'icon' => ['nullable', 'string', 'max:50'],
         ]);
 

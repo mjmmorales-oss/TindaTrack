@@ -10,6 +10,7 @@ import { useSettings } from '@/features/settings/hooks/useSettings'
 import { DashboardSkeleton } from '@/features/dashboard/components/DashboardSkeleton'
 import { OwnerDashboard } from '@/features/dashboard/components/OwnerDashboard'
 import { CashierDashboard } from '@/features/dashboard/components/CashierDashboard'
+import { PwaDashboardBanner } from '@/components/common/PwaInstallPrompt'
 
 /**
  * Main Dashboard controller page supporting both store owner and cashier roles.
@@ -30,6 +31,7 @@ export function DashboardPage() {
 
   return (
     <PageContainer className="pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
+      <PwaDashboardBanner />
       {isLoading ? (
         <DashboardSkeleton isOwner={isOwner} />
       ) : isError ? (

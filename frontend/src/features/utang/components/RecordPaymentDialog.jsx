@@ -14,6 +14,7 @@ import { Money } from '@/components/common/Money'
 import { recordPaymentSchema } from '@/features/utang/schemas'
 import { useRecordPayment } from '@/features/utang/hooks/useUtang'
 import { notify } from '@/lib/notify'
+import { applyServerErrors } from '@/lib/formErrors'
 
 /**
  * Shared Record Payment Dialog for collecting customer utang payments.
@@ -110,11 +111,9 @@ export function RecordPaymentDialog({
       onOpenChange(false)
       onSuccess?.()
     } catch (err) {
-      if (err.errors) {
-        Object.entries(err.errors).forEach(([field, msgs]) => {
-          setError(field, { message: Array.isArray(msgs) ? msgs[0] : msgs })
-        })
-      }
+      applyServerErrors(err, setError, {
+        visibleFields: ['amount', 'payment_date', 'notes'],
+      })
     }
   }
 

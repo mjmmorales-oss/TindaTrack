@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "lint": "oxlint",
     "preview": "vite preview",
+    "pwa:preview": "cross-env VITE_API_URL=/api VITE_DATA_SOURCE=api vite build && vite preview --port 4173 --host",
     "check:bundle": "node ../scripts/check-prod-bundle.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:mobile": "node scripts/check-mobile.mjs",

@@ -67,6 +67,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatRelative, formatDate } from '@/lib/format'
 import { notify } from '@/lib/notify'
 import { createStaffSchema, updateStaffSchema, resetPasswordSchema } from '@/features/staff/schemas'
+import { applyServerErrors } from '@/lib/formErrors'
 
 export function StaffPage() {
   const { t } = useTranslation(['users', 'common'])
@@ -207,11 +208,9 @@ export function StaffPage() {
         setTempPasswordModalOpen(true)
       }
     } catch (err) {
-      if (err.errors) {
-        Object.entries(err.errors).forEach(([field, msgs]) => {
-          addForm.setError(field, { message: Array.isArray(msgs) ? msgs[0] : msgs })
-        })
-      }
+      applyServerErrors(err, addForm.setError, {
+        visibleFields: ['name', 'email', 'phone', 'password'],
+      })
     }
   }
 
@@ -231,11 +230,9 @@ export function StaffPage() {
         setTargetStaff((prev) => ({ ...prev, ...values }))
       }
     } catch (err) {
-      if (err.errors) {
-        Object.entries(err.errors).forEach(([field, msgs]) => {
-          editForm.setError(field, { message: Array.isArray(msgs) ? msgs[0] : msgs })
-        })
-      }
+      applyServerErrors(err, editForm.setError, {
+        visibleFields: ['name', 'email', 'phone'],
+      })
     }
   }
 
@@ -258,11 +255,9 @@ export function StaffPage() {
         setTempPasswordModalOpen(true)
       }
     } catch (err) {
-      if (err.errors) {
-        Object.entries(err.errors).forEach(([field, msgs]) => {
-          resetForm.setError(field, { message: Array.isArray(msgs) ? msgs[0] : msgs })
-        })
-      }
+      applyServerErrors(err, resetForm.setError, {
+        visibleFields: ['password'],
+      })
     }
   }
 

@@ -124,6 +124,7 @@
   "installIosStep2": "Scroll down and tap 'Add to Home Screen'",
   "alreadyInstalled": "App Installed",
   "close": "Close",
+  "pwaDevNotice": "Install is available on the production build (npm run pwa:preview) or the deployed site.",
   "newVersionAvailable": "A new version is available",
   "reload": "Reload",
   "aiTab": "AI & Vision",

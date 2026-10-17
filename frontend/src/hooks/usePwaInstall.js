@@ -89,6 +89,7 @@ export function usePwaInstall() {
     isInstallable,
     isInstalled,
     isIos,
+    deferredPrompt,
     promptInstall,
   }
 }

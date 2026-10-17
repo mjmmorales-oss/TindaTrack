@@ -1,0 +1,13 @@
+{
+  "lines": [
+    {
+      "line_type": "item",
+      "suggested_product_id": 1,
+      "suggested_quantity": 2,
+      "confidence": 0.94,
+      "final_product_id": 1,
+      "final_quantity": 2,
+      "action": "accepted"
+    }
+  ]
+}

@@ -14,6 +14,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip'
 import { MoneyInput } from '@/components/forms/MoneyInput'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { Money } from '@/components/common/Money'
@@ -68,6 +73,7 @@ export function AddByBarcodeDialog({
   const [brand, setBrand] = useState('')
   const [size, setSize] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [categoryError, setCategoryError] = useState('')
   const [price, setPrice] = useState('')
   const [costPrice, setCostPrice] = useState('')
   const [stockQuantity, setStockQuantity] = useState(0)
@@ -91,7 +97,8 @@ export function AddByBarcodeDialog({
     setName('')
     setBrand('')
     setSize('')
-    setCategoryId(categories[0]?.id ? String(categories[0].id) : '1')
+    setCategoryId('')
+    setCategoryError('')
     setPrice('')
     setCostPrice('')
     setStockQuantity(0)
@@ -100,7 +107,7 @@ export function AddByBarcodeDialog({
     setPendingImage(null)
     setLookupResult(null)
     setJustSavedHomemade(null)
-  }, [categories])
+  }, [])
 
   // Lookup barcode function
   const executeLookup = useCallback(
@@ -139,8 +146,8 @@ export function AddByBarcodeDialog({
           setSize(catalog.size || '')
           if (catalog.suggested_category_id) {
             setCategoryId(String(catalog.suggested_category_id))
-          } else if (categories[0]?.id) {
-            setCategoryId(String(categories[0].id))
+          } else {
+            setCategoryId('')
           }
           if (catalog.image_url) {
             setImageUrl(catalog.image_url)
@@ -165,7 +172,7 @@ export function AddByBarcodeDialog({
         }, 150)
       }
     },
-    [categories, resetFormFields, t],
+    [resetFormFields, t],
   )
 
   // Handle open / initialBarcode changes
@@ -232,12 +239,17 @@ export function AddByBarcodeDialog({
     const rawCost = typeof costPrice === 'object' && costPrice?.target ? costPrice.target.value : costPrice
     const numCost = parseFloat(rawCost) || 0
 
+    if (!categoryId || !Number(categoryId)) {
+      setCategoryError(t('products:categoryRequired', 'Please select a category.'))
+      return
+    }
+
     try {
       const payload = {
         name: name.trim(),
         brand: brand.trim() || null,
         size: size.trim() || null,
-        category_id: Number(categoryId) || Number(categories[0]?.id) || 1,
+        category_id: Number(categoryId),
         price: numPrice,
         cost_price: numCost,
         stock_quantity: Number(stockQuantity) || 0,
@@ -264,7 +276,6 @@ export function AddByBarcodeDialog({
 
       setSessionProducts((prev) => [savedProd, ...prev])
       onSuccess?.()
-      notify.success(t('products:productSaved', 'Product added successfully!'), savedProd.name)
 
       if (dialogState === 'manual') {
         setJustSavedHomemade(savedProd)
@@ -325,9 +336,15 @@ export function AddByBarcodeDialog({
             <div className="space-y-4">
               <BarcodeCapture
                 onCode={(code) => executeLookup(code)}
+                onProductSelect={(product) => {
+                  setLookupResult({ local_product: product })
+                  setActiveBarcode(product.barcode || '')
+                  setDialogState('already_in_store')
+                }}
                 autoFocus={true}
                 cameraDefault="auto"
                 continuous={false}
+                hideAiBasket={true}
               />
 
               {/* Link to Homemade item */}
@@ -474,9 +491,19 @@ export function AddByBarcodeDialog({
                       </Badge>
                     )}
                     {dialogState === 'found_online' && (
-                      <Badge variant="secondary" className="text-[10px] font-semibold text-emerald-600 bg-emerald-50">
-                        OFF Catalog
-                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 cursor-help"
+                          >
+                            {t('products:onlineCatalogBadge', 'Online catalog')}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('products:openFoodFactsTooltip', 'Data from Open Food Facts (ODbL)')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
 
@@ -514,20 +541,31 @@ export function AddByBarcodeDialog({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor="quick-add-category" className="text-xs font-semibold">
-                      {t('products:categoryLabel', 'Category')}
+                      {t('products:categoryLabel', 'Category')} *
                     </Label>
                     <select
                       id="quick-add-category"
                       value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                      onChange={(e) => {
+                        setCategoryId(e.target.value)
+                        setCategoryError('')
+                      }}
+                      className={`w-full h-10 px-3 rounded-lg border bg-background text-base md:text-sm outline-none focus:ring-2 ${
+                        categoryError
+                          ? 'border-destructive focus:ring-destructive/20'
+                          : 'border-input focus:ring-primary/20'
+                      }`}
                     >
+                      <option value="">{t('products:selectCategory', 'Select category')}</option>
                       {categories.map((c) => (
                         <option key={c.id} value={String(c.id)}>
                           {c.name}
                         </option>
                       ))}
                     </select>
+                    {categoryError && (
+                      <p className="text-xs text-destructive mt-1 font-medium">{categoryError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-1">
