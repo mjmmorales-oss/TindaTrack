@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\BarcodeLookupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\ProductBulkController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductEmbeddingController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
@@ -35,6 +38,8 @@ Route::prefix('scanner')->group(function () {
         ->middleware('throttle:10,1');
     Route::post('/scans', [ScannerDeviceController::class, 'scan'])
         ->middleware(['scanner.device', 'throttle:120,1']);
+    Route::post('/ai-basket', [ScannerDeviceController::class, 'aiBasket'])
+        ->middleware(['scanner.device', 'throttle:10,1']);
     Route::post('/heartbeat', [ScannerDeviceController::class, 'heartbeat'])
         ->middleware('scanner.device');
 });
@@ -61,6 +66,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     // Products (viewing catalog & low-stock list accessible to all staff)
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/low-stock', [ProductController::class, 'lowStock']);
+    Route::get('/products/embeddings', [ProductEmbeddingController::class, 'index'])
+        ->middleware('role:owner,cashier');
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/barcode-lookup/{barcode}', BarcodeLookupController::class)
         ->middleware(['role:owner,cashier', 'throttle:30,1']);
@@ -92,10 +99,29 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::delete('/scanner-sessions/{id}', [ScannerSessionController::class, 'destroy'])
         ->middleware('role:owner,cashier');
 
+    // AI vision & feedback (accessible by owner and cashier)
+    Route::get('/ai/status', [AiController::class, 'status']);
+    Route::post('/ai/basket-scan', [AiController::class, 'basketScan'])
+        ->middleware(['role:owner,cashier', 'throttle:10,1']);
+    Route::post('/ai/scans/{scan}/feedback', [AiController::class, 'feedback'])
+        ->middleware(['role:owner,cashier', 'throttle:60,1']);
+
     // ==========================================
     // OWNER-ONLY PROTECTED ROUTES
     // ==========================================
     Route::middleware('role:owner')->group(function () {
+        // AI vision management, intake scans, and metrics
+        Route::post('/ai/product-scan', [AiController::class, 'productScan'])
+            ->middleware('throttle:10,1');
+        Route::get('/ai/scans', [AiController::class, 'indexScans']);
+        Route::get('/ai/scans/{scan}/image', [AiController::class, 'showImage']);
+        Route::get('/ai/metrics', [AiController::class, 'metrics']);
+        Route::get('/ai/metrics/export.csv', [AiController::class, 'exportCsv']);
+
+        // Visual search embeddings & bulk intake
+        Route::post('/products/{product}/embeddings', [ProductEmbeddingController::class, 'store']);
+        Route::delete('/products/{product}/embeddings/{id}', [ProductEmbeddingController::class, 'destroy']);
+        Route::post('/products/bulk', [ProductBulkController::class, 'bulk']);
         // Unknown barcodes
         Route::get('/scanner/unknown-barcodes', [ScannerSessionController::class, 'unknownBarcodes']);
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Ai\AiService;
 use App\Events\ScannerItemScanned;
 use App\Models\Product;
 use App\Models\ScannerEvent;
@@ -172,5 +173,60 @@ class ScannerDeviceController extends Controller
                 'ended' => false,
             ],
         ]);
+    }
+
+    /**
+     * Receive a basket photo from the paired phone scanner and emit ai_basket event.
+     */
+    public function aiBasket(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => ['required', 'file'],
+        ]);
+
+        /** @var ScannerSession $session */
+        $session = $request->attributes->get('scanner_session');
+
+        $aiService = app(AiService::class);
+        if (! $aiService->isAiEnabled()) {
+            return response()->json([
+                'message' => 'AI features are disabled in store settings.',
+                'code' => 'ai_disabled',
+            ], 403);
+        }
+
+        $result = $aiService->processBasket(
+            $request->file('image'),
+            $session->user,
+            $session->id
+        );
+
+        $event = ScannerEvent::create([
+            'scanner_session_id' => $session->id,
+            'barcode' => 'AI_BASKET',
+            'status' => 'ai_basket',
+            'product_id' => null,
+            'quantity' => count($result['items']),
+            'payload' => [
+                'scan_id' => $result['scan_id'],
+                'items_count' => count($result['items']),
+                'unmatched_count' => count($result['unmatched']),
+            ],
+            'resolved_at' => null,
+            'created_at' => now(),
+        ]);
+
+        try {
+            event(new ScannerItemScanned($event));
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast failed for scanner ai_basket: '.$e->getMessage());
+        }
+
+        return response()->json([
+            'data' => [
+                'event_id' => $event->id,
+                'scan' => $result,
+            ],
+        ], 201);
     }
 }

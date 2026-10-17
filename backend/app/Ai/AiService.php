@@ -162,7 +162,7 @@ class AiService
      *
      * @return array<string, mixed>
      */
-    public function processBasket(string|UploadedFile $image, ?User $user = null): array
+    public function processBasket(string|UploadedFile $image, ?User $user = null, ?string $scannerSessionId = null): array
     {
         $this->checkLimits($user);
         $imageData = $this->validateImage($image);
