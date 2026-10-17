@@ -383,7 +383,99 @@ TindaTrack is architected to remain 100% operational even during total AI outage
 ```
 
 - **Mock Vision Fallback**: If `GEMINI_API_KEY` is empty, TindaTrack runs in deterministic mock vision mode with zero network requests. POS testing and development proceed seamlessly without cloud dependencies.
-- **On-Device Fallback**: If WebGPU or WASM fails to load DINov2 weights (e.g. legacy mobile browsers or network blockage), the Visual scan tab displays a helpful fallback badge directing the cashier to standard barcode scanning.
+- **On-Device Fallback**: If WebGPU or WASM fails to load DINov2 weights (e.g. legacy mobile browsers or network blockage), the Visual match tab displays a helpful fallback badge directing the cashier to standard barcode scanning.
+
+---
+
+## 7.1 Auto-Capture Flow Diagrams & Operational Semantics
+
+### AI Basket Flow (POS Auto-Capture & Cart Transfer)
+
+```
+[Camera Open in AI Basket]
+           │
+           ▼
+[On-Device Motion Engine (useAutoCapture)]
+   - 64x48 downsampled canvas @ 10 fps
+   - Reject blank/pitch-black (< 35 luma)
+   - Luma diff <= threshold for steady duration (1.2s - 1.8s)
+           │
+           ├─ Movement detected? ──► Reset timer to 0 (Stay in "Watching")
+           ▼
+   [Steady Scene Confirmed]
+           │
+           ▼
+   [1.5s Radial Countdown Ring & Pulse]
+           │
+           ├─ Sudden motion? ──────► Abort countdown (abortCount++), Back to "Watching"
+           ▼
+   [Shutter Sound + Capture Frame Blob (capture_mode='auto')]
+           │
+           ▼
+   [Cloud Call: POST /api/ai/basket-scan]
+           │
+           ├─ 429 Rate Limit? ─────► Auto-capture toggles OFF, Backoff timer active
+           ▼
+   [BasketReviewSheet Opens]
+           │
+           ├─ "Scan Again" Clicked? ──► Modal: "Replace Items" vs "Add to Items"
+           │                             - Replace: overwrites current review
+           │                             - Add: merges newly detected items into review list
+           ▼
+   [Cashier Verifies & Confirms "Add to Cart"]
+           │
+           ├─ Cart items populated with add_method: 'ai'
+           └─ Telemetry feedback emitted: POST /api/ai/scans/{id}/feedback
+```
+
+### AI Stock-In Flow (Inventory Multi-Product Onboarding)
+
+```
+[Owner Navigates to Products ──► "AI Stock-In"]
+           │
+           ▼
+[Camera Viewfinder with Auto-Capture (feature='stockin')]
+   - Hint banner: "Place up to 5 different products, labels facing the camera, then hold still."
+   - 5-product limit enforced visually and via prompt
+           │
+           ▼
+[Settled Scene Detected ──► 1.5s Countdown ──► Auto Shutter]
+           │
+           ▼
+[Cloud Call: POST /api/ai/product-scan (capture_mode='auto')]
+           │
+           ▼
+[AiProductReviewTable Sheet Opens]
+   - Normalized product list with confidence badges and bounding boxes
+   - Selling Price starts empty (Required field; no silent 0.00 save)
+   - Starting stock defaults to estimated_count || 1
+   - Duplicate detection warns if GTIN or name already exists in catalog
+   - Auto-generated SKU displayed read-only (e.g. "SKU: auto-generated on save")
+   - Reorder level input per row (defaults to 5)
+           │
+           ├─ "Scan Again" Clicked? ──► Returns to camera, re-arms auto-capture, retains drafts
+           ▼
+[Owner Fills Prices & Clicks "Save Ready Items"]
+           │
+           ▼
+[Atomic Backend Transaction: POST /api/products/bulk]
+   - Creates products in exact review order
+   - Preserves packshot images & crop coordinates
+   - Stock movements logged with reference: "ai_stock_in"
+```
+
+### Rate Limiting & Daily Budget Rules
+
+1. **User Throttle (6 req/min)**:
+   - Enforced by Laravel API middleware on all AI endpoints.
+   - When a 429 response is encountered, frontend `useAutoCapture` automatically flips `isAutoEnabled` to `false` and engages rate limit backoff until the cooldown header expires.
+2. **Store Daily Quota (500 scans/day)**:
+   - Tracked in database cache per store tenant across 24-hour rolling window.
+   - When 80% (400 scans) is reached, AI dialogs display an amber quota warning banner.
+   - When 100% (500 scans) is reached, AI endpoints reject new scans with a 429 quota exhausted message, prompting cashier/owner to utilize high-speed barcode scanning.
+3. **Capture Cooldown**:
+   - Built-in 3.0s cooldown floor between successive auto-captures prevents accidental rapid-fire API charges when the cashier is removing items from the counter.
+
 
 ---
 
