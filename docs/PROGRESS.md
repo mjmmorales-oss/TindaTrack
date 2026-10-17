@@ -1797,4 +1797,17 @@ When starting work on TindaTrack v2.0.0:
   - Confirmed `RoleRoute.jsx` redirects unauthorized visits to `/403`.
   - Documented findings in `docs/AUDIT-v2.0.1.md`.
 
-
+### F6 Log (Deployment Readiness Double-Check & Beginner Checklist):
+- **Deployment Configuration Audit**:
+  - Re-verified `backend/nixpacks.toml`: PHP 8.4 runtime, required extensions (`pdo_mysql`, `bcmath`, `mbstring`, `fileinfo`), upload limits (`upload_max_filesize = 10M`, `post_max_size = 12M`), and public root `/app/public`.
+  - Re-verified `backend/railway.toml`: NIXPACKS builder, start command on `0.0.0.0:$PORT`, pre-deploy commands (`migrate --force`, `db:seed --force`, `config/route/view:cache`), health check `/up`, restart policy.
+  - Re-verified `frontend/vercel.json`: SPA rewrites excluding assets, manifest, sw.js, and icons; headers with 1-year immutable caching for static bundles and `no-cache` for `/sw.js`.
+- **Deploy Guide Rewrite (`docs/DEPLOY.md`)**:
+  - Added Beginner Click-by-Click Deploy-Day Checklist at the top in exact click order (1. Railway MySQL, 2. Railway backend repo/root, 3. Variables, 4. Domain, 5. Deploy & /up check, 6. Seed command, 7. Vercel frontend import & deploy, 8. Railway CORS sync, 9. Smoke test).
+  - Listed every environment variable with exact example values and descriptions across Railway and Vercel.
+- **Production-Like Verification**:
+  - Executed `composer install --no-dev --dry-run`: 52 dev packages cleanly excluded.
+  - Executed `php artisan config:cache && php artisan route:cache` successfully, followed by clearing caches.
+  - Executed `npm run build`: built clean 184 precache entries.
+  - Executed `node scripts/check-prod-bundle.mjs`: 103 built assets verified clean with 0 leaked secrets or dev credentials.
+  - Executed `node scripts/check-pwa.mjs`: all PWA asset, manifest, and service worker checks passed.
