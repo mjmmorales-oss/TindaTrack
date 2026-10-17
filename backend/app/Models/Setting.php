@@ -25,6 +25,9 @@ class Setting extends Model
         'ai_save_scan_images',
         'ai_research_mode',
         'visual_search_enabled',
+        'auto_capture_basket',
+        'auto_capture_stockin',
+        'auto_capture_sensitivity',
     ];
 
     protected function casts(): array
@@ -36,6 +39,9 @@ class Setting extends Model
             'ai_save_scan_images' => 'boolean',
             'ai_research_mode' => 'boolean',
             'visual_search_enabled' => 'boolean',
+            'auto_capture_basket' => 'boolean',
+            'auto_capture_stockin' => 'boolean',
+            'auto_capture_sensitivity' => 'string',
         ];
     }
 }

@@ -23,6 +23,9 @@ class SettingsController extends Controller
             'low_stock_threshold' => 5,
             'currency' => 'PHP',
             'timezone' => 'Asia/Manila',
+            'auto_capture_basket' => true,
+            'auto_capture_stockin' => true,
+            'auto_capture_sensitivity' => 'medium',
         ]);
 
         return response()->json([
@@ -55,7 +58,14 @@ class SettingsController extends Controller
             'ai_save_scan_images' => ['nullable', 'boolean'],
             'ai_research_mode' => ['nullable', 'boolean'],
             'visual_search_enabled' => ['nullable', 'boolean'],
+            'auto_capture_basket' => ['nullable', 'boolean'],
+            'auto_capture_stockin' => ['nullable', 'boolean'],
+            'auto_capture_sensitivity' => ['nullable', 'string', 'in:low,medium,normal,high'],
         ]);
+
+        if (isset($validated['auto_capture_sensitivity']) && $validated['auto_capture_sensitivity'] === 'normal') {
+            $validated['auto_capture_sensitivity'] = 'medium';
+        }
 
         if (isset($validated['contact_number']) && ! isset($validated['phone'])) {
             $validated['phone'] = $validated['contact_number'];

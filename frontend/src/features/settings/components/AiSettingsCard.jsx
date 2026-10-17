@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Sparkles,
   Eye,
+  Camera,
   Trash2,
   RefreshCw,
   Info,
@@ -21,6 +22,13 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { notify } from '@/lib/notify'
 import { aiService } from '@/services/aiService.js'
@@ -272,7 +280,83 @@ export function AiSettingsCard() {
           </div>
         </div>
 
-        {/* SECTION 3: PRIVACY & RESEARCH SWITCHES */}
+        {/* SECTION 3: AUTO-CAPTURE SETTINGS */}
+        <div className="space-y-4 rounded-xl border border-border/70 p-4 bg-card">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="toggle-auto-basket" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                <Camera className="h-4 w-4 text-primary" />
+                {t('settings:autoCaptureBasketLabel', 'Auto-capture for AI Basket')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings:autoCaptureBasketDesc', 'Automatically snap the basket when camera stays steady.')}
+              </p>
+            </div>
+            <Switch
+              id="toggle-auto-basket"
+              checked={settings.auto_capture_basket !== false}
+              disabled={isPending || isLoadingSettings}
+              onCheckedChange={(val) => handleToggle('auto_capture_basket', val)}
+            />
+          </div>
+
+          <div className="h-px bg-border/50" />
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="toggle-auto-stockin" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                {t('settings:autoCaptureStockinLabel', 'Auto-capture for AI Stock-In')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings:autoCaptureStockinDesc', 'Automatically snap new products on the counter when steady.')}
+              </p>
+            </div>
+            <Switch
+              id="toggle-auto-stockin"
+              checked={settings.auto_capture_stockin !== false}
+              disabled={isPending || isLoadingSettings}
+              onCheckedChange={(val) => handleToggle('auto_capture_stockin', val)}
+            />
+          </div>
+
+          <div className="h-px bg-border/50" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="select-auto-sensitivity" className="text-sm font-medium">
+                {t('settings:autoCaptureSensitivityLabel', 'Auto-capture sensitivity')}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t('settings:autoCaptureSensitivityDesc', 'Adjust how easily camera motion triggers the capture countdown.')}
+              </p>
+            </div>
+            <div className="w-full sm:w-64 shrink-0">
+              <Select
+                value={settings.auto_capture_sensitivity || 'medium'}
+                onValueChange={(val) => handleToggle('auto_capture_sensitivity', val)}
+                disabled={isPending || isLoadingSettings}
+              >
+                <SelectTrigger id="select-auto-sensitivity" className="h-9 text-xs">
+                  <SelectValue placeholder={t('settings:sensitivityMedium', 'Normal (Recommended)')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low" className="text-xs">
+                    {t('settings:sensitivityLow', 'Low (Steady counter / slow movement)')}
+                  </SelectItem>
+                  <SelectItem value="medium" className="text-xs">
+                    {t('settings:sensitivityMedium', 'Normal (Recommended)')}
+                  </SelectItem>
+                  <SelectItem value="high" className="text-xs">
+                    {t('settings:sensitivityHigh', 'High (Fast capture / sensitive)')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 4: PRIVACY & RESEARCH SWITCHES */}
         <div className="space-y-4 rounded-xl border border-border/70 p-4 bg-card">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">

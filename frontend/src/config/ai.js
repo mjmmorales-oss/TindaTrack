@@ -2,6 +2,8 @@
  * AI & Auto-Capture Configuration Constants
  */
 
+export const AUTO_CAPTURE_DEFAULT = true
+
 export const AUTO_CAPTURE = {
   SAMPLE_WIDTH: 64,
   SAMPLE_HEIGHT: 48,
@@ -20,6 +22,10 @@ export const AUTO_CAPTURE_SENSITIVITY = {
     steadyDurationMs: 1500,
   },
   medium: {
+    motionThreshold: 4.5,
+    steadyDurationMs: 1200,
+  },
+  normal: {
     motionThreshold: 4.5,
     steadyDurationMs: 1200,
   },

@@ -16,5 +16,8 @@
   "ai_enabled": true,
   "ai_save_scan_images": false,
   "ai_research_mode": false,
-  "visual_search_enabled": true
+  "visual_search_enabled": true,
+  "auto_capture_basket": true,
+  "auto_capture_stockin": true,
+  "auto_capture_sensitivity": "medium"
 }

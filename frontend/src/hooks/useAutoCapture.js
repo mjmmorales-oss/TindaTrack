@@ -28,18 +28,20 @@ export function useAutoCapture({
   mode = 'basket',
   rateLimitBackoffUntil = null,
 }) {
-  const storageKey = `tindatrack:auto_capture_enabled:${mode}`
+  const storageKey = mode === 'stockin' || mode === 'products'
+    ? 'tt.autoCapture.stockin'
+    : 'tt.autoCapture.basket'
 
   const [isAutoEnabled, setIsAutoEnabled] = useState(() => {
     if (typeof localStorage !== 'undefined') {
       try {
-        const stored = localStorage.getItem(storageKey)
+        const stored = localStorage.getItem(storageKey) ?? localStorage.getItem(`tindatrack:auto_capture_enabled:${mode}`)
         if (stored !== null) return stored === 'true'
       } catch {
         // Fallback default
       }
     }
-    return true
+    return enabled !== false
   })
 
   const [state, setState] = useState('off') // 'off'|'watching'|'steady'|'countdown'|'capturing'|'paused'|'cooldown'

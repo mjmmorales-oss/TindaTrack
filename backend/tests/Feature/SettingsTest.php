@@ -44,6 +44,25 @@ test('owner can update store settings', function () {
     expect(Setting::first()->store_name)->toBe('Aling Nena Super Tindahan');
 });
 
+test('owner can update auto capture settings', function () {
+    $response = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->putJson('/api/settings', [
+            'auto_capture_basket' => false,
+            'auto_capture_stockin' => true,
+            'auto_capture_sensitivity' => 'high',
+        ]);
+
+    $response->assertStatus(200);
+    expect($response->json('data.auto_capture_basket'))->toBeFalse();
+    expect($response->json('data.auto_capture_stockin'))->toBeTrue();
+    expect($response->json('data.auto_capture_sensitivity'))->toBe('high');
+
+    $setting = Setting::first();
+    expect($setting->auto_capture_basket)->toBeFalse();
+    expect($setting->auto_capture_stockin)->toBeTrue();
+    expect($setting->auto_capture_sensitivity)->toBe('high');
+});
+
 test('cashier cannot restore demo images', function () {
     $response = $this->withHeader('Authorization', "Bearer {$this->cashierToken}")
         ->postJson('/api/settings/restore-demo-images');

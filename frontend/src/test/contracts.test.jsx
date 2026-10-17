@@ -266,6 +266,9 @@ describe('F3: Form <-> API Contract & Payload Fixtures Audit', () => {
       expect(typeof settingsUpdateFixture.default_reorder_level).toBe('number')
       expect(typeof settingsUpdateFixture.ai_enabled).toBe('boolean')
       expect(typeof settingsUpdateFixture.visual_search_enabled).toBe('boolean')
+      expect(typeof settingsUpdateFixture.auto_capture_basket).toBe('boolean')
+      expect(typeof settingsUpdateFixture.auto_capture_stockin).toBe('boolean')
+      expect(['low', 'medium', 'normal', 'high']).toContain(settingsUpdateFixture.auto_capture_sensitivity)
     })
 
     it('validates auth fixtures match auth schemas', () => {
