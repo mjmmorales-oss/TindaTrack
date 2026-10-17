@@ -1,4 +1,12 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useContext } from 'react'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+  QueryClientContext,
+  QueryClient,
+} from '@tanstack/react-query'
 import { productService } from '@/services/productService'
 import { scannerService } from '@/services/scannerService'
 import { notify } from '@/lib/notify'
@@ -13,19 +21,31 @@ export const productKeys = {
   lowStock: () => [...productKeys.all, 'low-stock'],
 }
 
+const fallbackQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, gcTime: 0 } },
+})
+
 export function useUnknownBarcodes() {
-  return useQuery({
-    queryKey: ['scanner', 'unknown-barcodes'],
-    queryFn: () => scannerService.getUnknownBarcodes(),
-  })
+  const contextClient = useContext(QueryClientContext)
+  return useQuery(
+    {
+      queryKey: ['scanner', 'unknown-barcodes'],
+      queryFn: () => scannerService.getUnknownBarcodes(),
+    },
+    contextClient ? undefined : fallbackQueryClient,
+  )
 }
 
 export function useProducts(params = {}) {
-  return useQuery({
-    queryKey: productKeys.list(params),
-    queryFn: () => productService.list(params),
-    placeholderData: keepPreviousData,
-  })
+  const contextClient = useContext(QueryClientContext)
+  return useQuery(
+    {
+      queryKey: productKeys.list(params),
+      queryFn: () => productService.list(params),
+      placeholderData: keepPreviousData,
+    },
+    contextClient ? undefined : fallbackQueryClient,
+  )
 }
 
 export function useProduct(id) {

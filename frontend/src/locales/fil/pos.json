@@ -157,5 +157,18 @@
   "aiBasketReceived": "Natanggap ang AI Basket",
   "aiBasketReceivedDesc": "Suriin ang mga nakitang paninda mula sa telepono.",
   "stock": "Imbentaryo",
-  "searchProductPlaceholder": "Maghanap ayon sa pangalan o barcode..."
+  "searchProductPlaceholder": "Maghanap ayon sa pangalan o barcode...",
+  "aiConsentTitle": "Paunawa sa AI Privacy at Paggamit ng Litrato",
+  "aiConsentDesc": "Pakibasa kung paano pinoproseso ang mga larawan bago gamitin ang AI.",
+  "aiConsentNotice": "Ang mga litrato ay ipinapadala sa Google Gemini para suriin. Huwag isama ang mukha ng mga tao. Ang free-tier data ay maaaring gamitin ng Google upang mapabuti ang mga modelo nito. Ang resulta ay mga mungkahi lamang; laging suriin bago idagdag.",
+  "aiConsentCloudTitle": "Pagsusuri sa Cloud",
+  "aiConsentCloudDesc": "Ang mga litrato ay ipinapadala sa Google Gemini para tukuyin ang mga paninda.",
+  "aiConsentPrivacyTitle": "Bawal ang Mukha o Sensitibong Impormasyon",
+  "aiConsentPrivacyDesc": "Huwag isama ang mukha ng tao o personal na impormasyon sa litrato.",
+  "aiConsentGoogleTitle": "Polisiya ng Google Free-Tier",
+  "aiConsentGoogleDesc": "Ang free-tier data ay maaaring gamitin ng Google upang mapabuti ang mga modelo nito.",
+  "aiConsentReviewTitle": "Laging Suriin Bago Idagdag",
+  "aiConsentReviewDesc": "Ang mga resulta ay mungkahi lamang; laging suriin ang mga paninda at presyo bago kumpirmahin.",
+  "aiConsentAccept": "Naiintindihan at Tinatanggap Ko",
+  "aiConsentDecline": "Huwag Muna"
 }

@@ -133,7 +133,7 @@
   "aiEnabledDesc": "Paganahin ang AI basket scan sa POS at photo intake.",
   "providerLabel": "AI Provider",
   "modelLabel": "Model",
-  "demoNotice": "Aktibo ang Demo mode (Mock AI). Ilagay ang GEMINI_API_KEY sa backend/.env para sa totoong Gemini Vision.",
+  "demoNotice": "Aktibo ang Demo mode (Mock AI). Ilagay ang vision API key sa backend/.env para sa totoong Google Vision.",
   "dailyUsageLabel": "Pang-araw-araw na Gamit",
   "dailyUsageDesc": "{{used}} ng {{limit}} scans ang nagamit ngayong araw",
   "savePhotosLabel": "I-save ang mga litrato ng scan para sa pananaliksik",
@@ -150,5 +150,6 @@
   "pruning": "Naglilinis...",
   "pruneSuccess": "Matagumpay na nalinis ang mga litratong mas matanda sa 30 araw.",
   "pruneConfirmTitle": "Linisin ang mga Lumang Scan Photo?",
-  "pruneConfirmDesc": "Tatanggalin nito ang mga naka-save na litrato ng scan na mas matanda sa 30 araw. Mananatili ang metrics at records."
+  "pruneConfirmDesc": "Tatanggalin nito ang mga naka-save na litrato ng scan na mas matanda sa 30 araw. Mananatili ang metrics at records.",
+  "aiDocsLabel": "Arkitektura at Gabay"
 }

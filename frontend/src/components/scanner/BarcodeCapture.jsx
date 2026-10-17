@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { CameraScanner } from '@/components/scanner/CameraScanner'
 import { AiCapture } from '@/components/ai/AiCapture'
+import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
+import { useAiConsent } from '@/hooks/useAiConsent'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { Money } from '@/components/common/Money'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
@@ -84,6 +86,23 @@ export function BarcodeCapture({
   const [mode, setMode] = useState(defaultMode)
   const [value, setValue] = useState('')
   const [validationError, setValidationError] = useState('')
+
+  // AI First-Use Privacy Consent
+  const {
+    isConsentOpen,
+    setIsConsentOpen,
+    withConsent,
+    acceptConsent,
+    declineConsent,
+  } = useAiConsent()
+
+  const handleTabChange = (newMode) => {
+    if (newMode === 'ai_basket') {
+      withConsent(() => setMode('ai_basket'))
+      return
+    }
+    setMode(newMode)
+  }
 
   // Determine initial camera state for barcode tab
   const [isCameraOpen, setIsCameraOpen] = useState(() => {
@@ -398,7 +417,7 @@ export function BarcodeCapture({
     <div className={cn('space-y-3.5', className)}>
       {/* MODE TABS (Barcode | Visual | AI Basket) */}
       {showTabs && (
-        <Tabs value={mode} onValueChange={setMode} className="w-full">
+        <Tabs value={mode} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-10">
             <TabsTrigger value="barcode" className="gap-1.5 text-xs font-semibold">
               <ScanBarcode className="h-3.5 w-3.5" />
@@ -699,6 +718,13 @@ export function BarcodeCapture({
           />
         </div>
       )}
+      {/* AI First-Use Consent Dialog */}
+      <FirstUseAiConsentDialog
+        open={isConsentOpen}
+        onOpenChange={setIsConsentOpen}
+        onAccept={acceptConsent}
+        onDecline={declineConsent}
+      />
     </div>
   )
 }

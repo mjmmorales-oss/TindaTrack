@@ -34,6 +34,9 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /DemoAccounts/i, desc: 'Dev component name: DemoAccounts' },
   { pattern: /demo-accounts/i, desc: 'Dev identifier: demo-accounts' },
   { pattern: /localhost:8000/i, desc: 'Hardcoded local API: localhost:8000' },
+  { pattern: /AIza[0-9A-Za-z-_]{35}/, desc: 'Google Cloud / Gemini API key token: AIza...' },
+  { pattern: /GEMINI/, desc: 'Backend AI environment variable or token: GEMINI' },
+  { pattern: /generativelanguage/, desc: 'Google Gemini direct REST endpoint: generativelanguage' },
 ]
 
 const files = getAllFiles(distDir).filter(

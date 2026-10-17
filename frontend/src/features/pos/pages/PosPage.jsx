@@ -29,6 +29,7 @@ import { PairPhoneDialog } from '@/components/scanner/PairPhoneDialog'
 import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { AiCapture } from '@/components/ai/AiCapture'
+import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 import { BasketReviewSheet } from '@/features/pos/components/BasketReviewSheet'
 import { aiService } from '@/services/aiService'
 import { useProducts } from '@/features/products/hooks/useProducts'
@@ -37,6 +38,7 @@ import { useCustomers } from '@/features/customers/hooks/useCustomers'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { useCartStore, selectCartItemCount, selectCartTotal } from '@/stores/cartStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useAiConsent } from '@/hooks/useAiConsent'
 import { useHotkey } from '@/hooks/useHotkey'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -104,7 +106,14 @@ export function PosPage() {
   const [isRegisterProductOpen, setIsRegisterProductOpen] = useState(false)
   const [registerBarcode, setRegisterBarcode] = useState('')
 
-  // AI Basket Scan states
+  // AI Consent and Basket Scan states
+  const {
+    isConsentOpen,
+    setIsConsentOpen,
+    withConsent,
+    acceptConsent,
+    declineConsent,
+  } = useAiConsent()
   const [isAiCaptureOpen, setIsAiCaptureOpen] = useState(false)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
   const [aiAnalyzingStep, setAiAnalyzingStep] = useState('')
@@ -419,7 +428,7 @@ export function PosPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIsAiCaptureOpen(true)}
+                onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
                 className="h-10 text-xs font-semibold px-3 gap-1.5 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
               >
                 <Sparkles className="h-4 w-4 text-primary animate-pulse" />
@@ -665,6 +674,14 @@ export function PosPage() {
           }}
         />
       )}
+
+      {/* AI FIRST-USE CONSENT DIALOG */}
+      <FirstUseAiConsentDialog
+        open={isConsentOpen}
+        onOpenChange={setIsConsentOpen}
+        onAccept={acceptConsent}
+        onDecline={declineConsent}
+      />
 
       {/* AI BASKET CAPTURE MODAL */}
       <ResponsiveDialog

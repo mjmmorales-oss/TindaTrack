@@ -101,6 +101,13 @@ export const productService = {
   },
 
   /**
+   * Stores a visual embedding vector for a product (alias for addEmbedding).
+   */
+  async saveEmbedding(productId, data) {
+    return this.addEmbedding(productId, data)
+  },
+
+  /**
    * Deletes an embedding vector (owner only).
    * DELETE /api/products/{productId}/embeddings/{id}
    */

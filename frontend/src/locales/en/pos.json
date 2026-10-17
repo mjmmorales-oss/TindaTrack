@@ -157,5 +157,18 @@
   "aiBasketReceived": "AI Basket Received",
   "aiBasketReceivedDesc": "Review detected items from phone scanner.",
   "stock": "Stock",
-  "searchProductPlaceholder": "Search by name or barcode..."
+  "searchProductPlaceholder": "Search by name or barcode...",
+  "aiConsentTitle": "AI Privacy & Image Usage Notice",
+  "aiConsentDesc": "Please review how images and data are handled before using AI features.",
+  "aiConsentNotice": "Photos are sent to Google Gemini for analysis. Do not include people's faces. Free-tier data may be used by Google to improve its models. Results are suggestions; always review before adding.",
+  "aiConsentCloudTitle": "Cloud Vision Analysis",
+  "aiConsentCloudDesc": "Photos are sent to Google Gemini for basket detection and catalog matching.",
+  "aiConsentPrivacyTitle": "No Faces or Personal Data",
+  "aiConsentPrivacyDesc": "Do not capture people's faces, customers, or private personal information.",
+  "aiConsentGoogleTitle": "Google Free-Tier Policy",
+  "aiConsentGoogleDesc": "Free-tier data may be used by Google to improve its AI models.",
+  "aiConsentReviewTitle": "Review Before Adding",
+  "aiConsentReviewDesc": "Results are suggestions; always review detected items and prices before confirming.",
+  "aiConsentAccept": "I Understand & Accept",
+  "aiConsentDecline": "Not Now"
 }

@@ -1469,10 +1469,46 @@ Tracking implementation of v2.0.0 tasks (A0–A10):
 - [x] **A4 — Frontend AI Capture & POS Basket Scan**: `imagePrep.js`, `AiCapture.jsx`, `services/ai.js`, `BasketReviewSheet.jsx`, POS sparkles button, phone `/scan` Basket photo mode, cart timing & `add_method` tracking.
 - [x] **A5 — AI Bulk Product Add**: Products page header dropdown menu, `AiProductReviewTable.jsx`, duplicate detection & warning chips, crop upload & bulk create.
 - [x] **A6 — On-Device Visual Search**: Transformers.js, Web Worker (`embedder.worker.js`), `BarcodeCapture` Visual tab, visual index builder in Settings, correction learning loop.
-- [ ] **A7 — AI Lab & Research**: Route `/ai-lab`, metrics cards & charts, experiment runner with ground truth evaluation, CSV export, `docs/RESEARCH.md`.
-- [ ] **A8 — Settings, Privacy & Cashier Safety**: Settings AI Card, first-use consent modal, cashier vs owner permission checks, accessibility.
+- [x] **A7 — AI Lab & Research**: Route `/ai-lab`, metrics cards & charts, experiment runner with ground truth evaluation, CSV export, `docs/RESEARCH.md`.
+- [x] **A8 — Settings, Privacy & Cashier Safety**: Settings AI Card, first-use consent modal, cashier vs owner permission checks, accessibility.
 - [ ] **A9 — Documentation**: `docs/AI.md`, `docs/RESEARCH.md`, updated `docs/DEPLOY.md`, `README.md`, `docs/API.md`, `docs/CHANGELOG.md`.
 - [ ] **A10 — Final Hardening, Merging & Tagging**: `docs/AUDIT-v2.md`, `smoke-ai.mjs`, all gates clean, merge `feat/ai-v2` to `main`, tag `v2.0.0`.
+
+### A7 Log (AI Research Lab & Benchmark Runner):
+- **Backend Architecture & Pest Tests**:
+  - `AiExperimentController.php` with full CRUD, test case evaluations, reset, and CSV export.
+  - 136 Pest tests passing, Pint clean.
+- **Frontend AI Lab Suite (`/ai-lab`)**:
+  - `AiLabPage.jsx`, `AiMetricsTab.jsx`, `AiExperimentsTab.jsx`, `NewExperimentDialog.jsx`, `NewTestCaseDialog.jsx`.
+  - Recharts checkout timing duration grouped by dominant add_method.
+  - Test case runner with ground-truth input, latency logging, and running totals banner (Accuracy, Precision, Recall, MAE).
+  - Academic methodology guide in `docs/RESEARCH.md`.
+  - 6 unit tests in `src/test/aiLab.test.jsx` (100% passing).
+
+### A8 Log (Settings, Privacy & Cashier Safety):
+- **Settings AI Card (`AiSettingsCard.jsx`)**:
+  - Master AI feature switch, provider/model readouts, daily quota progress bar.
+  - Save scan photos for research switch, research mode toggle.
+  - Visual search toggle, index builder with real-time progress, 30-day photo pruner with confirmation dialog.
+  - Clean docs reference to `docs/AI.md` (no API tokens leaked in bundle).
+- **First-Use AI Consent Dialog (`FirstUseAiConsentDialog.jsx` & `useAiConsent.js`)**:
+  - Per-user device consent stored in `localStorage` (`tt_ai_consent_{userId}`).
+  - Displays mandatory disclosure in English and Filipino:
+    *"Photos are sent to Google Gemini for analysis. Do not include people's faces. Free-tier data may be used by Google to improve its models. Results are suggestions; always review before adding."*
+  - Guarded entry points via `withConsent()`:
+    1. POS toolbar "AI Basket" button (`PosPage.jsx`).
+    2. Scanner modal "AI Basket" tab (`BarcodeCapture.jsx`).
+    3. Wireless phone scanner "Scan Basket with AI" button (`PhoneScannerPage.jsx`).
+    4. Products page "Add from photo (AI)" action (`ProductsPage.jsx`).
+- **Cashier Permissions & Role Boundaries**:
+  - Cashier is granted `pos.use` (basket scan & visual search in POS).
+  - Cashier is strictly restricted from `products.manage`, `ai.lab`, `ai.manage`, and `settings.manage`.
+  - Responsive header on `ProductsPage.jsx` provides desktop action buttons and tidy mobile dropdown menu without horizontal scrolling.
+  - Added safe fallback QueryClient handling for headless/unit tests in `useSettings` and `useProducts`.
+- **Tests & Verification**:
+  - Authored unit test suite in `src/test/aiConsent.test.jsx` (7/7 passing).
+  - All 24 Vitest test suites (247 tests) passing.
+  - All check scripts clean (`check:i18n`, `check:mobile`, `check:pwa`, `check:services`, `check:contract`, `check:mockdata`, `check-prod-bundle`, `npm run build`).
 
 ### A6 Log (On-Device Visual Search):
 - **Transformers.js & Model Architecture**:

@@ -24,6 +24,8 @@ import { pairScanner, sendScan, scannerHeartbeat, sendAiBasket } from '@/service
 import { beep, vibrate } from '@/lib/feedback'
 import { toMoney } from '@/lib/format'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useAiConsent } from '@/hooks/useAiConsent'
+import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
 const SCANNER_INFO_KEY = 'tt_scanner_info'
@@ -85,6 +87,15 @@ export function PhoneScannerPage() {
   const [isAiCapturing, setIsAiCapturing] = useState(false)
   const [isSendingAi, setIsSendingAi] = useState(false)
   const [aiStep, setAiStep] = useState('')
+
+  // AI First-Use Privacy Consent
+  const {
+    isConsentOpen,
+    setIsConsentOpen,
+    withConsent,
+    acceptConsent,
+    declineConsent,
+  } = useAiConsent()
 
   const hasAutoPaired = useRef(false)
 
@@ -457,7 +468,7 @@ export function PhoneScannerPage() {
             {/* Scan Basket with AI Button */}
             <Button
               type="button"
-              onClick={() => setIsAiCapturing(true)}
+              onClick={() => withConsent(() => setIsAiCapturing(true))}
               className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs gap-2 shadow-sm rounded-xl"
             >
               <Sparkles className="w-4 h-4 animate-pulse" />
@@ -644,6 +655,14 @@ export function PhoneScannerPage() {
           </div>
         )}
       </main>
+
+      {/* AI First-Use Consent Dialog */}
+      <FirstUseAiConsentDialog
+        open={isConsentOpen}
+        onOpenChange={setIsConsentOpen}
+        onAccept={acceptConsent}
+        onDecline={declineConsent}
+      />
     </div>
   )
 }

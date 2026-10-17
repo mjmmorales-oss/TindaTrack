@@ -41,6 +41,8 @@ import { ProductFormDialog } from '@/features/products/components/ProductFormDia
 import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
 import { AiProductReviewTable } from '@/features/products/components/AiProductReviewTable'
 import { AiCapture } from '@/components/ai/AiCapture'
+import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
+import { useAiConsent } from '@/hooks/useAiConsent'
 import { aiService } from '@/services/aiService'
 import { notify } from '@/lib/notify'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
@@ -109,6 +111,15 @@ export function ProductsPage() {
   const [addByBarcodeOpen, setAddByBarcodeOpen] = useState(false)
   const [addByBarcodeInitialCode, setAddByBarcodeInitialCode] = useState('')
   const [dismissedUnknownCard, setDismissedUnknownCard] = useState(false)
+
+  // AI First-Use Privacy Consent
+  const {
+    isConsentOpen,
+    setIsConsentOpen,
+    withConsent,
+    acceptConsent,
+    declineConsent,
+  } = useAiConsent()
 
   // AI Bulk Product Add states
   const [isAiCaptureOpen, setIsAiCaptureOpen] = useState(false)
@@ -567,59 +578,99 @@ export function ProductsPage() {
         description={t('products:subtitle', 'Manage product catalog, selling prices, costs, and stock levels')}
         actions={
           canManage && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <>
+              {/* Desktop / Tablet actions */}
+              <div className="hidden sm:flex items-center gap-2">
                 <Button
-                  className="gap-1.5 shadow-xs h-10 sm:h-9 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-                  aria-label={t('products:addProductMenu', 'Add Product Menu')}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>{t('products:addMenuButton', 'Add...')}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-1">
-                <DropdownMenuItem
-                  onClick={() => setIsAiCaptureOpen(true)}
-                  className="gap-2.5 py-2 cursor-pointer font-medium text-xs text-primary"
-                >
-                  <Sparkles className="h-4 w-4 text-primary shrink-0 animate-pulse" />
-                  <div>
-                    <div className="font-semibold">{t('products:addFromPhotoAi', 'Add from photo (AI)')}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {t('products:addFromPhotoAiDesc', 'Detect up to 5 products at once')}
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setAddByBarcodeInitialCode('')
                     setAddByBarcodeOpen(true)
                   }}
-                  className="gap-2.5 py-2 cursor-pointer text-xs"
+                  className="gap-1.5 shadow-xs h-9 font-medium text-xs"
                 >
-                  <ScanBarcode className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div>
-                    <div className="font-medium">{t('products:addByBarcode', 'Add by barcode')}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {t('products:addByBarcodeDesc', 'Quick GTIN auto-fill')}
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
+                  <ScanBarcode className="h-4 w-4" />
+                  <span>{t('products:addByBarcode', 'Add by barcode')}</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
+                  className="gap-1.5 shadow-xs h-9 font-medium text-xs border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
+                >
+                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  <span>{t('products:addFromPhotoAi', 'Add from photo (AI)')}</span>
+                </Button>
+
+                <Button
+                  type="button"
                   onClick={handleCreate}
-                  className="gap-2.5 py-2 cursor-pointer text-xs"
+                  className="gap-1.5 shadow-xs h-9 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs"
                 >
-                  <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div>
-                    <div className="font-medium">{t('products:addProduct', 'Add Product')}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {t('products:addProductDesc', 'Fill manual details')}
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <Plus className="h-4 w-4" />
+                  <span>{t('products:addProduct', 'Add Product')}</span>
+                </Button>
+              </div>
+
+              {/* Mobile (< sm): Tidy single dropdown menu */}
+              <div className="sm:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="gap-1.5 shadow-xs h-10 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs"
+                      aria-label={t('products:addMenuButton', 'Add...')}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>{t('products:addMenuButton', 'Add...')}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 p-1">
+                    <DropdownMenuItem
+                      onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
+                      className="gap-2.5 py-2 cursor-pointer font-medium text-xs text-primary"
+                    >
+                      <Sparkles className="h-4 w-4 text-primary shrink-0 animate-pulse" />
+                      <div>
+                        <div className="font-semibold">{t('products:addFromPhotoAi', 'Add from photo (AI)')}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {t('products:addFromPhotoAiDesc', 'Detect up to 5 products at once')}
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAddByBarcodeInitialCode('')
+                        setAddByBarcodeOpen(true)
+                      }}
+                      className="gap-2.5 py-2 cursor-pointer text-xs"
+                    >
+                      <ScanBarcode className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div>
+                        <div className="font-medium">{t('products:addByBarcode', 'Add by barcode')}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {t('products:addByBarcodeDesc', 'Quick GTIN auto-fill')}
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleCreate}
+                      className="gap-2.5 py-2 cursor-pointer text-xs"
+                    >
+                      <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div>
+                        <div className="font-medium">{t('products:addProduct', 'Add Product')}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {t('products:addProductDesc', 'Fill manual details')}
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </>
           )
         }
       />
@@ -766,6 +817,14 @@ export function ProductsPage() {
           hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera.')}
         />
       </ResponsiveDialog>
+
+      {/* AI First-Use Privacy Consent Dialog */}
+      <FirstUseAiConsentDialog
+        open={isConsentOpen}
+        onOpenChange={setIsConsentOpen}
+        onAccept={acceptConsent}
+        onDecline={declineConsent}
+      />
 
       {/* AI Product Intake Review Table */}
       <AiProductReviewTable

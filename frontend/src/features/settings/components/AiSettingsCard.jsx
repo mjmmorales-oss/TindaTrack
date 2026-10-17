@@ -248,9 +248,16 @@ export function AiSettingsCard() {
             {isDemo && (
               <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-amber-300">
                 <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>{t('settings:demoNotice', 'Demo mode active (Mock AI). Add GEMINI_API_KEY in backend/.env for real Gemini Vision.')}</span>
+                <span>{t('settings:demoNotice', 'Demo mode active (Mock AI). Add your vision API key in backend/.env for real Google Vision.')}</span>
               </div>
             )}
+
+            <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{t('settings:aiDocsLabel', 'Architecture & Guide')}</span>
+              <span className="font-mono text-xs font-semibold text-primary">
+                docs/AI.md
+              </span>
+            </div>
           </div>
 
           <div className="rounded-xl border border-border/70 p-4 space-y-2.5 bg-card">

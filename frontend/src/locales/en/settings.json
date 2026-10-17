@@ -133,7 +133,7 @@
   "aiEnabledDesc": "Enable AI basket scanning in POS and bulk photo intake.",
   "providerLabel": "AI Provider",
   "modelLabel": "Model",
-  "demoNotice": "Demo mode active (Mock AI). Add GEMINI_API_KEY in backend/.env for real Gemini Vision.",
+  "demoNotice": "Demo mode active (Mock AI). Add your vision API key in backend/.env for real Google Vision.",
   "dailyUsageLabel": "Daily Usage",
   "dailyUsageDesc": "{{used}} of {{limit}} scans used today",
   "savePhotosLabel": "Save scan photos for research",
@@ -150,5 +150,6 @@
   "pruning": "Pruning...",
   "pruneSuccess": "Saved scan photos older than 30 days pruned successfully.",
   "pruneConfirmTitle": "Prune Saved Scan Photos?",
-  "pruneConfirmDesc": "This will remove all saved scan images older than 30 days. Metrics and experiment logs are kept."
+  "pruneConfirmDesc": "This will remove all saved scan images older than 30 days. Metrics and experiment logs are kept.",
+  "aiDocsLabel": "Architecture & Guide"
 }
