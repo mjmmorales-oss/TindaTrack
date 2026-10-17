@@ -67,7 +67,7 @@
   "categoryLabel": "Category",
   "selectCategory": "Select Category",
   "skuLabel": "SKU / Code",
-  "skuPlaceholder": "e.g. BEV-001",
+  "skuPlaceholder": "Auto-generated if empty",
   "barcodeLabel": "Barcode / GTIN",
   "barcodePlaceholder": "Scan or type barcode",
   "brandLabel": "Brand",

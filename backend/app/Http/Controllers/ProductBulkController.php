@@ -3,16 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ProductResource;
-use App\Models\Product;
 use App\Models\ScannerEvent;
 use App\Models\StockMovement;
 use App\Services\ProductImageService;
 use App\Support\Barcode;
+use App\Support\SkuGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class ProductBulkController extends Controller
 {
@@ -28,6 +27,7 @@ class ProductBulkController extends Controller
         $validator = Validator::make($request->all(), [
             'products' => ['required', 'array', 'min:1', 'max:10'],
             'products.*.name' => ['required', 'string', 'max:255'],
+            'products.*.sku' => ['nullable', 'string', 'max:50', 'distinct', 'unique:products,sku'],
             'products.*.brand' => ['nullable', 'string', 'max:100'],
             'products.*.size' => ['nullable', 'string', 'max:50'],
             'products.*.category_id' => ['nullable', 'integer', 'exists:categories,id'],
@@ -53,20 +53,11 @@ class ProductBulkController extends Controller
                 $name = trim($row['name']);
                 $barcode = ! empty($row['barcode']) ? Barcode::normalize(trim($row['barcode'])) : null;
                 $stock = (int) $row['stock_quantity'];
+                $categoryId = $row['category_id'] ?? null;
+                $sku = ! empty($row['sku']) ? trim($row['sku']) : null;
 
-                // Generate a unique SKU
-                $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $name) ?? '';
-                $prefix = strtoupper(substr($cleanName, 0, 4));
-                if (strlen($prefix) < 3) {
-                    $prefix = 'ITEM';
-                }
-
-                do {
-                    $sku = $prefix.'-'.strtoupper(Str::random(6));
-                } while (Product::where('sku', $sku)->exists());
-
-                $product = Product::create([
-                    'category_id' => $row['category_id'] ?? null,
+                $product = SkuGenerator::create([
+                    'category_id' => $categoryId,
                     'name' => $name,
                     'sku' => $sku,
                     'barcode' => $barcode,

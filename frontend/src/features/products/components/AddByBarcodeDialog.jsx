@@ -264,7 +264,6 @@ export function AddByBarcodeDialog({
 
       setSessionProducts((prev) => [savedProd, ...prev])
       onSuccess?.()
-      notify.success(t('products:productSaved', 'Product added successfully!'), savedProd.name)
 
       if (dialogState === 'manual') {
         setJustSavedHomemade(savedProd)

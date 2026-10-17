@@ -10,6 +10,7 @@ use App\Models\ScannerEvent;
 use App\Models\StockMovement;
 use App\Services\ProductImageService;
 use App\Support\ListQuery;
+use App\Support\SkuGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -78,7 +79,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:50', 'unique:products,sku'],
+            'sku' => ['nullable', 'string', 'max:50', 'unique:products,sku'],
             'barcode' => ['nullable', 'string', 'max:50', 'unique:products,barcode'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'unit' => ['nullable', 'string', 'max:20'],
@@ -113,9 +114,9 @@ class ProductController extends Controller
         $initialStock = (int) ($validated['stock_quantity'] ?? 0);
 
         $product = DB::transaction(function () use ($validated, $initialStock, $request) {
-            $prod = Product::create([
+            $prod = SkuGenerator::create([
                 'name' => trim($validated['name']),
-                'sku' => trim($validated['sku']),
+                'sku' => ! empty($validated['sku']) ? trim($validated['sku']) : null,
                 'barcode' => ! empty($validated['barcode']) ? trim($validated['barcode']) : null,
                 'category_id' => $validated['category_id'],
                 'unit' => $validated['unit'] ?? 'pc',
@@ -173,7 +174,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'sku' => ['sometimes', 'required', 'string', 'max:50', Rule::unique('products', 'sku')->ignore($product->id)],
+            'sku' => ['sometimes', 'nullable', 'string', 'max:50', Rule::unique('products', 'sku')->ignore($product->id)],
             'barcode' => ['nullable', 'string', 'max:50', Rule::unique('products', 'barcode')->ignore($product->id)],
             'category_id' => ['sometimes', 'required', 'integer', 'exists:categories,id'],
             'unit' => ['nullable', 'string', 'max:20'],
@@ -207,8 +208,13 @@ class ProductController extends Controller
         if (isset($validated['name'])) {
             $validated['name'] = trim($validated['name']);
         }
-        if (isset($validated['sku'])) {
-            $validated['sku'] = trim($validated['sku']);
+        if (array_key_exists('sku', $validated)) {
+            $trimmedSku = trim((string) $validated['sku']);
+            if ($trimmedSku === '') {
+                unset($validated['sku']);
+            } else {
+                $validated['sku'] = $trimmedSku;
+            }
         }
         if (isset($validated['barcode'])) {
             $validated['barcode'] = ! empty($validated['barcode']) ? trim($validated['barcode']) : null;

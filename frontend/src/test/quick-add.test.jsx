@@ -284,4 +284,79 @@ describe('U1: Unified Add by Barcode Flow and BarcodeCapture', () => {
       expect(screen.queryByRole('button', { name: /Scan to add|I-scan para idagdag/i })).toBeNull()
     })
   })
+
+  describe('F1: SKU auto-generation and optional field tests', () => {
+    it('Quick Add saves product without SKU and auto-generates TT-{CAT}-{NNN}', async () => {
+      const onSuccess = vi.fn()
+      const mockCategories = [
+        { id: 4, name: 'Canned Goods', code: 'CAN' },
+      ]
+      renderWithProviders(
+        <AddByBarcodeDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          categories={mockCategories}
+          initialBarcode="3017620422003"
+          onSuccess={onSuccess}
+        />,
+        { role: 'owner' }
+      )
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue(/Nutella/i)).toBeInTheDocument()
+      })
+
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '185.00' } })
+
+      const saveBtn = screen.getByRole('button', { name: /^Save$|^I-save$/i })
+      fireEvent.click(saveBtn)
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled()
+      })
+
+      const saved = useMockDb.getState().products.find((p) => p.name.includes('Nutella'))
+      expect(saved).toBeDefined()
+      expect(saved.sku).toMatch(/^TT-(CAN|GEN)-\d{3,}$/)
+    })
+
+    it('ProductFormDialog accepts an empty SKU and generates a valid SKU', async () => {
+      const onSuccess = vi.fn()
+      renderWithProviders(
+        <ProductFormDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          product={{ category_id: 5, unit: 'pc' }}
+          onSuccess={onSuccess}
+        />,
+        { role: 'owner' }
+      )
+
+      // Fill in Name, Price
+      const nameInput = screen.getByLabelText(/Product Name|Pangalan ng Produkto/i)
+      fireEvent.change(nameInput, { target: { value: 'Choco Mallows' } })
+
+      // Leave SKU empty (it should have placeholder Auto-generated if empty)
+      const skuInput = screen.getByPlaceholderText(/Auto-generated if empty|Kusang bubuuin kung bakante/i)
+      expect(skuInput).toBeInTheDocument()
+      expect(skuInput.value).toBe('')
+
+      const priceInput = screen.getByLabelText(/Selling Price|Presyo ng Benta/i)
+      fireEvent.change(priceInput, { target: { value: '25.00' } })
+
+      // Save via Add Product button or submit form
+      const saveBtn = screen.getByRole('button', { name: /Add Product|Idagdag ang Produkto/i })
+      fireEvent.click(saveBtn)
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled()
+      })
+
+      const saved = useMockDb.getState().products.find((p) => p.name === 'Choco Mallows')
+      expect(saved).toBeDefined()
+      expect(saved.sku).toMatch(/^TT-(SNA|GEN)-\d{3,}$/)
+    })
+  })
 })
+

@@ -1661,6 +1661,47 @@ When starting work on TindaTrack v2.0.0:
    - In **Settings** → **AI**, toggle **"Research Mode"** ON.
    - Open `/ai-lab` from the sidebar navigation to inspect real-time precision/recall telemetry and run evaluation benchmark experiments.
 
+---
 
+## v2.0.1 Fix Release Progress Tracker
 
+### F0 Log (Preflight & Baseline Audit):
+- **Branch**: Cut `fix/v2.0.1` from `main` (clean at `v2.0.0`).
+- **Baseline Gates Verified**:
+  - Backend Suite (`./vendor/bin/pest`): 136 passed (136), 704 assertions (7.28s).
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production build (102 assets).
+  - Frontend Tests (`npx vitest run`): 24 test suites passed, 247 passed tests.
+  - Verification Scripts:
+    - `check:i18n`: 19 namespaces, 1,834 `t(...)` calls validated, 0 leaks.
+    - `check:mobile`: 0 violations, touch floor verified.
+    - `check:pwa`: PWA manifest, service worker, icons valid.
+    - `check-services`: 13 service pairs, all mock/api contracts matched.
+    - `check-contract`: 49 API endpoint contracts matched registered Laravel routes.
+    - `check-mockdata`: Discrepancy ₱0.0000.
+    - `check-prod-bundle`: 102 assets scanned, 0 secrets, 0 dev leaks.
+    - `smoke:pairing`: Passed.
+    - `smoke:prod`: 9/9 passed.
+    - `smoke:ai`: 12/12 passed.
 
+### F1 Log (SKU Auto-Generation & Optional Constraints Across All Create Paths):
+- **Root Cause**: `ProductController@store` enforced `'sku' => ['required', ...]`. In *Add by barcode → Found online — Quick Add*, the UI deliberately did not render an SKU field, expecting the backend to generate one. Furthermore, `ProductBulkController` independently generated random `prefix-RANDOM6` strings instead of matching the seeded `TT-{CAT}-{NNN}` format.
+- **Architectural Fix**:
+  - Implemented `App\Support\SkuGenerator`:
+    - Canonical 3-letter category prefixes derived from category definitions: DRK (Drinks), COF (Coffee & Milk), NOO/NDL (Instant Noodles), CAN (Canned Goods), SNA (Snacks), BRD (Bread), CND (Condiments), RCE (Rice & Cooking), PER/PRC (Personal Care), HOU/HSH (Household). Fallback to first 3 letters of category slug uppercase, or `GEN` if uncategorized.
+    - Suffix extraction: queries existing `TT-{CAT}-%` SKUs, finds highest numeric suffix, increments by 1 with 3+ zero-padding.
+    - Robustness: `SkuGenerator::create` provides automated retry loop (up to 5 attempts) on unique SKU constraint collision.
+  - Backend controllers:
+    - `ProductController@store`: validation changed to `'sku' => ['nullable', 'string', 'max:50', 'unique:products,sku']`. Uses `SkuGenerator::create`.
+    - `ProductController@update`: `'sku' => ['sometimes', 'nullable', ...]`. Blanked/empty values are stripped, safely preserving existing product SKU.
+    - `ProductBulkController@bulk`: uses `SkuGenerator::create` with optional per-row custom SKU support.
+  - Frontend:
+    - `ProductFormDialog`: SKU placeholder updated to "Auto-generated if empty" / "Kusang bubuuin kung bakante" across `en` and `fil` locales.
+    - `useCreateProduct`: success toast shows generated SKU ("Saved {name} · {sku}"). Removed duplicate toast in `AddByBarcodeDialog`.
+    - Mock services: updated `mock/productService.js` and `mock/aiService.js` to auto-generate `TT-{CAT}-{NNN}` SKUs and preserve existing SKU on update.
+- **Verification**:
+  - Pest unit & feature tests: `SkuGeneratorTest` (5 passed), `ProductSkuTest` (6 passed). Full backend suite passing (147 passed, 744 assertions).
+  - Pint: Clean.
+  - Vitest: 13 passed in `quick-add.test.jsx`, including SKU auto-generation via Quick Add and ProductFormDialog.
+  - All check scripts and smoke tests passing cleanly.
