@@ -1579,5 +1579,88 @@ Tracking implementation of v2.0.0 tasks (A0–A10):
   - Updated `README.md` with v2.0.0 feature highlights.
   - Updated `docs/CHANGELOG.md` with complete `[v2.0.0]` release notes.
 
+### A10 Log (Final Hardening, Release & Tagging):
+- **Full Security & Quality Audit (`docs/AUDIT-v2.md`)**:
+  - Investigated and certified 12 audit findings across security, authorisation, upload validation, database indexing, client bundle splitting, query efficiency, mobile layout, test robustness, server configuration, and config/route caching.
+  - Zero high or medium severity findings remain unaddressed.
+- **End-to-End AI Capabilities Smoke Verification (`scripts/smoke-ai.mjs`)**:
+  - Implemented automated CLI smoke test verifying cashier basket scan, cashier feedback, cashier 403 authorization fences, owner intake scan, bulk product creation, cropped image upload, metrics calculation, CSV export, phone QR pairing, device token wireless basket scan, and laptop POS event delivery.
+  - All 12 automated verification steps passing green.
+- **Clean-State Gate Verifications**:
+  - Database: `php artisan migrate:fresh --seed` (12.1s demo seeding, 1,598 sales, 4,170 movements, 100% reconciled in `tindatrack:check`).
+  - Backend Tests: 136/136 Pest tests passing (704 assertions). Pint style check passing.
+  - Frontend Lint: Oxlint clean (0 errors).
+  - Frontend Tests: 247/247 Vitest tests passing across 24 test suites.
+  - Frontend Build: Clean production build (102 assets, 0 leaks in `check-prod-bundle.mjs`).
+  - Verification Suite: `check:i18n`, `check:mobile`, `check:pwa`, `check:services`, `check:contract`, `check:mockdata` all 100% green.
+  - Smoke Verification: `npm run smoke:pairing`, `npm run smoke:prod`, `npm run smoke:ai` all passing consecutively.
+
+---
+
+## Final v2.0.0 Release Metrics
+
+| Metric | Before (v1.4.0 Baseline) | After (v2.0.0 Release) | Delta |
+|---|---|---|---|
+| **Backend Test Count** | 103 passed (548 assertions) | 136 passed (704 assertions) | +33 tests, +156 assertions |
+| **Frontend Test Count** | 215 passed (18 test suites) | 247 passed (24 test suites) | +32 tests, +6 test suites |
+| **Production Assets** | 94 built assets | 102 built assets | +8 assets (Transformers.js split) |
+| **Database Migrations** | 20 migrations | 28 migrations | +8 migrations (scans, embeddings, experiments) |
+| **Reconciled Balance** | ₱6,695.00 (100% clean) | ₱6,695.00 (100% clean) | Clean |
+
+---
+
+## Deploy-Ready Checklist
+
+Deploying TindaTrack v2.0.0 to Railway and Vercel:
+- [x] Railway backend environment variables documented in `docs/DEPLOY.md`:
+  - `AI_PROVIDER=gemini` (or `mock` for zero-key demo mode)
+  - `GEMINI_API_KEY=<your-key>`
+  - `GEMINI_MODEL=gemini-2.5-flash`
+  - `GEMINI_FALLBACK_MODEL=gemini-2.5-flash-lite`
+  - `AI_DAILY_LIMIT=500`
+  - `AI_PER_USER_PER_MINUTE=6`
+  - `AI_TIMEOUT=30`
+  - `AI_MAX_IMAGE_KB=1500`
+  - `AI_SAVE_SCAN_IMAGES=false`
+- [x] PHP upload limits configured in `backend/nixpacks.toml` and `backend/public/.user.ini` (`upload_max_filesize = 10M`, `post_max_size = 12M`).
+- [x] Zero Vercel environment variable additions required (`VITE_API_URL` and `VITE_DATA_SOURCE` remain identical).
+- [x] Full deployment instructions verified in `docs/DEPLOY.md`.
+
+---
+
+## Morning Checklist for the User
+
+When starting work on TindaTrack v2.0.0:
+
+1. **Pull & Install**:
+   ```bash
+   git pull
+   cd backend && composer install && php artisan migrate
+   cd ../frontend && npm install
+   ```
+2. **Demo Mode Test (Zero Key)**:
+   - Launch TindaTrack: `npm run dev`.
+   - Open POS → Click the **AI Scan** sparkles button in the toolbar → try a test capture.
+   - Open Products → Click **Add...** → **Add from photo (AI)** → try a photo intake.
+3. **Connect Google Gemini**:
+   - Add your Gemini API key to `backend/.env`:
+     ```ini
+     AI_PROVIDER=gemini
+     GEMINI_API_KEY=your_actual_gemini_api_key
+     ```
+   - Test connectivity:
+     ```bash
+     cd backend && php artisan config:clear && php artisan ai:ping
+     ```
+   - Try a real basket photo with 3–5 sari-sari items on the counter.
+4. **On-Device Visual Search**:
+   - Navigate to **Settings** → **AI** tab.
+   - Click **"Build visual index"** and observe the progress bar.
+   - Open **POS** → Click **Scan** → Select the **Visual** tab. Point your camera at a registered product to verify real-time on-device recognition!
+5. **AI Research Lab**:
+   - In **Settings** → **AI**, toggle **"Research Mode"** ON.
+   - Open `/ai-lab` from the sidebar navigation to inspect real-time precision/recall telemetry and run evaluation benchmark experiments.
+
+
 
 

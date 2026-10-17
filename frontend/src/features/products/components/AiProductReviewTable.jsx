@@ -4,11 +4,7 @@ import {
   Sparkles,
   AlertTriangle,
   Check,
-  CheckCircle2,
   Package,
-  Layers,
-  ArrowRight,
-  ExternalLink,
   Loader2,
   Barcode,
 } from 'lucide-react'

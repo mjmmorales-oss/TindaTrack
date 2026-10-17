@@ -4,12 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Sparkles,
   Eye,
-  Database,
   Trash2,
   RefreshCw,
   Info,
-  CheckCircle2,
-  AlertCircle,
   Loader2,
 } from 'lucide-react'
 import {
@@ -18,7 +15,6 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -35,7 +31,6 @@ import {
 } from '@/features/settings/hooks/useSettings.js'
 import {
   VISUAL_MODEL_ID,
-  VISUAL_FALLBACK_MODEL_ID,
 } from '@/config/visual.js'
 import {
   embedImage,
@@ -60,7 +55,7 @@ export function AiSettingsCard() {
   const [isPruning, setIsPruning] = useState(false)
 
   // Query AI Status
-  const { data: aiStatus, isLoading: isLoadingStatus } = useQuery({
+  const { data: aiStatus } = useQuery({
     queryKey: ['ai-status'],
     queryFn: () => aiService.getAiStatus(),
     staleTime: 30000,

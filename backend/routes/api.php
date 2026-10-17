@@ -36,11 +36,11 @@ Route::get('/product-images/{ulid}', [ProductImageController::class, 'show']);
 // Device-scoped scanner endpoints (phone client)
 Route::prefix('scanner')->group(function () {
     Route::post('/pair', [ScannerDeviceController::class, 'pair'])
-        ->middleware('throttle:10,1');
+        ->middleware('throttle:10,1,scanner_pair');
     Route::post('/scans', [ScannerDeviceController::class, 'scan'])
         ->middleware(['scanner.device', 'throttle:120,1']);
     Route::post('/ai-basket', [ScannerDeviceController::class, 'aiBasket'])
-        ->middleware(['scanner.device', 'throttle:10,1']);
+        ->middleware(['scanner.device', 'throttle:30,1,scanner_ai_basket']);
     Route::post('/heartbeat', [ScannerDeviceController::class, 'heartbeat'])
         ->middleware('scanner.device');
 });
