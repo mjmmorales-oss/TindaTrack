@@ -17,7 +17,7 @@ TindaTrack uses a **hybrid AI model**:
 |                                    FRONTEND CLIENT                                    |
 |                                                                                       |
 |  +--------------------+     +---------------------+     +--------------------------+  |
-|  |  POS Basket Scan   |     | Wireless Phone /scan|     |   Bulk Product Intake    |  |
+|  |  POS Basket Scan   |     | Wireless Phone /scan|     |       AI Stock-In        |  |
 |  |  (Laptop/Desktop)  |     |  (Paired Mobile)    |     |   (Inventory Onboard)    |  |
 |  +---------+----------+     +----------+----------+     +------------+-------------+  |
 |            |                           |                             |                |
@@ -170,16 +170,18 @@ Store Catalog (Format: id|name|size|category):
 
 ---
 
-### 2.2 Bulk Product Intake Scan (`products-v1`)
+### 2.2 AI Stock-In Scan (`products-v1`)
 
 - **Class**: `App\Ai\Prompts\ProductPrompt`
 - **Version**: `products-v1`
 - **Strategy**: **Intake Extraction with Barcode OCR**. Extracts up to 5 distinct new products placed on a counter, reading brand, packaging size, readable barcode text, suggested category ID, and bounding box coordinates for client-side automated cropping.
+- **Limit Notice**: Gemini AI processes up to 5 products per photo. When more than 5 products are visible, `more_than_five` is set to `true`, prompting the user: "Showing 5 products. Scan again for the rest."
 
 #### System Prompt Template
 ```text
 You are an inventory assistant for a Philippine sari-sari store.
 Identify up to 5 DISTINCT products in the image.
+If more than 5 distinct products are visible in the photo, set `more_than_five` to true and return the first 5.
 For each: name as printed, brand, size/net weight, a suggested category from the provided list (by id), estimated count of units visible, any barcode digits readable on the packaging, `box_2d`, and confidence.
 Use Filipino product naming as printed; do not translate brand names.
 Return `box_2d` as [ymin, xmin, ymax, xmax] normalized 0–1000.
@@ -194,6 +196,9 @@ Store Categories (Format: id: name):
 {
   "type": "OBJECT",
   "properties": {
+    "more_than_five": {
+      "type": "BOOLEAN"
+    },
     "products": {
       "type": "ARRAY",
       "items": {

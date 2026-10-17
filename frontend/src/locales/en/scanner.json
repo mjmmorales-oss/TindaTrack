@@ -110,7 +110,7 @@
   "aiBasketDetected": "AI Basket ({{count}} items detected)",
   "aiBasketFailed": "Failed to analyze basket.",
   "modeBarcode": "Barcode",
-  "modeVisual": "Visual",
+  "modeVisual": "Visual Match",
   "modeAiBasket": "AI Basket",
   "visualHoldCloser": "Hold the product closer / try another angle",
   "visualSearching": "Identifying product...",

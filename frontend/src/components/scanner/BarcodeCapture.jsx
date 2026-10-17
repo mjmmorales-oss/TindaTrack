@@ -443,7 +443,7 @@ export function BarcodeCapture({
             {visualSearchEnabled && (
               <TabsTrigger value="visual" className="gap-1.5 text-xs font-semibold">
                 <Eye className="h-3.5 w-3.5 text-primary" />
-                <span>{t('scanner:modeVisual', 'Visual')}</span>
+                <span>{t('scanner:modeVisual', 'Visual Match')}</span>
               </TabsTrigger>
             )}
 
@@ -608,7 +608,7 @@ export function BarcodeCapture({
                     ) : (
                       <>
                         <Eye className="h-3 w-3 text-primary" />
-                        <span>{t('scanner:modeVisual', 'Visual Search')}</span>
+                        <span>{t('scanner:modeVisual', 'Visual Match')}</span>
                       </>
                     )}
                   </div>
