@@ -96,5 +96,12 @@
   "experimentNotes": "Mga Tala at Kondisyon ng Ilaw",
   "experimentNotesPlaceholder": "hal. 20 baskets sa ilalim ng 400 lux diffuse LED lighting",
   "createExperiment": "Gawin ang Eksperimento",
-  "cancel": "Kanselahin"
+  "cancel": "Kanselahin",
+  "captureModeSection": "Paghahambing ayon sa Paraan ng Pagkuha (Auto vs Manual vs Upload)",
+  "captureModeDesc": "Pagsusuri sa bilis, rate ng pagtanggap, at pagwawasto ng user ayon sa paraan ng pagkuha ng litrato",
+  "modeAuto": "Auto-Capture",
+  "modeManual": "Pindot (Manual)",
+  "modeUpload": "Pag-upload ng File",
+  "acceptanceRate": "Rate ng Pagtanggap",
+  "avgCorrectionsPerScan": "Karaniwang Pagwawasto / Scan"
 }

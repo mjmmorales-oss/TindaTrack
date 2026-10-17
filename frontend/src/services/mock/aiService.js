@@ -273,12 +273,35 @@ export const aiService = {
         item_removed: 1,
         item_added: 1,
       },
+      capture_mode: {
+        auto: {
+          scans_count: 5,
+          avg_latency_ms: 320,
+          acceptance_rate: 0.92,
+          avg_corrections_per_scan: 0.2,
+          lines_evaluated: 15,
+        },
+        manual: {
+          scans_count: 5,
+          avg_latency_ms: 380,
+          acceptance_rate: 0.88,
+          avg_corrections_per_scan: 0.4,
+          lines_evaluated: 14,
+        },
+        upload: {
+          scans_count: 2,
+          avg_latency_ms: 410,
+          acceptance_rate: 0.85,
+          avg_corrections_per_scan: 0.5,
+          lines_evaluated: 6,
+        },
+      },
     }
   },
 
   async exportMetricsCsv(_params = {}) {
     await delay(50)
-    return 'date,total_scans,accuracy,avg_latency_ms\n2026-10-14,3,0.89,350\n2026-10-15,4,0.92,370\n2026-10-16,5,0.94,365\n'
+    return 'Scan ID,Type,Capture Mode,Provider,Model,Latency (ms),Status,User,Items Detected,Feedback Action,Line Type,Suggested Product ID,Suggested Qty,Final Product ID,Final Qty,Confidence,Timestamp\nscan_mock_1,basket,auto,mock,mock-gemini-2.5-flash,320,ok,Owner,3,accepted,item,1,2,1,2,0.95,2026-10-17T00:00:00Z\n'
   },
 
   async getEmbeddings(params = {}) {

@@ -162,7 +162,7 @@ class AiService
      *
      * @return array<string, mixed>
      */
-    public function processBasket(string|UploadedFile $image, ?User $user = null, ?string $scannerSessionId = null): array
+    public function processBasket(string|UploadedFile $image, ?User $user = null, ?string $scannerSessionId = null, ?string $captureMode = 'manual'): array
     {
         $this->checkLimits($user);
         $imageData = $this->validateImage($image);
@@ -287,6 +287,7 @@ class AiService
                 'user_id' => $userId,
                 'scanner_session_id' => $scannerSessionId,
                 'type' => 'basket',
+                'capture_mode' => $captureMode,
                 'provider' => config('ai.provider', 'mock'),
                 'model' => $visionResult->model,
                 'prompt_version' => $visionResult->promptVersion,
@@ -307,6 +308,7 @@ class AiService
 
         return [
             'scan_id' => $scan?->id,
+            'capture_mode' => $captureMode,
             'provider' => config('ai.provider', 'mock'),
             'model' => $visionResult->model,
             'latency_ms' => $visionResult->latencyMs,
@@ -325,7 +327,7 @@ class AiService
      *
      * @return array<string, mixed>
      */
-    public function processNewProducts(string|UploadedFile $image, ?User $user = null): array
+    public function processNewProducts(string|UploadedFile $image, ?User $user = null, ?string $captureMode = 'manual'): array
     {
         $this->checkLimits($user);
         $imageData = $this->validateImage($image);
@@ -424,6 +426,7 @@ class AiService
                 'user_id' => $userId,
                 'scanner_session_id' => null,
                 'type' => 'products',
+                'capture_mode' => $captureMode,
                 'provider' => config('ai.provider', 'mock'),
                 'model' => $visionResult->model,
                 'prompt_version' => $visionResult->promptVersion,
@@ -444,6 +447,7 @@ class AiService
 
         return [
             'scan_id' => $scan?->id,
+            'capture_mode' => $captureMode,
             'provider' => config('ai.provider', 'mock'),
             'model' => $visionResult->model,
             'latency_ms' => $visionResult->latencyMs,

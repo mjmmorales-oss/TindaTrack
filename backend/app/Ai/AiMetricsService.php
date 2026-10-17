@@ -48,12 +48,16 @@ class AiMetricsService
         // 4. Visual search metrics
         $visualMetrics = $this->calculateVisualMetrics($from, $to);
 
+        // 5. Capture mode metrics breakdown (auto vs manual vs upload)
+        $captureModeMetrics = $this->calculateCaptureModeMetrics($allScans, $feedbackRows);
+
         return [
             'total_scans' => $allScans->count(),
             'basket' => $basketMetrics,
             'products' => $productMetrics,
             'checkout_timing' => $checkoutMetrics,
             'visual_search' => $visualMetrics,
+            'capture_mode' => $captureModeMetrics,
         ];
     }
 
@@ -301,6 +305,81 @@ class AiMetricsService
     }
 
     /**
+     * Computes breakdown by capture mode (auto vs manual vs upload).
+     *
+     * @param  Collection<int, AiScan>  $scans
+     * @param  Collection<int, AiScanFeedback>  $feedback
+     * @return array<string, mixed>
+     */
+    protected function calculateCaptureModeMetrics($scans, $feedback): array
+    {
+        $modes = ['auto', 'manual', 'upload'];
+        $scansByMode = [];
+        foreach ($modes as $m) {
+            $scansByMode[$m] = [];
+        }
+
+        foreach ($scans as $scan) {
+            $mode = $scan->capture_mode ?: 'manual';
+            if (! isset($scansByMode[$mode])) {
+                $scansByMode[$mode] = [];
+            }
+            $scansByMode[$mode][] = $scan;
+        }
+
+        $feedbackByScanId = $feedback->groupBy('ai_scan_id');
+
+        $result = [];
+        foreach ($modes as $mode) {
+            $modeScans = collect($scansByMode[$mode]);
+            $scanCount = $modeScans->count();
+
+            if ($scanCount === 0) {
+                $result[$mode] = [
+                    'scans_count' => 0,
+                    'avg_latency_ms' => 0,
+                    'acceptance_rate' => 0.0,
+                    'avg_corrections_per_scan' => 0.0,
+                    'lines_evaluated' => 0,
+                ];
+
+                continue;
+            }
+
+            $avgLatency = (int) round($modeScans->avg('latency_ms'));
+
+            $totalLines = 0;
+            $acceptedLines = 0;
+            $corrections = 0;
+
+            foreach ($modeScans as $s) {
+                $scanFb = $feedbackByScanId->get($s->id, collect());
+                foreach ($scanFb as $fb) {
+                    $totalLines++;
+                    if ($fb->action === 'accepted') {
+                        $acceptedLines++;
+                    } else {
+                        $corrections++;
+                    }
+                }
+            }
+
+            $acceptanceRate = $totalLines > 0 ? round($acceptedLines / $totalLines, 4) : 1.0;
+            $avgCorrections = round($corrections / $scanCount, 2);
+
+            $result[$mode] = [
+                'scans_count' => $scanCount,
+                'avg_latency_ms' => $avgLatency,
+                'acceptance_rate' => $acceptanceRate,
+                'avg_corrections_per_scan' => $avgCorrections,
+                'lines_evaluated' => $totalLines,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Exports full metrics and scan logs to a CSV string.
      */
     public function exportCsv(?string $from = null, ?string $to = null): string
@@ -317,6 +396,7 @@ class AiMetricsService
         fputcsv($output, [
             'Scan ID',
             'Type',
+            'Capture Mode',
             'Provider',
             'Model',
             'Latency (ms)',
@@ -336,11 +416,13 @@ class AiMetricsService
         foreach ($scans as $scan) {
             $user = $scan->user?->name ?? 'User #'.$scan->user_id;
             $itemsCount = count($scan->result['items'] ?? ($scan->result['products'] ?? []));
+            $captureMode = $scan->capture_mode ?: 'manual';
 
             if ($scan->feedback->isEmpty()) {
                 fputcsv($output, [
                     $scan->id,
                     $scan->type,
+                    $captureMode,
                     $scan->provider,
                     $scan->model,
                     $scan->latency_ms,
@@ -361,6 +443,7 @@ class AiMetricsService
                     fputcsv($output, [
                         $scan->id,
                         $scan->type,
+                        $captureMode,
                         $scan->provider,
                         $scan->model,
                         $scan->latency_ms,
