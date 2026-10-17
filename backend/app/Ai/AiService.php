@@ -402,6 +402,7 @@ class AiService
 
         $resultPayload = [
             'products' => $processedProducts,
+            'more_than_five' => (bool) $visionResult->moreThanFive,
         ];
 
         $this->lazyPruneImages();
@@ -449,6 +450,7 @@ class AiService
             'prompt_version' => $visionResult->promptVersion,
             'image_sha256' => $imageData['sha256'],
             'products' => $processedProducts,
+            'more_than_five' => (bool) $visionResult->moreThanFive,
             'raw' => $visionResult->raw,
         ];
     }

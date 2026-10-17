@@ -25,6 +25,7 @@ class ProductPrompt
         return <<<PROMPT
 You are an inventory assistant for a Philippine sari-sari store.
 Identify up to 5 DISTINCT products in the image.
+If more than 5 distinct products are visible in the photo, set `more_than_five` to true and return the first 5.
 For each: name as printed, brand, size/net weight, a suggested category from the provided list (by id), estimated count of units visible, any barcode digits readable on the packaging, `box_2d`, and confidence.
 Use Filipino product naming as printed; do not translate brand names.
 Return `box_2d` as [ymin, xmin, ymax, xmax] normalized 0–1000.
@@ -45,6 +46,9 @@ PROMPT;
         return [
             'type' => 'OBJECT',
             'properties' => [
+                'more_than_five' => [
+                    'type' => 'BOOLEAN',
+                ],
                 'products' => [
                     'type' => 'ARRAY',
                     'items' => [

@@ -36,6 +36,9 @@ class ProductBulkController extends Controller
                 if (isset($row['cost']) && ! isset($row['cost_price'])) {
                     $row['cost_price'] = $row['cost'];
                 }
+                if (isset($row['min_stock']) && ! isset($row['reorder_level'])) {
+                    $row['reorder_level'] = $row['min_stock'];
+                }
 
                 return $row;
             }, $rawProducts);
@@ -48,11 +51,13 @@ class ProductBulkController extends Controller
             'products.*.sku' => ['nullable', 'string', 'max:50', 'distinct', 'unique:products,sku'],
             'products.*.brand' => ['nullable', 'string', 'max:100'],
             'products.*.size' => ['nullable', 'string', 'max:50'],
+            'products.*.unit' => ['nullable', 'string', 'max:20'],
             'products.*.category_id' => ['required', 'integer', 'exists:categories,id'],
             'products.*.barcode' => ['nullable', 'string', 'max:100', 'distinct', 'unique:products,barcode'],
             'products.*.price' => ['required', 'numeric', 'min:0'],
             'products.*.cost_price' => ['nullable', 'numeric', 'min:0'],
             'products.*.stock_quantity' => ['required', 'integer', 'min:0'],
+            'products.*.reorder_level' => ['nullable', 'integer', 'min:0'],
             'products.*.image_url' => ['nullable', 'string', 'max:2048'],
         ]);
 
@@ -81,11 +86,11 @@ class ProductBulkController extends Controller
                     'barcode' => $barcode,
                     'brand' => $row['brand'] ?? null,
                     'size' => $row['size'] ?? null,
-                    'unit' => 'pc',
+                    'unit' => ! empty($row['unit']) ? $row['unit'] : 'pc',
                     'price' => (float) $row['price'],
                     'cost_price' => isset($row['cost_price']) ? (float) $row['cost_price'] : 0,
                     'stock_quantity' => $stock,
-                    'reorder_level' => 5,
+                    'reorder_level' => isset($row['reorder_level']) ? (int) $row['reorder_level'] : 5,
                     'is_active' => true,
                     'image_url' => $row['image_url'] ?? null,
                 ]);

@@ -129,13 +129,13 @@ export function ProductsPage() {
   const [productScanResult, setProductScanResult] = useState(null)
   const [capturedImageBlob, setCapturedImageBlob] = useState(null)
 
-  const handleProductPhotoCapture = async (blob) => {
+  const handleProductPhotoCapture = async (blob, captureMode = 'manual') => {
     setIsAiScanning(true)
     setAiScanningStep(t('products:aiPreparingPhoto', 'Preparing photo for AI analysis...'))
     setCapturedImageBlob(blob)
     try {
       setAiScanningStep(t('products:aiDetectingProducts', 'Detecting products and GTIN barcodes...'))
-      const result = await aiService.productScan(blob)
+      const result = await aiService.productScan(blob, { capture_mode: captureMode })
       setProductScanResult(result)
       setIsAiCaptureOpen(false)
       setIsReviewTableOpen(true)
@@ -813,8 +813,10 @@ export function ProductsPage() {
           isAnalyzing={isAiScanning}
           analyzingStep={aiScanningStep}
           onCancel={() => setIsAiCaptureOpen(false)}
-          title={t('products:aiCaptureTitle', 'Scan Products with AI')}
-          hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera.')}
+          title={t('products:aiCaptureTitle', 'AI Stock-In')}
+          hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera, then hold still.')}
+          autoCaptureEnabled={true}
+          featureKey="stockin"
         />
       </ResponsiveDialog>
 
@@ -833,6 +835,10 @@ export function ProductsPage() {
         scanResult={productScanResult}
         imageBlob={capturedImageBlob}
         onRestockProduct={handleAdjust}
+        onScanAgain={() => {
+          setIsReviewTableOpen(false)
+          setIsAiCaptureOpen(true)
+        }}
         onSaved={refetch}
       />
     </PageContainer>

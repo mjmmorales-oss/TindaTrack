@@ -86,7 +86,8 @@ class GeminiVisionProvider implements VisionProvider
             model: $usedModel,
             latencyMs: $latencyMs,
             promptVersion: ProductPrompt::VERSION,
-            products: $parsed['products'] ?? []
+            products: $parsed['products'] ?? [],
+            moreThanFive: (bool) ($parsed['more_than_five'] ?? false)
         );
     }
 

@@ -16,7 +16,8 @@ class VisionResult
         public string $model = '',
         public int $latencyMs = 0,
         public string $promptVersion = '',
-        public array $products = []
+        public array $products = [],
+        public bool $moreThanFive = false
     ) {}
 
     /**
@@ -30,6 +31,7 @@ class VisionResult
             'items' => $this->items,
             'unmatched' => $this->unmatched,
             'products' => $this->products,
+            'more_than_five' => $this->moreThanFive,
             'raw' => $this->raw,
             'model' => $this->model,
             'latency_ms' => $this->latencyMs,

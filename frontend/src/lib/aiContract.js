@@ -160,6 +160,7 @@ export function normalizeProductScanResult(rawResponse, categories = []) {
     model: raw.model ?? '',
     latency_ms: Number(raw.latency_ms ?? raw.processing_time_ms ?? 0),
     products,
+    more_than_five: Boolean(raw.more_than_five || raw.total_visible > 5),
     raw: raw.raw ?? null,
   }
 }

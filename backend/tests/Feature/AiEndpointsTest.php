@@ -286,19 +286,23 @@ test('POST /api/products/bulk creates products transactionally and returns row v
                 'name' => 'Bulk Item 1',
                 'brand' => 'Brand A',
                 'size' => '100g',
+                'unit' => 'can',
                 'category_id' => $category->id,
                 'price' => 25.50,
                 'cost_price' => 20.00,
                 'stock_quantity' => 10,
+                'reorder_level' => 8,
             ],
             [
                 'name' => 'Bulk Item 2',
                 'brand' => 'Brand B',
                 'size' => '200ml',
+                'unit' => 'bottle',
                 'category_id' => $category->id,
                 'price' => 50.00,
                 'cost_price' => 40.00,
                 'stock_quantity' => 15,
+                'reorder_level' => 6,
             ],
         ],
     ];
@@ -307,10 +311,16 @@ test('POST /api/products/bulk creates products transactionally and returns row v
         ->postJson('/api/products/bulk', $goodPayload);
 
     $goodRes->assertStatus(201)
-        ->assertJsonPath('message', '2 products created successfully.');
+        ->assertJsonPath('message', '2 products created successfully.')
+        ->assertJsonPath('data.0.name', 'Bulk Item 1')
+        ->assertJsonPath('data.0.unit', 'can')
+        ->assertJsonPath('data.0.reorder_level', 8)
+        ->assertJsonPath('data.1.name', 'Bulk Item 2')
+        ->assertJsonPath('data.1.unit', 'bottle')
+        ->assertJsonPath('data.1.reorder_level', 6);
 
-    expect(Product::where('name', 'Bulk Item 1')->exists())->toBeTrue()
-        ->and(Product::where('name', 'Bulk Item 2')->exists())->toBeTrue();
+    expect(Product::where('name', 'Bulk Item 1')->first()->reorder_level)->toBe(8)
+        ->and(Product::where('name', 'Bulk Item 2')->first()->reorder_level)->toBe(6);
 });
 
 test('when ai_enabled is false, endpoints return 403 ai_disabled', function () {
