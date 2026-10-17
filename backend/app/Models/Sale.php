@@ -26,6 +26,8 @@ class Sale extends Model
         'voided_by',
         'voided_at',
         'notes',
+        'cart_started_at',
+        'cart_duration_ms',
     ];
 
     protected function casts(): array
@@ -37,6 +39,8 @@ class Sale extends Model
             'payment_type' => PaymentType::class,
             'status' => SaleStatus::class,
             'voided_at' => 'datetime',
+            'cart_started_at' => 'datetime',
+            'cart_duration_ms' => 'integer',
         ];
     }
 

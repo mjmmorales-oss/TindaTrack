@@ -6,6 +6,8 @@ use App\Ai\Exceptions\AiDailyLimitException;
 use App\Ai\Exceptions\AiDisabledException;
 use App\Ai\Exceptions\AiException;
 use App\Ai\Exceptions\AiRateLimitedException;
+use App\Models\AiScan;
+use App\Models\AiScanImage;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
@@ -261,7 +263,50 @@ class AiService
             ];
         }
 
+        $resultPayload = [
+            'items' => $finalItems,
+            'unmatched' => $unmatched,
+        ];
+
+        $this->lazyPruneImages();
+
+        $imageId = null;
+        if ($this->shouldSaveScanImages()) {
+            $scanImg = AiScanImage::create([
+                'mime_type' => $imageData['mime'],
+                'image_size' => strlen($imageData['bytes']),
+                'image_data' => $imageData['bytes'],
+            ]);
+            $imageId = $scanImg->id;
+        }
+
+        $scan = null;
+        $userId = $user?->id ?? User::value('id');
+        if ($userId) {
+            $scan = AiScan::create([
+                'user_id' => $userId,
+                'scanner_session_id' => $scannerSessionId,
+                'type' => 'basket',
+                'provider' => config('ai.provider', 'mock'),
+                'model' => $visionResult->model,
+                'prompt_version' => $visionResult->promptVersion,
+                'image_sha256' => $imageData['sha256'],
+                'image_id' => $imageId,
+                'latency_ms' => $visionResult->latencyMs,
+                'status' => 'ok',
+                'raw_response' => is_array($visionResult->raw) ? $visionResult->raw : ['raw' => $visionResult->raw],
+                'result' => $resultPayload,
+                'catalog_size' => $totalActive,
+                'catalog_truncated' => $catalogTruncated,
+            ]);
+
+            if ($imageId) {
+                AiScanImage::where('id', $imageId)->update(['ai_scan_id' => $scan->id]);
+            }
+        }
+
         return [
+            'scan_id' => $scan?->id,
             'provider' => config('ai.provider', 'mock'),
             'model' => $visionResult->model,
             'latency_ms' => $visionResult->latencyMs,
@@ -355,7 +400,49 @@ class AiService
             ];
         }
 
+        $resultPayload = [
+            'products' => $processedProducts,
+        ];
+
+        $this->lazyPruneImages();
+
+        $imageId = null;
+        if ($this->shouldSaveScanImages()) {
+            $scanImg = AiScanImage::create([
+                'mime_type' => $imageData['mime'],
+                'image_size' => strlen($imageData['bytes']),
+                'image_data' => $imageData['bytes'],
+            ]);
+            $imageId = $scanImg->id;
+        }
+
+        $scan = null;
+        $userId = $user?->id ?? User::value('id');
+        if ($userId) {
+            $scan = AiScan::create([
+                'user_id' => $userId,
+                'scanner_session_id' => null,
+                'type' => 'products',
+                'provider' => config('ai.provider', 'mock'),
+                'model' => $visionResult->model,
+                'prompt_version' => $visionResult->promptVersion,
+                'image_sha256' => $imageData['sha256'],
+                'image_id' => $imageId,
+                'latency_ms' => $visionResult->latencyMs,
+                'status' => 'ok',
+                'raw_response' => is_array($visionResult->raw) ? $visionResult->raw : ['raw' => $visionResult->raw],
+                'result' => $resultPayload,
+                'catalog_size' => count($categories),
+                'catalog_truncated' => false,
+            ]);
+
+            if ($imageId) {
+                AiScanImage::where('id', $imageId)->update(['ai_scan_id' => $scan->id]);
+            }
+        }
+
         return [
+            'scan_id' => $scan?->id,
             'provider' => config('ai.provider', 'mock'),
             'model' => $visionResult->model,
             'latency_ms' => $visionResult->latencyMs,
@@ -434,5 +521,34 @@ class AiService
         $filtered = array_filter($words, fn ($w) => ! in_array($w, $stopWords, true));
 
         return implode(' ', $filtered);
+    }
+
+    /**
+     * Determines whether scan images should be persisted to the database.
+     */
+    protected function shouldSaveScanImages(): bool
+    {
+        try {
+            $setting = Setting::first();
+            if ($setting && isset($setting->ai_save_scan_images)) {
+                return (bool) $setting->ai_save_scan_images;
+            }
+        } catch (\Throwable) {
+        }
+
+        return (bool) config('ai.save_scan_images', false);
+    }
+
+    /**
+     * Lazily purges stored scan images older than 30 days.
+     */
+    protected function lazyPruneImages(): void
+    {
+        try {
+            if (mt_rand(1, 50) === 1) {
+                AiScanImage::where('created_at', '<', now()->subDays(30))->delete();
+            }
+        } catch (\Throwable) {
+        }
     }
 }

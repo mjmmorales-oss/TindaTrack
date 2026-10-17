@@ -21,6 +21,10 @@ class Setting extends Model
         'low_stock_threshold',
         'currency',
         'timezone',
+        'ai_enabled',
+        'ai_save_scan_images',
+        'ai_research_mode',
+        'visual_search_enabled',
     ];
 
     protected function casts(): array
@@ -28,6 +32,10 @@ class Setting extends Model
         return [
             'default_reorder_level' => 'integer',
             'low_stock_threshold' => 'integer',
+            'ai_enabled' => 'boolean',
+            'ai_save_scan_images' => 'boolean',
+            'ai_research_mode' => 'boolean',
+            'visual_search_enabled' => 'boolean',
         ];
     }
 }

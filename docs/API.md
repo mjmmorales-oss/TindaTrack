@@ -432,5 +432,155 @@ All staff management operations are restricted to store owners (`role:owner`). S
 }
 ```
 
+---
+
+## AI Vision & Research Endpoints (v2.0)
+
+All endpoints require `auth:sanctum` and `active`. When `settings.ai_enabled` is false, endpoints return 403 `{ "message": "AI features are disabled in store settings.", "code": "ai_disabled" }`.
+
+### 1. `GET /api/ai/status`
+**Role**: `owner,cashier`
+**Response**:
+```json
+{
+  "data": {
+    "enabled": true,
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "demo": false,
+    "daily_remaining": 492,
+    "daily_limit": 500,
+    "per_minute": 6
+  }
+}
+```
+
+### 2. `POST /api/ai/basket-scan`
+**Role**: `owner,cashier`
+**Request**: `multipart/form-data` with `image` (JPEG, PNG, WebP ≤ 1.5MB)
+**Response**:
+```json
+{
+  "data": {
+    "scan_id": "01J0...",
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "latency_ms": 320,
+    "items": [
+      {
+        "product_id": 1,
+        "quantity": 2,
+        "confidence": 0.95,
+        "confidence_bucket": "high",
+        "box_2d": [100, 100, 300, 300],
+        "boxes": [[100, 100, 300, 300]],
+        "exceeds_stock": false,
+        "product": { "id": 1, "name": "Coke 290ml", "price": 18, "stock": 24, "unit": "bottle" }
+      }
+    ],
+    "unmatched": [
+      { "label": "donut", "quantity": 1, "box_2d": [500, 600, 800, 900] }
+    ]
+  }
+}
+```
+
+### 3. `POST /api/ai/product-scan`
+**Role**: `owner`
+**Request**: `multipart/form-data` with `image`
+**Response**:
+```json
+{
+  "data": {
+    "scan_id": "01J0...",
+    "products": [
+      {
+        "name": "Silver Swan Soy Sauce",
+        "brand": "Silver Swan",
+        "size": "350ml",
+        "category_id": 4,
+        "estimated_count": 2,
+        "barcode_text": "4800016644813",
+        "confidence": 0.94,
+        "box_2d": [120, 100, 650, 380],
+        "enrichment": { "source": "barcode_lookup", "name": "Silver Swan Soy Sauce 350ml", "image_url": "..." },
+        "duplicate_of": { "id": 12, "name": "Silver Swan Soy Sauce 350ml", "reason": "barcode" }
+      }
+    ]
+  }
+}
+```
+
+### 4. `POST /api/ai/scans/{scan}/feedback`
+**Role**: `owner,cashier` (scan owner or owner role)
+**Request Body**:
+```json
+{
+  "lines": [
+    {
+      "line_type": "item",
+      "suggested_product_id": 1,
+      "suggested_quantity": 2,
+      "confidence": 0.95,
+      "final_product_id": 1,
+      "final_quantity": 2,
+      "action": "accepted"
+    }
+  ]
+}
+```
+**Response**: `{ "message": "Feedback recorded." }`
+
+### 5. `GET /api/ai/scans`
+**Role**: `owner`
+**Params**: `type?: 'basket'|'products', status?: 'ok'|'error', from?: string, to?: string, page?: int, per_page?: int`
+**Response**: Paginator of `AiScanResource`
+
+### 6. `GET /api/ai/scans/{scan}/image`
+**Role**: `owner`
+**Behavior**: Streams binary image data with `Cache-Control: private, no-store`. 404 if image was not saved.
+
+### 7. `GET /api/ai/metrics`
+**Role**: `owner`
+**Params**: `from?: string, to?: string, type?: string`
+**Response**: Aggregate research metrics (precision, recall, MAE, checkout timing by add_method, visual search accuracy).
+
+### 8. `GET /api/ai/metrics/export.csv`
+**Role**: `owner`
+**Response**: CSV file download with scans, feedback, and checkout timing data.
+
+### 9. `POST /api/scanner/ai-basket`
+**Auth**: Header `X-Scanner-Token: <device_token>` (paired phone)
+**Request**: `multipart/form-data` with `image`
+**Behavior**: Runs basket analysis under paired session user, stores `scanner_session_id`, creates scanner event `type: 'ai_basket'` with `{ scan_id }`.
+
+### 10. Visual Search & Embeddings
+- `GET /api/products/embeddings?model=`: `owner,cashier` - Returns all product vectors for local visual search index.
+- `POST /api/products/{product}/embeddings`: `owner` - Body: `{ model: string, source: string, vector: number[], image_sha256?: string }`.
+- `DELETE /api/products/{product}/embeddings/{id}`: `owner`.
+
+### 11. `POST /api/products/bulk`
+**Role**: `owner`
+**Request Body**:
+```json
+{
+  "products": [
+    {
+      "name": "Lucky Me Beef 55g",
+      "brand": "Lucky Me",
+      "size": "55g",
+      "category_id": 2,
+      "barcode": "4807770270024",
+      "price": 15.00,
+      "cost_price": 12.50,
+      "stock_quantity": 24,
+      "image_url": "https://..."
+    }
+  ]
+}
+```
+**Behavior**: Transactional creation of up to 10 products. Auto-imports external `image_url` images into DB blobs. Resolves matching unknown-barcode scanner events. Per-row validation errors returned with row index on 422.
+
+
 
 
