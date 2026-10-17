@@ -1811,3 +1811,75 @@ When starting work on TindaTrack v2.0.0:
   - Executed `npm run build`: built clean 184 precache entries.
   - Executed `node scripts/check-prod-bundle.mjs`: 103 built assets verified clean with 0 leaked secrets or dev credentials.
   - Executed `node scripts/check-pwa.mjs`: all PWA asset, manifest, and service worker checks passed.
+
+---
+
+## TindaTrack v2.0.1 Final Release Summary (F7)
+
+### 1. Root Cause Post-Mortems
+- **SKU Auto-Generation**:
+  - *Cause*: `ProductController@store` enforced `'sku' => ['required', ...]`. In Quick Add, the UI intentionally omitted the SKU input, expecting automatic generation. Bulk intake generated uncoordinated random strings instead of standard store formats.
+  - *Fix*: Created `App\Support\SkuGenerator` implementing the seeded `TT-{CAT}-{NNN}` scheme with sequential zero-padded suffixing and collision retry loops. Made `sku` nullable in backend store validation and auto-generated across all creation paths.
+- **Silent Category Defaulting**:
+  - *Cause*: `AddByBarcodeDialog` used `Number(categoryId) || Number(categories[0]?.id) || 1`. Unmatched lookups silently defaulted to the first category ("Bread"). In addition, `CategoryGuesser` lacked heuristics for Philippine breakfast cereals, powdered milk, and household goods.
+  - *Fix*: Expanded `CategoryGuesser` with brand and product name heuristics prioritizing exact food staples over Open Food Facts broad tags. Removed all fallback defaults; the UI now enforces explicit category selection with user-friendly validation.
+- **PWA Installation & Assets**:
+  - *Cause*: The Vite dev server intentionally disables the service worker (`devOptions.enabled: false`) to avoid development caching bugs, and untrusted local self-signed certs block browser registration. Furthermore, the root `/apple-touch-icon.png` was missing, causing iOS Safari to take screen captures instead of using the app icon.
+  - *Fix*: Added a Vite preview proxy mirroring `/api` to the local backend, allowing complete offline/PWA testing via `npm run pwa:preview` (or HTTPS on iPhone via `npm run pwa:tunnel`). Placed a verified 180×180 opaque `apple-touch-icon.png` at root, added the TopBar install button and mobile dashboard banner, and updated Vercel caching headers.
+
+### 2. Audit Summary
+- **50 Write Paths Audited**: Documented in `docs/AUDIT-v2.0.1.md` with HTTP methods, required roles, payload structures, and form bindings.
+- **28 Canonical JSON Fixtures**: Authored in `contracts/payloads/*.json` matching real forms and tested in both backend (`FormContractAuditTest.php`) and frontend (`contracts.test.jsx`).
+- **Error UX**: Created `applyServerErrors` in `@/lib/formErrors.js` mapping backend validation errors to visible form fields with friendly translated messages.
+- **Role & Route Guards**: Verified Cashier permissions strictly hide Owner modules (`/categories`, `/inventory`, `/reports`, `/staff`, `/settings`, `/ai-lab`) in desktop sidebar and mobile bottom sheet, with `/403` navigation guards and API middleware enforcement.
+- **Gemini Error Handling**: Upgraded `GeminiVisionProvider` and `ai:ping` with structured actionable recommendations for 400/403 (invalid key), 404 (model not found), 429 (quota exceeded), and network failures.
+
+### 3. Test Counts (Before vs After)
+| Test Suite | Before v2.0.1 | After v2.0.1 | Change |
+|---|---|---|---|
+| **Backend Pest Tests** | 142 passed (686 assertions) | 178 passed (817 assertions) | **+36 tests (+131 assertions)** |
+| **Backend Pint** | Passed | Passed (0 style violations) | Clean |
+| **Database Reconciliation (`tindatrack:check`)** | 100% Passing | 100% Passing (0 discrepancies) | Clean |
+| **Frontend Vitest Tests** | 247 passed (22 files) | 273 passed (25 files) | **+26 tests (+3 suites)** |
+| **Frontend ESLint** | 0 errors | 0 errors | Clean |
+| **Contract Checks (`check-contract.mjs`)** | 49 endpoints matched | 49 endpoints matched | Clean |
+| **Service Checks (`check-services.mjs`)** | 13 service pairs matched | 13 service pairs matched | Clean |
+| **Production Bundle Audit (`check-prod-bundle.mjs`)** | Clean | Clean (103 assets, 0 leaks) | Clean |
+| **PWA Audit (`check-pwa.mjs`)** | Passed | Passed (all icons, manifest, SW) | Clean |
+| **End-to-End Smoke Tests** | Passed | Passed (`pairing`, `prod`, `ai`) | Clean |
+
+---
+
+### 4. Morning Checklist for the User
+When opening the project in the morning, verify everything with these 5 quick steps:
+
+1. **Pull & Start Dev Servers**:
+   ```bash
+   git pull
+   composer install
+   npm install && cd frontend && npm install && cd ..
+   cd backend && php artisan migrate && cd ..
+   npm run dev
+   ```
+2. **Verify SKU Auto-Generation & Category Guesser**:
+   - Go to **Products** → Click **"Add by barcode"** (or scan barcode).
+   - Enter `9556001257321` (Nestle Koko Krunch).
+   - Verify: Quick Add detects product, category is not silently forced to "Bread", and clicking save generates an automatic SKU formatted like `TT-SNA-001` with a success toast.
+3. **Verify Desktop PWA Installation**:
+   - Run `npm run pwa:preview`.
+   - Open `http://localhost:4173` in Google Chrome or Microsoft Edge.
+   - Verify the "Install app" icon appears in the browser address bar (and in the TindaTrack TopBar). Install the app and verify it launches in standalone mode with the TindaTrack icon.
+4. **Verify iPhone PWA Add to Home Screen (Optional)**:
+   - Run `npm run pwa:tunnel` to obtain a trusted HTTPS public URL via Cloudflare tunnel.
+   - Open the URL in Safari on your iPhone.
+   - Tap **Share** (square with up arrow) → Tap **"Add to Home Screen"**.
+   - Verify the icon appears crisp without white margins and the app launches full-screen as a standalone native app.
+5. **Set Up Google Gemini Vision (Optional)**:
+   - Obtain a free API key from [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
+   - Add it to `backend/.env`: `GEMINI_API_KEY=your_key_here`.
+   - Test connectivity from the terminal:
+     ```bash
+     cd backend && php artisan ai:ping
+     ```
+   - It will report `Status: SUCCESS - Connected to Google Gemini Vision API successfully.`
+
