@@ -19,6 +19,7 @@ import { aiService } from '@/services/aiService'
 import { productService } from '@/services/productService'
 import { cropBox } from '@/lib/imagePrep'
 import { notify } from '@/lib/notify'
+import { buildProductFeedbackLines } from '@/lib/aiContract.js'
 
 /**
  * Helper to determine confidence badge styling.
@@ -97,14 +98,14 @@ export function AiProductReviewTable({
           }
         }
 
-        // Match category by suggested name
-        let matchedCategoryId = ''
-        if (c.suggested_category) {
+        // Match category: use suggested_category_id or match by name
+        let matchedCategoryId = c.suggested_category_id ? String(c.suggested_category_id) : ''
+        if (!matchedCategoryId && c.suggested_category) {
           const cat = categories.find(
             (catItem) =>
               catItem.name.toLowerCase() === c.suggested_category.toLowerCase(),
           )
-          if (cat) matchedCategoryId = cat.id
+          if (cat) matchedCategoryId = String(cat.id)
         }
 
         prepared.push({
@@ -118,13 +119,13 @@ export function AiProductReviewTable({
           category_id: matchedCategoryId,
           original_category_id: matchedCategoryId,
           barcode: c.suggested_barcode || '',
-          price: c.suggested_price ? String(c.suggested_price) : '',
-          cost: c.suggested_cost ? String(c.suggested_cost) : '',
-          stock: c.estimated_count || 5,
+          price: c.suggested_price !== undefined && c.suggested_price !== null && c.suggested_price !== '' ? String(c.suggested_price) : '',
+          cost: c.suggested_cost !== undefined && c.suggested_cost !== null && c.suggested_cost !== '' ? String(c.suggested_cost) : '',
+          stock: c.estimated_count || 1,
           confidence: c.confidence || 0.9,
           bounding_box: c.bounding_box,
           is_duplicate: Boolean(c.is_duplicate),
-          possible_duplicate: c.possible_duplicate_product || null,
+          possible_duplicate: c.possible_duplicate_product || c.possible_duplicate || null,
           cropBlob,
           cropUrl,
           online_image_url: c.online_image_url || null,
@@ -232,32 +233,10 @@ export function AiProductReviewTable({
         }
       }
 
-      // 3. Prepare and send feedback
-      const feedbackLines = rows.map((r) => {
-        if (!r.selected) {
-          return {
-            line_id: r.id,
-            status: 'removed',
-            original_product_id: null,
-            final_product_id: null,
-            original_quantity: r.stock,
-            final_quantity: 0,
-          }
-        }
-        const nameChanged = r.name !== r.original_name
-        const catChanged = r.category_id !== r.original_category_id
-        return {
-          line_id: r.id,
-          status: nameChanged || catChanged ? 'product_changed' : 'accepted',
-          original_product_id: null,
-          final_product_id: null,
-          original_quantity: r.stock,
-          final_quantity: r.stock,
-        }
-      })
-
+      // 3. Prepare and send feedback matching backend schema
       if (scanResult?.scan_id) {
-        aiService.sendFeedback(scanResult.scan_id, feedbackLines).catch(() => {})
+        const feedbackPayload = buildProductFeedbackLines(rows, scanResult)
+        aiService.sendFeedback(scanResult.scan_id, feedbackPayload.lines).catch(() => {})
       }
 
       notify.success(

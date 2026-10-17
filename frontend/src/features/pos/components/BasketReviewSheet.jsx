@@ -7,7 +7,6 @@ import {
   RefreshCw,
   AlertTriangle,
   ShoppingCart,
-  CheckCircle2,
   Search,
   X,
   Package,
@@ -22,6 +21,7 @@ import { useCartStore } from '@/stores/cartStore'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { aiService } from '@/services/aiService'
 import { notify } from '@/lib/notify'
+import { buildBasketFeedbackLines } from '@/lib/aiContract.js'
 
 /**
  * Helper to determine confidence badge styling.
@@ -246,72 +246,14 @@ export function BasketReviewSheet({
       }
     }
 
-    // 2. Prepare feedback lines
-    const feedbackLines = []
-    const originalItems = scanResult?.items || []
-
-    for (const orig of originalItems) {
-      const confirmed = confirmedItems.find((ci) => ci.id === orig.id)
-      if (!confirmed) {
-        // Item was removed
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'removed',
-          original_product_id: orig.matched_product_id,
-          final_product_id: null,
-          original_quantity: orig.quantity,
-          final_quantity: 0,
-        })
-      } else if (confirmed.matched_product_id !== orig.matched_product_id) {
-        // Product was swapped
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'product_changed',
-          original_product_id: orig.matched_product_id,
-          final_product_id: confirmed.matched_product_id,
-          original_quantity: orig.quantity,
-          final_quantity: confirmed.quantity,
-        })
-      } else if (confirmed.quantity !== orig.quantity) {
-        // Quantity was edited
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'quantity_changed',
-          original_product_id: orig.matched_product_id,
-          final_product_id: confirmed.matched_product_id,
-          original_quantity: orig.quantity,
-          final_quantity: confirmed.quantity,
-        })
-      } else {
-        // Accepted without edits
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'accepted',
-          original_product_id: orig.matched_product_id,
-          final_product_id: confirmed.matched_product_id,
-          original_quantity: orig.quantity,
-          final_quantity: confirmed.quantity,
-        })
-      }
-    }
-
-    // Include manually added missed items
-    for (const item of confirmedItems) {
-      if (item.is_manual) {
-        feedbackLines.push({
-          line_id: item.id,
-          status: 'added_manually',
-          original_product_id: null,
-          final_product_id: item.matched_product_id,
-          original_quantity: 0,
-          final_quantity: item.quantity,
-        })
-      }
-    }
-
-    // 3. Fire-and-forget feedback to backend
+    // 2. Prepare & send feedback matching backend schema
     if (scanResult?.scan_id) {
-      aiService.sendFeedback(scanResult.scan_id, feedbackLines).catch(() => {})
+      const feedbackPayload = buildBasketFeedbackLines(
+        confirmedItems,
+        unmatchedItems,
+        scanResult,
+      )
+      aiService.sendFeedback(scanResult.scan_id, feedbackPayload.lines).catch(() => {})
     }
 
     notify.success(

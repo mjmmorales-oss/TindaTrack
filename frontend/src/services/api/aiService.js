@@ -1,4 +1,8 @@
 import { apiClient } from './apiClient.js'
+import {
+  normalizeBasketResult,
+  normalizeProductScanResult,
+} from '@/lib/aiContract.js'
 
 export const aiService = {
   /**
@@ -15,16 +19,21 @@ export const aiService = {
    * @param {Blob|File} imageBlob
    * @param {object} [options]
    * @param {AbortSignal} [options.signal]
+   * @param {'auto'|'manual'|'upload'} [options.capture_mode]
    */
   async basketScan(imageBlob, options = {}) {
     const formData = new FormData()
     formData.append('image', imageBlob, 'basket.jpg')
+    if (options.capture_mode) {
+      formData.append('capture_mode', options.capture_mode)
+    }
 
     const res = await apiClient.post('/ai/basket-scan', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       signal: options.signal,
     })
-    return res?.data ?? res
+    const data = res?.data ?? res
+    return normalizeBasketResult(data)
   },
 
   /**
@@ -33,26 +42,33 @@ export const aiService = {
    * @param {Blob|File} imageBlob
    * @param {object} [options]
    * @param {AbortSignal} [options.signal]
+   * @param {'auto'|'manual'|'upload'} [options.capture_mode]
+   * @param {Array<object>} [options.categories]
    */
   async productScan(imageBlob, options = {}) {
     const formData = new FormData()
     formData.append('image', imageBlob, 'products.jpg')
+    if (options.capture_mode) {
+      formData.append('capture_mode', options.capture_mode)
+    }
 
     const res = await apiClient.post('/ai/product-scan', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       signal: options.signal,
     })
-    return res?.data ?? res
+    const data = res?.data ?? res
+    return normalizeProductScanResult(data, options.categories || [])
   },
 
   /**
    * POST /api/ai/scans/{scanId}/feedback
    *
-   * @param {string} scanId
-   * @param {Array<object>} lines
+   * @param {string|number} scanId
+   * @param {Array<object>|{ lines: Array<object> }} payload
    */
-  async sendFeedback(scanId, lines) {
-    const res = await apiClient.post(`/ai/scans/${scanId}/feedback`, { lines })
+  async sendFeedback(scanId, payload) {
+    const body = Array.isArray(payload) ? { lines: payload } : (payload?.lines ? payload : { lines: [] })
+    const res = await apiClient.post(`/ai/scans/${scanId}/feedback`, body)
     return res?.data ?? res
   },
 

@@ -10,12 +10,10 @@ import {
   Sparkles,
   HelpCircle,
   Loader2,
-  Check,
-  RotateCcw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CameraScanner } from '@/components/scanner/CameraScanner'
 import { AiCapture } from '@/components/ai/AiCapture'
 import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
@@ -88,6 +86,7 @@ export function BarcodeCapture({
   const [mode, setMode] = useState(() => (defaultMode === 'ai_basket' && hideAiBasket ? 'barcode' : defaultMode))
   const [value, setValue] = useState('')
   const [validationError, setValidationError] = useState('')
+  const [isBasketAnalyzing, setIsBasketAnalyzing] = useState(false)
 
   // AI First-Use Privacy Consent
   const {
@@ -403,13 +402,23 @@ export function BarcodeCapture({
 
   // Handle AI Basket photo upload/capture
   const handleBasketCaptured = async (blob) => {
+    setIsBasketAnalyzing(true)
+    let objectUrl = null
     try {
+      if (blob) {
+        objectUrl = URL.createObjectURL(blob)
+      }
       const res = await aiService.basketScan(blob)
       beep()
       vibrate()
-      onBasketScanned?.(res)
+      onBasketScanned?.(res, objectUrl)
     } catch (err) {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
       notify.error(t('scanner:aiBasketFailed', 'Failed to analyze basket.'), err?.message)
+    } finally {
+      setIsBasketAnalyzing(false)
     }
   }
 
@@ -721,6 +730,7 @@ export function BarcodeCapture({
         <div className="space-y-3">
           <AiCapture
             onCapture={handleBasketCaptured}
+            isAnalyzing={isBasketAnalyzing}
             hint={t('scanner:aiBasketHint', 'Point camera at the customer basket, then tap Capture.')}
           />
         </div>

@@ -1,0 +1,40 @@
+{
+  "scan_id": 101,
+  "provider": "mock",
+  "model": "mock-vision-v2",
+  "latency_ms": 320,
+  "prompt_version": "v2.0",
+  "image_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "catalog_size": 15,
+  "catalog_truncated": false,
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 2,
+      "confidence": 0.95,
+      "confidence_bucket": "high",
+      "box_2d": [100, 150, 400, 450],
+      "boxes": [
+        [100, 150, 400, 450]
+      ],
+      "exceeds_stock": false,
+      "product": {
+        "id": 1,
+        "name": "Coca-Cola Original 330ml",
+        "price": 25.0,
+        "stock": 48,
+        "image_url": null,
+        "unit": "can",
+        "barcode": "4800016644800"
+      }
+    }
+  ],
+  "unmatched": [
+    {
+      "label": "Unknown snack pouch",
+      "quantity": 1,
+      "box_2d": [20, 20, 80, 80]
+    }
+  ],
+  "raw": {}
+}

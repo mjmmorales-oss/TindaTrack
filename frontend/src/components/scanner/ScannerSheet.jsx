@@ -39,8 +39,8 @@ export function ScannerSheet({
     }
   }
 
-  const handleBasketScanned = (result) => {
-    onBasketScanned?.(result)
+  const handleBasketScanned = (result, imageSrc) => {
+    onBasketScanned?.(result, imageSrc)
     if (!continuous) {
       onOpenChange?.(false)
     }

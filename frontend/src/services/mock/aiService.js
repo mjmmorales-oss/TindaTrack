@@ -1,5 +1,9 @@
 import { delay } from '@/lib/mockApi'
 import { useMockDb } from '@/mocks/db'
+import {
+  normalizeBasketResult,
+  normalizeProductScanResult,
+} from '@/lib/aiContract.js'
 
 let mockScans = []
 let mockEmbeddings = []
@@ -156,19 +160,19 @@ export const aiService = {
     }
     mockScans.unshift(scanRecord)
 
-    return {
+    return normalizeBasketResult({
       scan_id: scanId,
       detected_count: scanRecord.detected_count,
       matched_count: matched.length,
       unmatched_count: unmatched.length,
       items: matched,
       unmatched_items: unmatched,
-      processing_time_ms: 350,
+      latency_ms: 350,
       model: 'mock-gemini-2.5-flash',
-    }
+    })
   },
 
-  async productScan(imageBlob, _options = {}) {
+  async productScan(imageBlob, options = {}) {
     await delay(350)
     const candidates = [
       {
@@ -176,8 +180,10 @@ export const aiService = {
         suggested_name: 'Piattos Cheese 85g',
         suggested_barcode: '4800016644208',
         suggested_category: 'Snacks',
+        category_id: 2,
         suggested_price: 38.0,
         suggested_cost: 32.5,
+        estimated_count: 5,
         confidence: 0.94,
         bounding_box: [120, 100, 480, 550],
         is_duplicate: false,
@@ -186,9 +192,11 @@ export const aiService = {
         id: 'cand_2',
         suggested_name: 'C2 Green Tea Apple 500ml',
         suggested_barcode: '4800016052300',
-        suggested_category: 'Beverages',
+        suggested_category: 'Drinks',
+        category_id: 1,
         suggested_price: 25.0,
         suggested_cost: 21.0,
+        estimated_count: 3,
         confidence: 0.91,
         bounding_box: [520, 150, 880, 700],
         is_duplicate: false,
@@ -196,22 +204,26 @@ export const aiService = {
     ]
 
     const scanId = 'scan_prod_' + Math.random().toString(36).slice(2, 9)
-    return {
-      scan_id: scanId,
-      detected_count: candidates.length,
-      products: candidates,
-      processing_time_ms: 350,
-      model: 'mock-gemini-2.5-flash',
-    }
+    return normalizeProductScanResult(
+      {
+        scan_id: scanId,
+        detected_count: candidates.length,
+        products: candidates,
+        latency_ms: 350,
+        model: 'mock-gemini-2.5-flash',
+      },
+      options.categories || [],
+    )
   },
 
-  async sendFeedback(scanId, lines) {
+  async sendFeedback(scanId, payload) {
     await delay(60)
+    const lines = Array.isArray(payload) ? payload : (payload?.lines || [])
     return {
       success: true,
       message: 'Feedback recorded successfully',
       scan_id: scanId,
-      recorded_lines: lines?.length || 0,
+      recorded_lines: lines.length,
     }
   },
 
