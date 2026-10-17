@@ -1565,4 +1565,19 @@ Tracking implementation of v2.0.0 tasks (A0–A10):
   - **Sales & Timing**: `CreateSaleAction.php` persists `add_method` on `SaleItem` and `cart_started_at` / `cart_duration_ms` on `Sale`.
   - **Research & Evaluation**: `/ai-lab` presents research metrics (precision, recall, quantity error, latency, checkout speed comparisons), ground truth experiment runner (`ai_experiments`, `ai_experiment_cases`), and CSV export.
 
+### A9 Log (Documentation Suite):
+- **Technical Architecture Guide (`docs/AI.md`)**:
+  - Authored comprehensive architecture document with ASCII component diagrams, exact prompt templates and JSON schemas (`basket-v1`, `products-v1`), post-processing matching and bucketing rules, on-device vector search pipeline (DINOv2 Web Worker + cosine top-K), cost/token controls, privacy policies, failure fallbacks, model switching instructions, and `php artisan ai:ping` documentation.
+- **Evaluation Research Document (`docs/RESEARCH.md`)**:
+  - Detailed ground truth evaluation benchmark runner methodology, synthetic fixture dataset generation, precision/recall metrics formulas, and CSV export specifications.
+- **Deployment & Infrastructure Guide (`docs/DEPLOY.md`)**:
+  - Documented all Railway v2.0.0 environment variables (`GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `AI_PROVIDER`, `AI_DAILY_LIMIT`, `AI_PER_USER_PER_MINUTE`, `AI_TIMEOUT`, `AI_MAX_IMAGE_KB`, `AI_SAVE_SCAN_IMAGES`).
+  - Configured PHP upload limits in `backend/nixpacks.toml` and `backend/public/.user.ini` (`upload_max_filesize = 10M`, `post_max_size = 12M`).
+- **API Specification (`docs/API.md`)**:
+  - Updated Service to Endpoint Mapping Matrix and added detailed specifications for all 19 AI, scanner device, visual search, bulk intake, and evaluation benchmark routes.
+- **Release Documentation**:
+  - Updated `README.md` with v2.0.0 feature highlights.
+  - Updated `docs/CHANGELOG.md` with complete `[v2.0.0]` release notes.
+
+
 

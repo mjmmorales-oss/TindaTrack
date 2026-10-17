@@ -78,6 +78,17 @@ SANCTUM_EXPIRATION=10080
 PRODUCT_LOOKUP_ENABLED=true
 OFF_USER_AGENT="TindaTrack/1.2 (your-email@example.com)"
 
+# TindaTrack v2.0.0 AI & Computer Vision Configuration
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_google_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODEL=gemini-2.5-flash-lite
+AI_TIMEOUT=30
+AI_PER_USER_PER_MINUTE=6
+AI_DAILY_LIMIT=500
+AI_MAX_IMAGE_KB=1500
+AI_SAVE_SCAN_IMAGES=false
+
 # Optional Realtime Broadcasting (no worker required; polling is used by default)
 # BROADCAST_CONNECTION=pusher
 # PUSHER_APP_ID=
@@ -85,6 +96,12 @@ OFF_USER_AGENT="TindaTrack/1.2 (your-email@example.com)"
 # PUSHER_APP_SECRET=
 # PUSHER_APP_CLUSTER=mt1
 ```
+
+> **Note on AI Configuration & Upload Limits**:
+> - `GEMINI_API_KEY` is kept strictly on the backend. The frontend never accesses or bundles API keys.
+> - PHP upload limits (`upload_max_filesize = 10M` and `post_max_size = 12M`) are pre-configured in `backend/nixpacks.toml` and `backend/public/.user.ini`.
+> - If `GEMINI_API_KEY` is not provided, TindaTrack automatically operates in deterministic mock vision mode with zero network requests.
+> - **Frontend (Vercel)**: No new Vercel environment variables are needed for v2.0.0. The existing `VITE_API_URL` and `VITE_DATA_SOURCE` remain unchanged.
 
 > **Note on Broadcasting**: No extra Railway background worker or Redis container is required. TindaTrack uses synchronous HTTP polling out of the box with zero external dependencies. If you opt into Pusher WebSockets, `ScannerItemScanned` implements `ShouldBroadcastNow`, which broadcasts synchronously during the HTTP request without a queue worker.
 

@@ -76,6 +76,25 @@ Not found errors: 404 `{ message: 'Resource not found.' }`.
 | `scannerService.pair(data)` | POST | `/api/scanner/pair` | Public | `{ pairing_code: string, device_label?: string }` | `{ data: { token: string, session: { id, mode, expires_at }, store_name: string, user_name: string } }` | Redeems unexpired pairing code for 40-char session device token. Throttled 10/min. Single-use. |
 | `scannerService.sendScan(data)` | POST | `/api/scanner/scans` | Device (`X-Scanner-Token`) | `{ barcode: string, quantity?: int }` | `{ data: { event_id: int, status: 'found'\|'out_of_stock'\|'unknown', product: ProductSnapshot\|null, catalog?: CatalogInfo } }` | Normalizes and logs scan event; broadcasts `scanner.scanned` live sync event. Throttled 120/min. |
 | `scannerService.heartbeat()` | POST | `/api/scanner/heartbeat` | Device (`X-Scanner-Token`) | None | `{ data: { ended: bool } }` | Touches device `last_seen_at`. 401 if session has ended or expired. |
+| `aiService.getStatus()` | GET | `/api/ai/status` | `owner,cashier` | None | `{ data: { enabled: bool, provider: string, model: string, demo: bool, daily_remaining: int, daily_limit: int, per_minute: int } }` | AI service operational status and quota balance. |
+| `aiService.basketScan(formData)` | POST | `/api/ai/basket-scan` | `owner,cashier` | `FormData: image (file, max 1.5MB)` | `{ data: { scan_id: int, provider: string, model: string, latency_ms: int, items: Item[], unmatched: Unmatched[] } }` | Recognizes basket items constrained to active catalog. Throttled 10/min. |
+| `aiService.productScan(formData)` | POST | `/api/ai/product-scan` | `owner` | `FormData: image (file, max 1.5MB)` | `{ data: { scan_id: int, provider: string, model: string, latency_ms: int, products: Product[] } }` | Intake recognition of up to 5 items with GTIN enrichment and duplicate detection. Throttled 10/min. |
+| `aiService.submitFeedback(scanId, data)` | POST | `/api/ai/scans/{scan}/feedback` | `owner,cashier` | `{ lines: FeedbackLine[] }` | `{ message: string }` | Records cashier feedback (accepted, edited, rejected) per line item. Throttled 60/min. |
+| `aiService.listScans(params)` | GET | `/api/ai/scans` | `owner` | `type?: string, status?: string, from?: string, to?: string, page?: int, per_page?: int` | Paginator of `AiScan` | Scans audit history. Cashiers blocked (403). |
+| `aiService.getScanImage(scanId)` | GET | `/api/ai/scans/{scan}/image` | `owner` | None | Binary image stream | Streams stored scan image. 404 if image retention disabled. |
+| `aiService.getMetrics(params)` | GET | `/api/ai/metrics` | `owner` | `from?: string, to?: string, type?: string` | `{ data: AiMetrics }` | Aggregate precision, recall, MAE, checkout timing, and visual search stats. |
+| `aiService.exportMetrics(params)` | GET | `/api/ai/metrics/export.csv` | `owner` | `from?: string, to?: string, type?: string` | CSV file stream | Exports full scan and feedback telemetry to CSV. |
+| `scannerService.aiBasket(formData)` | POST | `/api/scanner/ai-basket` | Device (`X-Scanner-Token`) | `FormData: image (file, max 1.5MB)` | `{ data: { event_id: int, scan_id: int, items_count: int } }` | Phone camera wireless basket scan; dispatches realtime sync event. Throttled 10/min. |
+| `productService.listEmbeddings(params)` | GET | `/api/products/embeddings` | `owner,cashier` | `model?: string` | `{ data: ProductEmbedding[] }` | Retrieves product embedding vectors for client-side visual search index. |
+| `productService.storeEmbedding(id, data)` | POST | `/api/products/{id}/embeddings` | `owner` | `{ model: string, source: string, vector: number[], image_sha256?: string }` | `{ data: ProductEmbedding }` | Persists visual feature embedding vector for a product. |
+| `productService.deleteEmbedding(id, embId)` | DELETE | `/api/products/{id}/embeddings/{embId}` | `owner` | None | `{ message: string }` | Deletes a stored visual embedding vector. |
+| `productService.bulkCreate(data)` | POST | `/api/products/bulk` | `owner` | `{ products: ProductPayload[] }` | `{ data: Product[], message: string }` | Transactional creation of up to 10 products with auto image ingestion. |
+| `aiExperimentService.list()` | GET | `/api/ai/experiments` | `owner` | None | `{ data: AiExperiment[] }` | Lists all evaluation benchmarks with aggregate precision, recall, and run count. |
+| `aiExperimentService.create(data)` | POST | `/api/ai/experiments` | `owner` | `{ name: string, description?: string, prompt_version: string, dataset_source: string, notes?: string }` | `{ data: AiExperiment }` | Creates a new evaluation experiment runner. |
+| `aiExperimentService.get(id)` | GET | `/api/ai/experiments/{id}` | `owner` | None | `{ data: AiExperiment }` | Experiment detail with evaluation cases and metrics. |
+| `aiExperimentService.storeCase(id, data)` | POST | `/api/ai/experiments/{id}/cases` | `owner` | `{ image: file, ground_truth: object, predicted: object, execution_time_ms?: int }` | `{ data: AiExperimentCase }` | Runs or logs an evaluation test case. Throttled 30/min. |
+| `aiExperimentService.reset(id)` | POST | `/api/ai/experiments/{id}/reset` | `owner` | None | `{ message: string }` | Deletes all evaluation cases for the experiment and resets run counters. |
+| `aiExperimentService.exportCsv(id)` | GET | `/api/ai/experiments/{id}/export.csv` | `owner` | None | CSV file stream | Exports benchmark evaluation cases with ground truth, predictions, and errors to CSV. |
 
 ---
 
@@ -580,6 +599,55 @@ All endpoints require `auth:sanctum` and `active`. When `settings.ai_enabled` is
 }
 ```
 **Behavior**: Transactional creation of up to 10 products. Auto-imports external `image_url` images into DB blobs. Resolves matching unknown-barcode scanner events. Per-row validation errors returned with row index on 422.
+
+---
+
+## 12. AI Research Experiments & Benchmark Runner
+
+### 1. `GET /api/ai/experiments`
+**Role**: `owner`
+**Response**: `{ "data": [ AiExperiment ] }`
+Returns list of all evaluation benchmark experiments with associated run metrics.
+
+### 2. `POST /api/ai/experiments`
+**Role**: `owner`
+**Request Body**:
+```json
+{
+  "name": "Basket Occlusion Stress Test",
+  "description": "50 photos with 20% to 50% partial item occlusion",
+  "prompt_version": "basket-v1",
+  "dataset_source": "tindatrack-occlusion-v1",
+  "notes": "Testing gemini-2.5-flash robustness under dim sari-sari lighting"
+}
+```
+**Response**: `201 Created` with `{ "data": AiExperiment }`
+
+### 3. `GET /api/ai/experiments/{id}`
+**Role**: `owner`
+**Response**: `{ "data": AiExperiment }` with eager-loaded `cases` (ordered by `created_at` desc) and computed evaluation statistics:
+- `cases_count`: Total evaluated images
+- `precision_mean`: Average detection precision ($0.0 - 1.0$)
+- `recall_mean`: Average detection recall ($0.0 - 1.0$)
+- `f1_score`: Harmonic mean of precision and recall
+- `mae_quantity`: Mean absolute error in item quantity counts
+- `latency_p50_ms`, `latency_p95_ms`: Median and 95th-percentile inference latency
+
+### 4. `POST /api/ai/experiments/{id}/cases`
+**Role**: `owner`
+**Throttle**: 30 requests / minute
+**Request**: `multipart/form-data` with `image` (binary, max 1.5MB), `ground_truth` (JSON string or array), `predicted` (JSON string or array), `execution_time_ms` (integer)
+**Behavior**: Validates ground truth vs prediction, computes per-case true positives ($TP$), false positives ($FP$), false negatives ($FN$), quantity error, logs case in `ai_experiment_cases`, updates experiment running totals, and returns `{ "data": AiExperimentCase }`.
+
+### 5. `POST /api/ai/experiments/{id}/reset`
+**Role**: `owner`
+**Behavior**: Deletes all test cases associated with the experiment, resets metrics (`cases_count = 0`, `precision = null`, etc.), and returns `{ "message": "Experiment reset successfully." }`.
+
+### 6. `GET /api/ai/experiments/{id}/export.csv`
+**Role**: `owner`
+**Response**: CSV file stream (`Content-Type: text/csv`) with header:
+`case_id,image_sha256,ground_truth_count,predicted_count,tp,fp,fn,precision,recall,quantity_error,latency_ms,created_at`
+
 
 
 

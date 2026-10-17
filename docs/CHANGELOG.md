@@ -2,6 +2,42 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v2.0.0] - 2026-10-17 - AI Basket Scan, AI Product Add, On-Device Visual Search & AI Research Lab
+- **AI Multi-Object POS Basket Scan (A1, A4)**:
+  - Google Gemini multi-modal vision provider (`gemini-2.5-flash` with automatic fallback to `gemini-2.5-flash-lite`), catalog-constrained recognition (`basket-v1`), and deterministic offline mock vision provider (`MockVisionProvider`).
+  - Interactive bounding box review sheet (`BasketReviewSheet.jsx`) rendering normalized bounding boxes over canvas captures, confidence badges (`high`, `check`, `low`), quantity steppers, stock overflow warnings, and inline unmatched item assignment.
+  - POS toolbar AI Scan trigger with sparkles button and shortcut in scanner modal tabs (**Barcode | Visual | AI basket**).
+  - Paired phone camera basket capture (`PhoneScannerPage.jsx`) submitting to `POST /api/scanner/ai-basket` using device token authentication and broadcasting realtime sync event `type: 'ai_basket'`.
+  - Cashier feedback tracking (`POST /api/ai/scans/{scan}/feedback`) recording accepted, edited, and rejected item decisions for research metrics.
+- **AI Bulk Product Intake & GTIN Enrichment (A3, A5)**:
+  - Multi-product intake extraction prompt (`products-v1`) parsing up to 5 items simultaneously from a single counter layout photo.
+  - Automatic OCR of packaging barcodes with Open Food Facts GTIN enrichment (`ProductLookupService`) and prefilled Filipino product titles, brands, net weights, and categories.
+  - Existing inventory duplicate detection via normalized GTIN matching and fuzzy Levenshtein distance ($\ge 85\%$) offering one-click restock shortcuts.
+  - Unified Add menu on `ProductsPage.jsx` ("Add by barcode", "Add from photo (AI)", "Add product") with responsive mobile dropdown adaptation.
+  - Interactive multi-row review table (`AiProductReviewTable.jsx`) with client-side canvas bounding box cropping, per-item image editing, and bulk creation endpoint (`POST /api/products/bulk`).
+- **On-Device Feature Extraction & Visual Search (A6)**:
+  - Integrated `@huggingface/transformers` running Meta DINov2 (`onnx-community/dinov2-small`, quantized `q8`, 384-dimensional embeddings) in a dedicated Web Worker (`embedder.worker.js`).
+  - WebGPU execution with automatic WASM fallback, zero main-thread UI blocking, and bundle chunk isolation (`vendor-transformers`).
+  - High-performance dot-product cosine similarity engine (`visualSearch.js`) with confidence threshold ($\ge 0.60$) and margin threshold ($\ge 0.03$).
+  - Continuous learning loop allowing store owners to teach visual corrections directly from POS scans (`POST /api/products/{id}/embeddings` with `source: 'correction'`).
+  - Settings visual index builder (`AiSettingsCard.jsx`) and per-product reference photo management in `ProductDetailPage.jsx`.
+- **AI Research Lab & Benchmark Runner (A7)**:
+  - AI Research Lab interface (`/ai-lab`) with metrics overview (precision, recall, quantity MAE, latency percentiles, scan history).
+  - Transaction checkout speed analytics tracking elapsed duration by entry method (`ai_basket`, `visual`, `barcode`, `tap`).
+  - Evaluation benchmark runner (`ai_experiments`, `ai_experiment_cases`) executing ground-truth photo datasets with precision/recall scoring and per-case error diagnostics.
+  - One-click CSV export endpoints (`/api/ai/metrics/export.csv` and `/api/ai/experiments/{id}/export.csv`).
+- **Settings, Privacy & Cashier Safety (A8)**:
+  - Mandatory bilingual first-use consent dialog (`FirstUseAiConsentDialog.jsx`) in English and Filipino with strict "no human faces" instructions.
+  - Per-user device consent storage (`tt_ai_consent_{userId}`) ensuring explicit agreement before image transmission.
+  - Strict role-based boundaries: cashiers can use POS basket scan and visual search; only owners can access AI Lab, bulk intake, index building, and AI settings.
+  - Ephemeral image buffers by default; optional persistent image retention with 30-day lazy pruning and CLI pruning command (`php artisan ai:prune`).
+  - Bundle secret scanning (`check-prod-bundle.mjs`) blocking Google AI Studio keys (`AIza`, `GEMINI`, `generativelanguage`).
+- **Backend Infrastructure & Testing (A1–A3, A9)**:
+  - 6 new database tables: `ai_scans`, `ai_scan_feedback`, `ai_scan_images`, `product_embeddings`, `ai_experiments`, `ai_experiment_cases`.
+  - Transaction-level telemetry tracking `cart_started_at` and `cart_duration_ms` on `sales`, and `add_method` on `sale_items`.
+  - `php artisan ai:ping` command for testing connectivity and latency to vision providers.
+  - 136 passing Pest tests, 247 passing Vitest tests across 24 suites.
+
 ## [v1.4.0] - 2026-10-17 - Packshot Demo Catalog, Image-First POS & Installable PWA
 - **Deterministic Demo Packshot Catalog (P1)**:
   - 58 deterministic vector SVG packshots (`frontend/public/demo-products/*.svg`) crafted specifically for traditional Philippine sari-sari items across 8 categories (Beverages, Instant Noodles, Canned Goods, Snacks, Condiments & Cooking, Coffee & Milk, Personal Care, and Household & Cleaning).
