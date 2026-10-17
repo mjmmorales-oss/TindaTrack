@@ -1705,3 +1705,27 @@ When starting work on TindaTrack v2.0.0:
   - Pint: Clean.
   - Vitest: 13 passed in `quick-add.test.jsx`, including SKU auto-generation via Quick Add and ProductFormDialog.
   - All check scripts and smoke tests passing cleanly.
+
+### F2 Log (Category Guesser Expansion & Eliminate Silent Category Defaults):
+- **Root Cause**: `AddByBarcodeDialog` used `Number(categoryId) || Number(categories[0]?.id) || 1`. When barcode lookup had no suggested category, the system silently picked the first category in the array without user consent. Furthermore, `CategoryGuesser` lacked heuristics for breakfast cereals, oats, and common Philippine staples, causing items like "Koko Krunch" to be miscategorized.
+- **Architectural Fix**:
+  - `CategoryGuesser`:
+    - Prioritizes exact and high-confidence product name matches over broad Open Food Facts tags.
+    - Added comprehensive heuristics for:
+      - Cereals / oats / granola / chips / cookies / crackers / confectionery / chocolates -> Snacks ("Koko Krunch", "Skyflakes")
+      - Powdered milk / dairy / 3-in-1 coffee -> Coffee & Milk ("Bear Brand")
+      - Instant noodles / pancit canton / ramen -> Instant Noodles ("Lucky Me Pancit Canton")
+      - Soaps / shampoos / toothpastes -> Personal Care ("Safeguard")
+      - Detergents / bleaches / dishwashing -> Household ("Surf")
+    - Confidently returns `null` when neither product name nor tags match, without forcing a fallback.
+  - Frontend:
+    - Removed every `categories[0]` and `|| 1` default across `AddByBarcodeDialog`, `AiProductReviewTable`, and mock services.
+    - Category select renders `<option value="">Select category</option>` placeholder and requires explicit user selection.
+    - Shows inline destructive error ("Please select a category." / "Pumili ng kategorya.") if save is attempted without category.
+    - Renamed hardcoded "OFF Catalog" badge to localized "Online catalog" with an informative Tooltip explaining "Data from Open Food Facts (ODbL)".
+- **Verification**:
+  - Pest unit tests: `CategoryGuesserTest` with 8 tests passing real-world Philippine staples ("Koko Krunch", "Skyflakes", "Bear Brand", "Lucky Me Pancit Canton", "Safeguard", "Surf", tags, null). Total backend suite: 155 passed, 759 assertions.
+  - Pint: Clean.
+  - Vitest: 15 passed in `quick-add.test.jsx`, including validation blocking save when category is omitted and online catalog badge rendering.
+  - All check scripts and smoke tests passing cleanly.
+

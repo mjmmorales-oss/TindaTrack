@@ -98,7 +98,7 @@ export function AiProductReviewTable({
         }
 
         // Match category by suggested name
-        let matchedCategoryId = categories[0]?.id || 1
+        let matchedCategoryId = ''
         if (c.suggested_category) {
           const cat = categories.find(
             (catItem) =>
@@ -182,7 +182,14 @@ export function AiProductReviewTable({
   // Validation
   const hasInvalidSelectedRows = useMemo(() => {
     const selected = rows.filter((r) => r.selected)
-    return selected.some((r) => !r.name.trim() || !r.price || Number(r.price) <= 0)
+    return selected.some(
+      (r) =>
+        !r.name.trim() ||
+        !r.price ||
+        Number(r.price) <= 0 ||
+        !r.category_id ||
+        Number(r.category_id) <= 0,
+    )
   }, [rows])
 
   // Handle Save Selected Products
@@ -425,12 +432,17 @@ export function AiProductReviewTable({
                     {/* Category Select */}
                     <td className="p-3 align-middle">
                       <select
-                        value={row.category_id}
+                        value={row.category_id || ''}
                         onChange={(e) =>
-                          updateRow(row.id, 'category_id', Number(e.target.value))
+                          updateRow(row.id, 'category_id', e.target.value ? Number(e.target.value) : '')
                         }
-                        className="w-full h-8 text-xs rounded-md border border-input bg-background px-2 focus:ring-1 focus:ring-primary focus:outline-none"
+                        className={`w-full h-8 text-xs rounded-md border px-2 focus:ring-1 focus:outline-none ${
+                          !row.category_id
+                            ? 'border-destructive focus:ring-destructive'
+                            : 'border-input bg-background focus:ring-primary'
+                        }`}
                       >
+                        <option value="">{t('products:selectCategory', 'Select category')}</option>
                         {categories.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.name}
@@ -586,14 +598,21 @@ export function AiProductReviewTable({
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <label className="text-[10px] text-muted-foreground">Category</label>
+                    <label className="text-[10px] text-muted-foreground">
+                      {t('products:categoryLabel', 'Category')} *
+                    </label>
                     <select
-                      value={row.category_id}
+                      value={row.category_id || ''}
                       onChange={(e) =>
-                        updateRow(row.id, 'category_id', Number(e.target.value))
+                        updateRow(row.id, 'category_id', e.target.value ? Number(e.target.value) : '')
                       }
-                      className="w-full h-8 text-xs rounded-md border border-input bg-background px-2"
+                      className={`w-full h-8 text-xs rounded-md border px-2 ${
+                        !row.category_id
+                          ? 'border-destructive focus:ring-destructive'
+                          : 'border-input bg-background'
+                      }`}
                     >
+                      <option value="">{t('products:selectCategory', 'Select category')}</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}

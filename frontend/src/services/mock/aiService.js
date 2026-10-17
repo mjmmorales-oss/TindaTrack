@@ -330,7 +330,7 @@ export const aiService = {
         name: p.name,
         sku,
         barcode: p.barcode || null,
-        category_id: p.category_id || 1,
+        category_id: p.category_id ? Number(p.category_id) : null,
         price: Number(p.price || 0),
         cost: Number(p.cost || 0),
         stock: Number(p.stock || p.initial_stock || 0),
