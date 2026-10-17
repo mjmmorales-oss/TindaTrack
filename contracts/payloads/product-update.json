@@ -1,0 +1,17 @@
+{
+  "name": "Lucky Me Pancit Canton Extra Hot Chili",
+  "category_id": 3,
+  "sku": "TT-NDL-001",
+  "barcode": "4800016644801",
+  "unit": "pack",
+  "price": 19.0,
+  "cost_price": 14.5,
+  "reorder_level": 12,
+  "is_active": true,
+  "description": "Spicy instant noodles",
+  "brand": "Lucky Me!",
+  "size": "80g",
+  "image_url": null,
+  "source": "manual",
+  "source_ref": null
+}

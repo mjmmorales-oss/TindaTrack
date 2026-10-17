@@ -1,0 +1,6 @@
+{
+  "customer_id": 1,
+  "amount": 50.0,
+  "payment_date": "2026-10-17T08:00:00Z",
+  "notes": "Partial repayment"
+}

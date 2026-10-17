@@ -1,0 +1,16 @@
+{
+  "name": "Koko Krunch Cereal Bar",
+  "category_id": 5,
+  "unit": "pc",
+  "price": 25.0,
+  "cost_price": 20.0,
+  "stock_quantity": 30,
+  "barcode": "4800361376822",
+  "brand": "Nestle",
+  "size": "25g",
+  "image_url": "https://images.openfoodfacts.org/images/products/480/036/137/6822/front_en.3.400.jpg",
+  "source": "openfoodfacts",
+  "source_ref": "4800361376822",
+  "reorder_level": 10,
+  "is_active": true
+}

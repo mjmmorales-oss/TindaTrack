@@ -24,13 +24,31 @@ class ProductBulkController extends Controller
      */
     public function bulk(Request $request): JsonResponse
     {
+        $rawProducts = $request->input('products', []);
+        if (is_array($rawProducts)) {
+            $normalizedProducts = array_map(function ($row) {
+                if (! is_array($row)) {
+                    return $row;
+                }
+                if (isset($row['initial_stock']) && ! isset($row['stock_quantity'])) {
+                    $row['stock_quantity'] = $row['initial_stock'];
+                }
+                if (isset($row['cost']) && ! isset($row['cost_price'])) {
+                    $row['cost_price'] = $row['cost'];
+                }
+
+                return $row;
+            }, $rawProducts);
+            $request->merge(['products' => $normalizedProducts]);
+        }
+
         $validator = Validator::make($request->all(), [
             'products' => ['required', 'array', 'min:1', 'max:10'],
             'products.*.name' => ['required', 'string', 'max:255'],
             'products.*.sku' => ['nullable', 'string', 'max:50', 'distinct', 'unique:products,sku'],
             'products.*.brand' => ['nullable', 'string', 'max:100'],
             'products.*.size' => ['nullable', 'string', 'max:50'],
-            'products.*.category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'products.*.category_id' => ['required', 'integer', 'exists:categories,id'],
             'products.*.barcode' => ['nullable', 'string', 'max:100', 'distinct', 'unique:products,barcode'],
             'products.*.price' => ['required', 'numeric', 'min:0'],
             'products.*.cost_price' => ['nullable', 'numeric', 'min:0'],

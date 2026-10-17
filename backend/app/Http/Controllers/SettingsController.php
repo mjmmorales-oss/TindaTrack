@@ -39,15 +39,33 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'store_name' => ['sometimes', 'required', 'string', 'max:255'],
             'store_tagline' => ['nullable', 'string', 'max:255'],
+            'owner_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'contact_number' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:500'],
             'receipt_header' => ['nullable', 'string', 'max:500'],
             'receipt_footer' => ['nullable', 'string', 'max:500'],
+            'show_cashier_name' => ['nullable', 'boolean'],
             'default_reorder_level' => ['nullable', 'integer', 'min:1'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:1'],
+            'low_stock_threshold_percent' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'max:10'],
             'timezone' => ['nullable', 'string', 'max:50'],
+            'ai_enabled' => ['nullable', 'boolean'],
+            'ai_save_scan_images' => ['nullable', 'boolean'],
+            'ai_research_mode' => ['nullable', 'boolean'],
+            'visual_search_enabled' => ['nullable', 'boolean'],
         ]);
+
+        if (isset($validated['contact_number']) && ! isset($validated['phone'])) {
+            $validated['phone'] = $validated['contact_number'];
+        }
+        unset(
+            $validated['contact_number'],
+            $validated['owner_name'],
+            $validated['show_cashier_name'],
+            $validated['low_stock_threshold_percent']
+        );
 
         $setting = Setting::firstOrCreate(['id' => 1]);
         $setting->update($validated);

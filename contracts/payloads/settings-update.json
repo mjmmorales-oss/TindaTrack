@@ -1,0 +1,20 @@
+{
+  "store_name": "Tindahan ni Aling Nena",
+  "store_tagline": "Mura at Sariwa Araw-araw",
+  "owner_name": "Aling Nena",
+  "phone": "0917-123-4567",
+  "contact_number": "0917-123-4567",
+  "address": "Purok 3, Brgy. San Isidro",
+  "receipt_header": "Tindahan ni Aling Nena",
+  "receipt_footer": "Salamat po! Balik po kayo!",
+  "show_cashier_name": true,
+  "default_reorder_level": 10,
+  "low_stock_threshold": 5,
+  "low_stock_threshold_percent": 20,
+  "currency": "PHP",
+  "timezone": "Asia/Manila",
+  "ai_enabled": true,
+  "ai_save_scan_images": false,
+  "ai_research_mode": false,
+  "visual_search_enabled": true
+}

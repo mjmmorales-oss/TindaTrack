@@ -1729,3 +1729,26 @@ When starting work on TindaTrack v2.0.0:
   - Vitest: 15 passed in `quick-add.test.jsx`, including validation blocking save when category is omitted and online catalog badge rendering.
   - All check scripts and smoke tests passing cleanly.
 
+### F3 Log (Form ↔ API Contract Audit, Fixtures, and Error UX):
+- **Contract Audit**:
+  - Audited all 50 write endpoints in `docs/AUDIT-v2.0.1.md` documenting HTTP method, URI, exact payload shape, optional fields, form source, and validation behavior.
+  - Authored 28 canonical JSON request fixtures in `contracts/payloads/*.json` matching the real forms in production.
+- **Backend Fixes**:
+  - `CategoryController`: Widened `color` validation from `max:30` to `max:100` to support Tailwind swatch class strings; updated migration `2026_10_08_000001_create_categories_table.php` and created incremental migration `2026_10_17_000009_widen_category_color_column.php`.
+  - `ProductBulkController`: Normalized legacy keys (`initial_stock` -> `stock_quantity`, `cost` -> `cost_price`) and enforced `products.*.category_id` required.
+  - `SettingsController`: Added fillable support for `ai_enabled`, `ai_save_scan_images`, `ai_research_mode`, `visual_search_enabled`, `owner_name`, `contact_number`, `show_cashier_name`, `low_stock_threshold_percent` and stripped non-fillable attributes before model update.
+- **Frontend Error UX & Fixture Tests**:
+  - Created `frontend/src/lib/formErrors.js` with `applyServerErrors(error, setErrorOrForm, { fieldMap, visibleFields })` and `formatFieldName`.
+  - Added flat validation error translation keys in `frontend/src/locales/en/errors.json` and `frontend/src/locales/fil/errors.json`.
+  - Adopted `applyServerErrors` across `ProductFormDialog.jsx`, `CustomerFormDialog.jsx`, `RecordPaymentDialog.jsx`, `StaffPage.jsx`, `AccountPage.jsx`, and `CategoryFormDialog.jsx`.
+  - Updated `frontend/src/features/products/schemas.js` to allow `.nullable()` on optional string fields.
+  - Created `frontend/src/test/contracts.test.jsx`: 18 tests passing.
+  - Created `backend/tests/Feature/FormContractAuditTest.php`: 18 tests passing.
+- **Verification**:
+  - Pest test suite: 173 passed, 800 assertions.
+  - Pint: Clean.
+  - Vitest: 269 passed across 25 test files.
+  - ESLint: 0 errors.
+  - Vite build: Clean.
+  - Check scripts: `check-i18n.mjs`, `check-contract.mjs`, `check-mockdata.mjs`, `check-services.mjs` all passing with zero errors.
+

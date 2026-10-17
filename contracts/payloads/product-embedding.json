@@ -1,0 +1,6 @@
+{
+  "model": "Xenova/clip-vit-base-patch32",
+  "source": "product_image",
+  "vector": [0.012, 0.034, 0.056],
+  "image_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

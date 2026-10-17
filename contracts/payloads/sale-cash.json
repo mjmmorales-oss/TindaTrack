@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 2,
+      "add_method": "barcode"
+    }
+  ],
+  "payment_type": "cash",
+  "amount_paid": 500.0,
+  "notes": "Exact cash bill"
+}

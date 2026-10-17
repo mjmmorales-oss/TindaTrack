@@ -43,6 +43,7 @@ import { notify } from '@/lib/notify'
 import { resolveImageUrl } from '@/lib/images'
 import { resizeImage } from '@/lib/imageResize'
 import { getAutoBarcodeLookup } from '@/lib/barcodeSettings'
+import { applyServerErrors } from '@/lib/formErrors'
 
 /**
  * Product Create & Edit modal form with Open Food Facts auto-fill,
@@ -431,14 +432,9 @@ export function ProductFormDialog({
       onSuccess?.()
       onOpenChange(false)
     } catch (err) {
-      if (err.errors) {
-        Object.entries(err.errors).forEach(([field, msgs]) => {
-          setError(field, {
-            type: 'server',
-            message: Array.isArray(msgs) ? msgs[0] : msgs,
-          })
-        })
-      }
+      applyServerErrors(err, setError, {
+        visibleFields: Object.keys(DEFAULT_PRODUCT),
+      })
     }
   }
 

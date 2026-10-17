@@ -1,0 +1,12 @@
+{
+  "name": "Homemade Yema Candy",
+  "category_id": 5,
+  "unit": "pc",
+  "price": 5.0,
+  "cost_price": 3.0,
+  "stock_quantity": 50,
+  "barcode": "2000000000018",
+  "source": "manual",
+  "reorder_level": 10,
+  "is_active": true
+}

@@ -205,6 +205,8 @@ export function AiProductReviewTable({
         barcode: r.barcode.trim() || null,
         category_id: Number(r.category_id),
         price: Number(r.price),
+        cost_price: Number(r.cost || 0),
+        stock_quantity: Number(r.stock || 0),
         cost: Number(r.cost || 0),
         initial_stock: Number(r.stock || 0),
         min_stock: 5,

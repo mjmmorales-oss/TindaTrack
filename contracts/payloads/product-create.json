@@ -1,0 +1,18 @@
+{
+  "name": "Lucky Me Pancit Canton Extra Hot",
+  "category_id": 3,
+  "sku": "TT-NDL-001",
+  "barcode": "4800016644801",
+  "unit": "pack",
+  "price": 18.5,
+  "cost_price": 14.0,
+  "stock_quantity": 40,
+  "reorder_level": 10,
+  "is_active": true,
+  "description": "Instant pancit canton noodles",
+  "brand": "Lucky Me!",
+  "size": "80g",
+  "image_url": "https://images.openfoodfacts.org/images/products/480/001/664/4801/front_en.3.400.jpg",
+  "source": "manual",
+  "source_ref": null
+}

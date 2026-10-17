@@ -16,6 +16,7 @@ import {
   useCreateCustomer,
   useUpdateCustomer,
 } from '@/features/customers/hooks/useCustomers'
+import { applyServerErrors } from '@/lib/formErrors'
 
 /**
  * Customer create and edit modal using ResponsiveDialog, RHF, and Zod.
@@ -84,11 +85,9 @@ export function CustomerFormDialog({
       onOpenChange(false)
       onSuccess?.()
     } catch (err) {
-      if (err.errors) {
-        Object.entries(err.errors).forEach(([field, msgs]) => {
-          setError(field, { message: Array.isArray(msgs) ? msgs[0] : msgs })
-        })
-      }
+      applyServerErrors(err, setError, {
+        visibleFields: ['name', 'nickname', 'contact_number', 'address', 'credit_limit', 'notes'],
+      })
     }
   }
 

@@ -20,5 +20,11 @@
   "accessDeniedCashierDesc": "This page is restricted to store owners. Cashier accounts have limited access to protect financial reports and settings.",
   "accessDeniedGeneralDesc": "You do not have permission to view or manage this module.",
   "goToPos": "Go to POS Terminal",
-  "backToDashboard": "Back to Dashboard"
+  "backToDashboard": "Back to Dashboard",
+  "validationCheckFields": "Please check the highlighted fields",
+  "validationUnmappedNotice": "Please check the highlighted fields: {{fields}}",
+  "validationRequired": "This field is required.",
+  "validationNumeric": "This field must be a number.",
+  "validationUnique": "This value has already been taken.",
+  "validationInvalid": "The provided value is invalid."
 }

@@ -37,6 +37,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useTranslation } from 'react-i18next'
 import { notify } from '@/lib/notify'
 import { formatDate } from '@/lib/format'
+import { applyServerErrors } from '@/lib/formErrors'
 
 const passwordChangeSchema = z
   .object({
@@ -96,18 +97,13 @@ export function AccountPage() {
       notify.success(t('settings:passwordChangedSuccess'))
       reset()
     } catch (err) {
-      if (err.response?.status === 422 && err.response.data?.errors) {
-        const backendErrors = err.response.data.errors
-        if (backendErrors.current_password) {
-          setError('current_password', { message: backendErrors.current_password[0] })
-        }
-        if (backendErrors.password) {
-          setError('new_password', { message: backendErrors.password[0] })
-        }
-        notify.error(t('settings:invalidData'), err.response.data.message || t('settings:checkFields'))
-      } else {
-        notify.error(t('settings:passwordChangeFailed'), err.response?.data?.message || err.message)
-      }
+      applyServerErrors(err, setError, {
+        fieldMap: {
+          password: 'new_password',
+          password_confirmation: 'confirm_password',
+        },
+        visibleFields: ['current_password', 'new_password', 'confirm_password'],
+      })
     } finally {
       setIsSubmittingPassword(false)
     }
