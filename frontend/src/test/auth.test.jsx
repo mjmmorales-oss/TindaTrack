@@ -65,8 +65,12 @@ describe('Demo Credentials Visibility', () => {
 
       localStorage.setItem('tindatrack-cart-v1', '{"state":{"items":[1]}}')
       localStorage.setItem('tt_pos_cart', '{"items":[1]}')
+      localStorage.setItem('tt-scanner-event', '{"type":"scan"}')
+      localStorage.setItem('tt_ai_review_queue', '{"items":[]}')
       sessionStorage.setItem('tt_pos_scanner_session', '{"id":"scan_123"}')
       sessionStorage.setItem('tt_scanner_token', 'tok_abc')
+      sessionStorage.setItem('tt_scanner_info', '{"code":"123"}')
+      sessionStorage.setItem('tt_ai_review_queue', '{"items":[]}')
 
       let authContextVal = null
       function TestConsumer() {
@@ -103,8 +107,12 @@ describe('Demo Credentials Visibility', () => {
       const rawCart = localStorage.getItem('tindatrack-cart-v1')
       expect(!rawCart || JSON.parse(rawCart)?.state?.items?.length === 0).toBe(true)
       expect(localStorage.getItem('tt_pos_cart')).toBeNull()
+      expect(localStorage.getItem('tt-scanner-event')).toBeNull()
+      expect(localStorage.getItem('tt_ai_review_queue')).toBeNull()
       expect(sessionStorage.getItem('tt_pos_scanner_session')).toBeNull()
       expect(sessionStorage.getItem('tt_scanner_token')).toBeNull()
+      expect(sessionStorage.getItem('tt_scanner_info')).toBeNull()
+      expect(sessionStorage.getItem('tt_ai_review_queue')).toBeNull()
     })
   })
 

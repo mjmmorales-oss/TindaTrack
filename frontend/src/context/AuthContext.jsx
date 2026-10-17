@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, TOKEN_KEY } from '@/lib/api'
 import { useCartStore } from '@/stores/cartStore'
+import { invalidateVisualIndex, terminateVisualWorker } from '@/lib/visualSearch'
 import { notify } from '@/lib/notify'
 import i18n from '@/i18n'
 
@@ -31,11 +32,22 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('tindatrack_user')
     localStorage.removeItem('tindatrack-cart-v1')
     localStorage.removeItem('tt_pos_cart')
+    localStorage.removeItem('tt-scanner-event')
+    localStorage.removeItem('tindatrack_mock_scanner_sessions')
+    localStorage.removeItem('tt_ai_review_queue')
 
     // Reset Zustand cart store
     try {
       useCartStore.getState().reset?.()
       useCartStore.persist?.clearStorage?.()
+    } catch {
+      // ignore
+    }
+
+    // Invalidate visual search index & terminate worker
+    try {
+      invalidateVisualIndex()
+      terminateVisualWorker()
     } catch {
       // ignore
     }
@@ -54,6 +66,8 @@ export function AuthProvider({ children }) {
       }
       sessionStorage.removeItem('tt_pos_scanner_session')
       sessionStorage.removeItem('tt_scanner_token')
+      sessionStorage.removeItem('tt_scanner_info')
+      sessionStorage.removeItem('tt_ai_review_queue')
     }
     setUser(null)
     setStatus('guest')

@@ -1775,3 +1775,26 @@ When starting work on TindaTrack v2.0.0:
   - Full Vitest suite: 273 tests passing across 25 files.
   - Rewrote `docs/PWA.md` with environment comparison table, step-by-step guides, and diagnostics.
 
+### F5 Log (Functional Audit Sweep Across Owner/Cashier, Visual Search, and Gemini Error Handling):
+- **Barcode & Visual on Products Page**:
+  - Enhanced `BarcodeCapture.jsx` with `hideAiBasket` prop and dynamic grid column styling (`grid-cols-2` when AI basket is hidden, `grid-cols-3` when enabled in POS).
+  - In `AddByBarcodeDialog.jsx`, passed `hideAiBasket={true}` and attached `onProductSelect={(product) => { setLookupResult({ local_product: product }); setActiveBarcode(product.barcode || ''); setDialogState('already_in_store'); }}`. Visual camera matching on catalog products opens the item directly in Edit/Restock mode instead of adding to a cart.
+- **AI Paths, Metrics & Mock Fallback**:
+  - Verified checkout preserves `add_method` ('ai', 'visual', 'manual') across `cartStore`, `PaymentDialog`, and backend `sale_items`.
+  - Verified `cart_duration_ms` tracking and persistence in `sales`.
+  - Confirmed `AiMetricsTab.jsx` and `AiMetricsService.php` use nullish coalescing and division guards (`> 0 ? ... : 0`) so zero data never produces divide-by-zero or `NaN`.
+- **Gemini Vision Provider Error Classification & Tests**:
+  - Enhanced `AiProviderException` to retain HTTP status codes.
+  - Upgraded `GeminiVisionProvider.php` to classify API failures into actionable categories: `invalid_key` (400/403), `model_not_found` (404, recommending GEMINI_MODEL changes), `quota_exceeded` (429), and `network_failure`.
+  - Updated `AiPingCommand.php` to output recommendation hints.
+  - Added Pest feature tests in `backend/tests/Feature/AiPingCommandTest.php` testing 400, 404, 429, timeout, and 200 responses with HTTP fakes.
+- **Logout Cache Purge**:
+  - Updated `AuthContext.jsx` `clearSession` to purge cart store (`useCartStore.getState().reset()`), scanner session storage (`tt-scanner-event`, `tindatrack_mock_scanner_sessions`, `tt_scanner_info`, `tt_ai_review_queue`), React Query cache (`queryClient.clear()`), and visual search in-memory embedding cache (`invalidateVisualIndex()`, `terminateVisualWorker()`).
+  - Added automated assertions to `frontend/src/test/auth.test.jsx`.
+- **Cashier Navigation & Route Guards Sweep**:
+  - Verified cashier permissions in `config/permissions.js`: Cashier has `pos.use`, `products.view`, `customers.view`, `customers.manage`, `utang.record_payment`, `account.manage`.
+  - Confirmed `nav.js`, `NavMain.jsx`, and `MoreSheet.jsx` filter out owner-only links (`/categories`, `/inventory`, `/reports`, `/staff`, `/settings`, `/ai-lab`).
+  - Confirmed `RoleRoute.jsx` redirects unauthorized visits to `/403`.
+  - Documented findings in `docs/AUDIT-v2.0.1.md`.
+
+

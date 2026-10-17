@@ -86,3 +86,36 @@ This audit document details every write path across TindaTrack (frontend forms, 
 - **Problem**: When an unmapped or hidden field validation error occurred (e.g. legacy SKU required error), the user saw raw Laravel error strings like "The sku field is required."
 - **Resolution**: Created `applyServerErrors` in `@/lib/formErrors.js`. It links backend field errors to visible form fields, translates messages, and only surfaces toasts for truly unmapped fields formatted in plain English.
 - **Status**: Fixed & verified.
+
+---
+
+## 3. F5 Functional & Role Sweep Findings
+
+### Finding F5-A: Barcode & Visual Scanner in AddByBarcodeDialog
+- **Severity**: Medium
+- **File**: `frontend/src/components/scanner/BarcodeCapture.jsx`, `frontend/src/features/products/components/AddByBarcodeDialog.jsx`
+- **Problem**: On the Products page, `AddByBarcodeDialog` rendered the cart-oriented "AI Basket" tab, which is intended for POS checkout scanning rather than catalog product addition. Furthermore, selecting a visual match in this dialog did not open the product in Edit/Restock state.
+- **Resolution**: Added `hideAiBasket` prop to `BarcodeCapture.jsx` with dynamic grid sizing (`grid-cols-2` vs `grid-cols-3`). In `AddByBarcodeDialog.jsx`, passed `hideAiBasket={true}` and provided `onProductSelect={(product) => { setLookupResult({ local_product: product }); setActiveBarcode(product.barcode || ''); setDialogState('already_in_store'); }}` so visual search matches open the product in Edit/Restock state instead of adding to a cart.
+- **Status**: Fixed & verified.
+
+### Finding F5-B: Gemini Vision Error Classification & Actionable Guidance
+- **Severity**: Medium
+- **File**: `backend/app/Ai/Exceptions/AiProviderException.php`, `backend/app/Ai/GeminiVisionProvider.php`, `backend/app/Console/Commands/AiPingCommand.php`
+- **Problem**: When `GEMINI_API_KEY` was invalid (400/403), the model was decommissioned or not found (404), or free-tier quota was exceeded (429), `ai:ping` printed generic raw error strings without actionable next steps.
+- **Resolution**: Upgraded `AiProviderException` to retain HTTP status codes. Categorized errors in `GeminiVisionProvider` into `quota_exceeded`, `model_not_found`, `invalid_key`, and `network_failure` with actionable recommendation messages. Added 5 Pest tests in `tests/Feature/AiPingCommandTest.php` faking each response.
+- **Status**: Fixed & verified.
+
+### Finding F5-C: Logout Cache and Storage Purge
+- **Severity**: Medium
+- **File**: `frontend/src/context/AuthContext.jsx`, `frontend/src/test/auth.test.jsx`
+- **Problem**: Logging out cleared authentication tokens and cart store, but left in-memory visual search embeddings cache (`cachedIndex`) and mock/phone scanner session storage keys intact.
+- **Resolution**: Updated `AuthContext.jsx` `clearSession` to invoke `invalidateVisualIndex()` and `terminateVisualWorker()`, and purged `tt-scanner-event`, `tindatrack_mock_scanner_sessions`, `tt_scanner_info`, and `tt_ai_review_queue`. Added automated assertions in `auth.test.jsx`.
+- **Status**: Fixed & verified.
+
+### Finding F5-D: Cashier Route & Navigation Guards
+- **Severity**: Low
+- **File**: `frontend/src/config/nav.js`, `frontend/src/components/layout/NavMain.jsx`, `frontend/src/components/layout/MoreSheet.jsx`, `frontend/src/routes/RoleRoute.jsx`
+- **Problem**: Need verification that cashiers cannot access owner-only routes or see owner navigation elements.
+- **Resolution**: Verified `nav.js` and `MoreSheet` filter all owner-only navigation (`/categories`, `/inventory`, `/reports`, `/staff`, `/settings`, `/ai-lab`) by ability. Verified `RoleRoute.jsx` automatically redirects unauthorized attempts to `/403`. Verified backend middleware `role:owner` enforces 403 on API routes.
+- **Status**: Verified.
+

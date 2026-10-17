@@ -336,9 +336,15 @@ export function AddByBarcodeDialog({
             <div className="space-y-4">
               <BarcodeCapture
                 onCode={(code) => executeLookup(code)}
+                onProductSelect={(product) => {
+                  setLookupResult({ local_product: product })
+                  setActiveBarcode(product.barcode || '')
+                  setDialogState('already_in_store')
+                }}
                 autoFocus={true}
                 cameraDefault="auto"
                 continuous={false}
+                hideAiBasket={true}
               />
 
               {/* Link to Homemade item */}

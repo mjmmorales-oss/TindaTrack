@@ -75,6 +75,7 @@ export function BarcodeCapture({
   continuous = false,
   placeholder,
   defaultMode = 'barcode',
+  hideAiBasket = false,
 }) {
   const { t } = useTranslation(['scanner', 'products', 'common'])
   const { data: settingsRes } = useSettings()
@@ -82,8 +83,9 @@ export function BarcodeCapture({
 
   const visualSearchEnabled = settings.visual_search_enabled !== false
   const aiBasketEnabled = settings.ai_enabled !== false
+  const showAiBasket = aiBasketEnabled && !hideAiBasket
 
-  const [mode, setMode] = useState(defaultMode)
+  const [mode, setMode] = useState(() => (defaultMode === 'ai_basket' && hideAiBasket ? 'barcode' : defaultMode))
   const [value, setValue] = useState('')
   const [validationError, setValidationError] = useState('')
 
@@ -411,14 +413,19 @@ export function BarcodeCapture({
     }
   }
 
-  const showTabs = visualSearchEnabled || aiBasketEnabled
+  const showTabs = visualSearchEnabled || showAiBasket
 
   return (
     <div className={cn('space-y-3.5', className)}>
       {/* MODE TABS (Barcode | Visual | AI Basket) */}
       {showTabs && (
         <Tabs value={mode} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-10">
+          <TabsList
+            className={cn(
+              'grid w-full h-10',
+              showAiBasket && visualSearchEnabled ? 'grid-cols-3' : 'grid-cols-2',
+            )}
+          >
             <TabsTrigger value="barcode" className="gap-1.5 text-xs font-semibold">
               <ScanBarcode className="h-3.5 w-3.5" />
               <span>{t('scanner:modeBarcode', 'Barcode')}</span>
@@ -431,7 +438,7 @@ export function BarcodeCapture({
               </TabsTrigger>
             )}
 
-            {aiBasketEnabled && (
+            {showAiBasket && (
               <TabsTrigger value="ai_basket" className="gap-1.5 text-xs font-semibold">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 <span>{t('scanner:modeAiBasket', 'AI Basket')}</span>
