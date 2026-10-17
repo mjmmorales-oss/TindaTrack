@@ -707,7 +707,7 @@ export function AiProductReviewTable({
                                   value={row.brand}
                                   onChange={(e) => updateRow(row.id, 'brand', e.target.value)}
                                   placeholder="Brand"
-                                  className="h-7 text-xs"
+                                  className="h-7 text-base md:text-xs"
                                 />
                               </div>
                               <div>
@@ -716,7 +716,7 @@ export function AiProductReviewTable({
                                   value={row.size}
                                   onChange={(e) => updateRow(row.id, 'size', e.target.value)}
                                   placeholder="e.g. 350ml"
-                                  className="h-7 text-xs"
+                                  className="h-7 text-base md:text-xs"
                                 />
                               </div>
                               <div>
@@ -724,7 +724,7 @@ export function AiProductReviewTable({
                                 <select
                                   value={row.unit}
                                   onChange={(e) => updateRow(row.id, 'unit', e.target.value)}
-                                  className="w-full h-7 text-xs rounded-md border border-input bg-background px-1.5"
+                                  className="w-full h-7 text-base md:text-xs rounded-md border border-input bg-background px-1.5"
                                 >
                                   {PRODUCT_UNITS.map((u) => (
                                     <option key={u} value={u}>
@@ -743,7 +743,7 @@ export function AiProductReviewTable({
                                 min="0"
                                 value={row.reorder_level}
                                 onChange={(e) => updateRow(row.id, 'reorder_level', Number(e.target.value))}
-                                className="h-7 w-20 text-xs tabular-nums"
+                                className="h-7 w-20 text-base md:text-xs tabular-nums"
                               />
                             </div>
                           </div>

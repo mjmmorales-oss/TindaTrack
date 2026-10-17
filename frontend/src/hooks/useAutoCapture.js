@@ -4,6 +4,21 @@ import {
   getAutoCaptureProfile,
 } from '@/config/ai.js'
 
+function safeRequestAnimationFrame(cb) {
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    return window.requestAnimationFrame(cb)
+  }
+  return setTimeout(() => cb(Date.now()), 50)
+}
+
+function safeCancelAnimationFrame(id) {
+  if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(id)
+  } else {
+    clearTimeout(id)
+  }
+}
+
 /**
  * Reusable auto-capture engine hook for camera viewfinders (AI Basket, AI Stock-In, Phone Scanner).
  * Performs lightweight 10-fps motion detection using an offscreen 64x48 canvas,
@@ -71,12 +86,13 @@ export function useAutoCapture({
       const next = !prev
       try {
         localStorage.setItem(storageKey, String(next))
+        localStorage.setItem(`tindatrack:auto_capture_enabled:${mode}`, String(next))
       } catch {
         // ignore
       }
       return next
     })
-  }, [storageKey])
+  }, [storageKey, mode])
 
   // Manual trigger bypasses countdown and fires immediately
   const manualTrigger = useCallback(() => {
@@ -137,7 +153,7 @@ export function useAutoCapture({
         steadyStartTimeRef.current = null
         countdownStartTimeRef.current = null
         setCountdownRemaining(0)
-        animationFrameIdRef.current = requestAnimationFrame(loop)
+        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
         return
       }
 
@@ -147,34 +163,34 @@ export function useAutoCapture({
         steadyStartTimeRef.current = null
         countdownStartTimeRef.current = null
         setCountdownRemaining(0)
-        animationFrameIdRef.current = requestAnimationFrame(loop)
+        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
         return
       }
 
       const video = videoRef?.current
       // Video must be ready and playing
       if (!video || video.readyState < 2 || video.paused || video.ended) {
-        animationFrameIdRef.current = requestAnimationFrame(loop)
+        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
         return
       }
 
       // Throttle sampling to ~10 fps (every 100ms)
       if (timestamp - lastSampleTimeRef.current < 100) {
-        animationFrameIdRef.current = requestAnimationFrame(loop)
+        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
         return
       }
       lastSampleTimeRef.current = timestamp
 
       const canvas = canvasRef.current
       if (!canvas) {
-        animationFrameIdRef.current = requestAnimationFrame(loop)
+        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
         return
       }
 
       try {
         const ctx = canvas.getContext('2d', { willReadFrequently: true })
         if (!ctx) {
-          animationFrameIdRef.current = requestAnimationFrame(loop)
+          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
           return
         }
 
@@ -206,7 +222,7 @@ export function useAutoCapture({
           setCountdownRemaining(0)
           setState('watching')
           prevFrameLumaRef.current = currentLuma
-          animationFrameIdRef.current = requestAnimationFrame(loop)
+          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
           return
         }
 
@@ -249,7 +265,7 @@ export function useAutoCapture({
           countdownStartTimeRef.current = null
           setCountdownRemaining(0)
           setState('watching')
-          animationFrameIdRef.current = requestAnimationFrame(loop)
+          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
           return
         }
 
@@ -262,7 +278,7 @@ export function useAutoCapture({
           }
           steadyStartTimeRef.current = null
           setState('watching')
-          animationFrameIdRef.current = requestAnimationFrame(loop)
+          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
           return
         }
 
@@ -306,15 +322,15 @@ export function useAutoCapture({
         // Fallback gracefully on canvas errors
       }
 
-      animationFrameIdRef.current = requestAnimationFrame(loop)
+      animationFrameIdRef.current = safeRequestAnimationFrame(loop)
     }
 
-    animationFrameIdRef.current = requestAnimationFrame(loop)
+    animationFrameIdRef.current = safeRequestAnimationFrame(loop)
 
     return () => {
       running = false
       if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current)
+        safeCancelAnimationFrame(animationFrameIdRef.current)
       }
     }
   }, [
