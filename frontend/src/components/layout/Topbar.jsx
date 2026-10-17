@@ -20,6 +20,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { Kbd } from '@/components/ui/kbd'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { PwaInstallTopBarButton } from '@/components/common/PwaInstallPrompt'
 import { useTranslation } from 'react-i18next'
 
 export function Topbar() {
@@ -91,6 +92,9 @@ export function Topbar() {
           <span>{t('common:searchStore', 'Search store...')}</span>
           <Kbd className="ml-2 font-semibold">⌘K</Kbd>
         </Button>
+
+        {/* PWA Install Button for supported browsers */}
+        <PwaInstallTopBarButton />
 
         {/* Notifications Popover placeholder */}
         <Popover>

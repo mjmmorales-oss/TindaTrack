@@ -1752,3 +1752,26 @@ When starting work on TindaTrack v2.0.0:
   - Vite build: Clean.
   - Check scripts: `check-i18n.mjs`, `check-contract.mjs`, `check-mockdata.mjs`, `check-services.mjs` all passing with zero errors.
 
+### F4 Log (PWA Installability Diagnosis, Preview, Banner UX, and Assets):
+- **Root Cause Diagnosis**:
+  - Dev server (`npm run dev`/`dev:lan`) intentionally disables the service worker (`devOptions.enabled: false`) to prevent development caching bugs, and untrusted local certs block Chrome/Safari service worker registration.
+  - Production build was missing a plain root `/apple-touch-icon.png` (iOS Safari often requests `/apple-touch-icon.png` directly and falls back to a screenshot if absent).
+  - Verified `apple-touch-icon-180x180.png` and `apple-touch-icon.png` binary headers (width 180, height 180, colorType 3, zero alpha channel / tRNS).
+  - Updated `frontend/index.html` title to "TindaTrack — POS & Inventory for Sari-Sari Stores" and added `<link rel="apple-touch-icon" href="/apple-touch-icon.png">`.
+- **Vite Preview Proxy & CLI Scripts**:
+  - Added `preview` block in `frontend/vite.config.js` with proxy (`/api` -> `http://127.0.0.1:8000`).
+  - Added `pwa:preview` (`cross-env VITE_API_URL=/api VITE_DATA_SOURCE=api vite build && vite preview --port 4173 --host`), `pwa:tunnel` (`npx cloudflared tunnel --url http://localhost:4173`), `check:pwa`, and `smoke:pwa` in root and frontend `package.json`.
+- **Install Discoverability & UI**:
+  - Built `PwaInstallTopBarButton` in `frontend/src/components/common/PwaInstallPrompt.jsx` and rendered in `Topbar.jsx` (displays when `beforeinstallprompt` fires on supported browsers, hidden in standalone mode).
+  - Built `PwaDashboardBanner` and rendered on `DashboardPage.jsx` (one-time dismissible banner with install action for Android/Chrome and Share -> Add to Home Screen instructions for iOS Safari, persisted in localStorage).
+  - Added DEV notice in `PwaInstallCard` explaining that PWA install is enabled in production builds (`npm run pwa:preview`).
+  - Added translation keys `settings:pwaDevNotice` in `en` and `fil`.
+- **Vercel Headers & Caching**:
+  - Updated `frontend/vercel.json` with immutable 1-year cache for `/pwa-*`, `/maskable-icon-*`, `/apple-touch-icon*`, `/favicon*`; `no-cache` for `/sw.js`; and `application/manifest+json; charset=utf-8` for `/manifest.webmanifest`.
+- **Automated Verification**:
+  - Built `scripts/check-pwa.mjs`: asserts HTML manifest/meta links, manifest JSON structure, icon PNG header dimensions, 180x180 opaque icon, sw.js API exclusions, and bundle registration.
+  - Built `scripts/smoke-pwa.mjs`: tests preview routes (`/`, `/manifest.webmanifest`, `/sw.js`, `/apple-touch-icon-180x180.png`, `/apple-touch-icon.png`, `/pwa-512x512.png`, `/api/up`).
+  - Extended `frontend/src/test/pwa.test.jsx`: 11 tests passing (standalone detection, install triggers, TopBar button, Dashboard banner dismissal, and Vercel regex rewrite/headers).
+  - Full Vitest suite: 273 tests passing across 25 files.
+  - Rewrote `docs/PWA.md` with environment comparison table, step-by-step guides, and diagnostics.
+
