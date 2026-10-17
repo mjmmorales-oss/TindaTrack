@@ -12,6 +12,7 @@ import {
   ScanBarcode,
   Trash2,
   X,
+  Sparkles,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -35,8 +36,13 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
+import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
+import { AiProductReviewTable } from '@/features/products/components/AiProductReviewTable'
+import { AiCapture } from '@/components/ai/AiCapture'
+import { aiService } from '@/services/aiService'
+import { notify } from '@/lib/notify'
 import { DEFAULT_PRODUCT } from '@/features/products/schemas'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
 import {
@@ -103,6 +109,35 @@ export function ProductsPage() {
   const [addByBarcodeOpen, setAddByBarcodeOpen] = useState(false)
   const [addByBarcodeInitialCode, setAddByBarcodeInitialCode] = useState('')
   const [dismissedUnknownCard, setDismissedUnknownCard] = useState(false)
+
+  // AI Bulk Product Add states
+  const [isAiCaptureOpen, setIsAiCaptureOpen] = useState(false)
+  const [isAiScanning, setIsAiScanning] = useState(false)
+  const [aiScanningStep, setAiScanningStep] = useState('')
+  const [isReviewTableOpen, setIsReviewTableOpen] = useState(false)
+  const [productScanResult, setProductScanResult] = useState(null)
+  const [capturedImageBlob, setCapturedImageBlob] = useState(null)
+
+  const handleProductPhotoCapture = async (blob) => {
+    setIsAiScanning(true)
+    setAiScanningStep(t('products:aiPreparingPhoto', 'Preparing photo for AI analysis...'))
+    setCapturedImageBlob(blob)
+    try {
+      setAiScanningStep(t('products:aiDetectingProducts', 'Detecting products and GTIN barcodes...'))
+      const result = await aiService.productScan(blob)
+      setProductScanResult(result)
+      setIsAiCaptureOpen(false)
+      setIsReviewTableOpen(true)
+    } catch (err) {
+      notify.error(
+        t('products:aiScanFailed', 'Product scan failed'),
+        err?.message || 'Could not analyze product photo.',
+      )
+    } finally {
+      setIsAiScanning(false)
+      setAiScanningStep('')
+    }
+  }
 
   // Unknown barcodes for owner
   const { data: unknownBarcodesRes } = useUnknownBarcodes()
@@ -532,25 +567,59 @@ export function ProductsPage() {
         description={t('products:subtitle', 'Manage product catalog, selling prices, costs, and stock levels')}
         actions={
           canManage && (
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button
-                onClick={() => {
-                  setAddByBarcodeInitialCode('')
-                  setAddByBarcodeOpen(true)
-                }}
-                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-primary text-primary-foreground sm:bg-background sm:text-foreground sm:border sm:border-input sm:hover:bg-accent sm:hover:text-accent-foreground font-semibold"
-              >
-                <ScanBarcode className="h-4 w-4" />
-                {t('products:addByBarcode', 'Add by barcode')}
-              </Button>
-              <Button
-                onClick={handleCreate}
-                className="gap-1.5 shadow-xs h-11 sm:h-9 bg-background text-foreground border border-input hover:bg-accent hover:text-accent-foreground sm:bg-primary sm:text-primary-foreground sm:border-transparent sm:hover:bg-primary/90 font-semibold"
-              >
-                <Plus className="h-4 w-4" />
-                {t('products:addProduct', 'Add Product')}
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="gap-1.5 shadow-xs h-10 sm:h-9 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                  aria-label={t('products:addProductMenu', 'Add Product Menu')}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>{t('products:addMenuButton', 'Add...')}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-1">
+                <DropdownMenuItem
+                  onClick={() => setIsAiCaptureOpen(true)}
+                  className="gap-2.5 py-2 cursor-pointer font-medium text-xs text-primary"
+                >
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 animate-pulse" />
+                  <div>
+                    <div className="font-semibold">{t('products:addFromPhotoAi', 'Add from photo (AI)')}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {t('products:addFromPhotoAiDesc', 'Detect up to 5 products at once')}
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setAddByBarcodeInitialCode('')
+                    setAddByBarcodeOpen(true)
+                  }}
+                  className="gap-2.5 py-2 cursor-pointer text-xs"
+                >
+                  <ScanBarcode className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="font-medium">{t('products:addByBarcode', 'Add by barcode')}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {t('products:addByBarcodeDesc', 'Quick GTIN auto-fill')}
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleCreate}
+                  className="gap-2.5 py-2 cursor-pointer text-xs"
+                >
+                  <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="font-medium">{t('products:addProduct', 'Add Product')}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {t('products:addProductDesc', 'Fill manual details')}
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )
         }
       />
@@ -678,6 +747,34 @@ export function ProductsPage() {
         onSuccess={refetch}
         onEditProduct={handleEdit}
         onRestockProduct={handleAdjust}
+      />
+
+      {/* AI Product Intake Camera Modal */}
+      <ResponsiveDialog
+        open={isAiCaptureOpen}
+        onOpenChange={setIsAiCaptureOpen}
+        title={t('products:aiCaptureTitle', 'Scan Products with AI')}
+        description={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera.')}
+        className="sm:max-w-lg p-2"
+      >
+        <AiCapture
+          onCapture={handleProductPhotoCapture}
+          isAnalyzing={isAiScanning}
+          analyzingStep={aiScanningStep}
+          onCancel={() => setIsAiCaptureOpen(false)}
+          title={t('products:aiCaptureTitle', 'Scan Products with AI')}
+          hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera.')}
+        />
+      </ResponsiveDialog>
+
+      {/* AI Product Intake Review Table */}
+      <AiProductReviewTable
+        open={isReviewTableOpen}
+        onOpenChange={setIsReviewTableOpen}
+        scanResult={productScanResult}
+        imageBlob={capturedImageBlob}
+        onRestockProduct={handleAdjust}
+        onSaved={refetch}
       />
     </PageContainer>
   )

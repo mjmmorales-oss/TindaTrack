@@ -1463,10 +1463,10 @@ Tracking implementation of v1.4 tasks (P0–P6):
 
 Tracking implementation of v2.0.0 tasks (A0–A10):
 - [x] **A0 — Preflight**: Branch `feat/ai-v2`, verified baselines, AI feature map recorded.
-- [ ] **A1 — Backend AI Foundation**: `config/ai.php`, `VisionProvider` interface, `GeminiVisionProvider` + REST integration, `MockVisionProvider`, `AiService`, `php artisan ai:ping`, Pest tests.
-- [ ] **A2 — Database for AI Scans, Feedback, Metrics & Embeddings**: Migrations for `ai_scans`, `ai_scan_feedback`, `ai_scan_images`, `product_embeddings`, `ai_experiments`, `ai_experiment_cases`; `sale_items.add_method`, `sales.cart_started_at`, `sales.cart_duration_ms`; Settings keys; models, casts, factories.
-- [ ] **A3 — AI Endpoints**: `/api/ai/status`, `/api/ai/basket-scan`, `/api/ai/product-scan`, `/api/ai/scans/{scan}/feedback`, `/api/ai/scans`, `/api/ai/scans/{scan}/image`, `/api/ai/metrics`, `/api/ai/metrics/export.csv`, `/api/scanner/ai-basket`, `/api/products/embeddings`, `/api/products/bulk`; Pest tests.
-- [ ] **A4 — Frontend AI Capture & POS Basket Scan**: `imagePrep.js`, `AiCapture.jsx`, `services/ai.js`, `BasketReviewSheet.jsx`, POS sparkles button, phone `/scan` Basket photo mode, cart timing & `add_method` tracking.
+- [x] **A1 — Backend AI Foundation**: `config/ai.php`, `VisionProvider` interface, `GeminiVisionProvider` + REST integration, `MockVisionProvider`, `AiService`, `php artisan ai:ping`, Pest tests.
+- [x] **A2 — Database for AI Scans, Feedback, Metrics & Embeddings**: Migrations for `ai_scans`, `ai_scan_feedback`, `ai_scan_images`, `product_embeddings`, `ai_experiments`, `ai_experiment_cases`; `sale_items.add_method`, `sales.cart_started_at`, `sales.cart_duration_ms`; Settings keys; models, casts, factories.
+- [x] **A3 — AI Endpoints**: `/api/ai/status`, `/api/ai/basket-scan`, `/api/ai/product-scan`, `/api/ai/scans/{scan}/feedback`, `/api/ai/scans`, `/api/ai/scans/{scan}/image`, `/api/ai/metrics`, `/api/ai/metrics/export.csv`, `/api/scanner/ai-basket`, `/api/products/embeddings`, `/api/products/bulk`; Pest tests.
+- [x] **A4 — Frontend AI Capture & POS Basket Scan**: `imagePrep.js`, `AiCapture.jsx`, `services/ai.js`, `BasketReviewSheet.jsx`, POS sparkles button, phone `/scan` Basket photo mode, cart timing & `add_method` tracking.
 - [ ] **A5 — AI Bulk Product Add**: Products page header dropdown menu, `AiProductReviewTable.jsx`, duplicate detection & warning chips, crop upload & bulk create.
 - [ ] **A6 — On-Device Visual Search**: Transformers.js, Web Worker (`embedder.worker.js`), `BarcodeCapture` Visual tab, visual index builder in Settings, correction learning loop.
 - [ ] **A7 — AI Lab & Research**: Route `/ai-lab`, metrics cards & charts, experiment runner with ground truth evaluation, CSV export, `docs/RESEARCH.md`.
