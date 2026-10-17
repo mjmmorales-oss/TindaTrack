@@ -152,5 +152,14 @@
   "pruneSuccess": "Matagumpay na nalinis ang mga litratong mas matanda sa 30 araw.",
   "pruneConfirmTitle": "Linisin ang mga Lumang Scan Photo?",
   "pruneConfirmDesc": "Tatanggalin nito ang mga naka-save na litrato ng scan na mas matanda sa 30 araw. Mananatili ang metrics at records.",
-  "aiDocsLabel": "Arkitektura at Gabay"
+  "aiDocsLabel": "Arkitektura at Gabay",
+  "autoCaptureBasketLabel": "Auto-capture para sa AI Basket",
+  "autoCaptureBasketDesc": "Kusang kukuha ng litrato ng basket kapag naging steady ang camera.",
+  "autoCaptureStockinLabel": "Auto-capture para sa AI Stock-In",
+  "autoCaptureStockinDesc": "Kusang kukuha ng litrato ng mga bagong produkto kapag hindi gumagalaw.",
+  "autoCaptureSensitivityLabel": "Sensitibidad ng auto-capture",
+  "autoCaptureSensitivityDesc": "I-adjust kung gaano kabilis magsimula ang countdown base sa galaw ng camera.",
+  "sensitivityLow": "Mababa (Para sa steady na lamesa)",
+  "sensitivityMedium": "Normal (Inirerekomenda)",
+  "sensitivityHigh": "Mataas (Mabilis kumuha / sensitibo)"
 }

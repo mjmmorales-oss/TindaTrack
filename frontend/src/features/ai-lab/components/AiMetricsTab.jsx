@@ -7,6 +7,7 @@ import {
   CheckCheck,
   ScanLine,
   Eye,
+  Camera,
   Download,
   Percent,
   Calculator,
@@ -54,6 +55,10 @@ export function AiMetricsTab() {
   const products = metrics.products ?? {}
   const visual = metrics.visual_search ?? {}
   const checkout = metrics.checkout_timing ?? {}
+  const captureMode = metrics.capture_mode ?? {}
+  const autoMode = captureMode.auto ?? {}
+  const manualMode = captureMode.manual ?? {}
+  const uploadMode = captureMode.upload ?? {}
 
   // Format checkout timing for Recharts
   const chartData = useMemo(() => {
@@ -303,6 +308,107 @@ export function AiMetricsTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Section 4: Capture Mode Breakdown (Auto vs Manual vs Upload) */}
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+            {t('aiLab:captureModeSection', 'Capture Mode Breakdown (Auto vs Manual vs Upload)')}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {t('aiLab:captureModeDesc', 'Empirical comparison of latency, acceptance rate, and user correction overhead by capture method')}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Auto Mode */}
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-primary" />
+                  {t('aiLab:modeAuto', 'Auto-Capture')}
+                </CardTitle>
+                <span className="text-xs font-mono text-muted-foreground">
+                  {autoMode.scans_count ?? 0} scans
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 text-xs">
+              <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span className="text-muted-foreground">{t('aiLab:avgLatency', 'Avg Latency')}:</span>
+                <span className="font-mono font-medium">{autoMode.avg_latency_ms ?? 0} ms</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span className="text-muted-foreground">{t('aiLab:acceptanceRate', 'Acceptance Rate')}:</span>
+                <span className="font-mono font-medium text-success">{((autoMode.acceptance_rate ?? 0) * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('aiLab:avgCorrectionsPerScan', 'Avg Corrections / Scan')}:</span>
+                <span className="font-mono font-medium">{autoMode.avg_corrections_per_scan ?? 0}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Manual Mode */}
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <ScanLine className="h-4 w-4 text-primary" />
+                  {t('aiLab:modeManual', 'Manual Shutter')}
+                </CardTitle>
+                <span className="text-xs font-mono text-muted-foreground">
+                  {manualMode.scans_count ?? 0} scans
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 text-xs">
+              <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span className="text-muted-foreground">{t('aiLab:avgLatency', 'Avg Latency')}:</span>
+                <span className="font-mono font-medium">{manualMode.avg_latency_ms ?? 0} ms</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span className="text-muted-foreground">{t('aiLab:acceptanceRate', 'Acceptance Rate')}:</span>
+                <span className="font-mono font-medium text-success">{((manualMode.acceptance_rate ?? 0) * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('aiLab:avgCorrectionsPerScan', 'Avg Corrections / Scan')}:</span>
+                <span className="font-mono font-medium">{manualMode.avg_corrections_per_scan ?? 0}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Upload Mode */}
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Download className="h-4 w-4 text-primary rotate-180" />
+                  {t('aiLab:modeUpload', 'File Upload')}
+                </CardTitle>
+                <span className="text-xs font-mono text-muted-foreground">
+                  {uploadMode.scans_count ?? 0} scans
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 text-xs">
+              <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span className="text-muted-foreground">{t('aiLab:avgLatency', 'Avg Latency')}:</span>
+                <span className="font-mono font-medium">{uploadMode.avg_latency_ms ?? 0} ms</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span className="text-muted-foreground">{t('aiLab:acceptanceRate', 'Acceptance Rate')}:</span>
+                <span className="font-mono font-medium text-success">{((uploadMode.acceptance_rate ?? 0) * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('aiLab:avgCorrectionsPerScan', 'Avg Corrections / Scan')}:</span>
+                <span className="font-mono font-medium">{uploadMode.avg_corrections_per_scan ?? 0}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

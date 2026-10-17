@@ -170,5 +170,19 @@
   "aiConsentReviewTitle": "Laging Suriin Bago Idagdag",
   "aiConsentReviewDesc": "Ang mga resulta ay mungkahi lamang; laging suriin ang mga paninda at presyo bago kumpirmahin.",
   "aiConsentAccept": "Naiintindihan at Tinatanggap Ko",
-  "aiConsentDecline": "Huwag Muna"
+  "aiConsentDecline": "Huwag Muna",
+  "aiAutoCapture": "Awtomatikong Pagkuha",
+  "aiAutoCaptureTooltip": "Kukunan ng litrato nang kusa kapag hindi gumagalaw ang camera",
+  "aiHoldingSteady": "Panatilihing hindi gumagalaw...",
+  "aiCapturingIn": "Kukunan sa loob ng {{seconds}}s... Huwag igalaw",
+  "aiCooldown": "Nagpapahinga...",
+  "aiSceneUnchanged": "Walang pagbabago sa eksena — maglagay ng bagong paninda para ma-scan kusa",
+  "aiSceneTooDark": "Masyadong madilim para sa awtomatikong pagkuha",
+  "aiMovementWarning": "Masyadong magalaw ang camera? Pindutin ang Kunan nang manu-mano.",
+  "aiScanAgain": "I-scan muli",
+  "aiScanAgainTitle": "I-scan muli?",
+  "aiScanAgainDesc": "Gusto mo bang idagdag ang mga bagong paninda sa listahan, o magsimula ng bagong scan?",
+  "aiScanAgainMerge": "Idagdag sa kasalukuyang mga item",
+  "aiScanAgainReplace": "Palitan ang lahat ng item",
+  "aiTapNow": "Kunan agad"
 }

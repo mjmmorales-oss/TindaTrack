@@ -129,13 +129,13 @@ export function ProductsPage() {
   const [productScanResult, setProductScanResult] = useState(null)
   const [capturedImageBlob, setCapturedImageBlob] = useState(null)
 
-  const handleProductPhotoCapture = async (blob) => {
+  const handleProductPhotoCapture = async (blob, captureMode = 'manual') => {
     setIsAiScanning(true)
     setAiScanningStep(t('products:aiPreparingPhoto', 'Preparing photo for AI analysis...'))
     setCapturedImageBlob(blob)
     try {
       setAiScanningStep(t('products:aiDetectingProducts', 'Detecting products and GTIN barcodes...'))
-      const result = await aiService.productScan(blob)
+      const result = await aiService.productScan(blob, { capture_mode: captureMode })
       setProductScanResult(result)
       setIsAiCaptureOpen(false)
       setIsReviewTableOpen(true)
@@ -601,7 +601,7 @@ export function ProductsPage() {
                   className="gap-1.5 shadow-xs h-9 font-medium text-xs border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
                 >
                   <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                  <span>{t('products:addFromPhotoAi', 'Add from photo (AI)')}</span>
+                  <span>{t('products:addFromPhotoAi', 'AI Stock-In')}</span>
                 </Button>
 
                 <Button
@@ -633,9 +633,9 @@ export function ProductsPage() {
                     >
                       <Sparkles className="h-4 w-4 text-primary shrink-0 animate-pulse" />
                       <div>
-                        <div className="font-semibold">{t('products:addFromPhotoAi', 'Add from photo (AI)')}</div>
+                        <div className="font-semibold">{t('products:addFromPhotoAi', 'AI Stock-In')}</div>
                         <div className="text-[10px] text-muted-foreground">
-                          {t('products:addFromPhotoAiDesc', 'Detect up to 5 products at once')}
+                          {t('products:addFromPhotoAiDesc', 'Snap up to 5 new products at once')}
                         </div>
                       </div>
                     </DropdownMenuItem>
@@ -804,7 +804,7 @@ export function ProductsPage() {
       <ResponsiveDialog
         open={isAiCaptureOpen}
         onOpenChange={setIsAiCaptureOpen}
-        title={t('products:aiCaptureTitle', 'Scan Products with AI')}
+        title={t('products:aiCaptureTitle', 'AI Stock-In')}
         description={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera.')}
         className="sm:max-w-lg p-2"
       >
@@ -813,8 +813,10 @@ export function ProductsPage() {
           isAnalyzing={isAiScanning}
           analyzingStep={aiScanningStep}
           onCancel={() => setIsAiCaptureOpen(false)}
-          title={t('products:aiCaptureTitle', 'Scan Products with AI')}
-          hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera.')}
+          title={t('products:aiCaptureTitle', 'AI Stock-In')}
+          hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera, then hold still.')}
+          autoCaptureEnabled={true}
+          featureKey="stockin"
         />
       </ResponsiveDialog>
 
@@ -833,6 +835,10 @@ export function ProductsPage() {
         scanResult={productScanResult}
         imageBlob={capturedImageBlob}
         onRestockProduct={handleAdjust}
+        onScanAgain={() => {
+          setIsReviewTableOpen(false)
+          setIsAiCaptureOpen(true)
+        }}
         onSaved={refetch}
       />
     </PageContainer>

@@ -18,6 +18,7 @@ import {
   applySort,
 } from '../../lib/mockApi.js'
 import { getCurrentUser } from '../../lib/authBridge.js'
+import { aiService } from './aiService.js'
 
 export const productService = {
   /**

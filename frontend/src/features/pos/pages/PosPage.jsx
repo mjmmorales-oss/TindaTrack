@@ -121,19 +121,64 @@ export function PosPage() {
   const [aiScanResult, setAiScanResult] = useState(null)
   const [aiScanImageSrc, setAiScanImageSrc] = useState(null)
 
-  const handleAiBasketCapture = async (blob) => {
+  const [basketScanMode, setBasketScanMode] = useState('replace') // 'replace' | 'add'
+
+  const openBasketReview = (result, imageSrc = null) => {
+    setAiScanResult(result)
+    setAiScanImageSrc(imageSrc)
+    setIsBasketReviewOpen(true)
+  }
+
+  const handleScanAgain = (scanMode = 'replace') => {
+    setBasketScanMode(scanMode)
+    setIsBasketReviewOpen(false)
+    setIsAiCaptureOpen(true)
+  }
+
+  const handleAiBasketCapture = async (blob, captureMode = 'manual') => {
     setIsAiAnalyzing(true)
     setAiAnalyzingStep(t('pos:aiAnalyzingPreparing', 'Preparing photo for AI analysis...'))
+    let objectUrl = null
     try {
-      const objectUrl = URL.createObjectURL(blob)
-      setAiScanImageSrc(objectUrl)
+      objectUrl = URL.createObjectURL(blob)
       setAiAnalyzingStep(t('pos:aiAnalyzingDetecting', 'Detecting items with Gemini Vision...'))
-      const result = await aiService.basketScan(blob)
+      const result = await aiService.basketScan(blob, { capture_mode: captureMode })
       beep()
-      setAiScanResult(result)
       setIsAiCaptureOpen(false)
-      setIsBasketReviewOpen(true)
+
+      if (basketScanMode === 'add' && aiScanResult) {
+        // Merge newly detected items into current review result
+        const mergedItems = [...(aiScanResult.items || [])]
+        for (const newItem of (result.items || [])) {
+          const existing = mergedItems.find(
+            (m) => m.matched_product_id === newItem.matched_product_id,
+          )
+          if (existing) {
+            existing.quantity += newItem.quantity
+          } else {
+            mergedItems.push(newItem)
+          }
+        }
+        const mergedUnmatched = [
+          ...(aiScanResult.unmatched_items || []),
+          ...(result.unmatched_items || []),
+        ]
+        openBasketReview(
+          {
+            ...result,
+            items: mergedItems,
+            unmatched_items: mergedUnmatched,
+          },
+          objectUrl,
+        )
+      } else {
+        openBasketReview(result, objectUrl)
+      }
+      setBasketScanMode('replace')
     } catch (err) {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
       notify.error(
         t('pos:aiScanFailed', 'AI Scan Failed'),
         err?.message || 'Could not analyze basket.',
@@ -244,9 +289,7 @@ export function PosPage() {
         setIsScannerOnline(true)
         if (event?.type === 'ai_basket' && event?.payload) {
           beep()
-          setAiScanResult(event.payload)
-          setAiScanImageSrc(null)
-          setIsBasketReviewOpen(true)
+          openBasketReview(event.payload, null)
           notify.info(
             t('pos:aiBasketReceived', 'AI Basket Received'),
             t('pos:aiBasketReceivedDesc', 'Review detected items from phone scanner.'),
@@ -640,10 +683,9 @@ export function PosPage() {
         onProductSelect={(product) => {
           handleAddToCart(product, 1, 'visual')
         }}
-        onBasketScanned={(result) => {
+        onBasketScanned={(result, imageSrc) => {
           setIsScannerSheetOpen(false)
-          setAiBasketData(result)
-          setIsBasketReviewOpen(true)
+          openBasketReview(result, imageSrc || null)
         }}
       />
 
@@ -705,6 +747,7 @@ export function PosPage() {
         onOpenChange={setIsBasketReviewOpen}
         scanResult={aiScanResult}
         imageSrc={aiScanImageSrc}
+        onScanAgain={handleScanAgain}
         onConfirmed={() => {
           setIsBasketReviewOpen(false)
           setAiScanResult(null)

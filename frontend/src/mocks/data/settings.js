@@ -8,6 +8,13 @@ export const initialSettings = {
   receipt_footer: 'Salamat po! Balik po kayo!',
   default_reorder_level: 10,
   low_stock_threshold_percent: 25,
+  ai_enabled: true,
+  ai_save_scan_images: false,
+  ai_research_mode: false,
+  visual_search_enabled: true,
+  auto_capture_basket: true,
+  auto_capture_stockin: true,
+  auto_capture_sensitivity: 'medium',
   created_at: '2026-01-01T00:00:00.000Z',
   updated_at: '2026-01-01T00:00:00.000Z',
 }

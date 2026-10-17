@@ -118,7 +118,8 @@ class MockVisionProvider implements VisionProvider
             model: 'mock-vision-v2',
             latencyMs: 50,
             promptVersion: ProductPrompt::VERSION,
-            products: $products
+            products: $products,
+            moreThanFive: false
         );
     }
 

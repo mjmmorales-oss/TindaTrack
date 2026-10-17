@@ -353,7 +353,7 @@ export const scannerService = {
     return { ended: false }
   },
 
-  async sendAiBasket(imageBlob) {
+  async sendAiBasket(imageBlob, options = {}) {
     await delay(250)
     const token =
       typeof sessionStorage !== 'undefined'
@@ -370,7 +370,7 @@ export const scannerService = {
     session.last_seen_at = new Date().toISOString()
 
     const { aiService } = await import('./aiService.js')
-    const result = await aiService.basketScan(imageBlob)
+    const result = await aiService.basketScan(imageBlob, options)
 
     const event = {
       id: ++nextEventId,

@@ -179,24 +179,41 @@ test('GET /api/ai/scans and GET /api/ai/scans/{scan}/image work for owner', func
 });
 
 test('GET /api/ai/metrics and CSV export work for owner', function () {
-    AiScan::factory()->count(3)->create(['user_id' => $this->owner->id]);
+    AiScan::factory()->create(['user_id' => $this->owner->id, 'capture_mode' => 'auto', 'type' => 'basket']);
+    AiScan::factory()->create(['user_id' => $this->owner->id, 'capture_mode' => 'manual', 'type' => 'basket']);
+    AiScan::factory()->create(['user_id' => $this->owner->id, 'capture_mode' => 'upload', 'type' => 'products']);
 
     $metricsRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
         ->getJson('/api/ai/metrics');
 
     $metricsRes->assertStatus(200)
         ->assertJsonStructure([
-            'data' => ['total_scans', 'basket', 'products', 'checkout_timing', 'visual_search'],
+            'data' => [
+                'total_scans',
+                'basket',
+                'products',
+                'checkout_timing',
+                'visual_search',
+                'capture_mode' => [
+                    'auto' => ['scans_count', 'avg_latency_ms', 'acceptance_rate', 'avg_corrections_per_scan'],
+                    'manual' => ['scans_count', 'avg_latency_ms', 'acceptance_rate', 'avg_corrections_per_scan'],
+                    'upload' => ['scans_count', 'avg_latency_ms', 'acceptance_rate', 'avg_corrections_per_scan'],
+                ],
+            ],
         ]);
+
+    expect($metricsRes->json('data.capture_mode.auto.scans_count'))->toBeGreaterThanOrEqual(1)
+        ->and($metricsRes->json('data.capture_mode.manual.scans_count'))->toBeGreaterThanOrEqual(1);
 
     $csvRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
         ->get('/api/ai/metrics/export.csv');
 
     $csvRes->assertStatus(200)
         ->assertHeader('Content-Type', 'text/csv; charset=utf-8');
+    expect($csvRes->getContent())->toContain('Capture Mode');
 });
 
-test('POST /api/scanner/ai-basket allows paired phone scanner to send basket photo', function () {
+test('POST /api/scanner/ai-basket allows paired phone scanner to send basket photo with capture_mode', function () {
     $session = ScannerSession::create([
         'user_id' => $this->owner->id,
         'mode' => 'pos',
@@ -214,15 +231,20 @@ test('POST /api/scanner/ai-basket allows paired phone scanner to send basket pho
     $response = $this->withHeader('X-Scanner-Token', 'plain-device-token-1234')
         ->postJson('/api/scanner/ai-basket', [
             'image' => $fakeImage,
+            'capture_mode' => 'auto',
         ]);
 
     $response->assertStatus(201)
         ->assertJsonStructure([
             'data' => [
                 'event_id',
-                'scan' => ['scan_id', 'items', 'unmatched'],
+                'scan' => ['scan_id', 'items', 'unmatched', 'capture_mode'],
             ],
         ]);
+
+    $scanId = $response->json('data.scan.scan_id');
+    $scan = AiScan::find($scanId);
+    expect($scan->capture_mode)->toBe('auto');
 });
 
 test('product visual embeddings CRUD and 10-vector cap per product', function () {
@@ -286,19 +308,23 @@ test('POST /api/products/bulk creates products transactionally and returns row v
                 'name' => 'Bulk Item 1',
                 'brand' => 'Brand A',
                 'size' => '100g',
+                'unit' => 'can',
                 'category_id' => $category->id,
                 'price' => 25.50,
                 'cost_price' => 20.00,
                 'stock_quantity' => 10,
+                'reorder_level' => 8,
             ],
             [
                 'name' => 'Bulk Item 2',
                 'brand' => 'Brand B',
                 'size' => '200ml',
+                'unit' => 'bottle',
                 'category_id' => $category->id,
                 'price' => 50.00,
                 'cost_price' => 40.00,
                 'stock_quantity' => 15,
+                'reorder_level' => 6,
             ],
         ],
     ];
@@ -307,10 +333,16 @@ test('POST /api/products/bulk creates products transactionally and returns row v
         ->postJson('/api/products/bulk', $goodPayload);
 
     $goodRes->assertStatus(201)
-        ->assertJsonPath('message', '2 products created successfully.');
+        ->assertJsonPath('message', '2 products created successfully.')
+        ->assertJsonPath('data.0.name', 'Bulk Item 1')
+        ->assertJsonPath('data.0.unit', 'can')
+        ->assertJsonPath('data.0.reorder_level', 8)
+        ->assertJsonPath('data.1.name', 'Bulk Item 2')
+        ->assertJsonPath('data.1.unit', 'bottle')
+        ->assertJsonPath('data.1.reorder_level', 6);
 
-    expect(Product::where('name', 'Bulk Item 1')->exists())->toBeTrue()
-        ->and(Product::where('name', 'Bulk Item 2')->exists())->toBeTrue();
+    expect(Product::where('name', 'Bulk Item 1')->first()->reorder_level)->toBe(8)
+        ->and(Product::where('name', 'Bulk Item 2')->first()->reorder_level)->toBe(6);
 });
 
 test('when ai_enabled is false, endpoints return 403 ai_disabled', function () {

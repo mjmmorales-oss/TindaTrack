@@ -1,9 +1,40 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { aiService } from '@/services/ai'
 import { useCartStore } from '@/stores/cartStore'
 import { BasketReviewSheet } from '@/features/pos/components/BasketReviewSheet'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+vi.mock('@/components/scanner/ScannerSheet', () => ({
+  ScannerSheet: ({ onBasketScanned }) => (
+    <button
+      data-testid="mock-scanner-sheet-trigger"
+      onClick={() =>
+        onBasketScanned?.(
+          {
+            scan_id: 'scan_g1_1',
+            detected_count: 1,
+            matched_count: 1,
+            unmatched_count: 0,
+            items: [
+              {
+                id: 'item-1',
+                matched_product_id: 101,
+                matched_product: { id: 101, name: 'Bear Brand Fortified 33g', price: 15 },
+                confidence: 0.95,
+                quantity: 1,
+              },
+            ],
+            unmatched_items: [],
+          },
+          'data:image/svg+xml;utf8,<svg></svg>'
+        )
+      }
+    >
+      Mock Scanner Trigger
+    </button>
+  ),
+}))
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -114,6 +145,20 @@ describe('AI Basket Scan and Cart Integration', () => {
       expect(items[0].product_id).toBe(101)
       expect(items[0].add_method).toBe('ai')
       expect(items[0].quantity).toBe(2)
+    })
+  })
+
+  it('G1.1 regression: PosPage ScannerSheet onBasketScanned opens BasketReviewSheet without throwing', async () => {
+    const { PosPage } = await import('@/features/pos/pages/PosPage.jsx')
+    const { renderWithProviders } = await import('./renderRoute.jsx')
+
+    renderWithProviders(<PosPage />, { role: 'owner' })
+
+    const triggerBtn = await screen.findByTestId('mock-scanner-sheet-trigger')
+    fireEvent.click(triggerBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Bear Brand Fortified 33g/i)).toBeInTheDocument()
     })
   })
 })

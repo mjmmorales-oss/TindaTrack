@@ -16,6 +16,7 @@ class AiScan extends Model
         'user_id',
         'scanner_session_id',
         'type',
+        'capture_mode',
         'provider',
         'model',
         'prompt_version',

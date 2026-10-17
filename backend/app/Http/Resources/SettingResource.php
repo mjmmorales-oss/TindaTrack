@@ -26,6 +26,9 @@ class SettingResource extends JsonResource
             'ai_save_scan_images' => (bool) ($this->ai_save_scan_images ?? false),
             'ai_research_mode' => (bool) ($this->ai_research_mode ?? false),
             'visual_search_enabled' => (bool) ($this->visual_search_enabled ?? true),
+            'auto_capture_basket' => (bool) ($this->auto_capture_basket ?? true),
+            'auto_capture_stockin' => (bool) ($this->auto_capture_stockin ?? true),
+            'auto_capture_sensitivity' => (string) ($this->auto_capture_sensitivity ?? 'medium'),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

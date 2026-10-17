@@ -46,6 +46,18 @@ For each group, we compute:
 * Average Items per Sale: $\bar{K} = \frac{1}{N} \sum K_i$
 * Efficiency Rate: $\text{Items per Minute} = \frac{\bar{K}}{\bar{T} / 60}$
 
+### 1.4 Auto-Capture vs Manual Capture Telemetry
+Source table: `ai_scans.capture_mode` (`auto`, `manual`, `upload`).
+
+To evaluate whether automated computer-vision capture reduces cashier friction compared to traditional manual shutter buttons:
+* **Edge Motion Guarding:** On-device motion detection (`useAutoCapture`) continuously samples video frames at 10 fps onto an offscreen $64 \times 48$ grayscale canvas. The algorithm computes mean absolute pixel difference without network overhead or heavy local ML models.
+* **Settled Scene Gating:** The cloud vision model is only invoked when the scene has settled below the motion threshold for $\ge 1200\text{ ms}$, followed by a visual 3-2-1 countdown ring. Re-arming requires a minimum 3-second cooldown and detection of significant scene change ($\Delta > 8\%$).
+* **Comparative Metrics:**
+  - **Latency Comparison:** Compares mean inference and network round-trip time between modes.
+  - **Acceptance Rate:** Fraction of detected items accepted without edits ($A / S$).
+  - **User Correction Overhead:** Average user corrections per scan (quantity adjustments, line removals, re-assignments).
+* **Academic Experimentation:** Researchers can benchmark auto-capture against manual capture in controlled runs (`/ai-lab` $\rightarrow$ Metrics Dashboard and CSV exports) to quantify whether auto-capture speeds up checkout throughput without compromising bounding box fidelity.
+
 ---
 
 ## 2. Controlled Testing Protocol (Ground-Truth Evaluation)

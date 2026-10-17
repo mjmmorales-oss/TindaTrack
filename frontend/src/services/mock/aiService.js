@@ -1,5 +1,9 @@
 import { delay } from '@/lib/mockApi'
 import { useMockDb } from '@/mocks/db'
+import {
+  normalizeBasketResult,
+  normalizeProductScanResult,
+} from '@/lib/aiContract.js'
 
 let mockScans = []
 let mockEmbeddings = []
@@ -156,19 +160,19 @@ export const aiService = {
     }
     mockScans.unshift(scanRecord)
 
-    return {
+    return normalizeBasketResult({
       scan_id: scanId,
       detected_count: scanRecord.detected_count,
       matched_count: matched.length,
       unmatched_count: unmatched.length,
       items: matched,
       unmatched_items: unmatched,
-      processing_time_ms: 350,
+      latency_ms: 350,
       model: 'mock-gemini-2.5-flash',
-    }
+    })
   },
 
-  async productScan(imageBlob, _options = {}) {
+  async productScan(imageBlob, options = {}) {
     await delay(350)
     const candidates = [
       {
@@ -176,8 +180,8 @@ export const aiService = {
         suggested_name: 'Piattos Cheese 85g',
         suggested_barcode: '4800016644208',
         suggested_category: 'Snacks',
-        suggested_price: 38.0,
-        suggested_cost: 32.5,
+        category_id: 2,
+        estimated_count: 2,
         confidence: 0.94,
         bounding_box: [120, 100, 480, 550],
         is_duplicate: false,
@@ -186,9 +190,9 @@ export const aiService = {
         id: 'cand_2',
         suggested_name: 'C2 Green Tea Apple 500ml',
         suggested_barcode: '4800016052300',
-        suggested_category: 'Beverages',
-        suggested_price: 25.0,
-        suggested_cost: 21.0,
+        suggested_category: 'Drinks',
+        category_id: 1,
+        estimated_count: 3,
         confidence: 0.91,
         bounding_box: [520, 150, 880, 700],
         is_duplicate: false,
@@ -196,22 +200,27 @@ export const aiService = {
     ]
 
     const scanId = 'scan_prod_' + Math.random().toString(36).slice(2, 9)
-    return {
-      scan_id: scanId,
-      detected_count: candidates.length,
-      products: candidates,
-      processing_time_ms: 350,
-      model: 'mock-gemini-2.5-flash',
-    }
+    return normalizeProductScanResult(
+      {
+        scan_id: scanId,
+        detected_count: candidates.length,
+        products: candidates,
+        more_than_five: false,
+        latency_ms: 350,
+        model: 'mock-gemini-2.5-flash',
+      },
+      options.categories || [],
+    )
   },
 
-  async sendFeedback(scanId, lines) {
+  async sendFeedback(scanId, payload) {
     await delay(60)
+    const lines = Array.isArray(payload) ? payload : (payload?.lines || [])
     return {
       success: true,
       message: 'Feedback recorded successfully',
       scan_id: scanId,
-      recorded_lines: lines?.length || 0,
+      recorded_lines: lines.length,
     }
   },
 
@@ -264,12 +273,35 @@ export const aiService = {
         item_removed: 1,
         item_added: 1,
       },
+      capture_mode: {
+        auto: {
+          scans_count: 5,
+          avg_latency_ms: 320,
+          acceptance_rate: 0.92,
+          avg_corrections_per_scan: 0.2,
+          lines_evaluated: 15,
+        },
+        manual: {
+          scans_count: 5,
+          avg_latency_ms: 380,
+          acceptance_rate: 0.88,
+          avg_corrections_per_scan: 0.4,
+          lines_evaluated: 14,
+        },
+        upload: {
+          scans_count: 2,
+          avg_latency_ms: 410,
+          acceptance_rate: 0.85,
+          avg_corrections_per_scan: 0.5,
+          lines_evaluated: 6,
+        },
+      },
     }
   },
 
   async exportMetricsCsv(_params = {}) {
     await delay(50)
-    return 'date,total_scans,accuracy,avg_latency_ms\n2026-10-14,3,0.89,350\n2026-10-15,4,0.92,370\n2026-10-16,5,0.94,365\n'
+    return 'Scan ID,Type,Capture Mode,Provider,Model,Latency (ms),Status,User,Items Detected,Feedback Action,Line Type,Suggested Product ID,Suggested Qty,Final Product ID,Final Qty,Confidence,Timestamp\nscan_mock_1,basket,auto,mock,mock-gemini-2.5-flash,320,ok,Owner,3,accepted,item,1,2,1,2,0.95,2026-10-17T00:00:00Z\n'
   },
 
   async getEmbeddings(params = {}) {
@@ -332,10 +364,15 @@ export const aiService = {
         barcode: p.barcode || null,
         category_id: p.category_id ? Number(p.category_id) : null,
         price: Number(p.price || 0),
-        cost: Number(p.cost || 0),
-        stock: Number(p.stock || p.initial_stock || 0),
-        stock_quantity: Number(p.stock || p.initial_stock || 0),
-        min_stock: Number(p.min_stock || 5),
+        cost: Number(p.cost || p.cost_price || 0),
+        cost_price: Number(p.cost || p.cost_price || 0),
+        brand: p.brand || null,
+        size: p.size || null,
+        unit: p.unit || 'pc',
+        stock: Number(p.stock || p.initial_stock || p.stock_quantity || 0),
+        stock_quantity: Number(p.stock || p.initial_stock || p.stock_quantity || 0),
+        min_stock: Number(p.reorder_level || p.min_stock || 5),
+        reorder_level: Number(p.reorder_level || p.min_stock || 5),
         is_active: true,
         created_at: new Date().toISOString(),
       }
@@ -348,6 +385,7 @@ export const aiService = {
     }
     return {
       message: `${created.length} products created successfully.`,
+      data: created,
       products: created,
     }
   },

@@ -38,11 +38,14 @@ class AiController extends Controller
 
         $request->validate([
             'image' => ['required', 'file'],
+            'capture_mode' => ['nullable', 'in:auto,manual,upload'],
         ]);
 
         $result = $this->aiService->processBasket(
             $request->file('image'),
-            $request->user()
+            $request->user(),
+            null,
+            $request->input('capture_mode', 'manual')
         );
 
         return response()->json([
@@ -59,11 +62,13 @@ class AiController extends Controller
 
         $request->validate([
             'image' => ['required', 'file'],
+            'capture_mode' => ['nullable', 'in:auto,manual,upload'],
         ]);
 
         $result = $this->aiService->processNewProducts(
             $request->file('image'),
-            $request->user()
+            $request->user(),
+            $request->input('capture_mode', 'manual')
         );
 
         return response()->json([

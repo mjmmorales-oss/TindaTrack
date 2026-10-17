@@ -1,0 +1,30 @@
+{
+  "scan_id": 202,
+  "provider": "mock",
+  "model": "mock-vision-v2",
+  "latency_ms": 340,
+  "prompt_version": "v2.0",
+  "image_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "products": [
+    {
+      "name": "Piattos Cheese 85g",
+      "brand": "Jack 'n Jill",
+      "size": "85g",
+      "category_id": 2,
+      "estimated_count": 5,
+      "barcode_text": "4800016644208",
+      "confidence": 0.94,
+      "box_2d": [120, 100, 480, 550],
+      "enrichment": {
+        "source": "barcode_lookup",
+        "name": "Piattos Cheese Flavored Potato Crisps 85g",
+        "brand": "Jack 'n Jill",
+        "size": "85g",
+        "image_url": "https://example.com/piattos.jpg"
+      },
+      "duplicate_of": null
+    }
+  ],
+  "more_than_five": false,
+  "raw": {}
+}

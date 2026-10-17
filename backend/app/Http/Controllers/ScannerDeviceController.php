@@ -182,6 +182,7 @@ class ScannerDeviceController extends Controller
     {
         $request->validate([
             'image' => ['required', 'file'],
+            'capture_mode' => ['nullable', 'in:auto,manual,upload'],
         ]);
 
         /** @var ScannerSession $session */
@@ -198,7 +199,8 @@ class ScannerDeviceController extends Controller
         $result = $aiService->processBasket(
             $request->file('image'),
             $session->user,
-            $session->id
+            $session->id,
+            $request->input('capture_mode', 'manual')
         );
 
         $event = ScannerEvent::create([

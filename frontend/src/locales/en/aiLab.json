@@ -96,5 +96,12 @@
   "experimentNotes": "Notes & Lighting Conditions",
   "experimentNotesPlaceholder": "e.g. 20 baskets under 400 lux diffuse LED lighting",
   "createExperiment": "Create Experiment",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "captureModeSection": "Capture Mode Breakdown (Auto vs Manual vs Upload)",
+  "captureModeDesc": "Empirical comparison of latency, acceptance rate, and user correction overhead by capture method",
+  "modeAuto": "Auto-Capture",
+  "modeManual": "Manual Shutter",
+  "modeUpload": "File Upload",
+  "acceptanceRate": "Acceptance Rate",
+  "avgCorrectionsPerScan": "Avg Corrections / Scan"
 }

@@ -7,10 +7,10 @@ import {
   RefreshCw,
   AlertTriangle,
   ShoppingCart,
-  CheckCircle2,
   Search,
   X,
   Package,
+  Camera,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ import { useCartStore } from '@/stores/cartStore'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { aiService } from '@/services/aiService'
 import { notify } from '@/lib/notify'
+import { buildBasketFeedbackLines } from '@/lib/aiContract.js'
 
 /**
  * Helper to determine confidence badge styling.
@@ -57,6 +58,7 @@ function getConfidenceStyle(confidence = 0) {
  * @param {object} props.scanResult
  * @param {string} props.imageSrc - Captured photo data/blob URL
  * @param {() => void} [props.onConfirmed]
+ * @param {(mode: 'add'|'replace') => void} [props.onScanAgain]
  */
 export function BasketReviewSheet({
   open,
@@ -64,6 +66,7 @@ export function BasketReviewSheet({
   scanResult,
   imageSrc,
   onConfirmed,
+  onScanAgain,
 }) {
   const { t } = useTranslation(['pos', 'common'])
   const { data: productsData } = useProducts({ per_page: 200 })
@@ -73,6 +76,7 @@ export function BasketReviewSheet({
   const [confirmedItems, setConfirmedItems] = useState([])
   const [unmatchedItems, setUnmatchedItems] = useState([])
   const [hoveredItemId, setHoveredItemId] = useState(null)
+  const [showScanAgainChoice, setShowScanAgainChoice] = useState(false)
 
   // Sub-modal / picker state
   const [pickerMode, setPickerMode] = useState(null) // 'swap' | 'add' | 'match'
@@ -246,72 +250,14 @@ export function BasketReviewSheet({
       }
     }
 
-    // 2. Prepare feedback lines
-    const feedbackLines = []
-    const originalItems = scanResult?.items || []
-
-    for (const orig of originalItems) {
-      const confirmed = confirmedItems.find((ci) => ci.id === orig.id)
-      if (!confirmed) {
-        // Item was removed
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'removed',
-          original_product_id: orig.matched_product_id,
-          final_product_id: null,
-          original_quantity: orig.quantity,
-          final_quantity: 0,
-        })
-      } else if (confirmed.matched_product_id !== orig.matched_product_id) {
-        // Product was swapped
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'product_changed',
-          original_product_id: orig.matched_product_id,
-          final_product_id: confirmed.matched_product_id,
-          original_quantity: orig.quantity,
-          final_quantity: confirmed.quantity,
-        })
-      } else if (confirmed.quantity !== orig.quantity) {
-        // Quantity was edited
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'quantity_changed',
-          original_product_id: orig.matched_product_id,
-          final_product_id: confirmed.matched_product_id,
-          original_quantity: orig.quantity,
-          final_quantity: confirmed.quantity,
-        })
-      } else {
-        // Accepted without edits
-        feedbackLines.push({
-          line_id: orig.id,
-          status: 'accepted',
-          original_product_id: orig.matched_product_id,
-          final_product_id: confirmed.matched_product_id,
-          original_quantity: orig.quantity,
-          final_quantity: confirmed.quantity,
-        })
-      }
-    }
-
-    // Include manually added missed items
-    for (const item of confirmedItems) {
-      if (item.is_manual) {
-        feedbackLines.push({
-          line_id: item.id,
-          status: 'added_manually',
-          original_product_id: null,
-          final_product_id: item.matched_product_id,
-          original_quantity: 0,
-          final_quantity: item.quantity,
-        })
-      }
-    }
-
-    // 3. Fire-and-forget feedback to backend
+    // 2. Prepare & send feedback matching backend schema
     if (scanResult?.scan_id) {
-      aiService.sendFeedback(scanResult.scan_id, feedbackLines).catch(() => {})
+      const feedbackPayload = buildBasketFeedbackLines(
+        confirmedItems,
+        unmatchedItems,
+        scanResult,
+      )
+      aiService.sendFeedback(scanResult.scan_id, feedbackPayload.lines).catch(() => {})
     }
 
     notify.success(
@@ -705,6 +651,24 @@ export function BasketReviewSheet({
           </div>
 
           <div className="flex items-center gap-2">
+            {onScanAgain && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (confirmedItems.length > 0) {
+                    setShowScanAgainChoice(true)
+                  } else {
+                    onScanAgain?.('replace')
+                  }
+                }}
+                className="gap-1.5"
+              >
+                <Camera className="w-4 h-4 text-primary" />
+                <span>{t('pos:aiScanAgain', 'Scan again')}</span>
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -726,6 +690,55 @@ export function BasketReviewSheet({
           </div>
         </div>
       </div>
+
+      {/* SCAN AGAIN CHOICE MODAL */}
+      <ResponsiveDialog
+        open={showScanAgainChoice}
+        onOpenChange={setShowScanAgainChoice}
+        title={t('pos:aiScanAgainTitle', 'Scan again?')}
+        description={t(
+          'pos:aiScanAgainDesc',
+          'Do you want to add newly detected items to your current review list, or start a fresh scan?',
+        )}
+        className="sm:max-w-sm"
+      >
+        <div className="flex flex-col gap-2.5 p-1 pt-2">
+          <Button
+            type="button"
+            className="w-full justify-start gap-2 h-11 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => {
+              setShowScanAgainChoice(false)
+              onScanAgain?.('add')
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t('pos:aiScanAgainMerge', 'Add to current items')}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start gap-2 h-11 text-xs font-semibold"
+            onClick={() => {
+              setShowScanAgainChoice(false)
+              onScanAgain?.('replace')
+            }}
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>{t('pos:aiScanAgainReplace', 'Replace all items')}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowScanAgainChoice(false)}
+            className="text-xs text-muted-foreground mt-1"
+          >
+            {t('common:cancel', 'Cancel')}
+          </Button>
+        </div>
+      </ResponsiveDialog>
     </ResponsiveDialog>
   )
 }

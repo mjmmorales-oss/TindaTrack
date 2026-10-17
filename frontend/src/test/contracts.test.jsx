@@ -36,6 +36,14 @@ import aiExperimentCreateFixture from '../../../contracts/payloads/ai-experiment
 import authLoginFixture from '../../../contracts/payloads/auth-login.json'
 import authRegisterFixture from '../../../contracts/payloads/auth-register.json'
 import authForgotPasswordFixture from '../../../contracts/payloads/auth-forgot-password.json'
+import aiBasketScanResponseFixture from '../../../contracts/responses/ai-basket-scan.json'
+import aiProductScanResponseFixture from '../../../contracts/responses/ai-product-scan.json'
+import {
+  normalizeBasketResult,
+  normalizeProductScanResult,
+  buildBasketFeedbackLines,
+} from '@/lib/aiContract'
+import { aiService as mockAiService } from '@/services/mock/aiService'
 
 vi.mock('@/lib/notify', () => ({
   notify: {
@@ -258,6 +266,9 @@ describe('F3: Form <-> API Contract & Payload Fixtures Audit', () => {
       expect(typeof settingsUpdateFixture.default_reorder_level).toBe('number')
       expect(typeof settingsUpdateFixture.ai_enabled).toBe('boolean')
       expect(typeof settingsUpdateFixture.visual_search_enabled).toBe('boolean')
+      expect(typeof settingsUpdateFixture.auto_capture_basket).toBe('boolean')
+      expect(typeof settingsUpdateFixture.auto_capture_stockin).toBe('boolean')
+      expect(['low', 'medium', 'normal', 'high']).toContain(settingsUpdateFixture.auto_capture_sensitivity)
     })
 
     it('validates auth fixtures match auth schemas', () => {
@@ -287,6 +298,92 @@ describe('F3: Form <-> API Contract & Payload Fixtures Audit', () => {
       expect(Array.isArray(productEmbeddingFixture.vector)).toBe(true)
 
       expect(aiExperimentCreateFixture.name).toBeTruthy()
+    })
+
+    describe('AI Scan response fixtures and contract normalizers', () => {
+      it('normalizes real-API ai-basket-scan response fixture accurately', () => {
+        const normalized = normalizeBasketResult(aiBasketScanResponseFixture)
+        expect(normalized.scan_id).toBe(101)
+        expect(normalized.items.length).toBe(1)
+        expect(normalized.items[0].matched_product_id).toBe(1)
+        expect(normalized.items[0].matched_product.name).toBe('Coca-Cola Original 330ml')
+        expect(normalized.items[0].matched_product.price).toBe(25.0)
+        expect(normalized.items[0].quantity).toBe(2)
+        expect(normalized.unmatched_items.length).toBe(1)
+        expect(normalized.unmatched_items[0].label).toBe('Unknown snack pouch')
+      })
+
+      it('normalizes real-API ai-product-scan response fixture accurately', () => {
+        const normalized = normalizeProductScanResult(aiProductScanResponseFixture, [
+          { id: 2, name: 'Snacks' },
+        ])
+        expect(normalized.scan_id).toBe(202)
+        expect(normalized.products.length).toBe(1)
+        const p = normalized.products[0]
+        expect(p.suggested_name).toBe('Piattos Cheese 85g')
+        expect(p.suggested_category_id).toBe(2)
+        expect(p.suggested_barcode).toBe('4800016644208')
+        expect(p.estimated_count).toBe(5)
+        expect(p.official_name).toBe('Piattos Cheese Flavored Potato Crisps 85g')
+      })
+
+      it('validates mock aiService returns normalized shapes matching contracts', async () => {
+        const basket = await mockAiService.basketScan(new Blob(['test'], { type: 'image/jpeg' }))
+        expect(basket).toHaveProperty('scan_id')
+        expect(Array.isArray(basket.items)).toBe(true)
+        expect(Array.isArray(basket.unmatched_items)).toBe(true)
+        if (basket.items.length > 0) {
+          expect(basket.items[0]).toHaveProperty('matched_product_id')
+          expect(basket.items[0]).toHaveProperty('matched_product')
+          expect(basket.items[0]).toHaveProperty('quantity')
+        }
+
+        const products = await mockAiService.productScan(new Blob(['test'], { type: 'image/jpeg' }), {
+          categories: [{ id: 1, name: 'Drinks' }, { id: 2, name: 'Snacks' }],
+        })
+        expect(products).toHaveProperty('scan_id')
+        expect(Array.isArray(products.products)).toBe(true)
+        expect(products.products[0]).toHaveProperty('suggested_name')
+        expect(products.products[0]).toHaveProperty('suggested_category_id')
+        // Parity check: category Drink is matched to id 1
+        const drinksProduct = products.products.find((p) => p.suggested_name.includes('C2'))
+        expect(drinksProduct?.suggested_category_id).toBe(1)
+      })
+
+      it('verifies buildBasketFeedbackLines matches contracts/payloads/ai-feedback.json schema', () => {
+        const originalScan = {
+          scan_id: 101,
+          items: [
+            {
+              id: 'item_1',
+              matched_product_id: 1,
+              original_product_id: 1,
+              quantity: 2,
+              original_quantity: 2,
+              confidence: 0.94,
+            },
+          ],
+          unmatched_items: [],
+        }
+        const confirmedItems = [
+          {
+            id: 'item_1',
+            matched_product_id: 1,
+            quantity: 2,
+            is_manual: false,
+          },
+        ]
+
+        const generated = buildBasketFeedbackLines(confirmedItems, [], originalScan)
+        expect(generated.lines.length).toBe(1)
+        const line = generated.lines[0]
+        expect(line.line_type).toBe(aiFeedbackFixture.lines[0].line_type)
+        expect(line.suggested_product_id).toBe(aiFeedbackFixture.lines[0].suggested_product_id)
+        expect(line.suggested_quantity).toBe(aiFeedbackFixture.lines[0].suggested_quantity)
+        expect(line.final_product_id).toBe(aiFeedbackFixture.lines[0].final_product_id)
+        expect(line.final_quantity).toBe(aiFeedbackFixture.lines[0].final_quantity)
+        expect(line.action).toBe(aiFeedbackFixture.lines[0].action)
+      })
     })
   })
 })

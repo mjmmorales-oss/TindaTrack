@@ -10,12 +10,10 @@ import {
   Sparkles,
   HelpCircle,
   Loader2,
-  Check,
-  RotateCcw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CameraScanner } from '@/components/scanner/CameraScanner'
 import { AiCapture } from '@/components/ai/AiCapture'
 import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
@@ -88,6 +86,7 @@ export function BarcodeCapture({
   const [mode, setMode] = useState(() => (defaultMode === 'ai_basket' && hideAiBasket ? 'barcode' : defaultMode))
   const [value, setValue] = useState('')
   const [validationError, setValidationError] = useState('')
+  const [isBasketAnalyzing, setIsBasketAnalyzing] = useState(false)
 
   // AI First-Use Privacy Consent
   const {
@@ -402,14 +401,24 @@ export function BarcodeCapture({
   }
 
   // Handle AI Basket photo upload/capture
-  const handleBasketCaptured = async (blob) => {
+  const handleBasketCaptured = async (blob, captureMode = 'manual') => {
+    setIsBasketAnalyzing(true)
+    let objectUrl = null
     try {
-      const res = await aiService.basketScan(blob)
+      if (blob) {
+        objectUrl = URL.createObjectURL(blob)
+      }
+      const res = await aiService.basketScan(blob, { capture_mode: captureMode })
       beep()
       vibrate()
-      onBasketScanned?.(res)
+      onBasketScanned?.(res, objectUrl)
     } catch (err) {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
       notify.error(t('scanner:aiBasketFailed', 'Failed to analyze basket.'), err?.message)
+    } finally {
+      setIsBasketAnalyzing(false)
     }
   }
 
@@ -434,7 +443,7 @@ export function BarcodeCapture({
             {visualSearchEnabled && (
               <TabsTrigger value="visual" className="gap-1.5 text-xs font-semibold">
                 <Eye className="h-3.5 w-3.5 text-primary" />
-                <span>{t('scanner:modeVisual', 'Visual')}</span>
+                <span>{t('scanner:modeVisual', 'Visual Match')}</span>
               </TabsTrigger>
             )}
 
@@ -599,7 +608,7 @@ export function BarcodeCapture({
                     ) : (
                       <>
                         <Eye className="h-3 w-3 text-primary" />
-                        <span>{t('scanner:modeVisual', 'Visual Search')}</span>
+                        <span>{t('scanner:modeVisual', 'Visual Match')}</span>
                       </>
                     )}
                   </div>
@@ -721,6 +730,9 @@ export function BarcodeCapture({
         <div className="space-y-3">
           <AiCapture
             onCapture={handleBasketCaptured}
+            isAnalyzing={isBasketAnalyzing}
+            autoCaptureEnabled={true}
+            featureKey="basket"
             hint={t('scanner:aiBasketHint', 'Point camera at the customer basket, then tap Capture.')}
           />
         </div>

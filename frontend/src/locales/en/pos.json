@@ -170,5 +170,19 @@
   "aiConsentReviewTitle": "Review Before Adding",
   "aiConsentReviewDesc": "Results are suggestions; always review detected items and prices before confirming.",
   "aiConsentAccept": "I Understand & Accept",
-  "aiConsentDecline": "Not Now"
+  "aiConsentDecline": "Not Now",
+  "aiAutoCapture": "Auto-Capture",
+  "aiAutoCaptureTooltip": "Takes photo automatically when camera is steady",
+  "aiHoldingSteady": "Hold steady...",
+  "aiCapturingIn": "Capturing in {{seconds}}s... Hold steady",
+  "aiCooldown": "Cooldown...",
+  "aiSceneUnchanged": "Scene unchanged — introduce new items to auto-scan",
+  "aiSceneTooDark": "Lighting too low for auto-capture",
+  "aiMovementWarning": "Camera moving too much? Tap Capture manually.",
+  "aiScanAgain": "Scan again",
+  "aiScanAgainTitle": "Scan again?",
+  "aiScanAgainDesc": "Do you want to add newly detected items to your current review list, or start a fresh scan?",
+  "aiScanAgainMerge": "Add to current items",
+  "aiScanAgainReplace": "Replace all items",
+  "aiTapNow": "Tap for now"
 }
