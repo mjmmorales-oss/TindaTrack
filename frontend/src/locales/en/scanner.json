@@ -108,5 +108,17 @@
   "aiBasketHint": "Point camera at the customer basket, then tap Capture.",
   "aiSendingToPos": "Processing basket with AI...",
   "aiBasketDetected": "AI Basket ({{count}} items detected)",
-  "aiBasketFailed": "Failed to analyze basket."
+  "aiBasketFailed": "Failed to analyze basket.",
+  "modeBarcode": "Barcode",
+  "modeVisual": "Visual",
+  "modeAiBasket": "AI Basket",
+  "visualHoldCloser": "Hold the product closer / try another angle",
+  "visualSearching": "Identifying product...",
+  "visualDownloading": "Downloading visual model...",
+  "visualUnavailable": "On-device visual search is unavailable on this browser/device. Please use barcode scanning.",
+  "visualMatchConfidence": "{{percent}}% match",
+  "notThisOne": "Not this one?",
+  "teachPhoto": "Teach TindaTrack this photo",
+  "teachingSuccess": "Successfully saved reference photo for {{name}}.",
+  "pickCorrectProduct": "Pick the correct product"
 }

@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Loader2,
   Image as ImageIcon,
+  Sparkles,
 } from 'lucide-react'
 
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -28,6 +29,7 @@ import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 import { PwaInstallCard } from '@/components/common/PwaInstallPrompt'
 import { ReceiptView } from '@/features/pos/components/ReceiptView'
+import { AiSettingsCard } from '@/features/settings/components/AiSettingsCard'
 import {
   useSettings,
   useUpdateSettings,
@@ -147,6 +149,10 @@ export function SettingsPage() {
             <TabsTrigger value="inventory" className="flex-1 sm:flex-none gap-2">
               <Boxes className="h-4 w-4" />
               {t('settings:inventoryTab')}
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex-1 sm:flex-none gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t('settings:aiTab')}
             </TabsTrigger>
             <TabsTrigger value="data" className="flex-1 sm:flex-none gap-2">
               <Database className="h-4 w-4" />
@@ -419,7 +425,12 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 4: Data Management & Demo Data */}
+        {/* TAB 4: AI & Visual Search */}
+        <TabsContent value="ai" className="space-y-6">
+          <AiSettingsCard />
+        </TabsContent>
+
+        {/* TAB 5: Data Management & Demo Data */}
         <TabsContent value="data" className="space-y-6">
           <Card className="border-border">
             <CardHeader>

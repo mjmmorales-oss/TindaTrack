@@ -241,5 +241,13 @@
   "aiBulkCreateError": "Failed to add products",
   "aiSelectedReady": "{{count}} products ready to add",
   "aiSavingBulk": "Adding products...",
-  "aiSaveSelectedBtn": "Save selected ({{count}})"
+  "aiSaveSelectedBtn": "Save selected ({{count}})",
+  "referencePhotosTitle": "Visual Recognition Photos",
+  "referencePhotosDesc": "Extra angles and real-store lighting to improve visual search",
+  "noReferencePhotos": "No extra reference photos yet. Take photos from different angles to make visual search faster and more accurate.",
+  "addReferencePhoto": "Add Reference Photo",
+  "addReferencePhotoDesc": "Take a photo of {{name}} in real store lighting to teach visual search.",
+  "referencePhotoSavedDesc": "Saved extra photo to improve visual search recognition.",
+  "referencePhotoRemoved": "Reference vector removed.",
+  "referenceCaptureHint": "Hold the product steady in the center of the frame."
 }

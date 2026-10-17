@@ -1467,12 +1467,41 @@ Tracking implementation of v2.0.0 tasks (A0–A10):
 - [x] **A2 — Database for AI Scans, Feedback, Metrics & Embeddings**: Migrations for `ai_scans`, `ai_scan_feedback`, `ai_scan_images`, `product_embeddings`, `ai_experiments`, `ai_experiment_cases`; `sale_items.add_method`, `sales.cart_started_at`, `sales.cart_duration_ms`; Settings keys; models, casts, factories.
 - [x] **A3 — AI Endpoints**: `/api/ai/status`, `/api/ai/basket-scan`, `/api/ai/product-scan`, `/api/ai/scans/{scan}/feedback`, `/api/ai/scans`, `/api/ai/scans/{scan}/image`, `/api/ai/metrics`, `/api/ai/metrics/export.csv`, `/api/scanner/ai-basket`, `/api/products/embeddings`, `/api/products/bulk`; Pest tests.
 - [x] **A4 — Frontend AI Capture & POS Basket Scan**: `imagePrep.js`, `AiCapture.jsx`, `services/ai.js`, `BasketReviewSheet.jsx`, POS sparkles button, phone `/scan` Basket photo mode, cart timing & `add_method` tracking.
-- [ ] **A5 — AI Bulk Product Add**: Products page header dropdown menu, `AiProductReviewTable.jsx`, duplicate detection & warning chips, crop upload & bulk create.
-- [ ] **A6 — On-Device Visual Search**: Transformers.js, Web Worker (`embedder.worker.js`), `BarcodeCapture` Visual tab, visual index builder in Settings, correction learning loop.
+- [x] **A5 — AI Bulk Product Add**: Products page header dropdown menu, `AiProductReviewTable.jsx`, duplicate detection & warning chips, crop upload & bulk create.
+- [x] **A6 — On-Device Visual Search**: Transformers.js, Web Worker (`embedder.worker.js`), `BarcodeCapture` Visual tab, visual index builder in Settings, correction learning loop.
 - [ ] **A7 — AI Lab & Research**: Route `/ai-lab`, metrics cards & charts, experiment runner with ground truth evaluation, CSV export, `docs/RESEARCH.md`.
 - [ ] **A8 — Settings, Privacy & Cashier Safety**: Settings AI Card, first-use consent modal, cashier vs owner permission checks, accessibility.
 - [ ] **A9 — Documentation**: `docs/AI.md`, `docs/RESEARCH.md`, updated `docs/DEPLOY.md`, `README.md`, `docs/API.md`, `docs/CHANGELOG.md`.
 - [ ] **A10 — Final Hardening, Merging & Tagging**: `docs/AUDIT-v2.md`, `smoke-ai.mjs`, all gates clean, merge `feat/ai-v2` to `main`, tag `v2.0.0`.
+
+### A6 Log (On-Device Visual Search):
+- **Transformers.js & Model Architecture**:
+  - Installed `@huggingface/transformers` (v4.3.1).
+  - Selected model `onnx-community/dinov2-small` (`VISUAL_MODEL_ID`) with fallback to `Xenova/dinov2-small`.
+  - Configured Rollup manualChunks to isolate `@huggingface` and `onnxruntime` into `vendor-transformers` chunk, keeping the main entry chunk lightweight.
+  - Excluded `.wasm`, `.onnx`, and `ort-*` from PWA Workbox precache to keep service worker bundle size under 4MB.
+- **Dedicated Web Worker (`src/workers/embedder.worker.js`)**:
+  - Handles `INIT`, `EMBED_IMAGE`, and `COMPUTE_SIMILARITY` off the main UI thread.
+  - Dynamically detects WebGPU (`navigator.gpu`) with fallback to WASM, using `dtype: 'q8'`.
+  - Normalizes feature vectors using L2 norm: $\hat{x} = x / \|x\|_2$.
+- **Client Search Engine (`src/lib/visualSearch.js`)**:
+  - Singleton Web Worker manager with request ID matching and download progress events.
+  - Image rasterization helper for HTMLImageElement, Canvas, ImageData, SVG, and Blob sources.
+  - High-performance dot-product cosine similarity engine and top-K search with confidence floor ($\ge 0.60$) and margin threshold ($\ge 0.03$).
+  - In-memory index caching with `getVisualIndex()` and `invalidateVisualIndex()`.
+- **Identify Mode in `BarcodeCapture.jsx`**:
+  - Implemented 3 mode tabs: **Barcode | Visual | AI basket** (hiding disabled feature tabs).
+  - Center square guide overlay with corner reticles and animated scanning pulse.
+  - 700ms interval embedding loop from camera video stream.
+  - Renders top 3 matches as tappable product chips with thumbnail, name, price, and match percentage.
+  - Integrated "Teach TindaTrack this photo" learning loop for owner corrections (`source: 'correction'`).
+  - Graceful fallback UI when WebGPU/WASM is unavailable.
+- **Visual Index Builder in Settings (`AiSettingsCard.jsx`) & Reference Photos (`ReferencePhotosSection.jsx`)**:
+  - Added "Build visual index" in Settings → AI tab with live progress bar and summary report.
+  - Added "Visual Recognition Photos" in `ProductDetailPage.jsx` for owner to add 1–10 reference photos (`source: 'reference_photo'`).
+- **Tests & Verification**:
+  - Created 8 unit tests in `src/test/visualSearch.test.jsx` covering cosine top-K, confidence/margin thresholds, cache invalidation, cart store addition with `'visual'`, learning loop corrections, and lazy loading chunk isolation.
+  - All tests passing. `check:i18n`, `check:mobile`, `check:pwa`, `build`, and `check-prod-bundle` all 100% green.
 
 ### A0 Log (Preflight & AI Feature Map):
 - **Baseline Metrics (Recorded at v1.4.0 on `main` / `feat/ai-v2`)**:

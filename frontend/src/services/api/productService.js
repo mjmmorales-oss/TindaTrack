@@ -83,6 +83,30 @@ export const productService = {
   async deleteImage(id) {
     return apiClient.delete(`/products/${id}/image`)
   },
+
+  /**
+   * Retrieves visual search embeddings for building/updating local index.
+   * GET /api/products/embeddings
+   */
+  async getEmbeddings(params = {}) {
+    return apiClient.get('/products/embeddings', params)
+  },
+
+  /**
+   * Stores a visual embedding vector for a product (owner only).
+   * POST /api/products/{id}/embeddings
+   */
+  async addEmbedding(productId, data) {
+    return apiClient.post(`/products/${productId}/embeddings`, data)
+  },
+
+  /**
+   * Deletes an embedding vector (owner only).
+   * DELETE /api/products/{productId}/embeddings/{id}
+   */
+  async deleteEmbedding(productId, id) {
+    return apiClient.delete(`/products/${productId}/embeddings/${id}`)
+  },
 }
 
 export default productService

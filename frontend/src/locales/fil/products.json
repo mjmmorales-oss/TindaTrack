@@ -241,5 +241,13 @@
   "aiBulkCreateError": "Nabigong idagdag ang mga produkto",
   "aiSelectedReady": "{{count}} paninda ang handang idagdag",
   "aiSavingBulk": "Idinaragdag ang mga produkto...",
-  "aiSaveSelectedBtn": "I-save ang napili ({{count}})"
+  "aiSaveSelectedBtn": "I-save ang napili ({{count}})",
+  "referencePhotosTitle": "Mga Litrato para sa Visual Recognition",
+  "referencePhotosDesc": "Iba't ibang anggulo at ilaw para mapabilis ang visual search",
+  "noReferencePhotos": "Wala pang karagdagang litrato. Kumuha ng litrato sa iba't ibang anggulo para mas madaling makilala ng visual search.",
+  "addReferencePhoto": "Magdagdag ng Reference Photo",
+  "addReferencePhotoDesc": "Kumuha ng litrato ng {{name}} sa ilaw ng tindahan para ituro sa visual search.",
+  "referencePhotoSavedDesc": "Nai-save ang karagdagang litrato para sa visual search.",
+  "referencePhotoRemoved": "Naalis ang reference vector.",
+  "referenceCaptureHint": "Ihawak nang maayos ang paninda sa gitna ng frame."
 }

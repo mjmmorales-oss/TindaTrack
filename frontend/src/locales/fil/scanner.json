@@ -108,5 +108,17 @@
   "aiBasketHint": "Itapat ang camera sa basket ng suki, pagkatapos ay pindutin ang Capture.",
   "aiSendingToPos": "Pinoproseso ang basket gamit ang AI...",
   "aiBasketDetected": "AI Basket ({{count}} paninda ang nakita)",
-  "aiBasketFailed": "Pumalya sa pagsusuri ng basket."
+  "aiBasketFailed": "Pumalya sa pagsusuri ng basket.",
+  "modeBarcode": "Barcode",
+  "modeVisual": "Visual",
+  "modeAiBasket": "AI Basket",
+  "visualHoldCloser": "Ilapit ang produkto o subukan ang ibang anggulo",
+  "visualSearching": "Kinikilala ang produkto...",
+  "visualDownloading": "Dina-download ang visual model...",
+  "visualUnavailable": "Hindi magamit ang visual search sa device na ito. Gamitin ang barcode scanner.",
+  "visualMatchConfidence": "{{percent}}% tugma",
+  "notThisOne": "Hindi ito?",
+  "teachPhoto": "Ituro ang litratong ito sa TindaTrack",
+  "teachingSuccess": "Matagumpay na naituro ang litrato para sa {{name}}.",
+  "pickCorrectProduct": "Piliin ang tamang produkto"
 }

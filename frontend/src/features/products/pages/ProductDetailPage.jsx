@@ -34,6 +34,7 @@ import { StockLevelBar } from '@/components/common/StockLevelBar'
 import { ErrorState } from '@/components/common/ErrorState'
 import { ProductFormDialog } from '@/features/products/components/ProductFormDialog'
 import { AdjustStockDialog } from '@/features/products/components/AdjustStockDialog'
+import { ReferencePhotosSection } from '@/features/products/components/ReferencePhotosSection'
 import { useProduct } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useStockMovements } from '@/features/inventory/hooks/useInventory'
@@ -487,6 +488,9 @@ export function ProductDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Visual recognition reference photos (owner only) */}
+      <ReferencePhotosSection product={product} canManage={canManage} />
 
       {/* CARD 5: Recent Transactions with this product */}
       <Card>

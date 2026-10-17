@@ -628,6 +628,14 @@ export function PosPage() {
         continuous={true}
         title={t('pos:scanSheetTitle', 'Scan Barcode in POS')}
         onDetected={(code) => handleScannedCode(code, { source: 'camera' })}
+        onProductSelect={(product) => {
+          handleAddToCart(product, 1, 'visual')
+        }}
+        onBasketScanned={(result) => {
+          setIsScannerSheetOpen(false)
+          setAiBasketData(result)
+          setIsBasketReviewOpen(true)
+        }}
       />
 
       {/* PHONE PAIRING MODAL */}
