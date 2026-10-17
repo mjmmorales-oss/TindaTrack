@@ -401,14 +401,14 @@ export function BarcodeCapture({
   }
 
   // Handle AI Basket photo upload/capture
-  const handleBasketCaptured = async (blob) => {
+  const handleBasketCaptured = async (blob, captureMode = 'manual') => {
     setIsBasketAnalyzing(true)
     let objectUrl = null
     try {
       if (blob) {
         objectUrl = URL.createObjectURL(blob)
       }
-      const res = await aiService.basketScan(blob)
+      const res = await aiService.basketScan(blob, { capture_mode: captureMode })
       beep()
       vibrate()
       onBasketScanned?.(res, objectUrl)
@@ -731,6 +731,8 @@ export function BarcodeCapture({
           <AiCapture
             onCapture={handleBasketCaptured}
             isAnalyzing={isBasketAnalyzing}
+            autoCaptureEnabled={true}
+            featureKey="basket"
             hint={t('scanner:aiBasketHint', 'Point camera at the customer basket, then tap Capture.')}
           />
         </div>

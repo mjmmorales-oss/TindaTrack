@@ -285,11 +285,11 @@ export function PhoneScannerPage() {
   }
 
   // Handle AI basket photo capture from phone
-  const handleAiBasketPhoto = async (blob) => {
+  const handleAiBasketPhoto = async (blob, captureMode = 'manual') => {
     setIsSendingAi(true)
     setAiStep(t('scanner:aiSendingToPos', 'Processing basket with AI...'))
     try {
-      const res = await sendAiBasket(blob)
+      const res = await sendAiBasket(blob, { capture_mode: captureMode })
       beep()
       vibrate(100)
       setIsAiCapturing(false)

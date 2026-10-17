@@ -112,9 +112,12 @@ export const scannerService = {
    *
    * @param {Blob|File} imageBlob
    */
-  async sendAiBasket(imageBlob) {
+  async sendAiBasket(imageBlob, options = {}) {
     const formData = new FormData()
     formData.append('image', imageBlob, 'basket.jpg')
+    if (options.capture_mode) {
+      formData.append('capture_mode', options.capture_mode)
+    }
     const res = await handleDeviceRequest(
       deviceAxios.post('/scanner/ai-basket', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
