@@ -12,10 +12,15 @@ import { NAV_GROUPS } from '@/config/nav'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useLowStockProducts } from '@/features/products/hooks/useProducts'
 import { useUtangSummary } from '@/features/utang/hooks/useUtang'
+import { useSettings } from '@/features/settings/hooks/useSettings'
 
 export function NavMain() {
   const { can } = usePermissions()
   const { t } = useTranslation()
+
+  const { data: settingsRes } = useSettings()
+  const settings = settingsRes?.data ?? settingsRes ?? {}
+  const isResearchMode = Boolean(settings.ai_research_mode) || import.meta.env.DEV
 
   const { data: lowStockRes } = useLowStockProducts()
   const { data: utangSummaryRes } = useUtangSummary()
@@ -51,6 +56,7 @@ export function NavMain() {
       '/customers': t('nav:customers', 'Customers'),
       '/utang': t('nav:utang', 'Utang / Credit'),
       '/reports': t('nav:reports', 'Reports'),
+      '/ai-lab': t('nav:ai_lab', 'AI Lab'),
       '/staff': t('nav:staff', 'Staff Management'),
       '/settings': t('nav:settings', 'Settings'),
     }
@@ -60,6 +66,7 @@ export function NavMain() {
   // Filter groups and items based on abilities
   const accessibleGroups = NAV_GROUPS.map((group) => {
     const visibleItems = group.items.filter((item) => {
+      if (item.requiresAiResearch && !isResearchMode) return false
       if (!item.ability) return true
       return can(item.ability)
     })

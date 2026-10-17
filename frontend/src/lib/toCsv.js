@@ -32,4 +32,23 @@ export function exportToCsv(data = [], columns = [], filename = 'export.csv') {
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Triggers a download of a raw CSV string.
+ *
+ * @param {string} csvText - Raw CSV content
+ * @param {string} [filename='export.csv'] - File name for download
+ */
+export function downloadCsvText(csvText, filename = 'export.csv') {
+  if (!csvText) return
+  const blob = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename.endsWith('.csv') ? filename : `${filename}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
 export default exportToCsv

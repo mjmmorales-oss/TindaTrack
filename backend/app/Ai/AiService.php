@@ -168,7 +168,7 @@ class AiService
         $imageData = $this->validateImage($image);
 
         // Fetch active catalog (max 400 items)
-        $query = Product::where('is_active', true)->with('category');
+        $query = Product::where('is_active', true)->with(['category', 'image']);
         $totalActive = $query->count();
 
         // 400 best selling or most recently updated
@@ -256,7 +256,7 @@ class AiService
                     'name' => $product->name,
                     'price' => (float) $product->price,
                     'stock' => $stock,
-                    'image_url' => $product->image_url ?? ($product->image ? url("/api/products/{$product->id}/image") : null),
+                    'image_url' => $product->image_url ?? (($product->relationLoaded('image') && $product->image) ? url("/api/products/{$product->id}/image") : null),
                     'unit' => $product->unit ?? 'pc',
                     'barcode' => $product->barcode,
                 ],

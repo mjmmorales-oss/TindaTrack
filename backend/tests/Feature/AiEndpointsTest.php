@@ -329,3 +329,68 @@ test('when ai_enabled is false, endpoints return 403 ai_disabled', function () {
             'code' => 'ai_disabled',
         ]);
 });
+
+test('cashier cannot access AI experiments', function () {
+    $forbiddenRes = $this->withHeader('Authorization', "Bearer {$this->cashierToken}")
+        ->getJson('/api/ai/experiments');
+    $forbiddenRes->assertStatus(403);
+});
+
+test('owner can manage AI experiments lifecycle and export csv', function () {
+    // 1. Owner creates an experiment
+    $createRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->postJson('/api/ai/experiments', [
+            'name' => 'Controlled Basket Evaluation',
+            'type' => 'basket',
+            'notes' => 'Evaluation of 20 baskets under normal store lighting',
+        ]);
+    $createRes->assertStatus(201)
+        ->assertJsonPath('data.name', 'Controlled Basket Evaluation');
+
+    $experimentId = $createRes->json('data.id');
+
+    // 2. Owner runs a test case with ground truth
+    $category = Category::factory()->create();
+    $product1 = Product::factory()->create(['category_id' => $category->id, 'price' => 20]);
+    $product2 = Product::factory()->create(['category_id' => $category->id, 'price' => 35]);
+
+    $fakeImage = UploadedFile::fake()->image('test_case.png', 640, 480);
+    $groundTruth = [
+        ['product_id' => $product1->id, 'quantity' => 2],
+        ['product_id' => $product2->id, 'quantity' => 1],
+    ];
+
+    $caseRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->postJson("/api/ai/experiments/{$experimentId}/cases", [
+            'image' => $fakeImage,
+            'ground_truth' => $groundTruth,
+        ]);
+
+    $caseRes->assertStatus(201)
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'case_number',
+                'is_correct',
+                'latency_ms',
+                'metrics' => ['precision', 'recall', 'mae'],
+            ],
+        ]);
+
+    // 3. Export CSV
+    $csvRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->get("/api/ai/experiments/{$experimentId}/export.csv");
+    $csvRes->assertStatus(200)
+        ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    expect($csvRes->getContent())->toContain('case_number,is_correct,latency_ms');
+
+    // 4. Reset experiment
+    $resetRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->postJson("/api/ai/experiments/{$experimentId}/reset");
+    $resetRes->assertStatus(200);
+
+    $showRes = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->getJson("/api/ai/experiments/{$experimentId}");
+    $showRes->assertStatus(200);
+    expect($showRes->json('data.cases'))->toBeEmpty();
+});

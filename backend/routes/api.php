@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AiController;
+use App\Http\Controllers\AiExperimentController;
 use App\Http\Controllers\BarcodeLookupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
@@ -117,6 +118,15 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/ai/scans/{scan}/image', [AiController::class, 'showImage']);
         Route::get('/ai/metrics', [AiController::class, 'metrics']);
         Route::get('/ai/metrics/export.csv', [AiController::class, 'exportCsv']);
+
+        // AI research experiments & evaluation runner
+        Route::get('/ai/experiments', [AiExperimentController::class, 'index']);
+        Route::post('/ai/experiments', [AiExperimentController::class, 'store']);
+        Route::get('/ai/experiments/{experiment}', [AiExperimentController::class, 'show']);
+        Route::post('/ai/experiments/{experiment}/cases', [AiExperimentController::class, 'storeCase'])
+            ->middleware('throttle:30,1');
+        Route::post('/ai/experiments/{experiment}/reset', [AiExperimentController::class, 'reset']);
+        Route::get('/ai/experiments/{experiment}/export.csv', [AiExperimentController::class, 'exportCsv']);
 
         // Visual search embeddings & bulk intake
         Route::post('/products/{product}/embeddings', [ProductEmbeddingController::class, 'store']);

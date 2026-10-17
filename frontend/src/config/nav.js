@@ -10,6 +10,7 @@ import {
   ChartColumn,
   UserCog,
   Settings,
+  FlaskConical,
 } from 'lucide-react'
 
 export const NAV_GROUPS = [
@@ -86,6 +87,13 @@ export const NAV_GROUPS = [
         path: '/reports',
         icon: ChartColumn,
         ability: 'reports.view',
+      },
+      {
+        title: 'AI Lab',
+        path: '/ai-lab',
+        icon: FlaskConical,
+        ability: 'ai.lab',
+        requiresAiResearch: true,
       },
     ],
   },

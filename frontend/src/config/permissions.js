@@ -16,6 +16,8 @@ export const ALL_ABILITIES = [
   'staff.manage',
   'settings.manage',
   'account.manage',
+  'ai.manage',
+  'ai.lab',
 ]
 
 export const ROLE_ABILITIES = {

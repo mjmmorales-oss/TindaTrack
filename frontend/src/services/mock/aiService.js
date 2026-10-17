@@ -3,6 +3,62 @@ import { useMockDb } from '@/mocks/db'
 
 let mockScans = []
 let mockEmbeddings = []
+let mockExperiments = [
+  {
+    id: 1,
+    name: 'Controlled Basket Evaluation',
+    type: 'basket_evaluation',
+    notes: 'Standard evaluation of 20 baskets under normal store lighting',
+    cases_count: 2,
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    cases: [
+      {
+        id: 1,
+        case_number: 1,
+        is_correct: true,
+        latency_ms: 340,
+        ground_truth: [
+          { product_id: 1, name: 'Lucky Me Instant Pancit Canton Original 60g', quantity: 2 },
+          { product_id: 2, name: 'Coca-Cola Regular 290ml', quantity: 1 },
+        ],
+        predicted: [
+          { matched_product_id: 1, label: 'Lucky Me Instant Pancit Canton Original 60g', quantity: 2, confidence: 0.94 },
+          { matched_product_id: 2, label: 'Coca-Cola Regular 290ml', quantity: 1, confidence: 0.91 },
+        ],
+        metrics: {
+          precision: 1.0,
+          recall: 1.0,
+          mae: 0.0,
+          is_exact_match: true,
+          true_positives: 3,
+        },
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+      },
+      {
+        id: 2,
+        case_number: 2,
+        is_correct: false,
+        latency_ms: 385,
+        ground_truth: [
+          { product_id: 3, name: 'Datu Puti Soy Sauce 385ml', quantity: 1 },
+          { product_id: 4, name: 'Silver Swan Vinegar 385ml', quantity: 2 },
+        ],
+        predicted: [
+          { matched_product_id: 3, label: 'Datu Puti Soy Sauce 385ml', quantity: 1, confidence: 0.88 },
+          { matched_product_id: 4, label: 'Silver Swan Vinegar 385ml', quantity: 1, confidence: 0.79 },
+        ],
+        metrics: {
+          precision: 1.0,
+          recall: 0.67,
+          mae: 0.5,
+          is_exact_match: false,
+          true_positives: 2,
+        },
+        created_at: new Date(Date.now() - 1800000).toISOString(),
+      },
+    ],
+  },
+]
 
 export const aiService = {
   async getAiStatus() {
@@ -277,6 +333,131 @@ export const aiService = {
       message: `${created.length} products created successfully.`,
       products: created,
     }
+  },
+
+  async getExperiments() {
+    await delay(50)
+    return {
+      data: mockExperiments.map((e) => ({
+        id: e.id,
+        name: e.name,
+        type: e.type,
+        notes: e.notes,
+        cases_count: e.cases?.length || 0,
+        created_at: e.created_at,
+      })),
+    }
+  },
+
+  async getExperiment(id) {
+    await delay(50)
+    const exp = mockExperiments.find((e) => String(e.id) === String(id))
+    if (!exp) {
+      throw new Error('Experiment not found')
+    }
+    return {
+      data: {
+        ...exp,
+        cases_count: exp.cases?.length || 0,
+      },
+    }
+  },
+
+  async createExperiment(data) {
+    await delay(50)
+    const newExp = {
+      id: mockExperiments.length + 1,
+      name: data.name,
+      type: data.type || 'basket_evaluation',
+      notes: data.notes || '',
+      cases_count: 0,
+      cases: [],
+      created_at: new Date().toISOString(),
+    }
+    mockExperiments.unshift(newExp)
+    return {
+      data: newExp,
+      message: 'Experiment created successfully.',
+    }
+  },
+
+  async runExperimentCase(id, _imageBlob, groundTruth) {
+    await delay(300)
+    const exp = mockExperiments.find((e) => String(e.id) === String(id))
+    if (!exp) {
+      throw new Error('Experiment not found')
+    }
+
+    const gtItems = Array.isArray(groundTruth)
+      ? groundTruth
+      : typeof groundTruth === 'string'
+        ? JSON.parse(groundTruth)
+        : []
+
+    // Build predicted items from mock basketScan logic
+    const { products } = useMockDb.getState()
+    const activeProducts = (products || []).filter((p) => p.is_active)
+
+    const predicted = gtItems.map((gt, idx) => {
+      const prod = activeProducts.find((p) => String(p.id) === String(gt.product_id || gt.id))
+      return {
+        matched_product_id: prod?.id || gt.product_id || idx + 1,
+        label: prod?.name || gt.name || 'Sample Product',
+        quantity: gt.quantity || 1,
+        confidence: 0.92,
+      }
+    })
+
+    const caseNumber = (exp.cases?.length || 0) + 1
+    const newCase = {
+      id: Date.now(),
+      case_number: caseNumber,
+      is_correct: true,
+      latency_ms: 320,
+      ground_truth: gtItems,
+      predicted,
+      metrics: {
+        precision: 1.0,
+        recall: 1.0,
+        mae: 0.0,
+        is_exact_match: true,
+        true_positives: gtItems.reduce((acc, i) => acc + Number(i.quantity || 1), 0),
+      },
+      created_at: new Date().toISOString(),
+    }
+
+    exp.cases = exp.cases || []
+    exp.cases.push(newCase)
+    exp.cases_count = exp.cases.length
+
+    return {
+      data: newCase,
+      message: 'Experiment case evaluated and recorded.',
+    }
+  },
+
+  async resetExperiment(id) {
+    await delay(50)
+    const exp = mockExperiments.find((e) => String(e.id) === String(id))
+    if (exp) {
+      exp.cases = []
+      exp.cases_count = 0
+    }
+    return {
+      message: 'Experiment cases cleared successfully.',
+    }
+  },
+
+  async exportExperimentCsv(id) {
+    await delay(50)
+    const exp = mockExperiments.find((e) => String(e.id) === String(id))
+    const cases = exp?.cases || []
+    let csv = 'case_number,is_correct,latency_ms,precision,recall,mae,ground_truth_count,predicted_count,created_at\n'
+    for (const c of cases) {
+      const m = c.metrics || {}
+      csv += `${c.case_number},${c.is_correct ? 1 : 0},${c.latency_ms},${m.precision ?? 1},${m.recall ?? 1},${m.mae ?? 0},${c.ground_truth?.length || 0},${c.predicted?.length || 0},${c.created_at}\n`
+    }
+    return csv
   },
 }
 

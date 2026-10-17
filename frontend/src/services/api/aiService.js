@@ -143,6 +143,74 @@ export const aiService = {
     const res = await apiClient.post('/products/bulk', { products })
     return res?.data ?? res
   },
+
+  /**
+   * GET /api/ai/experiments
+   */
+  async getExperiments() {
+    const res = await apiClient.get('/ai/experiments')
+    return res?.data ?? res
+  },
+
+  /**
+   * GET /api/ai/experiments/{id}
+   *
+   * @param {number|string} id
+   */
+  async getExperiment(id) {
+    const res = await apiClient.get(`/ai/experiments/${id}`)
+    return res?.data ?? res
+  },
+
+  /**
+   * POST /api/ai/experiments
+   *
+   * @param {object} data
+   */
+  async createExperiment(data) {
+    const res = await apiClient.post('/ai/experiments', data)
+    return res?.data ?? res
+  },
+
+  /**
+   * POST /api/ai/experiments/{id}/cases
+   *
+   * @param {number|string} id
+   * @param {Blob|File} imageBlob
+   * @param {Array<object>} groundTruth
+   */
+  async runExperimentCase(id, imageBlob, groundTruth) {
+    const formData = new FormData()
+    formData.append('image', imageBlob, 'experiment_case.jpg')
+    formData.append('ground_truth', JSON.stringify(groundTruth))
+
+    const res = await apiClient.post(`/ai/experiments/${id}/cases`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res?.data ?? res
+  },
+
+  /**
+   * POST /api/ai/experiments/{id}/reset
+   *
+   * @param {number|string} id
+   */
+  async resetExperiment(id) {
+    const res = await apiClient.post(`/ai/experiments/${id}/reset`)
+    return res?.data ?? res
+  },
+
+  /**
+   * GET /api/ai/experiments/{id}/export.csv
+   *
+   * @param {number|string} id
+   */
+  async exportExperimentCsv(id) {
+    const res = await apiClient.get(`/ai/experiments/${id}/export.csv`, {
+      responseType: 'text',
+    })
+    return res?.data ?? res
+  },
 }
 
 export default aiService
