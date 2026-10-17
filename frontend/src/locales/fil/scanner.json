@@ -102,5 +102,11 @@
   "localhostWarning": "Nasa localhost ka. Hindi ito mabubuksan ng camera ng phone sa parehong Wi-Fi. Patakbuhin ang npm run dev:lan sa terminal o gamitin ang deployed link.",
   "apiMismatchWarning": "Naka-set ang API base sa localhost habang binubuksan mo ang app sa LAN. Hindi maaabot ng phone ang server kung localhost ang API. Patakbuhin ang npm run dev:lan.",
   "noPairingCodeReturned": "Walang pairing code na ibinalik ang server.",
-  "cannotCreateCode": "Hindi makagawa ng code: {{message}}{{statusText}}"
+  "cannotCreateCode": "Hindi makagawa ng code: {{message}}{{statusText}}",
+  "scanBasketWithAi": "I-scan ang Basket gamit ang AI",
+  "aiBasketScanTitle": "AI Basket Scan",
+  "aiBasketHint": "Itapat ang camera sa basket ng suki, pagkatapos ay pindutin ang Capture.",
+  "aiSendingToPos": "Pinoproseso ang basket gamit ang AI...",
+  "aiBasketDetected": "AI Basket ({{count}} paninda ang nakita)",
+  "aiBasketFailed": "Pumalya sa pagsusuri ng basket."
 }

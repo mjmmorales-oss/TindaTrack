@@ -102,5 +102,11 @@
   "localhostWarning": "You are accessing on localhost. The phone camera cannot reach this over Wi-Fi. Run npm run dev:lan in the terminal or use the deployed link.",
   "apiMismatchWarning": "API base is set to localhost while accessing over LAN. The phone cannot reach the server on localhost. Run npm run dev:lan.",
   "noPairingCodeReturned": "Server did not return a pairing code.",
-  "cannotCreateCode": "Could not create pairing code: {{message}}{{statusText}}"
+  "cannotCreateCode": "Could not create pairing code: {{message}}{{statusText}}",
+  "scanBasketWithAi": "Scan Basket with AI",
+  "aiBasketScanTitle": "AI Basket Scan",
+  "aiBasketHint": "Point camera at the customer basket, then tap Capture.",
+  "aiSendingToPos": "Processing basket with AI...",
+  "aiBasketDetected": "AI Basket ({{count}} items detected)",
+  "aiBasketFailed": "Failed to analyze basket."
 }

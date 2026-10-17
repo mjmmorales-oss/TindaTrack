@@ -23,5 +23,7 @@ export const getUnknownBarcodes = () => scannerService.getUnknownBarcodes()
 export const pairScanner = (data) => scannerService.pairScanner(data)
 export const sendScan = (data) => scannerService.sendScan(data)
 export const scannerHeartbeat = () => scannerService.scannerHeartbeat()
+export const sendAiBasket = (imageBlob) => scannerService.sendAiBasket(imageBlob)
 
 export default scannerService
+

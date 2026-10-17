@@ -224,6 +224,7 @@ export const saleService = {
         unit_price: prod.price,
         unit_cost: prod.cost_price,
         subtotal,
+        add_method: item.add_method || 'manual',
       })
     }
 
@@ -284,6 +285,8 @@ export const saleService = {
       amount_paid: amountPaid,
       change_amount: changeAmount,
       status: 'completed',
+      cart_started_at: payment.cart_started_at || null,
+      cart_duration_ms: payment.cart_duration_ms || null,
       created_at: nowIso,
       items: preparedItems.map((pi) => ({ ...pi, sale_id: saleId })),
     }

@@ -22,6 +22,7 @@ import { Money } from '@/components/common/Money'
 import { ReceiptView } from '@/features/pos/components/ReceiptView'
 import { NewCustomerMiniForm } from '@/features/pos/components/NewCustomerMiniForm'
 import { useCreateSale } from '@/features/sales/hooks/useSales'
+import { useCartStore } from '@/stores/cartStore'
 import { notify } from '@/lib/notify'
 
 const QUICK_AMOUNTS = [20, 50, 100, 200, 500, 1000]
@@ -107,9 +108,15 @@ export function PaymentDialog({
   const handleCheckout = async () => {
     setApiError(null)
 
+    const cartStartedAt = useCartStore.getState().cart_started_at || null
+    const cartDurationMs = cartStartedAt
+      ? Math.max(0, Date.now() - new Date(cartStartedAt).getTime())
+      : null
+
     const preparedCart = cartItems.map((item) => ({
       product_id: item.product_id,
       quantity: item.quantity,
+      add_method: item.add_method || 'manual',
     }))
 
     const paymentPayload =
@@ -118,12 +125,16 @@ export function PaymentDialog({
             payment_type: 'cash',
             amount_paid: tenderedNum,
             notes: notes.trim() || undefined,
+            cart_started_at: cartStartedAt,
+            cart_duration_ms: cartDurationMs,
           }
         : {
             payment_type: 'utang',
             customer_id: Number(selectedCustomerId),
             amount_paid: paidNowNum,
             notes: notes.trim() || undefined,
+            cart_started_at: cartStartedAt,
+            cart_duration_ms: cartDurationMs,
           }
 
     try {
