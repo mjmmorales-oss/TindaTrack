@@ -18,6 +18,7 @@ class SaleItem extends Model
         'unit_price',
         'unit_cost',
         'subtotal',
+        'add_method',
     ];
 
     protected function casts(): array

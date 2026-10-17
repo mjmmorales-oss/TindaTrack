@@ -17,6 +17,8 @@ export function ScannerSheet({
   open,
   onOpenChange,
   onDetected,
+  onProductSelect,
+  onBasketScanned,
   title,
   continuous = false,
 }) {
@@ -25,6 +27,20 @@ export function ScannerSheet({
 
   const handleDetected = (code, meta) => {
     onDetected?.(code, meta)
+    if (!continuous) {
+      onOpenChange?.(false)
+    }
+  }
+
+  const handleProductSelect = (product, meta) => {
+    onProductSelect?.(product, meta)
+    if (!continuous) {
+      onOpenChange?.(false)
+    }
+  }
+
+  const handleBasketScanned = (result) => {
+    onBasketScanned?.(result)
     if (!continuous) {
       onOpenChange?.(false)
     }
@@ -41,6 +57,8 @@ export function ScannerSheet({
       <div className="p-1">
         <BarcodeCapture
           onCode={handleDetected}
+          onProductSelect={handleProductSelect}
+          onBasketScanned={handleBasketScanned}
           continuous={continuous}
           autoFocus={open}
           cameraDefault="auto"

@@ -115,6 +115,11 @@ const AccountPage = lazy(() =>
     default: m.AccountPage,
   })),
 )
+const AiLabPage = lazy(() =>
+  import('@/features/ai-lab/pages/AiLabPage').then((m) => ({
+    default: m.AiLabPage,
+  })),
+)
 const DevUiPage = import.meta.env.DEV
   ? lazy(() =>
       import('@/features/dev/pages/DevUiPage').then((m) => ({
@@ -375,6 +380,17 @@ export const routes = [
           <RoleRoute ability="reports.view">
             <SuspenseWrap>
               <ReportsPage />
+            </SuspenseWrap>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'ai-lab',
+        handle: { breadcrumb: 'AI Lab' },
+        element: (
+          <RoleRoute roles={['owner']}>
+            <SuspenseWrap>
+              <AiLabPage />
             </SuspenseWrap>
           </RoleRoute>
         ),

@@ -352,6 +352,44 @@ export const scannerService = {
 
     return { ended: false }
   },
+
+  async sendAiBasket(imageBlob) {
+    await delay(250)
+    const token =
+      typeof sessionStorage !== 'undefined'
+        ? sessionStorage.getItem(SCANNER_TOKEN_KEY)
+        : null
+
+    const sessions = loadSessions()
+    const session = sessions.find((s) => s.device_token === token)
+
+    if (!session || session.ended_at) {
+      throw new ApiError(401, { message: 'Scanner session ended' })
+    }
+
+    session.last_seen_at = new Date().toISOString()
+
+    const { aiService } = await import('./aiService.js')
+    const result = await aiService.basketScan(imageBlob)
+
+    const event = {
+      id: ++nextEventId,
+      scanner_session_id: session.id,
+      type: 'ai_basket',
+      status: 'found',
+      quantity: result.matched_count || 1,
+      payload: result,
+      created_at: new Date().toISOString(),
+      resolved_at: null,
+    }
+
+    session.events.push(event)
+    saveSessions(sessions)
+
+    broadcastMessage('ai_basket', { sessionId: session.id, event, result })
+
+    return result
+  },
 }
 
 export default scannerService

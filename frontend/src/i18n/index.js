@@ -19,6 +19,7 @@ import enSettings from '@/locales/en/settings.json'
 import enScanner from '@/locales/en/scanner.json'
 import enValidation from '@/locales/en/validation.json'
 import enErrors from '@/locales/en/errors.json'
+import enAiLab from '@/locales/en/aiLab.json'
 
 import filCommon from '@/locales/fil/common.json'
 import filNav from '@/locales/fil/nav.json'
@@ -38,6 +39,7 @@ import filSettings from '@/locales/fil/settings.json'
 import filScanner from '@/locales/fil/scanner.json'
 import filValidation from '@/locales/fil/validation.json'
 import filErrors from '@/locales/fil/errors.json'
+import filAiLab from '@/locales/fil/aiLab.json'
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', nativeLabel: 'English (Default)' },
@@ -88,6 +90,7 @@ const resources = {
     scanner: enScanner,
     validation: enValidation,
     errors: enErrors,
+    aiLab: enAiLab,
   },
   fil: {
     common: filCommon,
@@ -108,6 +111,7 @@ const resources = {
     scanner: filScanner,
     validation: filValidation,
     errors: filErrors,
+    aiLab: filAiLab,
   },
 }
 

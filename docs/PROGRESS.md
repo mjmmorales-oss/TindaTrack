@@ -1457,3 +1457,210 @@ Tracking implementation of v1.4 tasks (P0–P6):
   6. *Cart Store Item Shape* (`src/stores/cartStore.js`):
      - `newItem` in `useCartStore.add` currently stores `{ product_id, name, price, quantity, stock, sku, unit }` but omits `image_url`. Must be updated to retain `image_url` so cart rows and mobile cart bars can display thumbnail previews.
 
+---
+
+## TindaTrack v2.0.0 Progress Tracker
+
+Tracking implementation of v2.0.0 tasks (A0–A10):
+- [x] **A0 — Preflight**: Branch `feat/ai-v2`, verified baselines, AI feature map recorded.
+- [x] **A1 — Backend AI Foundation**: `config/ai.php`, `VisionProvider` interface, `GeminiVisionProvider` + REST integration, `MockVisionProvider`, `AiService`, `php artisan ai:ping`, Pest tests.
+- [x] **A2 — Database for AI Scans, Feedback, Metrics & Embeddings**: Migrations for `ai_scans`, `ai_scan_feedback`, `ai_scan_images`, `product_embeddings`, `ai_experiments`, `ai_experiment_cases`; `sale_items.add_method`, `sales.cart_started_at`, `sales.cart_duration_ms`; Settings keys; models, casts, factories.
+- [x] **A3 — AI Endpoints**: `/api/ai/status`, `/api/ai/basket-scan`, `/api/ai/product-scan`, `/api/ai/scans/{scan}/feedback`, `/api/ai/scans`, `/api/ai/scans/{scan}/image`, `/api/ai/metrics`, `/api/ai/metrics/export.csv`, `/api/scanner/ai-basket`, `/api/products/embeddings`, `/api/products/bulk`; Pest tests.
+- [x] **A4 — Frontend AI Capture & POS Basket Scan**: `imagePrep.js`, `AiCapture.jsx`, `services/ai.js`, `BasketReviewSheet.jsx`, POS sparkles button, phone `/scan` Basket photo mode, cart timing & `add_method` tracking.
+- [x] **A5 — AI Bulk Product Add**: Products page header dropdown menu, `AiProductReviewTable.jsx`, duplicate detection & warning chips, crop upload & bulk create.
+- [x] **A6 — On-Device Visual Search**: Transformers.js, Web Worker (`embedder.worker.js`), `BarcodeCapture` Visual tab, visual index builder in Settings, correction learning loop.
+- [x] **A7 — AI Lab & Research**: Route `/ai-lab`, metrics cards & charts, experiment runner with ground truth evaluation, CSV export, `docs/RESEARCH.md`.
+- [x] **A8 — Settings, Privacy & Cashier Safety**: Settings AI Card, first-use consent modal, cashier vs owner permission checks, accessibility.
+- [ ] **A9 — Documentation**: `docs/AI.md`, `docs/RESEARCH.md`, updated `docs/DEPLOY.md`, `README.md`, `docs/API.md`, `docs/CHANGELOG.md`.
+- [ ] **A10 — Final Hardening, Merging & Tagging**: `docs/AUDIT-v2.md`, `smoke-ai.mjs`, all gates clean, merge `feat/ai-v2` to `main`, tag `v2.0.0`.
+
+### A7 Log (AI Research Lab & Benchmark Runner):
+- **Backend Architecture & Pest Tests**:
+  - `AiExperimentController.php` with full CRUD, test case evaluations, reset, and CSV export.
+  - 136 Pest tests passing, Pint clean.
+- **Frontend AI Lab Suite (`/ai-lab`)**:
+  - `AiLabPage.jsx`, `AiMetricsTab.jsx`, `AiExperimentsTab.jsx`, `NewExperimentDialog.jsx`, `NewTestCaseDialog.jsx`.
+  - Recharts checkout timing duration grouped by dominant add_method.
+  - Test case runner with ground-truth input, latency logging, and running totals banner (Accuracy, Precision, Recall, MAE).
+  - Academic methodology guide in `docs/RESEARCH.md`.
+  - 6 unit tests in `src/test/aiLab.test.jsx` (100% passing).
+
+### A8 Log (Settings, Privacy & Cashier Safety):
+- **Settings AI Card (`AiSettingsCard.jsx`)**:
+  - Master AI feature switch, provider/model readouts, daily quota progress bar.
+  - Save scan photos for research switch, research mode toggle.
+  - Visual search toggle, index builder with real-time progress, 30-day photo pruner with confirmation dialog.
+  - Clean docs reference to `docs/AI.md` (no API tokens leaked in bundle).
+- **First-Use AI Consent Dialog (`FirstUseAiConsentDialog.jsx` & `useAiConsent.js`)**:
+  - Per-user device consent stored in `localStorage` (`tt_ai_consent_{userId}`).
+  - Displays mandatory disclosure in English and Filipino:
+    *"Photos are sent to Google Gemini for analysis. Do not include people's faces. Free-tier data may be used by Google to improve its models. Results are suggestions; always review before adding."*
+  - Guarded entry points via `withConsent()`:
+    1. POS toolbar "AI Basket" button (`PosPage.jsx`).
+    2. Scanner modal "AI Basket" tab (`BarcodeCapture.jsx`).
+    3. Wireless phone scanner "Scan Basket with AI" button (`PhoneScannerPage.jsx`).
+    4. Products page "Add from photo (AI)" action (`ProductsPage.jsx`).
+- **Cashier Permissions & Role Boundaries**:
+  - Cashier is granted `pos.use` (basket scan & visual search in POS).
+  - Cashier is strictly restricted from `products.manage`, `ai.lab`, `ai.manage`, and `settings.manage`.
+  - Responsive header on `ProductsPage.jsx` provides desktop action buttons and tidy mobile dropdown menu without horizontal scrolling.
+  - Added safe fallback QueryClient handling for headless/unit tests in `useSettings` and `useProducts`.
+- **Tests & Verification**:
+  - Authored unit test suite in `src/test/aiConsent.test.jsx` (7/7 passing).
+  - All 24 Vitest test suites (247 tests) passing.
+  - All check scripts clean (`check:i18n`, `check:mobile`, `check:pwa`, `check:services`, `check:contract`, `check:mockdata`, `check-prod-bundle`, `npm run build`).
+
+### A6 Log (On-Device Visual Search):
+- **Transformers.js & Model Architecture**:
+  - Installed `@huggingface/transformers` (v4.3.1).
+  - Selected model `onnx-community/dinov2-small` (`VISUAL_MODEL_ID`) with fallback to `Xenova/dinov2-small`.
+  - Configured Rollup manualChunks to isolate `@huggingface` and `onnxruntime` into `vendor-transformers` chunk, keeping the main entry chunk lightweight.
+  - Excluded `.wasm`, `.onnx`, and `ort-*` from PWA Workbox precache to keep service worker bundle size under 4MB.
+- **Dedicated Web Worker (`src/workers/embedder.worker.js`)**:
+  - Handles `INIT`, `EMBED_IMAGE`, and `COMPUTE_SIMILARITY` off the main UI thread.
+  - Dynamically detects WebGPU (`navigator.gpu`) with fallback to WASM, using `dtype: 'q8'`.
+  - Normalizes feature vectors using L2 norm: $\hat{x} = x / \|x\|_2$.
+- **Client Search Engine (`src/lib/visualSearch.js`)**:
+  - Singleton Web Worker manager with request ID matching and download progress events.
+  - Image rasterization helper for HTMLImageElement, Canvas, ImageData, SVG, and Blob sources.
+  - High-performance dot-product cosine similarity engine and top-K search with confidence floor ($\ge 0.60$) and margin threshold ($\ge 0.03$).
+  - In-memory index caching with `getVisualIndex()` and `invalidateVisualIndex()`.
+- **Identify Mode in `BarcodeCapture.jsx`**:
+  - Implemented 3 mode tabs: **Barcode | Visual | AI basket** (hiding disabled feature tabs).
+  - Center square guide overlay with corner reticles and animated scanning pulse.
+  - 700ms interval embedding loop from camera video stream.
+  - Renders top 3 matches as tappable product chips with thumbnail, name, price, and match percentage.
+  - Integrated "Teach TindaTrack this photo" learning loop for owner corrections (`source: 'correction'`).
+  - Graceful fallback UI when WebGPU/WASM is unavailable.
+- **Visual Index Builder in Settings (`AiSettingsCard.jsx`) & Reference Photos (`ReferencePhotosSection.jsx`)**:
+  - Added "Build visual index" in Settings → AI tab with live progress bar and summary report.
+  - Added "Visual Recognition Photos" in `ProductDetailPage.jsx` for owner to add 1–10 reference photos (`source: 'reference_photo'`).
+- **Tests & Verification**:
+  - Created 8 unit tests in `src/test/visualSearch.test.jsx` covering cosine top-K, confidence/margin thresholds, cache invalidation, cart store addition with `'visual'`, learning loop corrections, and lazy loading chunk isolation.
+  - All tests passing. `check:i18n`, `check:mobile`, `check:pwa`, `build`, and `check-prod-bundle` all 100% green.
+
+### A0 Log (Preflight & AI Feature Map):
+- **Baseline Metrics (Recorded at v1.4.0 on `main` / `feat/ai-v2`)**:
+  - Git Branch: `feat/ai-v2` (cut from `main` at `v1.4.0`).
+  - Backend Suite (`./vendor/bin/pest`): 103 passed (103), 548 assertions.
+  - Backend Pint (`./vendor/bin/pint --test`): Passed.
+  - Backend Reconciliation (`php artisan tindatrack:check`): 100% reconciled (1,600 sales, 4,181 movements).
+  - Frontend Lint (`npm run lint` / oxlint): 0 errors.
+  - Frontend Build (`npm run build`): Clean production bundle compiled (94 assets).
+  - Frontend Suite (`npx vitest run`): 18 test files passed, 215 passed tests.
+  - Verification Scripts:
+    - `check-i18n.mjs`: 18 namespaces clean, 1,571 `t(...)` calls validated, 0 leaks.
+    - `check-mobile.mjs`: 0 violations, touch floor verified.
+    - `check-prod-bundle.mjs`: 94 assets scanned, 0 secrets/dev leaks.
+    - `check-pwa.mjs`: All PWA checks passed.
+    - `smoke-pairing.mjs`: 6/6 passed.
+    - `smoke-prod-like.mjs`: 9/9 passed.
+- **AI Feature Map**:
+  - **POS**: `PosPage.jsx` integrates "AI Scan" button (sparkles icon) beside barcode scan, and mobile tab in scanner sheet. `BasketReviewSheet.jsx` presents bounding boxes and item rows. `cartStore.js` records `cart_started_at` on first item, `add_method` (`tap`, `search`, `barcode`, `wedge`, `phone`, `ai_basket`, `visual`) on each line, and computes `cart_duration_ms` on checkout.
+  - **Products**: `ProductsPage.jsx` consolidates header actions into unified Add menu: "Add by barcode", "Add from photo (AI)", and "Add product". `AiProductReviewTable.jsx` enables bulk intake of up to 5 items with automated bounding box crops, duplicate detection, and category prefill.
+  - **Scanner Suite**: `BarcodeCapture.jsx` incorporates three mode tabs: Barcode | Visual | AI basket. Phone `/scan` (`PhoneScannerPage.jsx`) provides "Barcode | Basket photo" mode and submits to `/api/scanner/ai-basket`.
+  - **Sync & Realtime**: `ScannerDeviceController.php` processes `/api/scanner/ai-basket` using device token authentication and dispatches `ScannerItemScanned` with `type: 'ai_basket'`.
+  - **Enrichment**: `ProductLookupService.php` powers GTIN enrichment for detected barcodes in AI product scan.
+  - **Settings & Privacy**: `Setting.php` adds `ai_enabled`, `ai_save_scan_images`, `ai_research_mode`, and `visual_search_enabled`. First-use consent dialog explains Gemini cloud analysis and strict privacy rules (no faces).
+  - **Sales & Timing**: `CreateSaleAction.php` persists `add_method` on `SaleItem` and `cart_started_at` / `cart_duration_ms` on `Sale`.
+  - **Research & Evaluation**: `/ai-lab` presents research metrics (precision, recall, quantity error, latency, checkout speed comparisons), ground truth experiment runner (`ai_experiments`, `ai_experiment_cases`), and CSV export.
+
+### A9 Log (Documentation Suite):
+- **Technical Architecture Guide (`docs/AI.md`)**:
+  - Authored comprehensive architecture document with ASCII component diagrams, exact prompt templates and JSON schemas (`basket-v1`, `products-v1`), post-processing matching and bucketing rules, on-device vector search pipeline (DINOv2 Web Worker + cosine top-K), cost/token controls, privacy policies, failure fallbacks, model switching instructions, and `php artisan ai:ping` documentation.
+- **Evaluation Research Document (`docs/RESEARCH.md`)**:
+  - Detailed ground truth evaluation benchmark runner methodology, synthetic fixture dataset generation, precision/recall metrics formulas, and CSV export specifications.
+- **Deployment & Infrastructure Guide (`docs/DEPLOY.md`)**:
+  - Documented all Railway v2.0.0 environment variables (`GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `AI_PROVIDER`, `AI_DAILY_LIMIT`, `AI_PER_USER_PER_MINUTE`, `AI_TIMEOUT`, `AI_MAX_IMAGE_KB`, `AI_SAVE_SCAN_IMAGES`).
+  - Configured PHP upload limits in `backend/nixpacks.toml` and `backend/public/.user.ini` (`upload_max_filesize = 10M`, `post_max_size = 12M`).
+- **API Specification (`docs/API.md`)**:
+  - Updated Service to Endpoint Mapping Matrix and added detailed specifications for all 19 AI, scanner device, visual search, bulk intake, and evaluation benchmark routes.
+- **Release Documentation**:
+  - Updated `README.md` with v2.0.0 feature highlights.
+  - Updated `docs/CHANGELOG.md` with complete `[v2.0.0]` release notes.
+
+### A10 Log (Final Hardening, Release & Tagging):
+- **Full Security & Quality Audit (`docs/AUDIT-v2.md`)**:
+  - Investigated and certified 12 audit findings across security, authorisation, upload validation, database indexing, client bundle splitting, query efficiency, mobile layout, test robustness, server configuration, and config/route caching.
+  - Zero high or medium severity findings remain unaddressed.
+- **End-to-End AI Capabilities Smoke Verification (`scripts/smoke-ai.mjs`)**:
+  - Implemented automated CLI smoke test verifying cashier basket scan, cashier feedback, cashier 403 authorization fences, owner intake scan, bulk product creation, cropped image upload, metrics calculation, CSV export, phone QR pairing, device token wireless basket scan, and laptop POS event delivery.
+  - All 12 automated verification steps passing green.
+- **Clean-State Gate Verifications**:
+  - Database: `php artisan migrate:fresh --seed` (12.1s demo seeding, 1,598 sales, 4,170 movements, 100% reconciled in `tindatrack:check`).
+  - Backend Tests: 136/136 Pest tests passing (704 assertions). Pint style check passing.
+  - Frontend Lint: Oxlint clean (0 errors).
+  - Frontend Tests: 247/247 Vitest tests passing across 24 test suites.
+  - Frontend Build: Clean production build (102 assets, 0 leaks in `check-prod-bundle.mjs`).
+  - Verification Suite: `check:i18n`, `check:mobile`, `check:pwa`, `check:services`, `check:contract`, `check:mockdata` all 100% green.
+  - Smoke Verification: `npm run smoke:pairing`, `npm run smoke:prod`, `npm run smoke:ai` all passing consecutively.
+
+---
+
+## Final v2.0.0 Release Metrics
+
+| Metric | Before (v1.4.0 Baseline) | After (v2.0.0 Release) | Delta |
+|---|---|---|---|
+| **Backend Test Count** | 103 passed (548 assertions) | 136 passed (704 assertions) | +33 tests, +156 assertions |
+| **Frontend Test Count** | 215 passed (18 test suites) | 247 passed (24 test suites) | +32 tests, +6 test suites |
+| **Production Assets** | 94 built assets | 102 built assets | +8 assets (Transformers.js split) |
+| **Database Migrations** | 20 migrations | 28 migrations | +8 migrations (scans, embeddings, experiments) |
+| **Reconciled Balance** | ₱6,695.00 (100% clean) | ₱6,695.00 (100% clean) | Clean |
+
+---
+
+## Deploy-Ready Checklist
+
+Deploying TindaTrack v2.0.0 to Railway and Vercel:
+- [x] Railway backend environment variables documented in `docs/DEPLOY.md`:
+  - `AI_PROVIDER=gemini` (or `mock` for zero-key demo mode)
+  - `GEMINI_API_KEY=<your-key>`
+  - `GEMINI_MODEL=gemini-2.5-flash`
+  - `GEMINI_FALLBACK_MODEL=gemini-2.5-flash-lite`
+  - `AI_DAILY_LIMIT=500`
+  - `AI_PER_USER_PER_MINUTE=6`
+  - `AI_TIMEOUT=30`
+  - `AI_MAX_IMAGE_KB=1500`
+  - `AI_SAVE_SCAN_IMAGES=false`
+- [x] PHP upload limits configured in `backend/nixpacks.toml` and `backend/public/.user.ini` (`upload_max_filesize = 10M`, `post_max_size = 12M`).
+- [x] Zero Vercel environment variable additions required (`VITE_API_URL` and `VITE_DATA_SOURCE` remain identical).
+- [x] Full deployment instructions verified in `docs/DEPLOY.md`.
+
+---
+
+## Morning Checklist for the User
+
+When starting work on TindaTrack v2.0.0:
+
+1. **Pull & Install**:
+   ```bash
+   git pull
+   cd backend && composer install && php artisan migrate
+   cd ../frontend && npm install
+   ```
+2. **Demo Mode Test (Zero Key)**:
+   - Launch TindaTrack: `npm run dev`.
+   - Open POS → Click the **AI Scan** sparkles button in the toolbar → try a test capture.
+   - Open Products → Click **Add...** → **Add from photo (AI)** → try a photo intake.
+3. **Connect Google Gemini**:
+   - Add your Gemini API key to `backend/.env`:
+     ```ini
+     AI_PROVIDER=gemini
+     GEMINI_API_KEY=your_actual_gemini_api_key
+     ```
+   - Test connectivity:
+     ```bash
+     cd backend && php artisan config:clear && php artisan ai:ping
+     ```
+   - Try a real basket photo with 3–5 sari-sari items on the counter.
+4. **On-Device Visual Search**:
+   - Navigate to **Settings** → **AI** tab.
+   - Click **"Build visual index"** and observe the progress bar.
+   - Open **POS** → Click **Scan** → Select the **Visual** tab. Point your camera at a registered product to verify real-time on-device recognition!
+5. **AI Research Lab**:
+   - In **Settings** → **AI**, toggle **"Research Mode"** ON.
+   - Open `/ai-lab` from the sidebar navigation to inspect real-time precision/recall telemetry and run evaluation benchmark experiments.
+
+
+
+

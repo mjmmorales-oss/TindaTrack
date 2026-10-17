@@ -12,16 +12,18 @@ export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
+      cart_started_at: null,
       heldCarts: [], // Placeholder for parked carts (Phase 3)
 
       /**
        * Adds a product to the cart or increments existing quantity up to available stock.
        */
-      add: (product, quantity = 1) => {
+      add: (product, quantity = 1, add_method = 'manual') => {
         const stock = product.stock_quantity ?? product.stock ?? 999
         if (stock <= 0) return
 
         set((state) => {
+          const startedAt = state.cart_started_at || new Date().toISOString()
           const existingIndex = state.items.findIndex(
             (i) => i.product_id === product.id,
           )
@@ -34,9 +36,10 @@ export const useCartStore = create(
               ...currentItem,
               quantity: newQty,
               stock,
+              add_method: currentItem.add_method || add_method,
               image_url: currentItem.image_url ?? product.image_url ?? null,
             }
-            return { items: updatedItems }
+            return { items: updatedItems, cart_started_at: startedAt }
           }
 
           const newItem = {
@@ -45,12 +48,13 @@ export const useCartStore = create(
             price: Number(product.price),
             quantity: Math.min(stock, Math.max(1, quantity)),
             stock,
+            add_method: add_method || 'manual',
             sku: product.sku,
             unit: product.unit || 'pc',
             image_url: product.image_url ?? null,
           }
 
-          return { items: [...state.items, newItem] }
+          return { items: [...state.items, newItem], cart_started_at: startedAt }
         })
       },
 
@@ -80,8 +84,10 @@ export const useCartStore = create(
           if (!item) return state
 
           if (item.quantity <= 1) {
+            const remaining = state.items.filter((i) => i.product_id !== productId)
             return {
-              items: state.items.filter((i) => i.product_id !== productId),
+              items: remaining,
+              cart_started_at: remaining.length === 0 ? null : state.cart_started_at,
             }
           }
 
@@ -112,26 +118,30 @@ export const useCartStore = create(
        * Removes an item from the cart.
        */
       remove: (productId) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.product_id !== productId),
-        }))
+        set((state) => {
+          const remaining = state.items.filter((item) => item.product_id !== productId)
+          return {
+            items: remaining,
+            cart_started_at: remaining.length === 0 ? null : state.cart_started_at,
+          }
+        })
       },
 
       /**
        * Clears all items in current cart.
        */
-      clear: () => set({ items: [] }),
+      clear: () => set({ items: [], cart_started_at: null }),
 
       /**
        * Resets entire cart store (active items + all held carts).
        */
-      reset: () => set({ items: [], heldCarts: [] }),
+      reset: () => set({ items: [], heldCarts: [], cart_started_at: null }),
 
       /**
        * Holds current cart into heldCarts array (max 3).
        */
       holdCurrentCart: () => {
-        const { items, heldCarts } = get()
+        const { items, heldCarts, cart_started_at } = get()
         if (items.length === 0 || heldCarts.length >= 3) return false
         const total = toMoney(items.reduce((sum, i) => sum + i.quantity * i.price, 0))
         const count = items.reduce((sum, i) => sum + i.quantity, 0)
@@ -143,10 +153,12 @@ export const useCartStore = create(
               items: [...items],
               total,
               itemCount: count,
+              cart_started_at,
               savedAt: new Date().toISOString(),
             },
           ],
           items: [],
+          cart_started_at: null,
         })
         return true
       },
@@ -155,7 +167,7 @@ export const useCartStore = create(
        * Restores a held cart back to active cart.
        */
       restoreHeldCart: (id) => {
-        const { items, heldCarts } = get()
+        const { items, heldCarts, cart_started_at } = get()
         const target = heldCarts.find((c) => c.id === id)
         if (!target) return
         const newHeld = heldCarts.filter((c) => c.id !== id)
@@ -168,12 +180,14 @@ export const useCartStore = create(
             items: [...items],
             total,
             itemCount: count,
+            cart_started_at,
             savedAt: new Date().toISOString(),
           })
         }
 
         set({
           items: target.items,
+          cart_started_at: target.cart_started_at || new Date().toISOString(),
           heldCarts: newHeld,
         })
       },

@@ -431,6 +431,22 @@ export const productService = {
 
     return { data: updated }
   },
+
+  async getEmbeddings(params = {}) {
+    return aiService.getEmbeddings(params)
+  },
+
+  async addEmbedding(productId, data) {
+    return aiService.saveEmbedding(productId, data)
+  },
+
+  async saveEmbedding(productId, data) {
+    return aiService.saveEmbedding(productId, data)
+  },
+
+  async deleteEmbedding(productId, id) {
+    return aiService.deleteEmbedding(productId, id)
+  },
 }
 
 export default productService

@@ -29,6 +29,8 @@ class SaleResource extends JsonResource
             'voided_by' => $this->voided_by,
             'voided_at' => $this->voided_at?->toIso8601String(),
             'notes' => $this->notes,
+            'cart_started_at' => $this->cart_started_at?->toIso8601String(),
+            'cart_duration_ms' => $this->cart_duration_ms ? (int) $this->cart_duration_ms : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'items' => SaleItemResource::collection($this->whenLoaded('items')),

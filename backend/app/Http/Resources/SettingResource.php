@@ -22,6 +22,10 @@ class SettingResource extends JsonResource
             'low_stock_threshold' => (int) $this->low_stock_threshold,
             'currency' => $this->currency,
             'timezone' => $this->timezone,
+            'ai_enabled' => (bool) ($this->ai_enabled ?? true),
+            'ai_save_scan_images' => (bool) ($this->ai_save_scan_images ?? false),
+            'ai_research_mode' => (bool) ($this->ai_research_mode ?? false),
+            'visual_search_enabled' => (bool) ($this->visual_search_enabled ?? true),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

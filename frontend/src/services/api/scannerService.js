@@ -106,6 +106,22 @@ export const scannerService = {
     const res = await handleDeviceRequest(deviceAxios.post('/scanner/heartbeat'))
     return res?.data ?? res
   },
+
+  /**
+   * POST /api/scanner/ai-basket
+   *
+   * @param {Blob|File} imageBlob
+   */
+  async sendAiBasket(imageBlob) {
+    const formData = new FormData()
+    formData.append('image', imageBlob, 'basket.jpg')
+    const res = await handleDeviceRequest(
+      deviceAxios.post('/scanner/ai-basket', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    )
+    return res?.data ?? res
+  },
 }
 
 export default scannerService

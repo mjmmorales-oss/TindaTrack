@@ -89,6 +89,7 @@ class CreateSaleAction
                     'unit_price' => $unitPrice,
                     'unit_cost' => $unitCost,
                     'subtotal' => $subtotal,
+                    'add_method' => $item['add_method'] ?? 'tap',
                 ];
             }
 
@@ -171,6 +172,8 @@ class CreateSaleAction
                 'change_amount' => $changeAmount,
                 'status' => SaleStatus::Completed,
                 'notes' => $notes,
+                'cart_started_at' => $payment['cart_started_at'] ?? null,
+                'cart_duration_ms' => $payment['cart_duration_ms'] ?? null,
             ]);
 
             // 5. Decrement stock, create items and stock movements
@@ -190,6 +193,7 @@ class CreateSaleAction
                     'unit_price' => $itemData['unit_price'],
                     'unit_cost' => $itemData['unit_cost'],
                     'subtotal' => $itemData['subtotal'],
+                    'add_method' => $itemData['add_method'],
                 ]);
 
                 StockMovement::create([

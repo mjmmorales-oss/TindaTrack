@@ -18,6 +18,7 @@ class SaleItemResource extends JsonResource
             'unit_price' => (float) $this->unit_price,
             'unit_cost' => (float) $this->unit_cost,
             'subtotal' => (float) $this->subtotal,
+            'add_method' => $this->add_method,
             'product' => new ProductResource($this->whenLoaded('product')),
         ];
     }

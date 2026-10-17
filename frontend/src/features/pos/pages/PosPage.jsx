@@ -5,6 +5,7 @@ import {
   Smartphone,
   LayoutGrid,
   List,
+  Sparkles,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -26,12 +27,18 @@ import { ProductDetailDialog } from '@/features/pos/components/ProductDetailDial
 import { ScannerSheet } from '@/components/scanner/ScannerSheet'
 import { PairPhoneDialog } from '@/components/scanner/PairPhoneDialog'
 import { AddByBarcodeDialog } from '@/features/products/components/AddByBarcodeDialog'
+import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
+import { AiCapture } from '@/components/ai/AiCapture'
+import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
+import { BasketReviewSheet } from '@/features/pos/components/BasketReviewSheet'
+import { aiService } from '@/services/aiService'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useCustomers } from '@/features/customers/hooks/useCustomers'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { useCartStore, selectCartItemCount, selectCartTotal } from '@/stores/cartStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useAiConsent } from '@/hooks/useAiConsent'
 import { useHotkey } from '@/hooks/useHotkey'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -98,6 +105,44 @@ export function PosPage() {
   // Quick product create for unknown barcodes (owner)
   const [isRegisterProductOpen, setIsRegisterProductOpen] = useState(false)
   const [registerBarcode, setRegisterBarcode] = useState('')
+
+  // AI Consent and Basket Scan states
+  const {
+    isConsentOpen,
+    setIsConsentOpen,
+    withConsent,
+    acceptConsent,
+    declineConsent,
+  } = useAiConsent()
+  const [isAiCaptureOpen, setIsAiCaptureOpen] = useState(false)
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+  const [aiAnalyzingStep, setAiAnalyzingStep] = useState('')
+  const [isBasketReviewOpen, setIsBasketReviewOpen] = useState(false)
+  const [aiScanResult, setAiScanResult] = useState(null)
+  const [aiScanImageSrc, setAiScanImageSrc] = useState(null)
+
+  const handleAiBasketCapture = async (blob) => {
+    setIsAiAnalyzing(true)
+    setAiAnalyzingStep(t('pos:aiAnalyzingPreparing', 'Preparing photo for AI analysis...'))
+    try {
+      const objectUrl = URL.createObjectURL(blob)
+      setAiScanImageSrc(objectUrl)
+      setAiAnalyzingStep(t('pos:aiAnalyzingDetecting', 'Detecting items with Gemini Vision...'))
+      const result = await aiService.basketScan(blob)
+      beep()
+      setAiScanResult(result)
+      setIsAiCaptureOpen(false)
+      setIsBasketReviewOpen(true)
+    } catch (err) {
+      notify.error(
+        t('pos:aiScanFailed', 'AI Scan Failed'),
+        err?.message || 'Could not analyze basket.',
+      )
+    } finally {
+      setIsAiAnalyzing(false)
+      setAiAnalyzingStep('')
+    }
+  }
 
   // Cart store
   const items = useCartStore((state) => state.items)
@@ -197,7 +242,16 @@ export function PosPage() {
     const unsub = subscribeToScanner(pairedSession.id, {
       onEvent: (event) => {
         setIsScannerOnline(true)
-        if (event?.barcode) {
+        if (event?.type === 'ai_basket' && event?.payload) {
+          beep()
+          setAiScanResult(event.payload)
+          setAiScanImageSrc(null)
+          setIsBasketReviewOpen(true)
+          notify.info(
+            t('pos:aiBasketReceived', 'AI Basket Received'),
+            t('pos:aiBasketReceivedDesc', 'Review detected items from phone scanner.'),
+          )
+        } else if (event?.barcode) {
           handleScannedCode(event.barcode, { source: 'phone', event })
         }
       },
@@ -368,8 +422,19 @@ export function PosPage() {
               />
             </div>
 
-            {/* Actions: Scan, Pair Phone, Phone Badge */}
+            {/* Actions: AI Basket, Scan, Pair Phone, Phone Badge */}
             <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
+                className="h-10 text-xs font-semibold px-3 gap-1.5 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
+              >
+                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                {t('pos:aiBasketScan', 'AI Basket')}
+              </Button>
+
               <Button
                 type="button"
                 variant="outline"
@@ -572,6 +637,14 @@ export function PosPage() {
         continuous={true}
         title={t('pos:scanSheetTitle', 'Scan Barcode in POS')}
         onDetected={(code) => handleScannedCode(code, { source: 'camera' })}
+        onProductSelect={(product) => {
+          handleAddToCart(product, 1, 'visual')
+        }}
+        onBasketScanned={(result) => {
+          setIsScannerSheetOpen(false)
+          setAiBasketData(result)
+          setIsBasketReviewOpen(true)
+        }}
       />
 
       {/* PHONE PAIRING MODAL */}
@@ -601,6 +674,43 @@ export function PosPage() {
           }}
         />
       )}
+
+      {/* AI FIRST-USE CONSENT DIALOG */}
+      <FirstUseAiConsentDialog
+        open={isConsentOpen}
+        onOpenChange={setIsConsentOpen}
+        onAccept={acceptConsent}
+        onDecline={declineConsent}
+      />
+
+      {/* AI BASKET CAPTURE MODAL */}
+      <ResponsiveDialog
+        open={isAiCaptureOpen}
+        onOpenChange={setIsAiCaptureOpen}
+        title={t('pos:aiBasketScan', 'AI Basket Scan')}
+        description={t('pos:aiCaptureModalDesc', 'Take a picture of the items on the counter to scan them with AI.')}
+        className="sm:max-w-lg p-2"
+      >
+        <AiCapture
+          onCapture={handleAiBasketCapture}
+          isAnalyzing={isAiAnalyzing}
+          analyzingStep={aiAnalyzingStep}
+          onCancel={() => setIsAiCaptureOpen(false)}
+        />
+      </ResponsiveDialog>
+
+      {/* AI BASKET REVIEW SHEET */}
+      <BasketReviewSheet
+        open={isBasketReviewOpen}
+        onOpenChange={setIsBasketReviewOpen}
+        scanResult={aiScanResult}
+        imageSrc={aiScanImageSrc}
+        onConfirmed={() => {
+          setIsBasketReviewOpen(false)
+          setAiScanResult(null)
+          setAiScanImageSrc(null)
+        }}
+      />
     </div>
   )
 }

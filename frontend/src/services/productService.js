@@ -7,7 +7,7 @@ function getImpl() {
     : apiImpl
 }
 
-export const productService = new Proxy({}, {
+export const productService = new Proxy(mockImpl, {
   get(_, prop) {
     const impl = getImpl()
     const val = impl[prop]

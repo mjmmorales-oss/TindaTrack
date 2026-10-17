@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Ai\GeminiVisionProvider;
+use App\Ai\MockVisionProvider;
+use App\Ai\VisionProvider;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,7 +18,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(VisionProvider::class, function ($app) {
+            $provider = config('ai.provider', 'mock');
+
+            return match ($provider) {
+                'gemini' => $app->make(GeminiVisionProvider::class),
+                default => $app->make(MockVisionProvider::class),
+            };
+        });
     }
 
     /**

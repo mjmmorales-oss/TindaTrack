@@ -78,7 +78,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,wasm}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globIgnores: ['**/*.wasm', '**/*.onnx', '**/ort-*'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
@@ -175,6 +176,9 @@ export default defineConfig({
             }
             if (id.includes('react-router')) {
               return 'vendor-router'
+            }
+            if (id.includes('@huggingface') || id.includes('onnxruntime')) {
+              return 'vendor-transformers'
             }
             if (id.includes('@tanstack')) {
               return 'vendor-tanstack'

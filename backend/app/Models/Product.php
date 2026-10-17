@@ -58,6 +58,11 @@ class Product extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    public function embeddings(): HasMany
+    {
+        return $this->hasMany(ProductEmbedding::class);
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);

@@ -1,4 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useContext } from 'react'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClientContext,
+  QueryClient,
+} from '@tanstack/react-query'
 import { settingsService } from '@/services/settingsService'
 import { notify } from '@/lib/notify'
 import i18n from '@/i18n'
@@ -7,11 +14,19 @@ export const settingsKeys = {
   all: ['settings'],
 }
 
+const fallbackQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, gcTime: 0 } },
+})
+
 export function useSettings() {
-  return useQuery({
-    queryKey: settingsKeys.all,
-    queryFn: () => settingsService.get(),
-  })
+  const contextClient = useContext(QueryClientContext)
+  return useQuery(
+    {
+      queryKey: settingsKeys.all,
+      queryFn: () => settingsService.get(),
+    },
+    contextClient ? undefined : fallbackQueryClient,
+  )
 }
 
 export function useUpdateSettings() {

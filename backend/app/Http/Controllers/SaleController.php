@@ -84,11 +84,14 @@ class SaleController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.add_method' => ['nullable', 'string', 'max:30'],
             'payment_type' => ['nullable', 'string', 'in:cash,utang'],
             'amount_paid' => ['nullable', 'numeric'],
             'customer_id' => ['nullable', 'integer'],
             'override_limit' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'cart_started_at' => ['nullable', 'date'],
+            'cart_duration_ms' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $sale = $action->execute(

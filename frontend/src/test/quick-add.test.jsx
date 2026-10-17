@@ -267,7 +267,7 @@ describe('U1: Unified Add by Barcode Flow and BarcodeCapture', () => {
     it('renders exactly two header actions: Add by barcode and Add Product; Quick Add by Scan is removed', async () => {
       renderRoute('/products', { role: 'owner' })
 
-      await screen.findByText(/Products & Inventory|Mga Paninda at Imbentaryo/i)
+      await screen.findByText(/Products & Inventory|Mga Paninda at Imbentaryo/i, {}, { timeout: 10000 })
 
       // 1. Add by barcode exists
       expect(

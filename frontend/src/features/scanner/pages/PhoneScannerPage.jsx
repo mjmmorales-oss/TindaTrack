@@ -12,16 +12,20 @@ import {
   Clock,
   ScanLine,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react'
 import { BarcodeCapture } from '@/components/scanner/BarcodeCapture'
+import { AiCapture } from '@/components/ai/AiCapture'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ModeToggle } from '@/components/common/ModeToggle'
-import { pairScanner, sendScan, scannerHeartbeat } from '@/services/scanner.js'
+import { pairScanner, sendScan, scannerHeartbeat, sendAiBasket } from '@/services/scanner.js'
 import { beep, vibrate } from '@/lib/feedback'
 import { toMoney } from '@/lib/format'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useAiConsent } from '@/hooks/useAiConsent'
+import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
 const SCANNER_INFO_KEY = 'tt_scanner_info'
@@ -80,6 +84,18 @@ export function PhoneScannerPage() {
   const [isSending, setIsSending] = useState(false)
   const [lastScan, setLastScan] = useState(null)
   const [scanHistory, setScanHistory] = useState([])
+  const [isAiCapturing, setIsAiCapturing] = useState(false)
+  const [isSendingAi, setIsSendingAi] = useState(false)
+  const [aiStep, setAiStep] = useState('')
+
+  // AI First-Use Privacy Consent
+  const {
+    isConsentOpen,
+    setIsConsentOpen,
+    withConsent,
+    acceptConsent,
+    declineConsent,
+  } = useAiConsent()
 
   const hasAutoPaired = useRef(false)
 
@@ -268,6 +284,43 @@ export function PhoneScannerPage() {
     }
   }
 
+  // Handle AI basket photo capture from phone
+  const handleAiBasketPhoto = async (blob) => {
+    setIsSendingAi(true)
+    setAiStep(t('scanner:aiSendingToPos', 'Processing basket with AI...'))
+    try {
+      const res = await sendAiBasket(blob)
+      beep()
+      vibrate(100)
+      setIsAiCapturing(false)
+      const count = res?.detected_count || res?.matched_count || 1
+      setLastScan({
+        id: Date.now(),
+        barcode: 'AI_BASKET',
+        status: 'found',
+        product: {
+          name: t('scanner:aiBasketDetected', {
+            count,
+            defaultValue: `AI Basket (${count} items detected)`,
+          }),
+          price: 0,
+        },
+        time: new Date().toLocaleTimeString('en-PH'),
+      })
+    } catch (err) {
+      setLastScan({
+        id: Date.now(),
+        barcode: 'AI_BASKET',
+        status: 'error',
+        error: err?.message || t('scanner:aiBasketFailed', 'Failed to analyze basket.'),
+        time: new Date().toLocaleTimeString('en-PH'),
+      })
+    } finally {
+      setIsSendingAi(false)
+      setAiStep('')
+    }
+  }
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground antialiased selection:bg-primary/20">
       {/* Top Header */}
@@ -397,9 +450,31 @@ export function PhoneScannerPage() {
               </p>
             </div>
           </div>
+        ) : isAiCapturing ? (
+          /* AI BASKET CAPTURE MODE */
+          <div className="flex-1 flex flex-col justify-center">
+            <AiCapture
+              onCapture={handleAiBasketPhoto}
+              isAnalyzing={isSendingAi}
+              analyzingStep={aiStep}
+              onCancel={() => setIsAiCapturing(false)}
+              title={t('scanner:aiBasketScanTitle', 'AI Basket Scan')}
+              hint={t('scanner:aiBasketHint', 'Point camera at the customer basket, then tap Capture.')}
+            />
+          </div>
         ) : (
           /* PAIRED STATE */
           <div className="flex-1 flex flex-col space-y-4">
+            {/* Scan Basket with AI Button */}
+            <Button
+              type="button"
+              onClick={() => withConsent(() => setIsAiCapturing(true))}
+              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs gap-2 shadow-sm rounded-xl"
+            >
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              {t('scanner:scanBasketWithAi', 'Scan Basket with AI')}
+            </Button>
+
             {/* Camera Viewfinder & Barcode Capture */}
             <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
               <BarcodeCapture
@@ -580,6 +655,14 @@ export function PhoneScannerPage() {
           </div>
         )}
       </main>
+
+      {/* AI First-Use Consent Dialog */}
+      <FirstUseAiConsentDialog
+        open={isConsentOpen}
+        onOpenChange={setIsConsentOpen}
+        onAccept={acceptConsent}
+        onDecline={declineConsent}
+      />
     </div>
   )
 }

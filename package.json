@@ -10,6 +10,7 @@
     "build:web": "npm --prefix frontend run build",
     "smoke:pairing": "node scripts/smoke-pairing.mjs",
     "smoke:prod": "node scripts/smoke-prod-like.mjs",
+    "smoke:ai": "node scripts/smoke-ai.mjs",
     "check:bundle": "node scripts/check-prod-bundle.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:mobile": "node frontend/scripts/check-mobile.mjs",
