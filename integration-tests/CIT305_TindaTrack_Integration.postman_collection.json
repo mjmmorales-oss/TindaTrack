@@ -1,0 +1,623 @@
+{
+  "info": {
+    "name": "CIT305 TindaOrder ↔ TindaTrack Integration Tests",
+    "description": "Integration test cases for System 1 (TindaOrder Online Ordering) → System 2 (TindaTrack Inventory) REST API. Run TindaTrack first (php artisan serve). Run the whole collection with the Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "TC-01 Valid order is accepted (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "System 1 sends order_id, customer_id, product_id, quantity. System 2 deducts stock and returns product_id, available_quantity, stock_status.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"{{order_id}}\",\n  \"customer_id\": \"CUST-001\",\n  \"items\": [\n    {\n      \"product_id\": 4,\n      \"quantity\": 2\n    },\n    {\n      \"product_id\": 1,\n      \"quantity\": 1\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('order_id', 'ORD-PM-' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+              "const b = pm.response.json();",
+              "pm.test('Order accepted', () => pm.expect(b.status).to.eql('accepted'));",
+              "pm.test('Returns product_id, available_quantity, stock_status', () => {",
+              "  b.items.forEach(i => { pm.expect(i).to.have.property('product_id'); pm.expect(i).to.have.property('available_quantity'); pm.expect(i).to.have.property('stock_status'); });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-02 Insufficient stock is rejected (409)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"{{reject_order_id}}\",\n  \"customer_id\": \"CUST-002\",\n  \"items\": [\n    {\n      \"product_id\": 4,\n      \"quantity\": 1\n    },\n    {\n      \"product_id\": 7,\n      \"quantity\": 999\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('reject_order_id', 'ORD-PM-REJ-' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 409 Conflict', () => pm.response.to.have.status(409));",
+              "const b = pm.response.json();",
+              "pm.test('Order rejected', () => pm.expect(b.status).to.eql('rejected'));",
+              "pm.test('Item flagged insufficient_stock', () => pm.expect(b.items[1].stock_status).to.eql('insufficient_stock'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-03 Missing required fields (422)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\n      \"product_id\": 4\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+              "const e = pm.response.json().errors;",
+              "pm.test('Errors for order_id, customer_id, items.0.quantity', () => { pm.expect(e).to.have.property('order_id'); pm.expect(e).to.have.property('customer_id'); pm.expect(e).to.have.property('items.0.quantity'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-04 Invalid data: unknown product & negative qty (422)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"ORD-PM-BAD-001\",\n  \"customer_id\": \"CUST-001\",\n  \"items\": [\n    {\n      \"product_id\": 99999,\n      \"quantity\": 1\n    },\n    {\n      \"product_id\": 4,\n      \"quantity\": -3\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+              "const e = pm.response.json().errors;",
+              "pm.test('Errors for items.0.product_id and items.1.quantity', () => { pm.expect(e).to.have.property('items.0.product_id'); pm.expect(e).to.have.property('items.1.quantity'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-05 Missing / wrong API key (401)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "wrong-key"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/products",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "products"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));",
+              "pm.test('Error code invalid_api_key', () => pm.expect(pm.response.json().error).to.eql('invalid_api_key'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-06 Stock check (200)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/products/4/stock",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "products",
+            "4",
+            "stock"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('Has product_id, available_quantity, stock_status', () => { pm.expect(b.product_id).to.eql(4); pm.expect(b).to.have.property('available_quantity'); pm.expect(['in_stock','low_stock','out_of_stock']).to.include(b.stock_status); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-07 Stock check for unknown product (404)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/products/99999/stock",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "products",
+            "99999",
+            "stock"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+              "pm.test('Error code product_not_found', () => pm.expect(pm.response.json().error).to.eql('product_not_found'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-08a Duplicate order - first send",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"{{dup_order_id}}\",\n  \"customer_id\": \"CUST-003\",\n  \"items\": [\n    {\n      \"product_id\": 12,\n      \"quantity\": 1\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('dup_order_id', 'ORD-PM-DUP-' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('First send is 201 Created', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('dup_stock_after', pm.response.json().items[0].available_quantity);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-08b Duplicate order - same order_id again (200, not deducted twice)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"{{dup_order_id}}\",\n  \"customer_id\": \"CUST-003\",\n  \"items\": [\n    {\n      \"product_id\": 12,\n      \"quantity\": 1\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Second send is 200 OK (replay)', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('Marked as duplicate', () => pm.expect(b.duplicate).to.eql(true));",
+              "pm.test('Stock not deducted twice', () => pm.expect(b.items[0].available_quantity).to.eql(Number(pm.collectionVariables.get('dup_stock_after'))));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-09 Product catalog for System 1 (200)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/products",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "products"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('Returns a product list with stock', () => { pm.expect(b.data.length).to.be.above(0); pm.expect(b.data[0]).to.have.property('available_quantity'); pm.expect(b.meta.count).to.eql(b.data.length); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC-10 Stock check as XML (200)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/products/4/stock?format=xml",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "products",
+            "4",
+            "stock"
+          ],
+          "query": [
+            {
+              "key": "format",
+              "value": "xml"
+            }
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is XML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/xml'));",
+              "const t = pm.response.text();",
+              "pm.test('XML has ProductID, AvailableQuantity, StockStatus', () => { pm.expect(t).to.include('<ProductID>4</ProductID>'); pm.expect(t).to.match(/<AvailableQuantity>\\d+<\\/AvailableQuantity>/); pm.expect(t).to.match(/<StockStatus>(in_stock|low_stock|out_of_stock)<\\/StockStatus>/); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order lookup (GET /orders/{order_id})",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/orders/{{order_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "orders",
+            "{{order_id}}"
+          ]
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Same order returned', () => pm.expect(pm.response.json().order_id).to.eql(pm.collectionVariables.get('order_id')));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api/integration/v1"
+    },
+    {
+      "key": "api_key",
+      "value": "tt_live_cit305_demo_key_change_me"
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    },
+    {
+      "key": "reject_order_id",
+      "value": ""
+    },
+    {
+      "key": "dup_order_id",
+      "value": ""
+    },
+    {
+      "key": "dup_stock_after",
+      "value": ""
+    }
+  ]
+}

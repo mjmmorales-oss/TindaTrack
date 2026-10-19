@@ -47,13 +47,14 @@ TindaTrack digitizes traditional pen-and-paper sari-sari store operations (*list
 
 ## Demo Accounts
 
-The database comes pre-seeded with 3 demo accounts:
+The database comes pre-seeded with these demo accounts:
 
 | Role | Email | Password | Permissions |
 |---|---|---|---|
-| **Owner** | `owner@tindatrack.ph` | `password123` | Full administrative access, voiding, staff, reports |
-| **Cashier 1** | `cashier@tindatrack.ph` | `password123` | POS sales, customer utang payments, product view |
-| **Cashier 2** | `juan@tindatrack.ph` | `password123` | POS sales, customer utang payments, product view |
+| **Owner** | `owner@tindatrack.test` | `password` | Full administrative access, voiding, staff, reports |
+| **Cashier** | `cashier@tindatrack.test` | `password` | POS sales, customer utang payments, product view |
+
+> These are the accounts created by `php artisan migrate:fresh --seed` on a local machine. (Production deploys use the `DEMO_*` environment variables instead.)
 
 ---
 
@@ -161,6 +162,31 @@ The database comes pre-seeded with 3 demo accounts:
    ```bash
    npm run dev
    ```
+
+---
+
+## System Integration (CIT 305): TindaOrder ↔ TindaTrack
+
+This repository contains **two systems** that communicate through a REST API:
+
+| | System 1 — **TindaOrder** | System 2 — **TindaTrack** |
+|---|---|---|
+| Role | Online Ordering System (customer-facing) | Inventory System (store-facing) |
+| Folder | `ordering-system/` | `backend/` (+ `frontend/`) |
+| Tech | PHP 8 + cURL, MySQL `tindaorder` | Laravel 13 REST API, MySQL `tindatrack` |
+| URL | http://127.0.0.1:8080 | http://127.0.0.1:8000 (API), http://localhost:5173 (UI) |
+
+**Integration API** — base URL `http://127.0.0.1:8000/api/integration/v1`, header `X-API-Key: <INTEGRATION_API_KEY>`
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/products` | Catalog with live stock |
+| GET | `/products/{id}/stock` | Product ID, available quantity, stock status (`?format=xml` for XML) |
+| POST | `/orders` | Receive an order, check and deduct stock (201 accepted / 409 rejected / 422 invalid) |
+| GET | `/orders/{order_id}` | Look up how an order was processed |
+
+Run order: `npm run dev` (System 2) → `npm run dev:order` (System 1, second terminal).
+Tests: `php artisan test --filter=IntegrationApiTest` (backend) and the Postman collection in `integration-tests/`.
 
 ---
 

@@ -1,0 +1,99 @@
+/* TindaOrder - System 1. Deliberately different colors from TindaTrack (green) so the
+   audience can tell the two systems apart during the demo. */
+:root {
+    --bg: #f6f5fb;
+    --card: #ffffff;
+    --ink: #1d1b2e;
+    --muted: #6b6880;
+    --line: #e4e1ef;
+    --brand: #4f46e5;
+    --brand-ink: #ffffff;
+    --accent: #f59e0b;
+    --ok-bg: #e7f7ee; --ok-ink: #11663b;
+    --warn-bg: #fff4dc; --warn-ink: #8a5300;
+    --bad-bg: #fde8e8; --bad-ink: #9b1c1c;
+    --info-bg: #eaf0ff; --info-ink: #2a3f9e;
+    --code-bg: #14132a; --code-ink: #e8e6ff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.5; }
+a { color: var(--brand); }
+code, .mono, pre { font-family: ui-monospace, Consolas, "Courier New", monospace; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+
+.topbar { background: var(--brand); color: var(--brand-ink); }
+.topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+.brand small { display: block; opacity: .85; font-size: 12px; }
+.brand-mark { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: #1d1b2e; display: grid; place-items: center; font-weight: 800; }
+.topbar nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.topbar nav a { color: inherit; text-decoration: none; padding: 8px 12px; border-radius: 8px; }
+.topbar nav a.active, .topbar nav a:hover { background: rgba(255,255,255,.18); }
+.integration-strip { background: #1d1b2e; color: #cfcbe8; font-size: 13px; padding: 6px 0; }
+.integration-strip code { color: #fff; }
+
+main { padding: 24px 16px 40px; }
+h1 { font-size: 26px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+h2 { font-size: 18px; margin: 0 0 10px; }
+h3 { font-size: 16px; margin: 6px 0; }
+.muted { color: var(--muted); font-size: 14px; }
+.hint { color: var(--muted); font-size: 14px; }
+
+.hero { display: flex; justify-content: space-between; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; flex-wrap: wrap; }
+.hero p { margin: 0; color: var(--muted); }
+.hero-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.pill { padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+.pill-ok { background: var(--ok-bg); color: var(--ok-ink); }
+.pill-bad { background: var(--bad-bg); color: var(--bad-ink); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+.customer-card { display: grid; gap: 8px; position: sticky; top: 8px; z-index: 2; box-shadow: 0 6px 20px rgba(29,27,46,.06); }
+.customer-card select { font-size: 16px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.product { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.product-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.price { font-size: 20px; font-weight: 700; }
+.price small { font-size: 13px; color: var(--muted); font-weight: 400; }
+.product-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 8px; }
+.product-actions input { width: 90px; font-size: 16px; padding: 8px; border-radius: 8px; border: 1px solid var(--line); }
+.link { font-size: 14px; }
+
+.btn { font: inherit; border: 0; border-radius: 10px; padding: 12px 18px; cursor: pointer; font-weight: 600; min-height: 44px; }
+.btn-primary { background: var(--brand); color: var(--brand-ink); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.badge-confirmed, .badge-in_stock { background: var(--ok-bg); color: var(--ok-ink); }
+.badge-low_stock, .badge-pending { background: var(--warn-bg); color: var(--warn-ink); }
+.badge-out_of_stock, .badge-insufficient_stock, .badge-rejected, .badge-failed { background: var(--bad-bg); color: var(--bad-ink); }
+
+.alert { border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-weight: 500; }
+.alert-success { background: var(--ok-bg); color: var(--ok-ink); }
+.alert-error { background: var(--bad-bg); color: var(--bad-ink); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+.total { text-align: right; font-size: 18px; margin: 12px 0 0; }
+.page-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+
+.exchange { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.exchange > * { min-width: 0; }
+pre { background: var(--code-bg); color: var(--code-ink); padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 13px; margin: 6px 0 0; white-space: pre; }
+.log summary { cursor: pointer; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.log[open] summary { margin-bottom: 10px; }
+.method { font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--info-bg); color: var(--info-ink); }
+.method-post { background: var(--warn-bg); color: var(--warn-ink); }
+.http { font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 6px; }
+.http-2 { background: var(--ok-bg); color: var(--ok-ink); }
+.http-4, .http-5, .http-0 { background: var(--bad-bg); color: var(--bad-ink); }
+.stock-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stock-summary div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.footer { color: var(--muted); font-size: 13px; padding-bottom: 30px; }
+
+@media (max-width: 760px) {
+    .exchange { grid-template-columns: 1fr; }
+    .hero-meta { align-items: flex-start; }
+    table { font-size: 13px; }
+}

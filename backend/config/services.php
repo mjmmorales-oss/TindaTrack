@@ -35,6 +35,15 @@ return [
         ],
     ],
 
+    /*
+    | System-to-system integration (CIT 305). External systems such as the
+    | TindaOrder Online Ordering System authenticate with this shared API key
+    | sent in the X-API-Key header.
+    */
+    'integration' => [
+        'api_key' => env('INTEGRATION_API_KEY'),
+    ],
+
     'openfoodfacts' => [
         'enabled' => env('PRODUCT_LOOKUP_ENABLED', true),
         'user_agent' => env('OFF_USER_AGENT', 'TindaTrack/1.1 (your-email@example.com)'),

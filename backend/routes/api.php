@@ -7,6 +7,7 @@ use App\Http\Controllers\BarcodeLookupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Integration\InventoryIntegrationController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductBulkController;
 use App\Http\Controllers\ProductController;
@@ -44,6 +45,21 @@ Route::prefix('scanner')->group(function () {
     Route::post('/heartbeat', [ScannerDeviceController::class, 'heartbeat'])
         ->middleware('scanner.device');
 });
+
+// ==========================================
+// SYSTEM INTEGRATION API (CIT 305)
+// System 1 (TindaOrder Online Ordering) -> System 2 (TindaTrack Inventory)
+// Auth: X-API-Key header (machine-to-machine), JSON in / JSON out
+// ==========================================
+Route::prefix('integration/v1')
+    ->middleware(['integration.key', 'throttle:120,1'])
+    ->controller(InventoryIntegrationController::class)
+    ->group(function () {
+        Route::get('/products', 'products');
+        Route::get('/products/{productId}/stock', 'stock');
+        Route::post('/orders', 'storeOrder');
+        Route::get('/orders/{orderId}', 'showOrder');
+    });
 
 require __DIR__.'/auth.php';
 
