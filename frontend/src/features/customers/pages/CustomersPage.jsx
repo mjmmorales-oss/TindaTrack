@@ -40,7 +40,7 @@ import { RecordPaymentDialog } from '@/features/utang/components/RecordPaymentDi
 import { useTableParams } from '@/components/data-table/useTableParams'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function CustomersPage() {
@@ -548,7 +548,7 @@ export function CustomersPage() {
               <p className="text-xs mt-1 text-destructive/90">
                 {t('customers:blockedDeleteDetail', {
                   name: blockedCustomer?.name,
-                  amount: `₱${Number(blockedCustomer?.credit_balance || 0).toFixed(2)}`,
+                  amount: formatCurrency(blockedCustomer?.credit_balance || 0),
                 })}
               </p>
             </div>

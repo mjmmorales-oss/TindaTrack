@@ -125,3 +125,16 @@ describe('C: one shared units list', () => {
     expect(productSchema.shape.unit.safeParse('banana').success).toBe(false)
   })
 })
+
+describe('C: AI Lab experiments keep the { data } envelope like the mock', () => {
+  it('getExperiments / getExperiment return what AiExperimentsTab reads (res.data)', async () => {
+    const { aiService } = await import('@/services/api/aiService.js')
+    vi.spyOn(apiClient, 'get')
+      .mockResolvedValueOnce({ data: [{ id: 1, name: 'Basket eval' }] })
+      .mockResolvedValueOnce({ data: { id: 1, name: 'Basket eval', cases: [] } })
+
+    expect((await aiService.getExperiments()).data[0].name).toBe('Basket eval')
+    expect((await aiService.getExperiment(1)).data.cases).toEqual([])
+    vi.restoreAllMocks()
+  })
+})

@@ -24,6 +24,7 @@ import { NewCustomerMiniForm } from '@/features/pos/components/NewCustomerMiniFo
 import { useCreateSale } from '@/features/sales/hooks/useSales'
 import { useCartStore } from '@/stores/cartStore'
 import { notify } from '@/lib/notify'
+import { formatCurrency } from '@/lib/format'
 
 const QUICK_AMOUNTS = [20, 50, 100, 200, 500, 1000]
 
@@ -171,7 +172,7 @@ export function PaymentDialog({
       description={
         completedSale
           ? t('pos:receiptDesc', 'Transaction recorded in system.')
-          : `${t('pos:amountDue', 'Amount Due')}: ₱${Number(total || 0).toFixed(2)}`
+          : `${t('pos:amountDue', 'Amount Due')}: ${formatCurrency(total || 0)}`
       }
       className="sm:max-w-md"
     >
@@ -237,7 +238,7 @@ export function PaymentDialog({
                     onClick={handleExactCash}
                     className="h-auto p-0 text-xs text-primary font-bold"
                   >
-                    {t('pos:exactAmount', 'Exact Amount')} (₱{Number(total || 0).toFixed(2)})
+                    {t('pos:exactAmount', 'Exact Amount')} ({formatCurrency(total || 0)})
                   </Button>
                 </div>
                 <MoneyInput

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useRunExperimentCase } from '../hooks/useAiLab'
 import { prepareForAi } from '@/lib/imagePrep'
+import { formatCurrency } from '@/lib/format'
 
 /**
  * Dialog to capture/upload a test case image and specify ground-truth items for evaluation.
@@ -179,7 +180,7 @@ export function NewTestCaseDialog({ open, onOpenChange, experimentId }) {
                 <option value="">-- {t('aiLab:chooseProduct')} --</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (₱{Number(p.price || 0).toFixed(2)})
+                    {p.name} ({formatCurrency(p.price || 0)})
                   </option>
                 ))}
               </select>

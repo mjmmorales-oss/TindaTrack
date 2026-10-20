@@ -163,8 +163,8 @@ export const aiService = {
    * GET /api/ai/experiments
    */
   async getExperiments() {
-    const res = await apiClient.get('/ai/experiments')
-    return res?.data ?? res
+    // Keep Laravel's { data } envelope: AiExperimentsTab (and the mock) read res.data
+    return apiClient.get('/ai/experiments')
   },
 
   /**
@@ -173,8 +173,7 @@ export const aiService = {
    * @param {number|string} id
    */
   async getExperiment(id) {
-    const res = await apiClient.get(`/ai/experiments/${id}`)
-    return res?.data ?? res
+    return apiClient.get(`/ai/experiments/${id}`)
   },
 
   /**
