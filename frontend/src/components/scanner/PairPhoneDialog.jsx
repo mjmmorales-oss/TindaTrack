@@ -20,6 +20,7 @@ import {
 } from '@/services/scanner.js'
 import { notify } from '@/lib/notify'
 import { getApiBaseUrl } from '@/lib/api'
+import { buildPairingUrl, getPairingBaseUrl } from '@/lib/pairingUrl'
 
 /**
  * PairPhoneDialog
@@ -47,18 +48,14 @@ export function PairPhoneDialog({
   const isPairedRef = useRef(false)
   const isCreatingRef = useRef(false)
 
-  const publicAppUrl =
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PUBLIC_APP_URL) ||
-    (typeof window !== 'undefined' ? window.location.origin : '')
-
-  const isLocalhostOrigin =
-    typeof publicAppUrl === 'string' &&
-    /localhost|127\.0\.0\.1/.test(publicAppUrl)
+  const pairingBase = getPairingBaseUrl()
+  // Only warn when the QR itself would point at localhost (the LAN origin fixes dev)
+  const isLocalhostOrigin = pairingBase.isLocalhost
 
   const apiBase = getApiBaseUrl()
   const isApiLocalhost =
     typeof apiBase === 'string' && /localhost|127\.0\.0\.1/.test(apiBase)
-  const isApiMismatch = !isLocalhostOrigin && isApiLocalhost
+  const isApiMismatch = !isLocalhostOrigin && pairingBase.source !== 'lan' && isApiLocalhost
 
   const startNewSession = useCallback(
     async (isManualRefresh = false) => {
@@ -206,10 +203,7 @@ export function PairPhoneDialog({
   }, [open, session, pairedDevice, onPaired, t])
 
   const pairingCode = session?.pairing_code || session?.data?.pairing_code || ''
-  const scanUrl =
-    session && pairingCode
-      ? `${publicAppUrl}/scan?code=${encodeURIComponent(pairingCode)}`
-      : ''
+  const scanUrl = session && pairingCode ? buildPairingUrl(pairingBase.baseUrl, pairingCode) : ''
 
   const minutes = timeLeft !== null ? Math.floor(timeLeft / 60) : 0
   const seconds = timeLeft !== null ? timeLeft % 60 : 0
@@ -241,7 +235,7 @@ export function PairPhoneDialog({
             <AlertDescription className="text-warning-foreground font-medium">
               {t(
                 'scanner:localhostWarning',
-                'You are accessing on localhost. The phone camera cannot reach this over Wi-Fi. Run npm run dev:lan in the terminal or use the deployed link.',
+                "Phones can't open localhost. Run npm run dev:lan and open the Network address on this laptop.",
               )
                 .split('localhost')
                 .reduce((acc, part, idx) => {
@@ -250,6 +244,15 @@ export function PairPhoneDialog({
                 }, [])}
             </AlertDescription>
           </Alert>
+        )}
+
+        {pairingBase.source === 'lan' && (
+          <p className="text-xs text-muted-foreground">
+            {t('scanner:lanQrHint', {
+              url: pairingBase.baseUrl,
+              defaultValue: 'The QR uses this laptop’s Wi-Fi address ({{url}}). Keep the phone on the same Wi-Fi.',
+            })}
+          </p>
         )}
 
         {isApiMismatch && (

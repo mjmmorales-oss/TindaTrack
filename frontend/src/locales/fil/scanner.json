@@ -99,7 +99,7 @@
   "numberOfCopies": "Bilang ng kopya:",
   "print": "I-print",
   "usbWedgeReady": "USB / Wedge handa",
-  "localhostWarning": "Nasa localhost ka. Hindi ito mabubuksan ng camera ng phone sa parehong Wi-Fi. Patakbuhin ang npm run dev:lan sa terminal o gamitin ang deployed link.",
+  "localhostWarning": "Hindi kayang buksan ng phone ang localhost. Patakbuhin ang npm run dev:lan at buksan ang Network address sa laptop na ito.",
   "apiMismatchWarning": "Naka-set ang API base sa localhost habang binubuksan mo ang app sa LAN. Hindi maaabot ng phone ang server kung localhost ang API. Patakbuhin ang npm run dev:lan.",
   "noPairingCodeReturned": "Walang pairing code na ibinalik ang server.",
   "cannotCreateCode": "Hindi makagawa ng code: {{message}}{{statusText}}",
@@ -120,5 +120,6 @@
   "notThisOne": "Hindi ito?",
   "teachPhoto": "Ituro ang litratong ito sa TindaTrack",
   "teachingSuccess": "Matagumpay na naituro ang litrato para sa {{name}}.",
-  "pickCorrectProduct": "Piliin ang tamang produkto"
+  "pickCorrectProduct": "Piliin ang tamang produkto",
+  "lanQrHint": "Gamit ng QR ang Wi-Fi address ng laptop na ito ({{url}}). Dapat nasa parehong Wi-Fi ang phone."
 }
