@@ -300,3 +300,31 @@ test('endpoint throttle restricts requests beyond 30 per minute', function () {
 
     $response->assertStatus(429);
 });
+
+test('a scanned pairing QR URL returns a clean 422, not a route 404', function () {
+    Http::fake();
+
+    foreach ([
+        '/api/barcode-lookup/'.rawurlencode('https://tindatrack.app/scan?code=ABCD-EFGH'),
+        '/api/barcode-lookup/https://tindatrack.app/scan?code=ABCD-EFGH',
+        '/api/barcode-lookup/'.rawurlencode('hello world, not a barcode'),
+    ] as $url) {
+        $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+            ->getJson($url)
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'not_a_barcode')
+            ->assertJsonStructure(['message', 'errors' => ['barcode']]);
+    }
+
+    Http::assertNothingSent();
+});
+
+test('a stored barcode resolves even when its check digit is invalid', function () {
+    Http::fake();
+    $product = Product::factory()->create(['barcode' => '4800016601011']);
+
+    $this->withHeader('Authorization', "Bearer {$this->cashierToken}")
+        ->getJson('/api/barcode-lookup/4800016601011')
+        ->assertOk()
+        ->assertJsonPath('data.local_product.id', $product->id);
+});

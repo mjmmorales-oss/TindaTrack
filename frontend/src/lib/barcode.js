@@ -125,6 +125,65 @@ export function makeInternal(sequence) {
   return `${digits}${check}`
 }
 
+/** Pairing-code alphabet used by App\Models\ScannerSession (no 0/O, 1/I/L). */
+const PAIRING_CODE_RE = /^([A-HJKMNP-Z2-9]{4})-?([A-HJKMNP-Z2-9]{4})$/i
+
+/**
+ * Formats a raw pairing code as "XXXX-XXXX" (upper-case), or returns null.
+ *
+ * @param {string} value
+ * @returns {string|null}
+ */
+export function parsePairingCode(value) {
+  const match = String(value || '').trim().match(PAIRING_CODE_RE)
+  return match ? `${match[1]}-${match[2]}`.toUpperCase() : null
+}
+
+/**
+ * Classifies a scanned/typed string before anything is sent to the barcode lookup.
+ *
+ * - `{ kind: 'pairing', code, fromUrl }` — a TindaTrack pairing QR (`…/scan?code=XXXX-XXXX`)
+ *   or a bare pairing code. A bare code could also be a custom alphanumeric barcode,
+ *   so callers should prefer an exact local product match when `fromUrl` is false.
+ * - `{ kind: 'barcode', value }` — an acceptable barcode, normalized.
+ * - `{ kind: 'unknown' }` — URLs, free text and anything the lookup would reject.
+ *
+ * @param {string} text
+ * @returns {{ kind: 'pairing', code: string, fromUrl: boolean } | { kind: 'barcode', value: string } | { kind: 'unknown' }}
+ */
+export function classifyScan(text) {
+  const raw = String(text ?? '').trim()
+  if (!raw) return { kind: 'unknown' }
+
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw)
+      const code = parsePairingCode(url.searchParams.get('code'))
+      if (code && /\/scan\/?$/.test(url.pathname)) {
+        return { kind: 'pairing', code, fromUrl: true }
+      }
+    } catch {
+      // malformed URL
+    }
+    return { kind: 'unknown' }
+  }
+
+  const pairing = parsePairingCode(raw)
+  // A purely numeric value is always a barcode; pairing codes contain letters.
+  if (pairing && /[A-Z]/i.test(raw)) {
+    return { kind: 'pairing', code: pairing, fromUrl: false }
+  }
+
+  // Any digit string counts: stored/printed codes may carry a wrong check digit,
+  // and the local product match / lookup decide what it is.
+  const normalized = normalize(raw)
+  if (isAcceptable(raw) || /^\d{4,32}$/.test(normalized)) {
+    return { kind: 'barcode', value: normalized }
+  }
+
+  return { kind: 'unknown' }
+}
+
 export const Barcode = {
   normalize,
   computeCheckDigit,
@@ -132,6 +191,8 @@ export const Barcode = {
   isInternal,
   isAcceptable,
   makeInternal,
+  parsePairingCode,
+  classifyScan,
 }
 
 export default Barcode

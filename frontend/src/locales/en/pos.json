@@ -186,5 +186,11 @@
   "aiScanAgainReplace": "Replace all items",
   "aiTapNow": "Tap for now",
   "aiCaptureFailed": "Could not take the photo. Please try again.",
-  "aiUploadFailed": "Could not read that photo. Try a different image."
+  "aiUploadFailed": "Could not read that photo. Try a different image.",
+  "notProductBarcode": "Not a product barcode.",
+  "notProductBarcodeDesc": "Scan the barcode printed on the product.",
+  "pairingQrTitle": "Phone-pairing code",
+  "pairingQrPhoneDesc": "Pair this phone as a scanner?",
+  "pairingQrDesktopDesc": "That's a phone-pairing code; scan it with the phone.",
+  "pairThisPhone": "Pair this phone"
 }

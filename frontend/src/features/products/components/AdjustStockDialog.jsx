@@ -87,7 +87,7 @@ export function AdjustStockDialog({
   }
 
   useBarcodeWedge({
-    onBarcode: (code) => {
+    onScan: (code) => {
       if (!open || product) return
       handleBarcodeScanned(code)
     },

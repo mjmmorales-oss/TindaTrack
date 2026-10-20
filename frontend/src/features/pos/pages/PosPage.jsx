@@ -8,6 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -42,7 +43,8 @@ import { useAiConsent } from '@/hooks/useAiConsent'
 import { useHotkey } from '@/hooks/useHotkey'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { Barcode } from '@/lib/barcode'
+import { Barcode, classifyScan } from '@/lib/barcode'
+import { handlePairingScan, notifyNotProductBarcode } from '@/lib/pairingScan'
 import { beep } from '@/lib/feedback'
 import { lookupBarcode } from '@/services/barcode'
 import { getScannerSession, endScannerSession } from '@/services/scanner'
@@ -60,6 +62,7 @@ const POS_SCANNER_SESSION_KEY = 'tt_pos_scanner_session'
 export function PosPage() {
   const { t } = useTranslation(['pos', 'common', 'scanner'])
   useDocumentTitle(t('pos:title', 'POS Terminal'))
+  const navigate = useNavigate()
 
   const { user } = useAuth()
   const searchInputRef = useRef(null)
@@ -216,13 +219,31 @@ export function PosPage() {
   const handleScannedCode = useCallback(
     async (rawCode, options = {}) => {
       if (!rawCode) return
-      const normalized = Barcode.normalize(String(rawCode))
+      const findLocal = (code) =>
+        allProducts.find(
+          (p) => p.is_active && p.barcode && Barcode.normalize(p.barcode) === code,
+        )
+
+      // 0. Never send a pairing QR URL or free text to the barcode lookup
+      const scan = classifyScan(String(rawCode))
+      let product
+      if (scan.kind === 'pairing') {
+        // A bare code may also be a custom barcode; an exact product match wins
+        product = scan.fromUrl ? undefined : findLocal(Barcode.normalize(String(rawCode)))
+        if (!product) {
+          handlePairingScan(scan.code, { navigate })
+          return
+        }
+      } else if (scan.kind === 'unknown') {
+        notifyNotProductBarcode()
+        return
+      }
+
+      const normalized = product ? Barcode.normalize(product.barcode) : scan.value
       if (!normalized) return
 
       // 1. Resolve product locally first (exact barcode match)
-      let product = allProducts.find(
-        (p) => p.is_active && p.barcode && Barcode.normalize(p.barcode) === normalized,
-      )
+      product = product || findLocal(normalized)
 
       // 2. If not found in loaded product list, call lookupBarcode
       if (!product) {
@@ -269,15 +290,20 @@ export function PosPage() {
       beep()
       notify.success(`+${qty} ${product.name}`, t('pos:addedToCart', { name: product.name, defaultValue: `Added: ${product.name}` }))
     },
-    [allProducts, user, addToCart, t],
+    [allProducts, user, addToCart, t, navigate],
   )
 
-  // Hardware scanner wedge support
+  // Hardware scanner wedge support (off while a dialog with its own scanner/input is open)
   useBarcodeWedge({
-    onBarcode: (code) => {
+    onScan: (code) => {
       handleScannedCode(code, { source: 'wedge' })
     },
-    enabled: true,
+    enabled:
+      !isScannerSheetOpen &&
+      !isRegisterProductOpen &&
+      !isPaymentOpen &&
+      !isAiCaptureOpen &&
+      !isBasketReviewOpen,
   })
 
   // Live phone scanner subscription

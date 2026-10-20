@@ -71,6 +71,18 @@ export const barcodeService = {
     await delay(120)
 
     const normalized = Barcode.normalize(barcode)
+
+    // Same as Laravel: a barcode stored on a product always resolves, even with a bad check digit.
+    const stored = (useMockDb.getState().products || []).find((p) => p.barcode === normalized)
+    if (stored) {
+      return {
+        barcode: normalized,
+        local_product: { ...stored, stock: stored.stock_quantity },
+        catalog: null,
+        archived_product: null,
+      }
+    }
+
     if (!Barcode.isAcceptable(normalized)) {
       throw new ApiError(422, {
         message: 'Invalid barcode format.',

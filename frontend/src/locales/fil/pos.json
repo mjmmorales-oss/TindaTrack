@@ -186,5 +186,11 @@
   "aiScanAgainReplace": "Palitan ang lahat ng item",
   "aiTapNow": "Kunan agad",
   "aiCaptureFailed": "Hindi nakuhanan ng litrato. Subukan ulit.",
-  "aiUploadFailed": "Hindi mabasa ang litratong iyan. Sumubok ng ibang larawan."
+  "aiUploadFailed": "Hindi mabasa ang litratong iyan. Sumubok ng ibang larawan.",
+  "notProductBarcode": "Hindi ito barcode ng produkto.",
+  "notProductBarcodeDesc": "I-scan ang barcode na nakalimbag sa produkto.",
+  "pairingQrTitle": "Code para i-pair ang phone",
+  "pairingQrPhoneDesc": "I-pair ang phone na ito bilang scanner?",
+  "pairingQrDesktopDesc": "Code iyan para sa phone; i-scan ito gamit ang phone.",
+  "pairThisPhone": "I-pair ang phone na ito"
 }

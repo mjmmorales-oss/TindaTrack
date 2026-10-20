@@ -24,7 +24,8 @@ import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
 import { useCameraScanner } from '@/hooks/useCameraScanner'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useSettings } from '@/features/settings/hooks/useSettings'
-import { Barcode } from '@/lib/barcode'
+import { Barcode, classifyScan } from '@/lib/barcode'
+import { handlePairingScan, notifyNotProductBarcode } from '@/lib/pairingScan'
 import { beep, vibrate } from '@/lib/feedback'
 import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
@@ -61,6 +62,9 @@ const CAMERA_STORAGE_KEY = 'tt_barcode_camera_enabled'
  * @param {boolean} [props.continuous=false] - Whether scanner stays active for multiple scans
  * @param {string} [props.placeholder] - Custom input placeholder
  * @param {'barcode'|'visual'|'ai_basket'} [props.defaultMode='barcode'] - Starting tab
+ * @param {boolean} [props.hideAiBasket=false] - Hide the AI Basket tab
+ * @param {(code: string) => void} [props.onPairingCode] - Receives a scanned pairing code
+ *   (QR URL or bare XXXX-XXXX). Without it, pairing QRs show the default pair/explain toast.
  */
 export function BarcodeCapture({
   onCode,
@@ -74,6 +78,7 @@ export function BarcodeCapture({
   placeholder,
   defaultMode = 'barcode',
   hideAiBasket = false,
+  onPairingCode,
 }) {
   const { t } = useTranslation(['scanner', 'products', 'common'])
   const { data: settingsRes } = useSettings()
@@ -179,6 +184,26 @@ export function BarcodeCapture({
       lastCodeRef.current = normalized
       lastTimeRef.current = now
 
+      // Pairing QRs and random QR/text never reach onCode (and so never hit the lookup)
+      if (source !== 'visual') {
+        const scan = classifyScan(trimmed)
+        if (scan.kind === 'pairing' && (scan.fromUrl || onPairingCode)) {
+          vibrate()
+          if (onPairingCode) {
+            onPairingCode(scan.code)
+          } else {
+            handlePairingScan(scan.code)
+          }
+          setValue('')
+          return false
+        }
+        if (scan.kind === 'unknown') {
+          notifyNotProductBarcode()
+          setValue('')
+          return false
+        }
+      }
+
       beep()
       vibrate()
 
@@ -188,7 +213,7 @@ export function BarcodeCapture({
 
       return true
     },
-    [disabled, onCode],
+    [disabled, onCode, onPairingCode],
   )
 
   // Keyboard wedge listener (active focused or not)

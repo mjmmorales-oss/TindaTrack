@@ -70,7 +70,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/products/embeddings', [ProductEmbeddingController::class, 'index'])
         ->middleware('role:owner,cashier');
     Route::get('/products/{product}', [ProductController::class, 'show']);
+    // `.*` lets URLs/QR text reach the controller, which answers 422 instead of a route 404
     Route::get('/barcode-lookup/{barcode}', BarcodeLookupController::class)
+        ->where('barcode', '.*')
         ->middleware(['role:owner,cashier', 'throttle:30,1']);
 
     // Customers (cashiers can view, create suki, and edit details during transactions)
