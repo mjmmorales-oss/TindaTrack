@@ -8,8 +8,6 @@ import {
   AlertCircle,
   Eye,
   Sparkles,
-  HelpCircle,
-  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,10 +16,8 @@ import { CameraScanner } from '@/components/scanner/CameraScanner'
 import { AiCapture } from '@/components/ai/AiCapture'
 import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 import { useAiConsent } from '@/hooks/useAiConsent'
-import { ProductThumb } from '@/components/common/ProductThumb'
-import { Money } from '@/components/common/Money'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
-import { useCameraScanner } from '@/hooks/useCameraScanner'
+import { VisualMatchPanel } from '@/components/scanner/VisualMatchPanel'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { Barcode, classifyScan } from '@/lib/barcode'
@@ -30,18 +26,6 @@ import { beep, vibrate } from '@/lib/feedback'
 import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 import { aiService } from '@/services/aiService'
-import {
-  VISUAL_MODEL_ID,
-  VISUAL_SIMILARITY_THRESHOLD,
-  VISUAL_MARGIN_THRESHOLD,
-  VISUAL_SCAN_INTERVAL_MS,
-} from '@/config/visual'
-import {
-  embedImage,
-  findTopMatches,
-  getVisualIndex,
-  invalidateVisualIndex,
-} from '@/lib/visualSearch'
 
 const CAMERA_STORAGE_KEY = 'tt_barcode_camera_enabled'
 
@@ -138,31 +122,10 @@ export function BarcodeCapture({
   const { data: productsRes } = useProducts({ per_page: 250 })
   const allProducts = productsRes?.data || []
 
-  // Visual search states
-  const [visualMatches, setVisualMatches] = useState([])
-  const [visualStatus, setVisualStatus] = useState('waiting') // 'waiting'|'ok'|'low_confidence'|'low_margin'|'empty'|'error'
-  const [isVisualScanning, setIsVisualScanning] = useState(false)
-  const [visualError, setVisualError] = useState(null)
-  const [lastQueryVector, setLastQueryVector] = useState(null)
-  const [showTeachDialog, setShowTeachDialog] = useState(false)
-  const [selectedCorrectionProduct, setSelectedCorrectionProduct] = useState(null)
-  const [isTeaching, setIsTeaching] = useState(false)
-
-  // Camera stream hook for Visual Mode
-  const {
-    videoRef: visualVideoRef,
-    status: visualCamStatus,
-    error: visualCamError,
-  } = useCameraScanner({
-    enabled: mode === 'visual' && !disabled,
-    paused: mode !== 'visual',
-  })
-
   const inputRef = useRef(null)
   const lastCodeRef = useRef('')
   const lastTimeRef = useRef(0)
   const debounceTimerRef = useRef(null)
-  const isBusyEmbeddingRef = useRef(false)
 
   // Emit accepted code with deduplication (1500ms)
   const handleAcceptedCode = useCallback(
@@ -312,116 +275,12 @@ export function BarcodeCapture({
     }
   }
 
-  // VISUAL SEARCH SCAN LOOP (~700ms interval)
-  useEffect(() => {
-    if (mode !== 'visual' || disabled || visualCamStatus !== 'scanning') {
-      return
-    }
-
-    let intervalId = null
-    let isCancelled = false
-
-    const runVisualScan = async () => {
-      if (document.hidden || isBusyEmbeddingRef.current || isCancelled) return
-      const video = visualVideoRef.current
-      if (!video || video.readyState < 2 || video.videoWidth === 0) return
-
-      isBusyEmbeddingRef.current = true
-      setIsVisualScanning(true)
-
-      try {
-        // Crop center square
-        const side = Math.min(video.videoWidth, video.videoHeight)
-        const sx = (video.videoWidth - side) / 2
-        const sy = (video.videoHeight - side) / 2
-
-        const canvas = document.createElement('canvas')
-        canvas.width = 224
-        canvas.height = 224
-        const ctx = canvas.getContext('2d', { willReadFrequently: true })
-        ctx.drawImage(video, sx, sy, side, side, 0, 0, 224, 224)
-
-        const vector = await embedImage(canvas)
-        if (isCancelled) return
-
-        setLastQueryVector(vector)
-
-        const index = await getVisualIndex()
-        const { matches, status } = findTopMatches(vector, index, {
-          topK: 3,
-          threshold: VISUAL_SIMILARITY_THRESHOLD,
-          margin: VISUAL_MARGIN_THRESHOLD,
-        })
-
-        if (!isCancelled) {
-          setVisualStatus(status)
-          if (status === 'ok') {
-            // Attach resolved product objects
-            const resolved = matches
-              .map((m) => {
-                const prod = allProducts.find((p) => Number(p.id) === Number(m.product_id))
-                return prod ? { ...m, product: prod } : null
-              })
-              .filter(Boolean)
-            setVisualMatches(resolved)
-          } else {
-            setVisualMatches([])
-          }
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          console.warn('Visual search cycle error:', err)
-          setVisualError(err?.message || 'Inference error')
-        }
-      } finally {
-        isBusyEmbeddingRef.current = false
-        if (!isCancelled) {
-          setIsVisualScanning(false)
-        }
-      }
-    }
-
-    intervalId = setInterval(runVisualScan, VISUAL_SCAN_INTERVAL_MS)
-    return () => {
-      isCancelled = true
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [mode, disabled, visualCamStatus, allProducts])
-
-  // Handle visual match selection
-  const handleSelectVisualMatch = (product) => {
-    beep()
-    vibrate()
+  // Visual Match picked a product (from a match or "Ask AI")
+  const handleVisualSelect = (product) => {
     if (onProductSelect) {
       onProductSelect(product, { source: 'visual' })
     } else {
       handleAcceptedCode(product.barcode || String(product.id), 'visual')
-    }
-  }
-
-  // Handle teaching loop
-  const handleTeachPhoto = async () => {
-    if (!selectedCorrectionProduct || !lastQueryVector) return
-    setIsTeaching(true)
-    try {
-      await aiService.saveEmbedding(selectedCorrectionProduct.id, {
-        model: VISUAL_MODEL_ID,
-        source: 'correction',
-        vector: lastQueryVector,
-      })
-      invalidateVisualIndex()
-      notify.success(
-        t('scanner:teachPhoto', 'Teach TindaTrack this photo'),
-        t('scanner:teachingSuccess', 'Successfully saved reference photo for {{name}}.', {
-          name: selectedCorrectionProduct.name,
-        }),
-      )
-      setShowTeachDialog(false)
-      setSelectedCorrectionProduct(null)
-    } catch (err) {
-      notify.error(t('common:error', 'Error'), err?.message)
-    } finally {
-      setIsTeaching(false)
     }
   }
 
@@ -573,181 +432,16 @@ export function BarcodeCapture({
         </div>
       )}
 
-      {/* TAB 2: VISUAL PRODUCT IDENTIFIER */}
+      {/* TAB 2: VISUAL MATCH (taught products, on-device) */}
       {mode === 'visual' && (
-        <div className="space-y-3.5">
-          {visualError ? (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-2">
-              <p className="font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
-                <AlertCircle className="h-4 w-4" />
-                <span>{t('scanner:unsupportedTitle', 'Visual search unavailable')}</span>
-              </p>
-              <p className="text-muted-foreground">
-                {t('scanner:visualUnavailable', 'On-device visual search is unavailable on this browser/device. Please use barcode scanning.')}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setMode('barcode')}
-                className="gap-1.5 text-xs"
-              >
-                <ScanBarcode className="h-3.5 w-3.5" />
-                <span>{t('scanner:modeBarcode', 'Switch to Barcode')}</span>
-              </Button>
-            </div>
-          ) : (
-            <>
-              {/* Camera Viewfinder with Center Square Guide */}
-              <div className="relative aspect-square w-full max-w-md mx-auto overflow-hidden rounded-xl border border-border bg-black shadow-sm sm:aspect-4/3">
-                <video
-                  ref={visualVideoRef}
-                  className="h-full w-full object-cover"
-                  autoPlay
-                  muted
-                  playsInline
-                />
-
-                {/* Center Square Overlay Guide */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-8">
-                  <div className="relative aspect-square w-48 sm:w-56 rounded-2xl border-2 border-primary/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
-                    {/* Corner Reticles */}
-                    <div className="absolute -top-1 -left-1 h-5 w-5 rounded-tl-lg border-t-3 border-l-3 border-primary" />
-                    <div className="absolute -top-1 -right-1 h-5 w-5 rounded-tr-lg border-t-3 border-r-3 border-primary" />
-                    <div className="absolute -bottom-1 -left-1 h-5 w-5 rounded-bl-lg border-b-3 border-l-3 border-primary" />
-                    <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-br-lg border-b-3 border-r-3 border-primary" />
-
-                    {/* Scanning Pulse Line */}
-                    <div className="absolute inset-x-2 top-1/2 h-0.5 bg-primary/70 shadow-[0_0_8px_var(--primary)] animate-pulse" />
-                  </div>
-                </div>
-
-                {/* Live Scanning Status Pill */}
-                <div className="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none">
-                  <div className="rounded-full bg-slate-900/80 backdrop-blur-xs px-3 py-1 text-[11px] text-white flex items-center gap-1.5 font-medium shadow-sm">
-                    {isVisualScanning ? (
-                      <>
-                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                        <span>{t('scanner:visualSearching', 'Identifying product...')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-3 w-3 text-primary" />
-                        <span>{t('scanner:modeVisual', 'Visual Match')}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* MATCHED RESULTS OR HINTS */}
-              {visualMatches.length > 0 ? (
-                <div className="space-y-2 animate-in fade-in-50">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">Top Matches:</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowTeachDialog(true)}
-                      className="text-primary hover:underline text-[11px]"
-                    >
-                      {t('scanner:notThisOne', 'Not this one?')}
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    {visualMatches.map((m) => (
-                      <button
-                        key={m.product_id}
-                        type="button"
-                        onClick={() => handleSelectVisualMatch(m.product)}
-                        className="flex items-center gap-3 rounded-xl border border-primary/40 bg-card p-2.5 text-left hover:border-primary hover:bg-primary/5 transition-all shadow-xs"
-                      >
-                        <ProductThumb
-                          name={m.product?.name}
-                          imageUrl={m.product?.image_url}
-                          size="md"
-                          className="shrink-0 rounded-lg"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-xs text-foreground truncate leading-tight">
-                            {m.product?.name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <Money amount={m.product?.price || 0} size="xs" />
-                            <span className="text-[10px] font-mono font-medium text-primary bg-primary/10 rounded px-1">
-                              {Math.round(m.score * 100)}%
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-2 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  <span>
-                    {t(
-                      'scanner:visualHoldCloser',
-                      'Hold the product closer / try another angle',
-                    )}
-                  </span>
-                </div>
-              )}
-
-              {/* TEACHING LOOP ACCORDION/FORM */}
-              {showTeachDialog && (
-                <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5 space-y-2.5 animate-in fade-in-50">
-                  <p className="text-xs font-semibold text-foreground">
-                    {t('scanner:pickCorrectProduct', 'Pick the correct product')}
-                  </p>
-                  <select
-                    className="w-full rounded-lg border border-border bg-background p-2 text-base md:text-xs"
-                    value={selectedCorrectionProduct?.id || ''}
-                    onChange={(e) => {
-                      const id = e.target.value
-                      const found = allProducts.find((p) => String(p.id) === String(id))
-                      setSelectedCorrectionProduct(found || null)
-                    }}
-                  >
-                    <option value="">-- Choose product --</option>
-                    {allProducts.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} (₱{p.price})
-                      </option>
-                    ))}
-                  </select>
-
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowTeachDialog(false)}
-                      className="text-xs h-8"
-                    >
-                      {t('common:cancel', 'Cancel')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={!selectedCorrectionProduct || isTeaching}
-                      onClick={handleTeachPhoto}
-                      className="gap-1.5 text-xs h-8"
-                    >
-                      {isTeaching ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-3.5 w-3.5" />
-                      )}
-                      <span>{t('scanner:teachPhoto', 'Teach TindaTrack this photo')}</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <VisualMatchPanel
+          products={allProducts}
+          onSelect={handleVisualSelect}
+          onSwitchToBarcode={() => setMode('barcode')}
+          aiEnabled={aiBasketEnabled}
+          withConsent={withConsent}
+          disabled={disabled}
+        />
       )}
 
       {/* TAB 3: AI BASKET SCANNER */}

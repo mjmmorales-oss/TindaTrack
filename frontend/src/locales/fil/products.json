@@ -290,5 +290,9 @@
   "addAsNew": "Idagdag bilang bago",
   "restore": "Ibalik",
   "archivedBarcodeHintTitle": "Barcode ng na-delete na produkto",
-  "archivedBarcodeHint": "Ginamit ng {{name}} ang barcode na ito bago na-delete. Gagawa ng bagong produkto kapag nag-save."
+  "archivedBarcodeHint": "Ginamit ng {{name}} ang barcode na ito bago na-delete. Gagawa ng bagong produkto kapag nag-save.",
+  "takeThreePhotos": "Kumuha ng 3 litrato",
+  "referencePhotoProgress": "Na-save ang litrato {{done}} sa {{total}}",
+  "referencePhotoTurn": "Paikutin nang kaunti ang produkto, saka kunan ulit.",
+  "referencePhotoSaving": "Inaaral ang produktong ito…"
 }

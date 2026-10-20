@@ -121,5 +121,18 @@
   "teachPhoto": "Ituro ang litratong ito sa TindaTrack",
   "teachingSuccess": "Matagumpay na naituro ang litrato para sa {{name}}.",
   "pickCorrectProduct": "Piliin ang tamang produkto",
-  "lanQrHint": "Gamit ng QR ang Wi-Fi address ng laptop na ito ({{url}}). Dapat nasa parehong Wi-Fi ang phone."
+  "lanQrHint": "Gamit ng QR ang Wi-Fi address ng laptop na ito ({{url}}). Dapat nasa parehong Wi-Fi ang phone.",
+  "topMatches": "Pinakamalapit na tugma",
+  "chooseProduct": "-- Pumili ng produkto --",
+  "visualLoadingIndex": "Kinukuha ang mga itinurong produkto…",
+  "visualEmptyTitle": "Walang alam na produkto ang Visual Match",
+  "visualEmptyDesc": "Magturo muna ng produkto: Products → (produkto) → Reference photos.",
+  "visualGoTeach": "Magturo ng produkto",
+  "visualKnowsCount_one": "May alam na {{count}} produkto ang Visual Match",
+  "visualKnowsCount_other": "May alam na {{count}} produkto ang Visual Match",
+  "visualModelLoading": "Nilo-load ang Visual Match model… {{progress}}%",
+  "askAi": "Tanungin ang AI",
+  "askAiNoMatch": "Walang nakitang produkto ng tindahan ang AI",
+  "askAiNoMatchDesc": "Subukan ang ibang anggulo o i-scan ang barcode.",
+  "visualKnowsCount": "May alam na {{count}} produkto ang Visual Match"
 }

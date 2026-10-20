@@ -290,5 +290,9 @@
   "addAsNew": "Add as new",
   "restore": "Restore",
   "archivedBarcodeHintTitle": "Barcode from a deleted product",
-  "archivedBarcodeHint": "{{name}} used this barcode before it was deleted. Saving creates a new product."
+  "archivedBarcodeHint": "{{name}} used this barcode before it was deleted. Saving creates a new product.",
+  "takeThreePhotos": "Take 3 photos",
+  "referencePhotoProgress": "Photo {{done}} of {{total}} saved",
+  "referencePhotoTurn": "Turn the product a little, then take the next photo.",
+  "referencePhotoSaving": "Learning this product…"
 }

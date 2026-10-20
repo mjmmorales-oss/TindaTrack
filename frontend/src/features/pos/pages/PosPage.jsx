@@ -45,6 +45,8 @@ import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { Barcode, classifyScan } from '@/lib/barcode'
 import { handlePairingScan, notifyNotProductBarcode } from '@/lib/pairingScan'
+import { isDesktopPos } from '@/lib/device'
+import { countIndexedProducts, getVisualIndex, preloadVisualModel } from '@/lib/visualSearch'
 import { beep } from '@/lib/feedback'
 import { lookupBarcode } from '@/services/barcode'
 import { getScannerSession, endScannerSession } from '@/services/scanner'
@@ -292,6 +294,19 @@ export function PosPage() {
     },
     [allProducts, user, addToCart, t, navigate],
   )
+
+  // Desktop POS: warm up the Visual Match model in idle time when products are taught
+  const visualSearchEnabled = settings?.visual_search_enabled !== false
+  useEffect(() => {
+    if (!settings || !visualSearchEnabled || !isDesktopPos()) return undefined
+    let alive = true
+    getVisualIndex().then((index) => {
+      if (alive && countIndexedProducts(index) > 0) preloadVisualModel()
+    })
+    return () => {
+      alive = false
+    }
+  }, [settings, visualSearchEnabled])
 
   // Hardware scanner wedge support (off while a dialog with its own scanner/input is open)
   useBarcodeWedge({
