@@ -2,6 +2,15 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v2.2.0] - 2026-10-21 - Demo-day fixes, phone & scanner UX, full-system bug hunt, hardening
+
+Full audit with root causes, tests and the demo script: `docs/AUDIT-v2.2.0.md`.
+
+- **Demo blockers:** AI camera capture sends a real Blob (A1), multipart uploads no longer JSON-stringified by axios (A1b), deleted products free their barcode/SKU + Restore (A2), pairing QR / non-barcodes never hit the lookup (A3), pairing QR uses the laptop's LAN address and `dev:lan` listens on Wi-Fi (A4), Visual Match explains its index, loads with progress, picks WebGPU/wasm safely and offers "Ask AI" (A5), USB barcode gun works on the POS page again.
+- **Phone & scanner UX:** "Use phone as scanner" on desktop only, in-app "Scan pairing QR" on `/scan`, clear Not paired / Pairing / Connected / Session ended states, Barcode | AI Basket tabs on the phone, `/scan` PWA shortcut, one-row mobile POS toolbar, scanner tab subtitles.
+- **Bug hunt:** phone scans no longer replayed into the cart; utang payment, staff edit/generate/reset, settings fields, sales summary, customer filters, AI Lab filters/experiments, AI Stock-In crops, stock filter, units, Manila date ranges, credit-limit override, down-payment and oversell guards; `friendlyError()` everywhere; owner self-registration closed.
+- **Tooling:** `npm run check-routes`, response-contract skeletons (Pest → Vitest), extended request contracts, `tindatrack:check --production`, mock-build detection in `check-prod-bundle`.
+
 ## [v2.0.0] - 2026-10-17 - AI Basket Scan, AI Product Add, On-Device Visual Search & AI Research Lab
 - **AI Multi-Object POS Basket Scan (A1, A4)**:
   - Google Gemini multi-modal vision provider (`gemini-2.5-flash` with automatic fallback to `gemini-2.5-flash-lite`), catalog-constrained recognition (`basket-v1`), and deterministic offline mock vision provider (`MockVisionProvider`).

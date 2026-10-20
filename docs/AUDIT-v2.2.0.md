@@ -104,3 +104,99 @@ Method: five read-only audit agents (Auth/Staff/Settings · Products/Categories/
 | Phone pairing | create ✓ · LAN QR ✓ · in-app QR pairing ✓ · scan → POS ✓ (no replays) · AI basket → POS review ✓ · expiry ✓ · end ✓ · device token on every scanner endpoint ✓ |
 | AI | ping ✓ · basket ✓ · stock-in ✓ · feedback 2xx ✓ · AI Lab metrics/CSV with filters ✓ · 429/daily-limit messages ✓ · fallback model ✓ · mock mode ✓ · consent ✓ |
 | PWA | manifest + icons + `/scan` shortcut ✓ · SW never caches `/api/**` (product images CacheFirst) ✓ · update prompt ✓ |
+
+## Phase B — Phone & scanner UX ✅
+
+| Item | Done |
+|---|---|
+| B1 labels | Scanner tabs show "Barcode: scan a barcode or QR" / "Visual Match: point at a taught product" / "AI Basket: photo of the whole basket"; Products shows **Add by barcode** ("One product by barcode or QR") and **AI Stock-In** ("Up to 5 new products in one photo") side by side |
+| B2 desktop-only | "Use phone as scanner" (renamed, hint "Scan with your phone, items appear here") only with `(pointer: fine)` and ≥1024 px (`useIsDesktop`), on POS and Inventory |
+| B3 pair in-app | `/scan`: big **Scan pairing QR** (in-app `BarcodeCapture`, QR enabled) pairs at once; manual code below. **Use this phone as a scanner** on the login page and the mobile More menu. POS camera on a phone also offers pairing (A3). PWA shortcut "Phone scanner → /scan" (asserted by `check-pwa`) |
+| B4 dialog | Bigger QR (220 px), code, live "Waiting for phone…" → "Phone connected ✓", localhost/API warnings, LAN-address hint |
+| B5 phone states | Not paired → Pairing… → Connected ✓ (store name) → Session ended; Barcode \| AI Basket tabs (device-token upload) + 44 px quantity stepper. **Fixed:** phone AI Basket events now carry the result and `type: 'ai_basket'` (API mode never opened the POS review sheet). Visual Match is not offered on the phone (needs the store catalog → D-2) |
+| B6 mobile POS | One row: **Scan** · **AI Basket** (+ view toggle); duplicate "Clear" removed. No floating avatar bubble exists in the POS code; the grid keeps `pb-24` above the mobile cart bar |
+| Tests | `phoneScannerUx.test.jsx` (desktop-only visibility, phone layout, `/scan` QR → `pair` with the classified code), `check-pwa` shortcut |
+
+Also fixed in Phase B: cashiers could not read `/api/settings` (403 toasts on POS, no receipt header) → read access for every role, PUT stays owner-only; shared components skip authenticated queries when there is no session (phone page "Session Expired" toasts).
+
+## Phase D — Production hardening ✅
+
+| Item | Status |
+|---|---|
+| Middleware | auth + `active` on all private routes; role checks on owner routes; throttles on login/register/forgot/**reset-password** (added), AI scans, feedback, lookup, phone pair/scans/ai-basket |
+| Mass assignment | every model uses `$fillable`; new `deleted_barcode/deleted_sku` are server-managed (`forceFill`) |
+| Money | decimals in DB, totals recomputed on the server (`CreateSaleAction`); float casts in resources |
+| Transactions + locks | sale, void, restock/adjust, utang payment all `DB::transaction` + `lockForUpdate` |
+| `APP_DEBUG=false` | `shouldRenderJsonWhen(api/*)` + `ForceJsonResponse`: JSON errors only, no traces; route error boundary hides raw text outside DEV |
+| CORS | `CORS_ALLOWED_ORIGINS` **plus** `FRONTEND_URL`, trailing slashes trimmed; bearer tokens, no credentials |
+| Upload limits | AI photo cap in the SPA **1.4 MB** < `AI_MAX_IMAGE_KB` (default now 5120) < Railway PHP 10 MB/12 MB; also below a stock local PHP `upload_max_filesize=2M` (the demo laptop's value). Product photos ≤ 300 KB (resize) < 1 MB rule |
+| Indexes | `products.deleted_at`, `products.deleted_barcode`, `stock_movements.created_at`, `sales(status, created_at)` (barcode/sku unique, sales created_at composite already existed) |
+| Frontend | no secrets in `VITE_*` (`check:bundle`), `VITE_API_URL` with/without trailing slash, 401 → session cleared + login, no CSRF/419 with bearer tokens, **mock-build detection** in `check-prod-bundle`, route error boundary with Reload |
+| Performance | all routes lazy; Transformers.js only inside the worker (`vendor-transformers` chunk); thumbnails `loading="lazy"` + `decoding="async"` in fixed-size boxes. Precache 4039.70 KiB → 4071.78 KiB (184 entries; +32 KiB for the new UI/i18n) |
+| Deploy | `railway.toml` (migrate → seed → caches), `nixpacks.toml` PHP 8.4 + limits, `vercel.json` SPA rewrites exclude `sw.js`/manifest/assets/icons; `DEPLOY.md` lists every app env var (added `ALLOW_OWNER_REGISTRATION`, `DEMO_*`, `OFF_TIMEOUT`, `VITE_APP_NAME`, `VITE_SHOW_DEMO_ACCOUNTS`, `VITE_MOCK_LATENCY`, dev-only `VITE_DEV_*`) |
+| `php artisan tindatrack:check --production` | warns: missing `APP_KEY`, `APP_DEBUG=true`, bad/trailing-slash/localhost/non-CORS `FRONTEND_URL`, Gemini without key, missing storage link, low PHP/AI upload limits (tested) |
+
+## Phase E — Final results
+
+| Check | Baseline (v2.1.0) | v2.2.0 |
+|---|---|---|
+| `php artisan test` | 179 passed (853 assertions) | **211 passed (1021 assertions)** |
+| `pint --test` | passed | passed |
+| `npm run test` | 290 passed (26 files) | **354 passed (34 files)** |
+| `npm run lint` | 0 errors, 111 warnings | **0 errors, 105 warnings** |
+| `npm run build` | 184 entries, 4039.70 KiB | 184 entries, 4071.78 KiB |
+| `check:bundle` · `check:i18n` · `check:mobile` · `check:pwa` | pass | pass (bundle now also rejects mock builds; pwa now asserts the `/scan` shortcut and precache entries) |
+| `check-routes` (new) | — | pass (86 calls) |
+| `check-services` · `check-contract` | pass | pass |
+| `smoke:ai` · `smoke:prod` · `smoke:pairing` · `smoke:pwa` | — | **all pass** (run against a throwaway SQLite DB + `AI_PROVIDER=mock` on ports 8765/4174; the user's own server on :8000 was not touched; temp servers stopped afterwards) |
+
+## Deferred (Medium/Low, with reason)
+
+| ID | Sev | Item | Why deferred |
+|---|---|---|---|
+| D-1 | Medium | All 58 seeded barcodes have a wrong EAN-13 check digit. Camera/USB scans and the lookup work (F4), but **typing** a seeded barcode is blocked by the deliberate check-digit guard | Regenerating them the night before rewrites fixtures and the deployed DB's barcodes (labels may be printed). Do it after the demo |
+| D-2 | Medium | Visual Match on the paired phone | Needs a device-token endpoint for the catalog + embeddings |
+| D-3 | Medium | AI Stock-In bulk-save errors for barcode/SKU/stock aren't rendered per row (toast only) | UI work > 30 lines |
+| D-4 | Low | Bulk restock is one request per item (not atomic) | `AdjustStockAction::bulkRestock` exists but has no route; low risk |
+| D-5 | Low | Some flows toast an error from the hook *and* show it in the dialog | cosmetic |
+| D-6 | Low | `must_change_password` is a banner, not enforced by middleware | product decision |
+| D-7 | Low | Dashboard `low_stock_count` excludes out-of-stock (mock includes it); mock default credit limit 1000 vs API 500 | cosmetic difference in mock mode only |
+| D-8 | Low | AI Lab visual top-1/top-3 accuracy are hard-coded in `AiMetricsService` | needs real labelled data |
+| D-9 | Low | Dead code: `useAdjustStock`, `adjustStockSchema`, `useImportProductImage`; `CategoryResource` reads `product_count` while `withCount` gives `products_count` (extra query per row) | cleanup |
+| D-10 | Low | 105 lint warnings (React Compiler advisories, exhaustive-deps); 117 heuristic "untranslated candidate" strings in older screens | no errors; all new text is translated |
+| D-11 | Low | `routes.test.jsx › renders /sales for owner` can time out under full-suite load | passes alone and on rerun |
+| D-12 | Low | A user deactivated mid-session sees a 403 toast until their next 401 | unverified edge |
+
+---
+
+## Demo script for tomorrow
+
+Log in on the laptop as the **owner** (local seed: `owner@tindatrack.test`; password from `DEMO_OWNER_PASSWORD`/`DEMO_PASSWORD` in `backend/.env`, `password` by default).
+
+1. **Barcode sale** — POS → **Scan** → keep the Barcode tab, scan a product (USB gun works anywhere on the POS page, or the camera). Tip: the night before, register 3–4 *real* products via Products → **Add by barcode** (scan the real barcode → Open Food Facts prefills → set price → Save) and sell those. → **Pay** → Cash → enter tendered amount → change is shown → Confirm → receipt.
+2. **AI Basket sale (3–4 items)** — POS → **AI Basket** → accept the AI consent once → put 3–4 store products in frame → Capture (or let auto-capture fire) → review sheet: check quantities, fix any item → **Add to cart** → Pay.
+3. **AI Stock-In (3 new items)** — Products → **AI Stock-In** → photo of 3 new products → review table: set category + price per row (required) → **Save all** → products appear with their cropped photos.
+4. **Visual Match (teach 3–5 products the night before)** — Products → open a product → *Reference photos* → **Take 3 photos** (turn it a little between shots). Repeat for 3–5 products. Demo: POS → **Scan** → **Visual Match** tab → it shows "Visual Match knows N products" → hold a taught product in the square → tap the match. If it hesitates for ~3 s, tap **Ask AI**.
+5. **Pair a phone by in-app QR** — Laptop: POS → **Use phone as scanner** (QR + code, "Waiting for phone…"). Phone: open the Network URL → login page → **Use this phone as a scanner** (or the installed PWA's "Phone scanner" shortcut) → **Scan pairing QR** → point at the laptop QR → "Connected ✓". Scan products on the phone → they appear in the laptop cart. Phone **AI Basket** tab → photo → the laptop opens the review sheet.
+6. **Utang sale and payment** — POS → add items → Pay → **Utang** tab → pick (or add) a customer → optional paid-now (must be ≤ total) → Confirm. Then **Utang** page → customer → **Record payment** → balance drops (overpaying is blocked).
+7. **Void** — Sales → open the sale → **Void** → reason (≥ 5 characters) → confirm → stock and utang are restored.
+8. **AI Lab metrics** — sidebar **AI Lab** → Metrics: scans, acceptance, latency, capture mode (auto/manual/upload), checkout time by add method → **Export CSV**.
+
+### Backup plan (Wi-Fi or Gemini fails)
+
+- In `backend/.env` set `AI_PROVIDER=mock`, then run `php artisan config:clear` in `backend/`. Every AI flow keeps working with the deterministic mock (a "Demo AI" badge shows in the camera). Barcode, Visual Match (on-device), POS, utang, void and reports don't need the internet.
+- No Wi-Fi for the phone: skip pairing and use the laptop camera / USB gun, or use a phone hotspot (laptop and phone on the same hotspot, then `npm run dev:lan`).
+- Visual Match model never downloaded: it needs the internet the first time (then it's cached). Open the Visual Match tab once the night before on each device.
+
+## Morning checklist
+
+1. `git pull` (on `main`, tag `v2.2.0`)
+2. `cd backend && composer install && php artisan migrate` (adds `deleted_barcode/sku`, settings profile fields, indexes)
+3. `cd ../frontend && npm install`
+4. Start **DBngin** (MySQL)
+5. From the repo root: `npm run dev:lan` (API + HTTPS dev server listening on Wi-Fi)
+6. On the laptop open the **Network** URL Vite prints (`https://192.168.x.x:5173`, accept the self-signed certificate) — not localhost
+7. Pair the phone by in-app QR (POS → Use phone as scanner → phone: Use this phone as a scanner → Scan pairing QR); accept the certificate on the phone too
+8. Teach 3–5 Visual Match products (Products → product → Reference photos → Take 3 photos)
+9. `cd backend && php artisan ai:ping` (expect "Connected"; if not, switch to `AI_PROVIDER=mock` — see Backup plan)
+10. Optional: `php artisan tindatrack:check` (data integrity) — `--production` is for the Railway deploy
