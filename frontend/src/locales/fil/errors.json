@@ -33,5 +33,10 @@
   "aiDailyLimit": "Naubos na ang AI limit ngayong araw. Gumagana pa rin ang barcode scanning.",
   "aiTimeout": "Natagalan ang AI sa pagsagot. Subukan ulit, o i-scan ang mga barcode.",
   "aiDisabled": "Naka-off ang AI features sa Settings.",
-  "registrationClosed": "Sarado na ang registration. Hilingin sa may-ari ng tindahan na gawan ka ng staff account."
+  "registrationClosed": "Sarado na ang registration. Hilingin sa may-ari ng tindahan na gawan ka ng staff account.",
+  "routeErrorTitle": "May nagkaproblema",
+  "routeErrorDesc": "Hindi na-load ang pahinang ito. I-reload para subukan ulit — naka-save ang cart mo.",
+  "newVersionTitle": "May bagong bersyon",
+  "newVersionDesc": "Na-update ang TindaTrack. I-reload para makuha ang pinakabagong bersyon.",
+  "reloadPage": "I-reload"
 }

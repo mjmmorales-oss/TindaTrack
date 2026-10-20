@@ -78,6 +78,7 @@ export function ProductThumb({
             )}
             onError={() => setImgError(true)}
             loading="lazy"
+            decoding="async"
           />
         </div>
       )
@@ -119,6 +120,7 @@ export function ProductThumb({
           )}
           onError={() => setImgError(true)}
           loading="lazy"
+          decoding="async"
         />
       </div>
     )

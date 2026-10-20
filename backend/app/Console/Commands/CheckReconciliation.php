@@ -22,11 +22,86 @@ use Illuminate\Console\Command;
 class CheckReconciliation extends Command
 {
     /**
+     * Deployment sanity checks. Prints WARN lines (does not change the exit code,
+     * which stays tied to data integrity) so a misconfigured Railway deploy is obvious.
+     */
+    protected function productionChecks(): void
+    {
+        $this->info('=== Production configuration ===');
+        $warnings = [];
+
+        if (empty(config('app.key'))) {
+            $warnings[] = 'APP_KEY is missing. Run: php artisan key:generate --show and set it on Railway.';
+        }
+        if (config('app.debug')) {
+            $warnings[] = 'APP_DEBUG=true: error pages would expose stack traces. Set APP_DEBUG=false.';
+        }
+
+        // Via config: after `config:cache` (Railway pre-deploy) env() returns null here
+        $frontend = (string) config('app.frontend_url', '');
+        if ($frontend === '' || ! preg_match('#^https?://[^/]+#', $frontend)) {
+            $warnings[] = "FRONTEND_URL is not a valid URL ('{$frontend}'). Set it to the Vercel URL, e.g. https://tindatrack.vercel.app";
+        } elseif (str_ends_with($frontend, '/')) {
+            $warnings[] = 'FRONTEND_URL ends with "/": CORS compares exact origins. Remove the trailing slash.';
+        } elseif (app()->environment('production') && preg_match('#localhost|127\.0\.0\.1#', $frontend)) {
+            $warnings[] = "FRONTEND_URL points at localhost ('{$frontend}') in production.";
+        } elseif (! in_array($frontend, config('cors.allowed_origins', []), true)) {
+            $warnings[] = 'FRONTEND_URL is not in the CORS allowed origins.';
+        }
+
+        if (config('ai.provider') === 'gemini' && empty(config('ai.gemini_api_key'))) {
+            $warnings[] = 'AI_PROVIDER=gemini but GEMINI_API_KEY is empty. Set the key, or AI_PROVIDER=mock for an offline demo.';
+        }
+
+        if (! is_link(public_path('storage')) && ! is_dir(public_path('storage'))) {
+            $warnings[] = 'public/storage link is missing. Run: php artisan storage:link';
+        }
+
+        $uploadMax = $this->iniBytes((string) ini_get('upload_max_filesize'));
+        $postMax = $this->iniBytes((string) ini_get('post_max_size'));
+        if ($uploadMax > 0 && $uploadMax < 2 * 1024 * 1024) {
+            $warnings[] = 'PHP upload_max_filesize is below 2M: AI photos (up to 1.4 MB) may be dropped.';
+        }
+        if ($postMax > 0 && $uploadMax > 0 && $postMax < $uploadMax) {
+            $warnings[] = 'PHP post_max_size is smaller than upload_max_filesize.';
+        }
+        if ((int) config('ai.max_image_kb') < 1500) {
+            $warnings[] = 'AI_MAX_IMAGE_KB is below the SPA\'s 1.4 MB AI photo cap.';
+        }
+
+        foreach ($warnings as $warning) {
+            $this->warn("  WARN: {$warning}");
+        }
+        if ($warnings === []) {
+            $this->info('  PASS: Production configuration looks right.');
+        }
+        $this->newLine();
+    }
+
+    private function iniBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 0;
+        }
+        $unit = strtolower(substr($value, -1));
+        $number = (int) $value;
+
+        return match ($unit) {
+            'g' => $number * 1024 ** 3,
+            'm' => $number * 1024 ** 2,
+            'k' => $number * 1024,
+            default => (int) $value,
+        };
+    }
+
+    /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'tindatrack:check';
+    protected $signature = 'tindatrack:check
+        {--production : Also warn about deployment settings (APP_KEY, APP_DEBUG, FRONTEND_URL, AI key, storage link, upload limits)}';
 
     /**
      * The console command description.
@@ -40,6 +115,10 @@ class CheckReconciliation extends Command
      */
     public function handle(): int
     {
+        if ($this->option('production')) {
+            $this->productionChecks();
+        }
+
         $this->info('=== TindaTrack System Integrity & Reconciliation Check ===');
         $this->newLine();
 

@@ -56,6 +56,16 @@ for (const file of files) {
   }
 }
 
+// A production build must talk to Laravel: main.jsx stamps the data source into the bundle
+// (the minifier may emit "…", '…' or `…`)
+const usesMockData = files.some((f) => /dataSource\s*=\s*["'`]mock["'`]/.test(fs.readFileSync(f, 'utf8')))
+const hasMarker = files.some((f) => /dataSource\s*=\s*["'`](api|mock)["'`]/.test(fs.readFileSync(f, 'utf8')))
+if (usesMockData) {
+  failures.push({ file: 'frontend/dist', desc: 'Built with VITE_DATA_SOURCE=mock (demo data instead of the API)' })
+} else if (!hasMarker) {
+  console.warn('⚠️  Data-source marker not found in the bundle (main.jsx); could not verify VITE_DATA_SOURCE.')
+}
+
 if (failures.length > 0) {
   console.error('❌ Production bundle check FAILED! Forbidden patterns found in dist:')
   for (const f of failures) {

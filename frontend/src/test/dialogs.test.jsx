@@ -59,7 +59,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           categories={categories}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
     })
 
@@ -73,7 +73,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           categories={categories}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Add New Product/i)).toBeInTheDocument()
     })
 
@@ -88,7 +88,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           categories={categories}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/I-edit ang Produkto|Edit Product/i)).toBeInTheDocument()
     })
   })
@@ -98,7 +98,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={null} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Bagong Kategorya|New Category/i)).toBeInTheDocument()
     })
 
@@ -107,7 +107,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={category} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/I-edit ang Kategorya|Edit Category/i)).toBeInTheDocument()
     })
   })
@@ -117,7 +117,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|Add New Suki|Register New Suki/i)).toBeInTheDocument()
     })
 
@@ -126,7 +126,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/I-edit ang Suki|Edit Customer/i)).toBeInTheDocument()
     })
   })
@@ -137,7 +137,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={product} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(new RegExp(`(I-adjust ang Stock|Adjust Stock): ${product.name}`, 'i'))).toBeInTheDocument()
     })
 
@@ -145,7 +145,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={null} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByRole('combobox', { name: /Pumili ng Produkto|Select Product/i })).toBeInTheDocument()
     })
 
@@ -158,7 +158,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           items={products}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
     })
 
@@ -170,7 +170,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           items={[]}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Maramihang Pag-restock|Bulk Restock/i)).toBeInTheDocument()
     })
   })
@@ -181,7 +181,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={debtor} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment/i })).toBeInTheDocument()
     })
 
@@ -205,7 +205,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           customers={useMockDb.getState().customers}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Checkout & Payment|Bayaran ang Benta/i)).toBeInTheDocument()
       expect(screen.getByRole('tab', { name: /Cash/i })).toBeInTheDocument()
     })
@@ -237,7 +237,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <NewCustomerMiniForm onSuccess={() => {}} onCancel={() => {}} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Register New Customer|Magrehistro ng Bagong Suki/i)).toBeInTheDocument()
     })
   })
@@ -254,7 +254,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           onAddToCart={() => {}}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const matches = await screen.findAllByText(new RegExp(product.name, 'i'))
       expect(matches.length).toBeGreaterThan(0)
     })
@@ -263,7 +263,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
       renderWithProviders(
         <HeldCartsDialog open={true} onOpenChange={() => {}} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByRole('heading', { name: /Parked Sales|Mga Naka-hold na Benta/i })).toBeInTheDocument()
     })
   })
@@ -279,7 +279,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           onConfirm={() => {}}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Kumpirmahin ang Pagbura/i)).toBeInTheDocument()
     })
 
@@ -297,7 +297,7 @@ describe('Comprehensive Dialog Smoke and Mode Tests', () => {
           onConfirm={() => {}}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const matches = await screen.findAllByText(/I-void ang Resibo/i)
       expect(matches.length).toBeGreaterThan(0)
       expect(screen.getByPlaceholderText(/Ibigay ang dahilan|Provide a reason/i)).toBeInTheDocument()

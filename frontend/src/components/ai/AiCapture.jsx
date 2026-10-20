@@ -19,8 +19,13 @@ import { useAutoCapture } from '@/hooks/useAutoCapture'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { notify } from '@/lib/notify'
 
-/** Resize/compress options for photos sent to the AI endpoints (backend cap is above 4 MB). */
-const AI_IMAGE_OPTIONS = { maxDim: 1600, maxBytes: 4 * 1024 * 1024, initialQuality: 0.85 }
+/**
+ * Resize/compress options for photos sent to the AI endpoints. Kept below every server
+ * limit — AI_MAX_IMAGE_KB (5120 default, 1500 in older .env files), Railway 10 MB, and a
+ * stock local PHP upload_max_filesize of 2 MB — so a photo is never dropped by PHP.
+ * A 1600 px JPEG is normally 300–900 KB; quality steps down only if it is larger.
+ */
+const AI_IMAGE_OPTIONS = { maxDim: 1600, maxBytes: 1400 * 1024, initialQuality: 0.85 }
 
 /**
  * Reusable AI Camera Capture Component with Auto-Capture engine.

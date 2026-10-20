@@ -33,5 +33,10 @@
   "aiDailyLimit": "Today's AI limit is used up. Barcode scanning still works.",
   "aiTimeout": "The AI took too long to answer. Try again, or scan the barcodes.",
   "aiDisabled": "AI features are turned off in Settings.",
-  "registrationClosed": "Registration is closed. Ask the store owner to create a staff account for you."
+  "registrationClosed": "Registration is closed. Ask the store owner to create a staff account for you.",
+  "routeErrorTitle": "Something went wrong",
+  "routeErrorDesc": "This page couldn't load. Reload to try again — your cart is kept.",
+  "newVersionTitle": "A new version is available",
+  "newVersionDesc": "TindaTrack was updated. Reload to get the latest version.",
+  "reloadPage": "Reload"
 }

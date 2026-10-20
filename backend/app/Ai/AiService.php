@@ -94,7 +94,7 @@ class AiService
             throw new AiException('Image content is empty.', 'ai_invalid_image', 422);
         }
 
-        $maxKb = (int) config('ai.max_image_kb', 1500);
+        $maxKb = (int) config('ai.max_image_kb', 5120);
         $maxBytes = $maxKb * 1024;
         if (strlen($bytes) > $maxBytes) {
             throw new AiException("Image size exceeds the maximum limit of {$maxKb} KB.", 'ai_oversize_image', 422);

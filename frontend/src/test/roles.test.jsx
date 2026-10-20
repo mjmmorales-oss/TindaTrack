@@ -47,7 +47,7 @@ describe('Role-Based Access Control and Action Visibility Tests', () => {
     forbiddenPaths.forEach((path) => {
       it(`redirects cashier from owner-only route ${path} to /403`, async () => {
         renderRoute(path, { role: 'cashier' })
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
         const forbiddenTexts = await screen.findAllByText(
           /Bawal ang Aksyon|Access Denied|403|Walang Permiso/i,
           {},
@@ -71,7 +71,7 @@ describe('Role-Based Access Control and Action Visibility Tests', () => {
     allowedCashierPaths.forEach(({ path, text }) => {
       it(`allows cashier to view ${path}`, async () => {
         renderRoute(path, { role: 'cashier' })
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
         const matches = await screen.findAllByText(text, {}, { timeout: 12000 })
         expect(matches.length).toBeGreaterThan(0)
       })
