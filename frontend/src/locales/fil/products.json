@@ -295,5 +295,9 @@
   "referencePhotoProgress": "Na-save ang litrato {{done}} sa {{total}}",
   "referencePhotoTurn": "Paikutin nang kaunti ang produkto, saka kunan ulit.",
   "referencePhotoSaving": "Inaaral ang produktong ito…",
-  "addByBarcodeSubtitle": "Isang produkto gamit ang barcode o QR"
+  "addByBarcodeSubtitle": "Isang produkto gamit ang barcode o QR",
+  "savedWithoutPhoto": "Na-save ang produkto — hindi na-upload ang litrato",
+  "savedWithoutPhotoDesc": "Buksan ang produkto at idagdag ulit ang litrato.",
+  "nameRequiredToast": "Kailangan ang pangalan ng produkto.",
+  "priceMinToast": "Ang presyo ng benta ay dapat hindi bababa sa ₱0."
 }

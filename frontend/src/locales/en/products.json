@@ -295,5 +295,9 @@
   "referencePhotoProgress": "Photo {{done}} of {{total}} saved",
   "referencePhotoTurn": "Turn the product a little, then take the next photo.",
   "referencePhotoSaving": "Learning this product…",
-  "addByBarcodeSubtitle": "One product by barcode or QR"
+  "addByBarcodeSubtitle": "One product by barcode or QR",
+  "savedWithoutPhoto": "Product saved — photo not uploaded",
+  "savedWithoutPhotoDesc": "Open the product and add the photo again.",
+  "nameRequiredToast": "Product name is required.",
+  "priceMinToast": "Selling price must be at least ₱0."
 }

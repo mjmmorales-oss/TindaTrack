@@ -114,3 +114,14 @@ describe('C: staff temporary password uses the Laravel key', () => {
     expect(res).not.toHaveProperty('temp_password')
   })
 })
+
+describe('C: one shared units list', () => {
+  it('the product schema accepts every unit AI Stock-In can save', async () => {
+    const { productSchema, PRODUCT_UNIT_VALUES } = await import('@/features/products/schemas')
+    for (const unit of ['box', 'roll', 'bag', 'g', 'ml', 'pc', 'L']) {
+      expect(PRODUCT_UNIT_VALUES).toContain(unit)
+      expect(productSchema.shape.unit.safeParse(unit).success).toBe(true)
+    }
+    expect(productSchema.shape.unit.safeParse('banana').success).toBe(false)
+  })
+})

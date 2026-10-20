@@ -10,6 +10,7 @@ use App\Models\ScannerEvent;
 use App\Models\StockMovement;
 use App\Services\ProductImageService;
 use App\Support\ListQuery;
+use App\Support\ProductUnits;
 use App\Support\SkuGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +35,15 @@ class ProductController extends Controller
             'is_active' => function (Builder $q, $val) {
                 $q->where('is_active', filter_var($val, FILTER_VALIDATE_BOOLEAN));
             },
+            // The Products/Inventory pages send stock=in|low|out (the mock reads the same)
+            'stock' => function (Builder $q, $val) {
+                match ($val) {
+                    'out' => $q->where('stock_quantity', '<=', 0),
+                    'low' => $q->where('stock_quantity', '>', 0)->whereColumn('stock_quantity', '<=', 'reorder_level'),
+                    'in' => $q->whereColumn('stock_quantity', '>', 'reorder_level'),
+                    default => null,
+                };
+            },
             'stock_status' => function (Builder $q, $val) {
                 if ($val === 'out_of_stock') {
                     $q->where('stock_quantity', '<=', 0);
@@ -50,7 +60,7 @@ class ProductController extends Controller
             request: $request,
             searchColumns: ['name', 'sku', 'barcode'],
             allowedFilters: $allowedFilters,
-            allowedSorts: ['name', 'price', 'stock_quantity', 'created_at', 'sku'],
+            allowedSorts: ['name', 'price', 'stock_quantity', 'created_at', 'sku', 'category_id', 'cost_price', 'is_active', 'updated_at'],
             defaultSort: 'name',
             defaultPerPage: 15
         );
@@ -88,7 +98,7 @@ class ProductController extends Controller
             'sku' => ['nullable', 'string', 'max:50', 'unique:products,sku'],
             'barcode' => ['nullable', 'string', 'max:50', 'unique:products,barcode'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'unit' => ['nullable', 'string', 'max:20'],
+            'unit' => ['nullable', 'string', Rule::in(ProductUnits::ALL)],
             'price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
@@ -183,7 +193,7 @@ class ProductController extends Controller
             'sku' => ['sometimes', 'nullable', 'string', 'max:50', Rule::unique('products', 'sku')->ignore($product->id)],
             'barcode' => ['nullable', 'string', 'max:50', Rule::unique('products', 'barcode')->ignore($product->id)],
             'category_id' => ['sometimes', 'required', 'integer', 'exists:categories,id'],
-            'unit' => ['nullable', 'string', 'max:20'],
+            'unit' => ['nullable', 'string', Rule::in(ProductUnits::ALL)],
             'price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'cost_price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],

@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { isAcceptable } from '@/lib/barcode'
 
+/**
+ * The one list of selling units (product form, Quick Add, AI Stock-In).
+ * Must match App\Support\ProductUnits on the backend.
+ */
 export const PRODUCT_UNITS = [
   { value: 'pc', label: 'Piraso (pc)' },
   { value: 'pack', label: 'Pakete (pack)' },
@@ -8,9 +12,16 @@ export const PRODUCT_UNITS = [
   { value: 'bottle', label: 'Bote (bottle)' },
   { value: 'can', label: 'Lata (can)' },
   { value: 'cup', label: 'Tasa (cup)' },
+  { value: 'box', label: 'Kahon (box)' },
+  { value: 'bag', label: 'Supot (bag)' },
+  { value: 'roll', label: 'Rolyo (roll)' },
   { value: 'kg', label: 'Kilo (kg)' },
+  { value: 'g', label: 'Gramo (g)' },
   { value: 'L', label: 'Litro (L)' },
+  { value: 'ml', label: 'Mililitro (ml)' },
 ]
+
+export const PRODUCT_UNIT_VALUES = PRODUCT_UNITS.map((u) => u.value)
 
 export const productSchema = z.object({
   name: z
@@ -35,7 +46,7 @@ export const productSchema = z.object({
   image_url: z.string().max(2048, 'Image URL is too long.').optional().nullable().or(z.literal('')),
   source: z.enum(['manual', 'openfoodfacts', 'openproductsfacts', 'openbeautyfacts']).default('manual'),
   source_ref: z.string().max(255).optional().nullable().or(z.literal('')),
-  unit: z.enum(['pc', 'pack', 'sachet', 'bottle', 'can', 'cup', 'kg', 'L'], {
+  unit: z.enum(PRODUCT_UNIT_VALUES, {
     errorMap: () => ({ message: 'Please select a valid unit.' }),
   }),
   price: z.coerce.number().min(0, 'Selling price cannot be negative.'),

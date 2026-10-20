@@ -50,7 +50,8 @@ class ProductImageController extends Controller
     {
         $request->validate([
             'image' => ['required', 'file', 'max:1024'], // 1MB
-            'source' => ['nullable', 'string', 'in:upload,camera'],
+            // ai_crop: AI Stock-In uploads each product's crop from the shelf photo
+            'source' => ['nullable', 'string', 'in:upload,camera,ai_crop'],
         ]);
 
         $file = $request->file('image');

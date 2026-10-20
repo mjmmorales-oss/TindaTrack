@@ -83,8 +83,12 @@ export function CategoriesPage() {
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return
-    await deleteMutation.mutateAsync(deleteTarget.id)
-    setDeleteTarget(null)
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id)
+      setDeleteTarget(null)
+    } catch {
+      // The hook already shows the reason (e.g. the category still has products)
+    }
   }
 
   return (

@@ -36,6 +36,7 @@ import {
 import { usePermissions } from '@/hooks/usePermissions'
 import { notify } from '@/lib/notify'
 import { resizeImage } from '@/lib/imageResize'
+import { PRODUCT_UNITS } from '@/features/products/schemas'
 
 /**
  * Unified "Add by Barcode" modal dialog.
@@ -237,7 +238,7 @@ export function AddByBarcodeDialog({
   // Save product logic
   const handleSaveProduct = async (andScanNext = false) => {
     if (!name.trim()) {
-      notify.error(t('products:nameLabel', 'Product name') + ' is required.')
+      notify.error(t('products:nameRequiredToast'))
       nameInputRef.current?.focus()
       return
     }
@@ -245,7 +246,7 @@ export function AddByBarcodeDialog({
     const rawPrice = typeof price === 'object' && price?.target ? price.target.value : price
     const numPrice = parseFloat(rawPrice)
     if (isNaN(numPrice) || numPrice < 0) {
-      notify.error(t('products:priceLabel', 'Selling price') + ' must be at least 0.')
+      notify.error(t('products:priceMinToast'))
       priceInputRef.current?.focus()
       return
     }
@@ -272,20 +273,24 @@ export function AddByBarcodeDialog({
         unit: unit || 'pc',
         image_url: pendingImage ? null : imageUrl || null,
         is_active: true,
-        source: dialogState === 'found_online' ? 'openfoodfacts' : 'manual',
+        source: dialogState === 'found_online' ? lookupResult?.catalog?.source || 'openfoodfacts' : 'manual',
         source_ref: activeBarcode || null,
       }
 
       const res = await createMutation.mutateAsync(payload)
       const savedProd = res.data
 
-      // Upload custom photo if provided
+      // Upload custom photo if provided (the product is saved already: never retry the create)
       if (pendingImage && savedProd?.id) {
-        await uploadImageMutation.mutateAsync({
-          id: savedProd.id,
-          file: pendingImage.file,
-          source: 'upload',
-        })
+        try {
+          await uploadImageMutation.mutateAsync({
+            id: savedProd.id,
+            file: pendingImage.file,
+            source: 'upload',
+          })
+        } catch {
+          notify.warning(t('products:savedWithoutPhoto'), t('products:savedWithoutPhotoDesc'))
+        }
       }
 
       setSessionProducts((prev) => [savedProd, ...prev])
@@ -664,12 +669,11 @@ export function AddByBarcodeDialog({
                       onChange={(e) => setUnit(e.target.value)}
                       className="w-full h-10 px-3 rounded-lg border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
-                      <option value="pc">Piece (pc)</option>
-                      <option value="pack">Pack</option>
-                      <option value="bottle">Bottle</option>
-                      <option value="can">Can</option>
-                      <option value="sachet">Sachet</option>
-                      <option value="kg">Kilogram (kg)</option>
+                      {PRODUCT_UNITS.map((u) => (
+                        <option key={u.value} value={u.value}>
+                          {u.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

@@ -7,11 +7,13 @@ use App\Models\ScannerEvent;
 use App\Models\StockMovement;
 use App\Services\ProductImageService;
 use App\Support\Barcode;
+use App\Support\ProductUnits;
 use App\Support\SkuGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ProductBulkController extends Controller
 {
@@ -49,9 +51,10 @@ class ProductBulkController extends Controller
             'products' => ['required', 'array', 'min:1', 'max:10'],
             'products.*.name' => ['required', 'string', 'max:255'],
             'products.*.sku' => ['nullable', 'string', 'max:50', 'distinct', 'unique:products,sku'],
-            'products.*.brand' => ['nullable', 'string', 'max:100'],
-            'products.*.size' => ['nullable', 'string', 'max:50'],
-            'products.*.unit' => ['nullable', 'string', 'max:20'],
+            // Same limits as single create (ProductController@store)
+            'products.*.brand' => ['nullable', 'string', 'max:255'],
+            'products.*.size' => ['nullable', 'string', 'max:100'],
+            'products.*.unit' => ['nullable', 'string', Rule::in(ProductUnits::ALL)],
             'products.*.category_id' => ['required', 'integer', 'exists:categories,id'],
             'products.*.barcode' => ['nullable', 'string', 'max:100', 'distinct', 'unique:products,barcode'],
             'products.*.price' => ['required', 'numeric', 'min:0'],

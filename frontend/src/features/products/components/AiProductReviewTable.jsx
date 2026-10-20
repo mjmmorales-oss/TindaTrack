@@ -26,21 +26,9 @@ import { productService } from '@/services/productService'
 import { cropBox } from '@/lib/imagePrep'
 import { notify } from '@/lib/notify'
 import { buildProductFeedbackLines } from '@/lib/aiContract.js'
+import { PRODUCT_UNIT_VALUES } from '@/features/products/schemas'
 
-const PRODUCT_UNITS = [
-  'pc',
-  'pack',
-  'can',
-  'bottle',
-  'sachet',
-  'box',
-  'roll',
-  'bag',
-  'kg',
-  'g',
-  'L',
-  'ml',
-]
+const PRODUCT_UNITS = PRODUCT_UNIT_VALUES
 
 /**
  * Validates a single row and returns its readiness status and message.
@@ -341,12 +329,13 @@ export function AiProductReviewTable({
         price: Number(r.price),
         cost_price: Number(r.cost || 0),
         stock_quantity: Number(r.stock || 0),
-        reorder_level: Number(r.reorder_level || defaultReorderLevel || 5),
+        reorder_level: Number(r.reorder_level ?? defaultReorderLevel ?? 5),
         image_url: r.use_online_image && r.online_image_url ? r.online_image_url : null,
       }))
 
       const res = await aiService.bulkCreateProducts(payload)
-      const createdProducts = res?.data || res?.products || []
+      // api aiService already unwraps to the array; the mock returns { data, products }
+      const createdProducts = Array.isArray(res) ? res : res?.data ?? res?.products ?? []
 
       // Upload image crops for created products matching index order
       for (let i = 0; i < readySelectedRows.length; i++) {
