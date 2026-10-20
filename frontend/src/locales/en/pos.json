@@ -198,5 +198,6 @@
   "phoneLabel": "Phone:",
   "phoneOnline": "Online",
   "phoneOffline": "Offline",
-  "scanButton": "Scan"
+  "scanButton": "Scan",
+  "paidNowTooHigh": "Paid now can't be more than the total. Use Cash instead."
 }

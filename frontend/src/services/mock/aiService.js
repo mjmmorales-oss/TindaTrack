@@ -68,15 +68,17 @@ let mockExperiments = [
 export const aiService = {
   async getAiStatus() {
     await delay(50)
+    // Same keys as AiService::getStatus (settings flags come from /settings, not here)
+    const dailyLimit = 1500
     return {
       enabled: true,
-      research_mode: false,
-      visual_search_enabled: true,
-      save_scan_images: true,
       provider: 'mock',
       model: 'mock-gemini-2.5-flash',
+      demo: true,
+      daily_remaining: Math.max(0, dailyLimit - mockScans.length),
       daily_scans_today: mockScans.length,
-      daily_limit: 1500,
+      daily_limit: dailyLimit,
+      per_minute: 6,
     }
   },
 

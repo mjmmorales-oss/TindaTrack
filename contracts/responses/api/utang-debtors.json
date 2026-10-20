@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "address": "string",
+            "contact_number": "string",
+            "created_at": "string",
+            "credit_balance": "number",
+            "credit_limit": "number",
+            "days_overdue": "number",
+            "id": "number",
+            "is_over_limit": "boolean",
+            "name": "string",
+            "nickname": "string",
+            "notes": "string",
+            "oldest_debt_date": "string",
+            "updated_at": "string",
+            "utilization_rate": "number"
+        }
+    ],
+    "links": {
+        "first": "string",
+        "last": "string",
+        "next": "null",
+        "prev": "null"
+    },
+    "meta": {
+        "current_page": "number",
+        "from": "number",
+        "last_page": "number",
+        "per_page": "number",
+        "to": "number",
+        "total": "number"
+    }
+}

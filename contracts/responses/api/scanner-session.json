@@ -1,0 +1,11 @@
+{
+    "data": {
+        "device_label": "null",
+        "ended_at": "null",
+        "id": "string",
+        "last_seen_at": "null",
+        "mode": "string",
+        "online": "boolean",
+        "paired": "boolean"
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "data": {
+        "aging_buckets": {
+            "0_7": "number",
+            "31_60": "number",
+            "60_plus": "number",
+            "8_30": "number"
+        },
+        "collected_this_week": "number",
+        "debtors_count": "number",
+        "overdue_count": "number",
+        "total_outstanding": "number"
+    }
+}

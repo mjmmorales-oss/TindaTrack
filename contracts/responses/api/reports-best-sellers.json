@@ -1,0 +1,14 @@
+{
+    "data": [
+        {
+            "category_name": "string",
+            "cost": "number",
+            "gross_profit": "number",
+            "product_id": "number",
+            "product_name": "string",
+            "quantity_sold": "number",
+            "revenue": "number",
+            "sku": "string"
+        }
+    ]
+}

@@ -50,6 +50,8 @@ class AiService
             'model' => $model,
             'demo' => $providerName === 'mock',
             'daily_remaining' => $dailyRemaining,
+            // Settings → AI usage reads this (it used to exist only in the mock)
+            'daily_scans_today' => $dailyUsed,
             'daily_limit' => $dailyLimit,
             'per_minute' => $perMinute,
         ];

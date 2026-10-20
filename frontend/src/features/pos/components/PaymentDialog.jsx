@@ -92,8 +92,10 @@ export function PaymentDialog({
   const creditLimit = Number(selectedCustomer?.credit_limit ?? 1000)
   const isOverCreditLimit =
     !!selectedCustomer && projectedCreditBalance > creditLimit
+  // A down payment above the total would *lower* the balance; the server rejects it too
+  const isPaidNowTooHigh = paidNowNum > total
   const canConfirmUtang =
-    !!selectedCustomer && (!isOverCreditLimit || isOwner)
+    !!selectedCustomer && !isPaidNowTooHigh && (!isOverCreditLimit || isOwner)
 
   const handleQuickAmount = (amt) => {
     setTenderedAmount(String(amt))
@@ -132,6 +134,8 @@ export function PaymentDialog({
             payment_type: 'utang',
             customer_id: Number(selectedCustomerId),
             amount_paid: paidNowNum,
+            // The owner confirmed going over the credit limit (cashiers can't; the server checks the role)
+            override_limit: isOwner && isOverCreditLimit,
             notes: notes.trim() || undefined,
             cart_started_at: cartStartedAt,
             cart_duration_ms: cartDurationMs,
@@ -413,7 +417,13 @@ export function PaymentDialog({
                   onChange={(e) => setPaidNowAmount(e.target.value)}
                   placeholder="0.00"
                   className="h-10 font-mono"
+                  aria-invalid={isPaidNowTooHigh || undefined}
                 />
+                {isPaidNowTooHigh && (
+                  <p className="text-xs font-medium text-destructive">
+                    {t('pos:paidNowTooHigh')}
+                  </p>
+                )}
               </div>
 
               {/* Optional Notes */}

@@ -1,0 +1,15 @@
+{
+    "data": {
+        "categories": [
+            {
+                "category_id": "number",
+                "category_name": "string",
+                "color": "string",
+                "items_sold": "number",
+                "percentage": "number",
+                "revenue": "number"
+            }
+        ],
+        "total_revenue": "number"
+    }
+}

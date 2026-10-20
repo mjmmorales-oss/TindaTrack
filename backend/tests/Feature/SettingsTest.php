@@ -106,3 +106,25 @@ test('owner can restore demo images without overwriting custom images', function
     expect($p2->image_url)->toBe('https://example.com/custom.jpg');
     expect($p3->image_url)->toBeNull();
 });
+
+test('v2.2: owner name, show cashier name and low-stock percent persist', function () {
+    $owner = User::factory()->owner()->create();
+    $auth = ['Authorization' => 'Bearer '.$owner->createToken('t')->plainTextToken];
+
+    $this->withHeaders($auth)->putJson('/api/settings', [
+        'owner_name' => 'Aling Nena',
+        'show_cashier_name' => false,
+        'low_stock_threshold_percent' => 35,
+    ])->assertOk();
+
+    $this->withHeaders($auth)->getJson('/api/settings')
+        ->assertOk()
+        ->assertJsonPath('data.owner_name', 'Aling Nena')
+        ->assertJsonPath('data.show_cashier_name', false)
+        ->assertJsonPath('data.low_stock_threshold_percent', 35);
+
+    // An emptied reorder level is a 422, not a 500 on the NOT NULL column
+    $this->withHeaders($auth)->putJson('/api/settings', ['default_reorder_level' => null])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('default_reorder_level');
+});

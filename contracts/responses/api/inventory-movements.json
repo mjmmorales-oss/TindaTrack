@@ -1,0 +1,72 @@
+{
+    "data": [
+        {
+            "created_at": "string",
+            "id": "number",
+            "notes": "string",
+            "product": {
+                "archived": "boolean",
+                "barcode": "string",
+                "brand": "null",
+                "category_id": "number",
+                "cost_price": "number",
+                "created_at": "string",
+                "deleted_at": "null",
+                "deleted_barcode": "null",
+                "deleted_sku": "null",
+                "description": "null",
+                "id": "number",
+                "image_url": "string",
+                "is_active": "boolean",
+                "name": "string",
+                "price": "number",
+                "profit_margin": "number",
+                "reorder_level": "number",
+                "size": "null",
+                "sku": "string",
+                "source": "string",
+                "source_ref": "null",
+                "stock": "number",
+                "stock_quantity": "number",
+                "unit": "string",
+                "updated_at": "string"
+            },
+            "product_id": "number",
+            "quantity": "number",
+            "reference": "string",
+            "stock_after": "number",
+            "type": "string",
+            "updated_at": "string",
+            "user": {
+                "created_at": "string",
+                "deleted_at": "null",
+                "email": "string",
+                "id": "number",
+                "is_active": "boolean",
+                "last_login_at": "null",
+                "must_change_password": "boolean",
+                "name": "string",
+                "phone": "null",
+                "role": "string",
+                "role_label": "string",
+                "sales_count": "number",
+                "sales_total_today": "number"
+            },
+            "user_id": "number"
+        }
+    ],
+    "links": {
+        "first": "string",
+        "last": "string",
+        "next": "string",
+        "prev": "null"
+    },
+    "meta": {
+        "current_page": "number",
+        "from": "number",
+        "last_page": "number",
+        "per_page": "number",
+        "to": "number",
+        "total": "number"
+    }
+}

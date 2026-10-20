@@ -45,7 +45,8 @@ class VoidSaleAction
             // 1. Restore stock and log void movements
             foreach ($sale->items as $item) {
                 /** @var Product $prod */
-                $prod = Product::where('id', $item->product_id)->lockForUpdate()->first();
+                // Archived (soft-deleted) products still get their stock back
+                $prod = Product::withTrashed()->where('id', $item->product_id)->lockForUpdate()->first();
                 if ($prod) {
                     $prod->increment('stock_quantity', $item->quantity);
                     $newStock = $prod->stock_quantity;

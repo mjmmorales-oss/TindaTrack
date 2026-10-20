@@ -1,0 +1,42 @@
+{
+    "data": {
+        "amount": "number",
+        "created_at": "string",
+        "customer": {
+            "address": "string",
+            "contact_number": "string",
+            "created_at": "string",
+            "credit_balance": "number",
+            "credit_limit": "number",
+            "id": "number",
+            "last_activity": "string",
+            "name": "string",
+            "nickname": "string",
+            "notes": "string",
+            "updated_at": "string"
+        },
+        "customer_id": "number",
+        "id": "number",
+        "notes": "null",
+        "payment_date": "string",
+        "recorded_by": "number",
+        "recorder": {
+            "created_at": "string",
+            "deleted_at": "null",
+            "email": "string",
+            "id": "number",
+            "is_active": "boolean",
+            "last_login_at": "null",
+            "must_change_password": "boolean",
+            "name": "string",
+            "phone": "null",
+            "role": "string",
+            "role_label": "string",
+            "sales_count": "number",
+            "sales_total_today": "number"
+        },
+        "sale_id": "null",
+        "updated_at": "string"
+    },
+    "message": "string"
+}

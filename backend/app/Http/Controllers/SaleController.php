@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateSaleAction;
 use App\Actions\VoidSaleAction;
+use App\Enums\SaleStatus;
 use App\Http\Resources\SaleResource;
 use App\Models\Sale;
+use App\Support\DateInput;
 use App\Support\ListQuery;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,10 +31,10 @@ class SaleController extends Controller
             'user_id' => 'user_id',
             'customer_id' => 'customer_id',
             'from' => function (Builder $q, $val) {
-                $q->where('created_at', '>=', Carbon::parse($val));
+                $q->where('created_at', '>=', DateInput::from($val));
             },
             'to' => function (Builder $q, $val) {
-                $q->where('created_at', '<=', Carbon::parse($val));
+                $q->where('created_at', '<=', DateInput::to($val));
             },
         ];
 
@@ -47,7 +48,17 @@ class SaleController extends Controller
             defaultPerPage: 20
         );
 
+        // Summary strip over the same filtered rows (the paginator left the filters on $query)
+        $completed = (clone $query)->reorder()->where('status', SaleStatus::Completed);
+        $completedCount = (clone $completed)->count();
+        $completedTotal = round((float) (clone $completed)->sum('total_amount'), 2);
+
         return response()->json([
+            'summary' => [
+                'total_amount' => $completedTotal,
+                'total_count' => $paginator->total(),
+                'average_sale' => $completedCount > 0 ? round($completedTotal / $completedCount, 2) : 0,
+            ],
             'data' => SaleResource::collection($paginator->items()),
             'links' => [
                 'first' => $paginator->url(1),
@@ -86,7 +97,7 @@ class SaleController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.add_method' => ['nullable', 'string', 'max:30'],
             'payment_type' => ['nullable', 'string', 'in:cash,utang'],
-            'amount_paid' => ['nullable', 'numeric'],
+            'amount_paid' => ['nullable', 'numeric', 'min:0'],
             'customer_id' => ['nullable', 'integer'],
             'override_limit' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:500'],
