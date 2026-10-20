@@ -40,7 +40,7 @@ test('cashier receives 403 on owner-only routes', function () {
         ['getJson', '/api/inventory/movements', []],
         ['getJson', '/api/inventory/restock-list', []],
         ['getJson', '/api/users', []],
-        ['getJson', '/api/settings', []],
+        ['putJson', '/api/settings', ['store_name' => 'Hacked']],
     ];
 
     foreach ($routes as [$method, $uri, $payload]) {
@@ -112,4 +112,11 @@ test('staff management prevents deactivating self and prevents deactivating last
     $toggleResp->assertStatus(200);
     expect($secondCashier->fresh()->is_active)->toBeFalse()
         ->and($secondCashier->fresh()->tokens()->count())->toBe(0);
+});
+
+test('cashier can read store settings (POS, receipts, scanner flags) but not change them', function () {
+    $this->withHeader('Authorization', "Bearer {$this->cashierToken}")
+        ->getJson('/api/settings')
+        ->assertOk()
+        ->assertJsonStructure(['data' => ['store_name', 'receipt_footer', 'ai_enabled', 'visual_search_enabled']]);
 });

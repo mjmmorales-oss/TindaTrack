@@ -28,6 +28,20 @@ export function getApiBaseUrl() {
 
 export const API_BASE = getApiBaseUrl()
 
+/**
+ * True when authenticated API calls can succeed: mock/test data source, or a
+ * stored bearer token. The paired phone scanner (/scan) has neither, so shared
+ * components skip owner/cashier queries there instead of triggering 401 toasts.
+ */
+export function hasApiSession() {
+  if (import.meta.env?.MODE === 'test' || import.meta.env?.VITE_DATA_SOURCE === 'mock') return true
+  try {
+    return Boolean(localStorage.getItem(TOKEN_KEY))
+  } catch {
+    return false
+  }
+}
+
 export const api = axios.create({
   baseURL: getApiBaseUrl(),
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },

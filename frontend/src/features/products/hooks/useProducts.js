@@ -11,6 +11,7 @@ import { productService } from '@/services/productService'
 import { scannerService } from '@/services/scannerService'
 import { notify } from '@/lib/notify'
 import i18n from '@/i18n'
+import { hasApiSession } from '@/lib/api'
 
 export const productKeys = {
   all: ['products'],
@@ -36,13 +37,14 @@ export function useUnknownBarcodes() {
   )
 }
 
-export function useProducts(params = {}) {
+export function useProducts(params = {}, { enabled = true } = {}) {
   const contextClient = useContext(QueryClientContext)
   return useQuery(
     {
       queryKey: productKeys.list(params),
       queryFn: () => productService.list(params),
       placeholderData: keepPreviousData,
+      enabled: enabled && hasApiSession(),
     },
     contextClient ? undefined : fallbackQueryClient,
   )

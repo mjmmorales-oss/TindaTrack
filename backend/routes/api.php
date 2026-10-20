@@ -58,6 +58,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/staff/ping', fn () => ['message' => 'Hello, staff! Any active role can see this.'])
         ->middleware('role:owner,cashier');
 
+    // Store profile + feature flags: POS, receipts and scanners need them for cashiers too
+    Route::get('/settings', [SettingsController::class, 'get']);
+
     // Dashboard (accessible by both owner and cashier with role-specific views)
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
@@ -180,8 +183,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::delete('/users/{user}', [UserController::class, 'destroy']);
         Route::post('/users/{user}/restore', [UserController::class, 'restore'])->withTrashed();
 
-        // Store settings
-        Route::get('/settings', [SettingsController::class, 'get']);
+        // Store settings (reading is shared below; changing is owner-only)
         Route::put('/settings', [SettingsController::class, 'update']);
         Route::post('/settings/restore-demo-images', [SettingsController::class, 'restoreDemoImages']);
     });
