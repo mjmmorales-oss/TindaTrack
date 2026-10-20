@@ -161,5 +161,7 @@
   "autoCaptureSensitivityDesc": "I-adjust kung gaano kabilis magsimula ang countdown base sa galaw ng camera.",
   "sensitivityLow": "Mababa (Para sa steady na lamesa)",
   "sensitivityMedium": "Normal (Inirerekomenda)",
-  "sensitivityHigh": "Mataas (Mabilis kumuha / sensitibo)"
+  "sensitivityHigh": "Mataas (Mabilis kumuha / sensitibo)",
+  "installUnavailableTitle": "I-install mula sa menu ng browser",
+  "installUnavailableDesc": "Buksan ang menu ng browser (⋮) at piliin ang \"Install app\" o \"Add to Home screen\"."
 }

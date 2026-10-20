@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { notify } from '@/lib/notify'
 import { Download, Share2, PlusSquare, CheckCircle2, Smartphone, X } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -79,6 +80,9 @@ export function PwaInstallCard({ className }) {
     const res = await promptInstall()
     if (res === 'ios') {
       setIosDialogOpen(true)
+    } else if (res === 'unavailable') {
+      // Never a silent no-op: tell them how to install from the browser menu
+      notify.info(t('settings:installUnavailableTitle'), t('settings:installUnavailableDesc'))
     }
   }
 

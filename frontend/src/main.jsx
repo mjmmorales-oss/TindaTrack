@@ -8,8 +8,10 @@ import '@fontsource-variable/geist-mono'
 import '@/i18n'
 import './index.css'
 import { initStandaloneMode } from '@/lib/standalone'
+import { initPwaInstallCapture } from '@/lib/pwaInstall'
 
 initStandaloneMode()
+initPwaInstallCapture()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

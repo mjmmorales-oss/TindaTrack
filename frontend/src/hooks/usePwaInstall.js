@@ -1,4 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
+import {
+  clearDeferredInstallPrompt,
+  getDeferredInstallPrompt,
+  initPwaInstallCapture,
+  subscribeInstallPrompt,
+} from '@/lib/pwaInstall'
+
+// main.jsx starts the capture at boot; this keeps it working wherever the hook is used first
+initPwaInstallCapture()
 
 /**
  * Hook to manage PWA installation state, capturing `beforeinstallprompt` on Chromium/Android
@@ -12,7 +21,7 @@ import { useState, useEffect, useCallback } from 'react'
  * }}
  */
 export function usePwaInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [deferredPrompt, setDeferredPrompt] = useState(getDeferredInstallPrompt)
   const [isInstalled, setIsInstalled] = useState(() => {
     if (typeof window === 'undefined') return false
     return (
@@ -37,24 +46,15 @@ export function usePwaInstall() {
     }
     mediaQuery.addEventListener?.('change', handleDisplayChange)
 
-    // Capture standard PWA install prompt
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
-
-    const handleAppInstalled = () => {
-      setIsInstalled(true)
-      setDeferredPrompt(null)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    // The install prompt is captured once at startup (lib/pwaInstall) and shared
+    const unsubscribe = subscribeInstallPrompt((prompt) => setDeferredPrompt(prompt))
+    const handleAppInstalled = () => setIsInstalled(true)
     window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
       mediaQuery.removeEventListener?.('change', handleDisplayChange)
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
+      unsubscribe()
     }
   }, [])
 
@@ -65,7 +65,7 @@ export function usePwaInstall() {
       try {
         await deferredPrompt.prompt()
         const choice = await deferredPrompt.userChoice
-        setDeferredPrompt(null)
+        clearDeferredInstallPrompt()
         if (choice?.outcome === 'accepted') {
           setIsInstalled(true)
           return 'accepted'
