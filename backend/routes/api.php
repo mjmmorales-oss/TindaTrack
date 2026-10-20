@@ -150,6 +150,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::post('/products/{product}/restore', [ProductController::class, 'restore'])->withTrashed();
         Route::post('/products/{product}/adjust', [ProductController::class, 'adjustStock']);
         Route::post('/products/{product}/image', [ProductImageController::class, 'upload']);
         Route::post('/products/{product}/image/import', [ProductImageController::class, 'import']);

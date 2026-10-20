@@ -263,6 +263,14 @@ export function ProductFormDialog({
           return
         }
 
+        // A deleted product used this barcode; saving creates a new product (codes were freed on delete).
+        if (res?.archived_product && !isEdit) {
+          notify.info(
+            t('products:archivedBarcodeHintTitle', 'Barcode from a deleted product'),
+            t('products:archivedBarcodeHint', { name: res.archived_product.name }),
+          )
+        }
+
         // 2. Catalog found hit
         if (res?.catalog?.found) {
           const cat = res.catalog

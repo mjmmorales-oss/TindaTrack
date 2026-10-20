@@ -118,6 +118,27 @@ export function useDeleteProduct() {
   })
 }
 
+export function useRestoreProduct() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productService.restore(id),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      const barcodeLost = res?.barcode_restored === false && !res?.data?.barcode
+      notify.success(
+        i18n.t('products:restoredSuccess', { name: res?.data?.name || '' }),
+        barcodeLost ? i18n.t('products:restoredBarcodeTaken') : undefined,
+      )
+    },
+    onError: (err) => {
+      notify.error(err.message || i18n.t('products:restoreError'))
+    },
+  })
+}
+
 export function useAdjustStock() {
   const queryClient = useQueryClient()
   return useMutation({

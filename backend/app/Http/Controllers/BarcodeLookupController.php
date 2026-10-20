@@ -41,12 +41,24 @@ class BarcodeLookupController extends Controller
                     'barcode' => $normalized,
                     'local_product' => $localProduct ? new ProductResource($localProduct) : null,
                     'catalog' => null,
+                    'archived_product' => null,
                 ],
             ]);
         }
 
         // Owners get the full lookup result
         $result = $this->lookupService->lookup($barcode);
+
+        // A deleted product with this barcode: offer to restore it instead of duplicating.
+        $result['archived_product'] = null;
+        if (empty($result['local_product'])) {
+            $archived = Product::onlyTrashed()
+                ->with('category')
+                ->where('deleted_barcode', $result['barcode'])
+                ->latest('deleted_at')
+                ->first();
+            $result['archived_product'] = $archived ? new ProductResource($archived) : null;
+        }
 
         return response()->json([
             'data' => $result,

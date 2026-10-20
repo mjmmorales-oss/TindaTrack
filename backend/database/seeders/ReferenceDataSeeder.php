@@ -112,6 +112,15 @@ class ReferenceDataSeeder extends Seeder
         if (File::exists($productsPath)) {
             $products = json_decode(File::get($productsPath), true);
             foreach ($products as $p) {
+                // Respect products the owner archived: re-creating them would also
+                // collide with the trashed row's primary key on every deploy.
+                $archived = Product::onlyTrashed()
+                    ->where(fn ($q) => $q->where('id', $p['id'])->orWhere('deleted_sku', $p['sku']))
+                    ->exists();
+                if ($archived) {
+                    continue;
+                }
+
                 $existing = Product::where('sku', $p['sku'])->first();
                 Product::updateOrCreate(
                     ['sku' => $p['sku']],

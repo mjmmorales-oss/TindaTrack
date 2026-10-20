@@ -93,6 +93,7 @@ export const barcodeService = {
           stock: local.stock_quantity,
         },
         catalog: null,
+        archived_product: null,
       }
     }
 
@@ -102,8 +103,13 @@ export const barcodeService = {
         barcode: normalized,
         local_product: null,
         catalog: null,
+        archived_product: null,
       }
     }
+
+    // A deleted product with this barcode: the UI offers "Restore it" instead of duplicating.
+    const archived =
+      (useMockDb.getState().archivedProducts || []).find((p) => p.deleted_barcode === normalized) || null
 
     // 2. Check online catalog fixtures
     const fixture = ONLINE_CATALOG_FIXTURES[normalized]
@@ -112,6 +118,7 @@ export const barcodeService = {
         barcode: normalized,
         local_product: null,
         catalog: fixture,
+        archived_product: archived,
       }
     }
 
@@ -119,6 +126,7 @@ export const barcodeService = {
     return {
       barcode: normalized,
       local_product: null,
+      archived_product: archived,
       catalog: {
         found: false,
         source: null,

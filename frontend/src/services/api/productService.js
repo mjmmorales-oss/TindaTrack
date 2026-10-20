@@ -51,6 +51,14 @@ export const productService = {
   },
 
   /**
+   * Restores an archived (soft-deleted) product (owner only).
+   * POST /api/products/{id}/restore
+   */
+  async restore(id) {
+    return apiClient.post(`/products/${id}/restore`)
+  },
+
+  /**
    * Retrieves all products currently at or below their reorder level.
    * GET /api/products/low-stock
    */

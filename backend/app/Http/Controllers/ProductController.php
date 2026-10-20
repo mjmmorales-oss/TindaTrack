@@ -23,6 +23,12 @@ class ProductController extends Controller
     {
         $query = Product::with('category');
 
+        // Archived (soft-deleted) products are an owner-only view.
+        if ($request->boolean('archived')) {
+            abort_unless($request->user()?->hasRole('owner'), 403, 'Only the owner can view archived products.');
+            $query->onlyTrashed();
+        }
+
         $allowedFilters = [
             'category_id' => 'category_id',
             'is_active' => function (Builder $q, $val) {
@@ -246,10 +252,35 @@ class ProductController extends Controller
 
     public function destroy(Product $product): JsonResponse
     {
-        $product->delete();
+        $product->archive();
 
         return response()->json([
             'message' => 'Product deleted successfully.',
+        ]);
+    }
+
+    public function restore(Product $product): JsonResponse
+    {
+        if (! $product->trashed()) {
+            return response()->json([
+                'data' => new ProductResource($product->load('category')),
+                'message' => 'Product is not archived.',
+            ]);
+        }
+
+        $hadBarcode = $product->deleted_barcode !== null;
+        $result = $product->restoreFromArchive();
+
+        $message = "{$product->name} has been restored.";
+        if ($hadBarcode && ! $result['barcode_restored']) {
+            $message .= ' Its old barcode is now used by another product, so it was left empty.';
+        }
+
+        return response()->json([
+            'data' => new ProductResource($product->fresh(['category'])),
+            'message' => $message,
+            'barcode_restored' => $result['barcode_restored'],
+            'sku_restored' => $result['sku_restored'],
         ]);
     }
 
