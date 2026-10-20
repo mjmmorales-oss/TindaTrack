@@ -37,3 +37,70 @@ Branch: `release/v2.2.0` (from `main` @ `8778827`, v2.1.0).
 | F2 | POS / toasts | High | `lib/notify.js` | `notify.info(title, desc, { action })` dropped the 3rd argument → the owner's "Register product" action on unknown barcodes never appeared. | `notify.*` accepts `(title, description, options)`. | covered by the A3 POS tests |
 | F3 | Visual Match teaching | High | `ReferencePhotosSection.jsx` | Passed `analyzing` to `AiCapture` (prop is `isAnalyzing`) → no busy state, double saves; auto-capture fired repeatedly. | `isAnalyzing`, `autoCaptureEnabled={false}`. | code fix (no dedicated test) |
 | F4 | Barcode data | High | `BarcodeLookupController`, mock `barcodeService` | All 58 seeded barcodes have an invalid EAN-13 check digit → lookup answered 422 for products that exist (e.g. scanning a printed label in Add by barcode). | A barcode stored on a product resolves **before** format validation; `classifyScan` treats any digit string as a barcode. (Seed data itself left unchanged the night before the demo — see deferred.) | `BarcodeLookupTest` "stored barcode resolves even when its check digit is invalid" |
+
+## Phase C — Code-only bug hunt ✅
+
+Method: five read-only audit agents (Auth/Staff/Settings · Products/Categories/Inventory · POS/Sales/Utang/Reports · AI/Pairing/PWA · mock-vs-API contracts) traced every flow button → hook → service → route → controller → DB → resource → UI; every finding below was re-read in the code before fixing. Pattern confirmed again: **two parts disagree and the mock or jsdom hides it** — the services proxy always picks the mock under Vitest (`MODE === 'test'`), so API services never ran in tests until C1.3.
+
+### C1 — Automated cross-checks (new, all green)
+
+| Check | What it does | Result |
+|---|---|---|
+| `npm run check-routes` (`scripts/check-routes.mjs`) | Parses every `apiClient` / `api` / `deviceAxios` call in `frontend/src` and matches it against `php artisan route:list --json` (method + params); lists backend routes the SPA never calls | Found **C-S1** (staff edit PUT→PATCH). Now: 86 calls, 0 problems, 0 unexpected unused routes |
+| Response contracts | Pest `ResponseContractExportTest` writes type skeletons (keys + JSON types) of 25 read endpoints + 2 mutations to `contracts/responses/api/*.json`; Vitest `responseContracts.test.jsx` feeds each skeleton through the **API** service (stubbed `apiClient`, so its unwrapping runs) and compares with the **mock** service output — fails on mock-only keys and type mismatches | Found C-U1, C-U5, C-S6, C-A8, C-X1/X2. Now 27/27 |
+| Request contracts | `contracts/payloads/` + `FormContractAuditTest` extended to staff generate/reset, PATCH update, toggle/archive/restore, phone pairing, product restore, image import | 22 passing |
+| Real-type traps | `toImageBlob` guard in api **and** mock services; A1/A1b tests take the real `canvas.toBlob` path and the real axios pipeline (stub adapter) | see Phase A |
+| Hygiene | `console.log`: 0 · `TODO/FIXME` in shipped code: 0 · remaining `console.error/warn` are in catch blocks / DEV only · jsdom shortcuts remain in `imagePrep`/`imageResize` (tests that matter spoof the UA to bypass them) | ok |
+
+### Findings fixed in Phase C (Critical/High all fixed, each with a regression test)
+
+| ID | Area | Sev | File:line (both sides) | Root cause | Fix | Test |
+|---|---|---|---|---|---|---|
+| C-A1 | Phone → POS | **Critical** | `PosPage.jsx` scanner effect deps; `lib/realtime.js` `lastId = 0` | A sale refreshes products → new `handleScannedCode` → re-subscribe from event 0 → old phone scans/baskets replayed into the cart | last event id persisted per session; handler kept in a ref | `phaseCRegressions` "never replayed" |
+| C-U1 | Utang | **Critical** | `useUtang.js:40` ↔ `UtangPaymentController@store` | Hook read `res.data.payment.amount` (mock shape); Laravel returns the payment resource → TypeError in `onSuccess` → saved payment shown as failed, invites double payment | API service returns `{payment, new_balance}` | `phaseCRegressions`, response contract `utang-payment-create` |
+| C-U2 | Reports/Sales | **Critical** | `ReportsPage`/`SalesPage` send UTC ISO ↔ `Carbon::parse` in `ReportController`, `SaleController`, `InventoryController`, `RecordPaymentAction` | Ranges compared UTC instants against Manila wall-clock `created_at` → "Today" = yesterday 16:00–today 15:59 | `App\Support\DateInput` (to Asia/Manila; date-only = whole day) everywhere; custom range end = `endOfDay` | `SalesReportsRegressionTest` "Manila days" |
+| C-S1 | Staff | **Critical** | `api/staffService.js:33` ↔ `Route::patch('/users/{user}')` | Edit sent PUT → 405 (mock ignores methods) | PATCH | `check-routes`, `phaseCRegressions`, `FormContractAuditTest` |
+| C-S2 | Staff | **Critical** | `StaffPage.jsx:194` ↔ `UserController@store:76` | Generate-password create never sent `generate_password` → password required → 422 on a hidden field | send `generate_password: true` | `FormContractAuditTest` staff-create-generate |
+| C-S3 | Staff | **Critical** | `StaffPage.jsx:205,252` ↔ `UserController:119,292` | Read `temp_password`; Laravel sends `temporary_password` (mock used the wrong key) → owner never sees generated/reset passwords; reset revokes tokens → cashier locked out | read `temporary_password`; mock aligned | `phaseCRegressions`, `FormContractAuditTest` |
+| C-S4 | Security | **Critical** | `RegisteredUserController@store` | Public `/register` always created an **owner** of the single store | closed once an owner exists (`ALLOW_OWNER_REGISTRATION` escape hatch) | `RegistrationTest` v2.2 |
+| C-P1 | Products | **Critical** | `ProductFormDialog.jsx:189` ↔ `schemas.js:34` | Uploaded photo's data URL put in `image_url` (max 2048) → zod fails on a collapsed field → Save silently does nothing (jsdom returns `dataUrl: ''`, hiding it) | photo travels only as `pendingImage`; `onInvalid` always explains | code + `onInvalid` toast |
+| C-A2 | AI | High | `lib/api.js:53` (15 s), `api/scannerService.js:12` (10 s) ↔ `config/ai.php` 30 s × fallback | Slow/fallback Gemini calls aborted in the browser while the server finished | `AI_REQUEST_TIMEOUT_MS = 70000` on basket/product/experiment/phone uploads | (config) |
+| C-A3 | AI Lab / Staff | High | `api/aiService.js:84,107,117,130`, `api/staffService.js:9` ↔ `apiClient.get(url, params, config)` | `{ params }` wrapped twice → `?params[from]=…`; CSV `responseType` sent as a query param; staff status tabs/search ignored | correct arguments | `phaseCRegressions` |
+| C-A4 | AI Lab | High | `BasketReviewSheet.jsx:249` (`'ai'`), `PosPage` adds without method ↔ `AiMetricsService` buckets | Checkout-time chart counted everything as manual | `ai_basket` / `barcode` / `phone` / `visual` | `aiBasket.test` |
+| C-A5 | Pairing (dev) | High | `vite.config.js` LAN origin in plain `npm run dev` | QR pointed at the LAN IP while the API stayed on `localhost:8000` | LAN origin only for `dev:lan`; mismatch warning whenever API is localhost | `pairingUrl.test` |
+| C-U3 | POS | High | `PaymentDialog.jsx:131` ↔ `CreateSaleAction:134` | Owner override of the credit limit never sent `override_limit` | sent when owner + over limit | `SalesReportsRegressionTest` override |
+| C-U4 | POS / Utang | High | `PaymentDialog.jsx:88` ↔ `SaleController:89`, `CreateSaleAction:128` | Paid-now above the total created negative debt (lowered the balance) | 422 on server + mock; inline error; `amount_paid min:0` | `SalesReportsRegressionTest` down payment |
+| C-U5 | Sales | High | `SalesPage.jsx:155` ↔ `SaleController@index` | Summary strip read `summary` only the mock returned → ₱0 | filtered `summary` from the API | response contract + `SalesReportsRegressionTest` |
+| C-U6 | Customers | High | `CustomersPage.jsx:117,123` ↔ `CustomerController@index` | `with_balance` / `over_limit` filters didn't exist on the API | added (+ `last_activity`) | `SalesReportsRegressionTest` filters |
+| C-S5 | Staff | High | see C-A3 | Staff tabs/search never reached Laravel | flat params | `phaseCRegressions` |
+| C-S6 | Settings | High | `SettingsPage.jsx:66` ↔ `SettingsController` `unset()` | `owner_name`, `show_cashier_name`, `low_stock_threshold_percent` validated then discarded | migration + fillable + resource | `SettingsTest` v2.2 |
+| C-P2 | Products/Inventory | High | `ProductsPage.jsx:79`, `InventoryPage.jsx:103` ↔ `ProductController@index` | `stock=in|low|out` ignored (API only knew `stock_status`) → "Running Low" listed everything | `stock` filter alias | `ProductsRegressionTest` |
+| C-P3 | AI Stock-In | High | `AiProductReviewTable.jsx:349,357` ↔ `api/aiService.bulkCreateProducts`, `ProductImageController:53` | Created list read from an already-unwrapped array → `[]`; `source=ai_crop` rejected → crops never uploaded | unwrap both shapes; accept `ai_crop` | `ProductsRegressionTest` |
+| C-P4 | Inventory | High | `AdjustStockDialog.jsx:69,77` ↔ `ListQuery` per_page ≤ 100 | Scan "not found" for products past the first 100 | server barcode lookup fallback | code |
+| C-P5 | Products | High | `ProductFormDialog.jsx:426`, `AddByBarcodeDialog.jsx:279` | Failed photo upload after create left the dialog in create mode → Save again = duplicate | product saved; photo failure reported separately | code |
+| C-P6 | Products | High | `AiProductReviewTable.jsx:30` vs `schemas.js:41` vs Quick Add vs API (any string) | AI could save `box`; the form then refused to edit it | one `PRODUCT_UNITS` list + `Rule::in(ProductUnits::ALL)` | `ProductsRegressionTest`, `phaseCRegressions` |
+| C-X1 | AI Lab | High | `AiExperimentsTab.jsx:36,50` ↔ `api/aiService.getExperiments` | Double unwrap → experiment list always empty | keep `{data}` envelope | `phaseCRegressions` |
+| C-X2 | Errors | High | `apiClient.handleRequest`, `ApiError` | Raw framework text ("The route … could not be found", "Server Error") reached toasts; `ApiError` dropped `reason`/`code` (phone pairing reasons never shown in API mode) | `friendlyError()` in `lib/notify.js` applied where errors are created; payload fields kept | `phaseCRegressions` C3 |
+| C-A6 | AI | Medium | `GeminiVisionProvider:212` | Gemini's own 401/403 and raw body passed to the SPA (logout / "Access Denied") | always 502 + clean message; upstream status kept for `ai:ping` | `AiPingCommandTest` |
+| C-A8/9/10/11 | AI / Pairing | Medium | `AiSettingsCard:192`; `BasketReviewSheet:190`; `ScannerSessionController@show`; `AiService:259`; Workbox matchers | usage always 0; matched unknowns logged as removed; POS never told about expiry; image URL had no route; runtime-cache RegExps never matched | `daily_scans_today`; keep id; `expired`/`ended_at`; `/api/product-images/{id}`; `url.pathname` matchers | response contract / code |
+| C-U7…U11 | Sales | Medium | `ReportController:63`, `VoidSaleAction:48`, `CreateSaleAction:49`, `DashboardController:195` | weekly = daily on MySQL; void skipped archived products' stock; duplicate lines could oversell; cashier received store-wide KPIs | ISO week; `withTrashed`; per-product running total; redacted | `SalesReportsRegressionTest` |
+| C-S7…S13 | Auth/Staff/Settings | Medium | see commit `fix(v2.2): C staff, auth…` | Settings 422 toast-only; empty reorder → 500; archived email → 500; logout 401 toast; PWA install missed the event; owner Edit always refused; reset didn't clear `must_change_password` | inline errors; rules; ordering; boot-time capture; hidden; flag cleared | `SettingsTest`, `pwa.test` |
+| C-P7…P9 | Products | Medium | `||` defaults; `CategoryController@destroy`; `allowedSorts` | reorder 0 → 10; archived products → FK 500; sort headers ignored | `??`; 422; more sorts | `ProductsRegressionTest` |
+| C-M1 | Money display | Medium | POS payment, receipt, sale detail, utang, customers, AI Lab | `₱` + `toFixed(2)` without thousands separators | `formatCurrency` | code |
+
+### C2 — Flow status after fixes
+
+| Area | Status |
+|---|---|
+| Auth | owner/cashier login ✓ · logout clears cart, scanner session (ended server-side first), query + visual caches ✓ · forced password change: banner only (deferred D-6) · forgot/reset ✓ · expired token → login ✓ · inactive staff blocked ✓ |
+| Products | manual add (incl. photo) ✓ · Quick Add ✓ · Add by barcode: local / OFF / not found / **archived** ✓ · homemade ✓ · edit ✓ · delete/archive/restore ✓ · image upload / import ✓ · reference photos (Take 3) ✓ · AI Stock-In incl. crops ✓ · SKU auto ✓ · category required ✓ |
+| Categories | create/edit ✓ · delete with products blocked with a clear message (incl. archived) ✓ |
+| Inventory | adjust (all types) ✓ · bulk restock ✓ (not atomic, D-4) · printable list ✓ · low stock = `reorder_level` ✓ · no negative stock ✓ |
+| POS | tap/search ✓ · **USB wedge ✓ (was dead)** · camera barcode ✓ · Visual Match ✓ · AI Basket ×3 entry points ✓ · quantity/stock clamps ✓ · cash + change ✓ · utang (customer required, override, down payment) ✓ · receipt ✓ · void restores stock + utang ✓ · Pay double-submit protected ✓ |
+| Customers / Utang | create ✓ · balance after sale/payment ✓ · overpayment blocked ✓ · ledger ✓ · filters ✓ |
+| Reports / Dashboard | totals = DB sums, voided excluded ✓ · Manila date ranges ✓ · weekly ✓ · cashier sees own shift only ✓ |
+| Staff | create (manual/generated) ✓ · edit ✓ · reset ✓ · archive/restore ✓ · cashier blocked UI + 403 ✓ |
+| Settings | store info ✓ · AI + auto-capture ✓ · language persists ✓ · PWA install ✓ |
+| Phone pairing | create ✓ · LAN QR ✓ · in-app QR pairing ✓ · scan → POS ✓ (no replays) · AI basket → POS review ✓ · expiry ✓ · end ✓ · device token on every scanner endpoint ✓ |
+| AI | ping ✓ · basket ✓ · stock-in ✓ · feedback 2xx ✓ · AI Lab metrics/CSV with filters ✓ · 429/daily-limit messages ✓ · fallback model ✓ · mock mode ✓ · consent ✓ |
+| PWA | manifest + icons + `/scan` shortcut ✓ · SW never caches `/api/**` (product images CacheFirst) ✓ · update prompt ✓ |
