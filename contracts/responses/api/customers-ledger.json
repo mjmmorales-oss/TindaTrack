@@ -1,0 +1,80 @@
+{
+    "data": {
+        "current_balance": "number",
+        "customer": {
+            "address": "string",
+            "contact_number": "string",
+            "created_at": "string",
+            "credit_balance": "number",
+            "credit_limit": "number",
+            "id": "number",
+            "last_activity": "string",
+            "name": "string",
+            "nickname": "string",
+            "notes": "string",
+            "updated_at": "string"
+        },
+        "timeline": [
+            {
+                "amount": "number",
+                "amountTone": "string",
+                "balance": "number",
+                "date": "string",
+                "id": "string",
+                "meta": "string",
+                "payment": {
+                    "amount": "number",
+                    "created_at": "string",
+                    "customer_id": "number",
+                    "id": "number",
+                    "notes": "string",
+                    "payment_date": "string",
+                    "recorded_by": "number",
+                    "sale_id": "null",
+                    "updated_at": "string"
+                },
+                "reference": "string",
+                "sale": {
+                    "amount_paid": "number",
+                    "amount_tendered": "number",
+                    "cart_duration_ms": "null",
+                    "cart_started_at": "null",
+                    "change": "number",
+                    "change_amount": "number",
+                    "created_at": "string",
+                    "customer_id": "number",
+                    "id": "number",
+                    "items": [
+                        {
+                            "add_method": "null",
+                            "id": "number",
+                            "product_id": "number",
+                            "product_name": "string",
+                            "quantity": "number",
+                            "sale_id": "number",
+                            "subtotal": "number",
+                            "unit_cost": "number",
+                            "unit_price": "number"
+                        }
+                    ],
+                    "notes": "null",
+                    "payment_method": "string",
+                    "payment_type": "string",
+                    "sale_no": "string",
+                    "sale_number": "string",
+                    "status": "string",
+                    "subtotal": "number",
+                    "total": "number",
+                    "total_amount": "number",
+                    "updated_at": "string",
+                    "user_id": "number",
+                    "void_reason": "null",
+                    "voided_at": "null",
+                    "voided_by": "null"
+                },
+                "title": "string",
+                "type": "string"
+            }
+        ]
+    }
+}

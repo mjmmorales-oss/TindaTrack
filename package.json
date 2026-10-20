@@ -18,6 +18,8 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:mobile": "node frontend/scripts/check-mobile.mjs",
     "check:pwa": "node scripts/check-pwa.mjs",
+    "check-routes": "node scripts/check-routes.mjs",
+    "check:routes": "node scripts/check-routes.mjs",
     "gen:demo-art": "npm --prefix frontend run gen:demo-art",
     "gen:icons": "npm --prefix frontend run gen:icons"
   },

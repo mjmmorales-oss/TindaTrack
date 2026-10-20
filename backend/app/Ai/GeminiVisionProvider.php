@@ -135,7 +135,8 @@ class GeminiVisionProvider implements VisionProvider
         } catch (\Throwable $e) {
             $elapsedMs = (int) round((hrtime(true) - $startTime) / 1e6);
             $msg = $e->getMessage();
-            $code = $e->getCode();
+            // Diagnose with Gemini's own status, not the 502 the SPA receives
+            $code = $e instanceof AiProviderException && $e->upstreamStatus ? $e->upstreamStatus : $e->getCode();
 
             $errorType = 'unknown';
             $actionableHint = '';
@@ -209,9 +210,14 @@ class GeminiVisionProvider implements VisionProvider
         }
 
         if (! $response->successful()) {
+            // Keep Gemini's status/body in the log only: passing its 401/403 through made the SPA
+            // log the cashier out or show "Access Denied", and the raw body reached the toast
+            Log::error("Gemini vision call failed with status {$response->status()}: ".substr($response->body(), 0, 500));
+
             throw new AiProviderException(
-                "Gemini vision call failed with status {$response->status()}: ".substr($response->body(), 0, 200),
-                $response->status()
+                'The AI service could not read this photo right now. Try again, or scan the barcodes.',
+                502,
+                upstreamStatus: $response->status(),
             );
         }
 

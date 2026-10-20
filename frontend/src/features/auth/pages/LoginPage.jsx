@@ -2,7 +2,7 @@ import { useState, lazy, Suspense } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, Smartphone } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -164,6 +164,14 @@ export function LoginPage() {
               {t('auth:registerOwnerLink', 'Register as Store Owner')}
             </Link>
           </p>
+
+          {/* Pairing is code-based (device token), so no owner login is needed on the phone */}
+          <Button asChild variant="outline" className="w-full h-11 gap-2">
+            <Link to="/scan">
+              <Smartphone className="h-4 w-4" />
+              {t('auth:usePhoneAsScanner')}
+            </Link>
+          </Button>
         </CardFooter>
       </form>
     </Card>

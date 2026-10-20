@@ -10,7 +10,8 @@ export const TOKEN_KEY = 'tindatrack_token'
 export function getApiBaseUrl() {
   const envUrl = import.meta.env?.VITE_API_URL
   if (typeof envUrl === 'string') {
-    const trimmed = envUrl.trim()
+    // "https://api.example.com/api/" and ".../api" must behave the same
+    const trimmed = envUrl.trim().replace(/\/+$/, '')
     if (trimmed.length > 0) {
       return trimmed
     }
@@ -27,6 +28,20 @@ export function getApiBaseUrl() {
 }
 
 export const API_BASE = getApiBaseUrl()
+
+/**
+ * True when authenticated API calls can succeed: mock/test data source, or a
+ * stored bearer token. The paired phone scanner (/scan) has neither, so shared
+ * components skip owner/cashier queries there instead of triggering 401 toasts.
+ */
+export function hasApiSession() {
+  if (import.meta.env?.MODE === 'test' || import.meta.env?.VITE_DATA_SOURCE === 'mock') return true
+  try {
+    return Boolean(localStorage.getItem(TOKEN_KEY))
+  } catch {
+    return false
+  }
+}
 
 export const api = axios.create({
   baseURL: getApiBaseUrl(),
@@ -52,7 +67,8 @@ api.interceptors.response.use(
           detail: error.response?.data?.message,
         }),
       )
-    } else if (error.response?.status === 403) {
+    } else if (error.response?.status === 403 && !error.response?.data?.code) {
+      // A 403 with a domain `code` (e.g. ai_disabled) is shown by the caller, not as "Access Denied"
       window.dispatchEvent(
         new CustomEvent('auth:forbidden', {
           detail: error.response?.data?.message,

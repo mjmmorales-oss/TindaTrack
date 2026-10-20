@@ -209,8 +209,11 @@ class ScannerDeviceController extends Controller
             'status' => 'ai_basket',
             'product_id' => null,
             'quantity' => count($result['items']),
+            // The POS opens its review sheet straight from this payload, so it carries the full result
             'payload' => [
                 'scan_id' => $result['scan_id'],
+                'items' => $result['items'],
+                'unmatched' => $result['unmatched'],
                 'items_count' => count($result['items']),
                 'unmatched_count' => count($result['unmatched']),
             ],

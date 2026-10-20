@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
   AlertCircle,
+  ArchiveRestore,
   ArrowDownUp,
   Copy,
   Eye,
@@ -50,6 +51,7 @@ import { AdjustStockDialog } from '@/features/products/components/AdjustStockDia
 import {
   useProducts,
   useDeleteProduct,
+  useRestoreProduct,
   useUnknownBarcodes,
 } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
@@ -81,13 +83,20 @@ export function ProductsPage() {
     per_page: 15,
   })
 
+  // "Archived" lives in the Status filter but is sent to the API as archived=1 (owner only)
+  const showArchived = canManage && params.is_active === 'archived'
+  const queryParams = useMemo(
+    () => (showArchived ? { ...params, is_active: '', archived: 1 } : params),
+    [params, showArchived],
+  )
+
   // Queries
   const {
     data: productsRes,
     isLoading,
     isError,
     refetch,
-  } = useProducts(params)
+  } = useProducts(queryParams)
 
   const { data: categoriesRes } = useCategories()
   const categories = useMemo(() => categoriesRes?.data || [], [categoriesRes?.data])
@@ -100,6 +109,7 @@ export function ProductsPage() {
   }, [categories])
 
   const deleteMutation = useDeleteProduct()
+  const restoreMutation = useRestoreProduct()
 
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false)
@@ -217,6 +227,7 @@ export function ProductsPage() {
   const statusFilterOptions = [
     { label: t('products:active', 'Active'), value: 'true' },
     { label: t('products:inactive', 'Inactive'), value: 'false' },
+    ...(canManage ? [{ label: t('products:archivedFilter', 'Archived (deleted)'), value: 'archived' }] : []),
   ]
 
   const isFiltered = Boolean(
@@ -350,12 +361,15 @@ export function ProductsPage() {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={t('products:statusCol', 'Status')} />
         ),
-        cell: ({ row }) => (
-          <StatusBadge
-            type="active"
-            variant={row.original.is_active ? 'active' : 'inactive'}
-          />
-        ),
+        cell: ({ row }) =>
+          row.original.archived ? (
+            <Badge variant="secondary">{t('products:archivedBadge', 'Archived')}</Badge>
+          ) : (
+            <StatusBadge
+              type="active"
+              variant={row.original.is_active ? 'active' : 'inactive'}
+            />
+          ),
       },
       {
         accessorKey: 'updated_at',
@@ -385,6 +399,18 @@ export function ProductsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
+                {p.archived ? (
+                  canManage && (
+                    <DropdownMenuItem
+                      onClick={() => restoreMutation.mutate(p.id)}
+                      disabled={restoreMutation.isPending}
+                      className="gap-2 text-xs"
+                    >
+                      <ArchiveRestore className="h-3.5 w-3.5" />
+                      {t('products:restore', 'Restore')}
+                    </DropdownMenuItem>
+                  )
+                ) : (<>
                 <DropdownMenuItem
                   onClick={() => navigate(`/products/${p.id}`)}
                   className="gap-2 text-xs"
@@ -426,6 +452,7 @@ export function ProductsPage() {
                     </DropdownMenuItem>
                   </>
                 )}
+                </>)}
               </DropdownMenuContent>
             </DropdownMenu>
           )
@@ -434,7 +461,7 @@ export function ProductsPage() {
     )
 
     return cols
-  }, [categoryMap, canViewCost, canManage, navigate, t])
+  }, [categoryMap, canViewCost, canManage, navigate, t, restoreMutation])
 
   // Mobile card renderer for screens below md
   const renderMobileCard = (row) => {
@@ -480,6 +507,18 @@ export function ProductsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {p.archived ? (
+                canManage && (
+                  <DropdownMenuItem
+                    onClick={() => restoreMutation.mutate(p.id)}
+                    disabled={restoreMutation.isPending}
+                    className="gap-2 text-xs"
+                  >
+                    <ArchiveRestore className="h-4 w-4" />
+                    {t('products:restore', 'Restore')}
+                  </DropdownMenuItem>
+                )
+              ) : (<>
               <DropdownMenuItem
                 onClick={() => navigate(`/products/${p.id}`)}
                 className="gap-2 text-xs"
@@ -520,6 +559,7 @@ export function ProductsPage() {
                   </DropdownMenuItem>
                 </>
               )}
+              </>)}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -545,11 +585,17 @@ export function ProductsPage() {
           </div>
 
           <div className="flex items-center justify-end pt-1">
-            <StatusBadge
-              type="active"
-              variant={p.is_active ? 'active' : 'inactive'}
-              className="text-[10px] px-1.5 py-0"
-            />
+            {p.archived ? (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {t('products:archivedBadge', 'Archived')}
+              </Badge>
+            ) : (
+              <StatusBadge
+                type="active"
+                variant={p.is_active ? 'active' : 'inactive'}
+                className="text-[10px] px-1.5 py-0"
+              />
+            )}
           </div>
         </div>
 
@@ -588,26 +634,36 @@ export function ProductsPage() {
                     setAddByBarcodeInitialCode('')
                     setAddByBarcodeOpen(true)
                   }}
-                  className="gap-1.5 shadow-xs h-9 font-medium text-xs"
+                  className="gap-2 shadow-xs h-auto min-h-11 py-1.5 font-medium text-xs"
                 >
-                  <ScanBarcode className="h-4 w-4" />
-                  <span>{t('products:addByBarcode', 'Add by barcode')}</span>
+                  <ScanBarcode className="h-4 w-4 shrink-0" />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{t('products:addByBarcode', 'Add by barcode')}</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {t('products:addByBarcodeSubtitle')}
+                    </span>
+                  </span>
                 </Button>
 
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
-                  className="gap-1.5 shadow-xs h-9 font-medium text-xs border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
+                  className="gap-2 shadow-xs h-auto min-h-11 py-1.5 font-medium text-xs border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
                 >
-                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                  <span>{t('products:addFromPhotoAi', 'AI Stock-In')}</span>
+                  <Sparkles className="h-4 w-4 shrink-0 text-primary motion-safe:animate-pulse" />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{t('products:addFromPhotoAi', 'AI Stock-In')}</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {t('products:addFromPhotoAiDesc', 'Snap up to 5 new products at once')}
+                    </span>
+                  </span>
                 </Button>
 
                 <Button
                   type="button"
                   onClick={handleCreate}
-                  className="gap-1.5 shadow-xs h-9 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs"
+                  className="gap-1.5 shadow-xs min-h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs"
                 >
                   <Plus className="h-4 w-4" />
                   <span>{t('products:addProduct', 'Add Product')}</span>
@@ -651,7 +707,7 @@ export function ProductsPage() {
                       <div>
                         <div className="font-medium">{t('products:addByBarcode', 'Add by barcode')}</div>
                         <div className="text-[10px] text-muted-foreground">
-                          {t('products:addByBarcodeDesc', 'Quick GTIN auto-fill')}
+                          {t('products:addByBarcodeSubtitle')}
                         </div>
                       </div>
                     </DropdownMenuItem>

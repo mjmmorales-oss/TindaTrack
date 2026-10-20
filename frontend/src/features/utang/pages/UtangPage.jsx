@@ -35,7 +35,7 @@ import { useTableParams } from '@/components/data-table/useTableParams'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { notify } from '@/lib/notify'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function UtangPage() {
@@ -487,7 +487,7 @@ export function UtangPage() {
                       'h-full rounded-xs transition-all duration-300 relative group',
                       bucket.colorClass,
                     )}
-                    title={`${bucket.label}: ₱${bucket.amount.toFixed(2)} (${bucket.pct}%)`}
+                    title={`${bucket.label}: ${formatCurrency(bucket.amount)} (${bucket.pct}%)`}
                   />
                 )
               })}

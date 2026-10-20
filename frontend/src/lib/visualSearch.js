@@ -12,6 +12,97 @@ let cachedIndex = null
 let requestIdCounter = 0
 const pendingRequests = new Map()
 
+// Observable model status for "Loading Visual Match model… X%"
+let modelStatus = { status: 'idle', progress: 0, device: null, error: null }
+const statusListeners = new Set()
+const fileProgress = new Map()
+let hasFallenBackToWasm = false
+let forcedDevice = null
+
+function setModelStatus(patch) {
+  modelStatus = { ...modelStatus, ...patch }
+  statusListeners.forEach((cb) => cb(modelStatus))
+}
+
+/** @returns {{ status: 'idle'|'loading'|'ready'|'error', progress: number, device: string|null, error: string|null }} */
+export function getVisualModelStatus() {
+  return modelStatus
+}
+
+/**
+ * Subscribes to model load status changes. Returns an unsubscribe function.
+ *
+ * @param {(status: object) => void} cb
+ */
+export function subscribeVisualModelStatus(cb) {
+  statusListeners.add(cb)
+  return () => statusListeners.delete(cb)
+}
+
+/**
+ * Aggregates Transformers.js progress_callback events (one per model file) into 0–100.
+ *
+ * @param {object} info - { status, file, loaded, total, progress }
+ * @returns {number|null}
+ */
+export function aggregateModelProgress(info) {
+  if (!info?.file) return null
+  if (info.status === 'progress' && info.total) {
+    fileProgress.set(info.file, { loaded: info.loaded || 0, total: info.total })
+  } else if (info.status === 'done') {
+    const prev = fileProgress.get(info.file)
+    if (prev) fileProgress.set(info.file, { loaded: prev.total, total: prev.total })
+  }
+  let loaded = 0
+  let total = 0
+  for (const f of fileProgress.values()) {
+    loaded += f.loaded
+    total += f.total
+  }
+  return total ? Math.min(100, Math.round((loaded / total) * 100)) : null
+}
+
+/**
+ * True for iPhone/iPad/iPod (all iOS browsers are WebKit), including iPadOS
+ * that reports itself as a Mac.
+ *
+ * @param {string} userAgent
+ * @param {number} [maxTouchPoints=0]
+ */
+export function isIOSWebKit(userAgent = '', maxTouchPoints = 0) {
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return true
+  return /Macintosh/i.test(userAgent) && maxTouchPoints > 1
+}
+
+/**
+ * Picks the inference backend. WebGPU only when an adapter really exists and the
+ * browser is not iOS Safari/WebKit (WebGPU there is missing or unreliable);
+ * otherwise wasm (with q8 weights).
+ *
+ * @param {{ userAgent?: string, maxTouchPoints?: number, gpu?: { requestAdapter?: () => Promise<unknown> } }} [env]
+ * @returns {Promise<'webgpu'|'wasm'>}
+ */
+export async function pickVisualDevice(env = {}) {
+  const nav = typeof navigator !== 'undefined' ? navigator : {}
+  const userAgent = env.userAgent ?? nav.userAgent ?? ''
+  const maxTouchPoints = env.maxTouchPoints ?? nav.maxTouchPoints ?? 0
+  const gpu = 'gpu' in env ? env.gpu : nav.gpu
+
+  if (isIOSWebKit(userAgent, maxTouchPoints)) return 'wasm'
+  if (!gpu || typeof gpu.requestAdapter !== 'function') return 'wasm'
+  try {
+    const adapter = await gpu.requestAdapter()
+    return adapter ? 'webgpu' : 'wasm'
+  } catch {
+    return 'wasm'
+  }
+}
+
+/** Weight precision per backend: q8 keeps the wasm download small and fast. */
+export function dtypeForDevice(device) {
+  return device === 'webgpu' ? 'fp32' : 'q8'
+}
+
 /**
  * Creates or retrieves the singleton Web Worker for Transformers.js feature extraction.
  */
@@ -44,8 +135,11 @@ export function getVisualWorker() {
       if (type === 'PROGRESS') {
         const onProgress = pendingRequests.get('__init__')?.onProgress
         onProgress?.(payload)
+        const pct = aggregateModelProgress(payload)
+        if (pct !== null) setModelStatus({ status: 'loading', progress: pct })
       } else if (type === 'READY') {
         workerReady = true
+        setModelStatus({ status: 'ready', progress: 100, device: payload?.device || modelStatus.device, error: null })
         const initReq = pendingRequests.get('__init__')
         if (initReq) {
           pendingRequests.delete('__init__')
@@ -55,6 +149,7 @@ export function getVisualWorker() {
         const initReq = pendingRequests.get('__init__')
         pendingRequests.delete('__init__')
         initReq.reject(new Error(payload?.message || 'Failed to initialize model'))
+        setModelStatus({ status: 'error', error: payload?.message || 'Failed to initialize model' })
       }
     }
 
@@ -85,22 +180,51 @@ export async function initVisualModel(onProgress) {
     return workerInitPromise
   }
 
-  const worker = getVisualWorker()
+  let worker
+  try {
+    worker = getVisualWorker()
+  } catch (err) {
+    setModelStatus({ status: 'error', error: err?.message || 'Web Workers are not supported.' })
+    throw err
+  }
   if (!worker) {
     throw new Error('Web Workers are not supported in this environment.')
   }
 
-  workerInitPromise = new Promise((resolve, reject) => {
-    pendingRequests.set('__init__', { resolve, reject, onProgress })
-    worker.postMessage({
-      type: 'INIT',
-      payload: { modelId: VISUAL_MODEL_ID },
+  workerInitPromise = (async () => {
+    const device = forcedDevice || (await pickVisualDevice())
+    setModelStatus({ status: 'loading', device, error: null })
+    return new Promise((resolve, reject) => {
+      pendingRequests.set('__init__', { resolve, reject, onProgress })
+      worker.postMessage({
+        type: 'INIT',
+        payload: { modelId: VISUAL_MODEL_ID, device, dtype: dtypeForDevice(device) },
+      })
     })
-  }).finally(() => {
-    workerInitPromise = null
-  })
+  })()
+    .catch((err) => {
+      setModelStatus({ status: 'error', error: err?.message || 'Failed to initialize model' })
+      throw err
+    })
+    .finally(() => {
+      workerInitPromise = null
+    })
 
   return workerInitPromise
+}
+
+/**
+ * Starts loading the model in the background (idle time) so the Visual Match
+ * tab opens instantly. Errors are surfaced through the status store only.
+ */
+export function preloadVisualModel() {
+  if (workerReady || workerInitPromise || typeof window === 'undefined' || typeof Worker === 'undefined') return
+  const start = () => initVisualModel().catch(() => {})
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(start, { timeout: 5000 })
+  } else {
+    setTimeout(start, 1500)
+  }
 }
 
 /**
@@ -122,8 +246,14 @@ export async function rasterizeToImageData(source, targetSize = 224) {
   canvas.height = targetSize
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
 
+  // Same framing for live frames and reference photos: center square, never stretched.
+  const drawCenterSquare = (drawable, w, h) => {
+    const side = Math.min(w, h) || targetSize
+    ctx.drawImage(drawable, (w - side) / 2, (h - side) / 2, side, side, 0, 0, targetSize, targetSize)
+  }
+
   if (source instanceof HTMLCanvasElement) {
-    ctx.drawImage(source, 0, 0, targetSize, targetSize)
+    drawCenterSquare(source, source.width, source.height)
     return ctx.getImageData(0, 0, targetSize, targetSize)
   }
 
@@ -136,7 +266,7 @@ export async function rasterizeToImageData(source, targetSize = 224) {
     tempCanvas.height = source.height
     const tempCtx = tempCanvas.getContext('2d')
     tempCtx.putImageData(source, 0, 0)
-    ctx.drawImage(tempCanvas, 0, 0, targetSize, targetSize)
+    drawCenterSquare(tempCanvas, source.width, source.height)
     return ctx.getImageData(0, 0, targetSize, targetSize)
   }
 
@@ -156,7 +286,7 @@ export async function rasterizeToImageData(source, targetSize = 224) {
       img.crossOrigin = 'anonymous'
       img.onload = () => {
         try {
-          ctx.drawImage(img, 0, 0, targetSize, targetSize)
+          drawCenterSquare(img, img.naturalWidth || img.width, img.naturalHeight || img.height)
           const data = ctx.getImageData(0, 0, targetSize, targetSize)
           if (revokeUrl) URL.revokeObjectURL(srcUrl)
           resolve(data)
@@ -174,7 +304,7 @@ export async function rasterizeToImageData(source, targetSize = 224) {
   }
 
   if (source instanceof HTMLImageElement) {
-    ctx.drawImage(source, 0, 0, targetSize, targetSize)
+    drawCenterSquare(source, source.naturalWidth || source.width, source.naturalHeight || source.height)
     return ctx.getImageData(0, 0, targetSize, targetSize)
   }
 
@@ -188,6 +318,21 @@ export async function rasterizeToImageData(source, targetSize = 224) {
  * @returns {Promise<number[]>}
  */
 export async function embedImage(source) {
+  try {
+    return await embedOnce(source)
+  } catch (err) {
+    // WebGPU can initialise fine and still fail on the first run: retry once on wasm.
+    if (modelStatus.device === 'webgpu' && !hasFallenBackToWasm) {
+      hasFallenBackToWasm = true
+      forcedDevice = 'wasm'
+      terminateVisualWorker()
+      return embedOnce(source)
+    }
+    throw err
+  }
+}
+
+async function embedOnce(source) {
   const worker = getVisualWorker()
   if (!worker) {
     throw new Error('Visual search worker unavailable.')
@@ -326,10 +471,72 @@ export async function getVisualIndex(forceRefresh = false) {
 }
 
 /**
+ * Number of distinct products that have at least one taught reference vector.
+ *
+ * @param {Array<{ product_id: number|string }>} index
+ */
+export function countIndexedProducts(index = []) {
+  return new Set((index || []).filter((e) => e?.product_id && e?.vector).map((e) => String(e.product_id))).size
+}
+
+const indexListeners = new Set()
+
+/**
+ * Subscribes to index invalidations (e.g. after teaching a photo). Returns an unsubscribe function.
+ *
+ * @param {() => void} cb
+ */
+export function subscribeVisualIndex(cb) {
+  indexListeners.add(cb)
+  return () => indexListeners.delete(cb)
+}
+
+/**
  * Invalidates the in-memory visual search index.
  */
 export function invalidateVisualIndex() {
   cachedIndex = null
+  indexListeners.forEach((cb) => cb())
+}
+
+/**
+ * 16×12 luma thumbnail of the frame, for cheap "did the scene change?" checks.
+ *
+ * @param {CanvasRenderingContext2D} ctx - context of the 224×224 frame canvas
+ * @returns {Uint8Array|null}
+ */
+export function frameSignature(ctx) {
+  try {
+    const small = document.createElement('canvas')
+    small.width = 16
+    small.height = 12
+    const sctx = small.getContext('2d', { willReadFrequently: true })
+    if (!sctx || !ctx?.canvas) return null
+    sctx.drawImage(ctx.canvas, 0, 0, 16, 12)
+    const { data } = sctx.getImageData(0, 0, 16, 12)
+    const out = new Uint8Array(16 * 12)
+    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+      out[j] = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000
+    }
+    return out
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Mean absolute luma difference between two signatures is above `threshold`
+ * (0–255). Missing signatures always count as changed.
+ *
+ * @param {Uint8Array|null} prev
+ * @param {Uint8Array|null} next
+ * @param {number} [threshold=6]
+ */
+export function hasSceneChanged(prev, next, threshold = 6) {
+  if (!prev || !next || prev.length !== next.length) return true
+  let sum = 0
+  for (let i = 0; i < next.length; i++) sum += Math.abs(next[i] - prev[i])
+  return sum / next.length > threshold
 }
 
 /**
@@ -342,5 +549,7 @@ export function terminateVisualWorker() {
     workerReady = false
     workerInitPromise = null
     pendingRequests.clear()
+    fileProgress.clear()
+    setModelStatus({ status: 'idle', progress: 0 })
   }
 }

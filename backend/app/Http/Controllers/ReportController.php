@@ -6,7 +6,7 @@ use App\Enums\SaleStatus;
 use App\Models\Category;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use Carbon\Carbon;
+use App\Support\DateInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +15,8 @@ class ReportController extends Controller
 {
     public function sales(Request $request): JsonResponse
     {
-        $from = $request->input('from') ? Carbon::parse($request->input('from')) : null;
-        $to = $request->input('to') ? Carbon::parse($request->input('to')) : null;
+        $from = DateInput::from($request->input('from'));
+        $to = DateInput::to($request->input('to'));
         $granularity = $request->input('granularity', 'daily');
 
         $isSqlite = DB::connection()->getDriverName() === 'sqlite';
@@ -60,7 +60,7 @@ class ReportController extends Controller
         if ($granularity === 'monthly') {
             $periodExpr = $isSqlite ? "strftime('%Y-%m', sales.created_at)" : "DATE_FORMAT(sales.created_at, '%Y-%m')";
         } elseif ($granularity === 'weekly') {
-            $periodExpr = $isSqlite ? "strftime('%Y-W%W', sales.created_at)" : "DATE_FORMAT(sales.created_at, 'Wk %m-%d')";
+            $periodExpr = $isSqlite ? "strftime('%Y-W%W', sales.created_at)" : "DATE_FORMAT(sales.created_at, 'Wk %x-%v')";
         } else {
             $periodExpr = $isSqlite ? 'date(sales.created_at)' : 'DATE(sales.created_at)';
         }
@@ -128,8 +128,8 @@ class ReportController extends Controller
 
     public function bestSellers(Request $request): JsonResponse
     {
-        $from = $request->input('from') ? Carbon::parse($request->input('from')) : null;
-        $to = $request->input('to') ? Carbon::parse($request->input('to')) : null;
+        $from = DateInput::from($request->input('from'));
+        $to = DateInput::to($request->input('to'));
         $limit = (int) $request->input('limit', 10);
         $limit = max(1, min(100, $limit));
 
@@ -176,8 +176,8 @@ class ReportController extends Controller
 
     public function categoryBreakdown(Request $request): JsonResponse
     {
-        $from = $request->input('from') ? Carbon::parse($request->input('from')) : null;
-        $to = $request->input('to') ? Carbon::parse($request->input('to')) : null;
+        $from = DateInput::from($request->input('from'));
+        $to = DateInput::to($request->input('to'));
 
         $categories = Category::all()->keyBy('id');
 
@@ -226,8 +226,8 @@ class ReportController extends Controller
 
     public function hourly(Request $request): JsonResponse
     {
-        $from = $request->input('from') ? Carbon::parse($request->input('from')) : null;
-        $to = $request->input('to') ? Carbon::parse($request->input('to')) : null;
+        $from = DateInput::from($request->input('from'));
+        $to = DateInput::to($request->input('to'));
 
         $isSqlite = DB::connection()->getDriverName() === 'sqlite';
         $hourExpr = $isSqlite ? "CAST(strftime('%H', created_at) AS INTEGER)" : 'HOUR(created_at)';

@@ -14,6 +14,7 @@ function createInitialDatabase() {
     staff: generated.staff,
     categories: generated.categories,
     products: generated.products,
+    archivedProducts: [],
     customers: generated.customers,
     sales: generated.sales,
     utangPayments: generated.utangPayments,
@@ -62,6 +63,16 @@ export const useMockDb = create(
       setProducts: (updater) => {
         set((state) => ({
           products: typeof updater === 'function' ? updater(state.products) : updater,
+        }))
+      },
+
+      /**
+       * Mutates soft-deleted (archived) products, mirroring Laravel's trashed rows.
+       */
+      setArchivedProducts: (updater) => {
+        set((state) => ({
+          archivedProducts:
+            typeof updater === 'function' ? updater(state.archivedProducts || []) : updater,
         }))
       },
 

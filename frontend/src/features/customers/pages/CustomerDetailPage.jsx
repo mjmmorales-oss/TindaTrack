@@ -38,7 +38,7 @@ import { CustomerFormDialog } from '@/features/customers/components/CustomerForm
 import { RecordPaymentDialog } from '@/features/utang/components/RecordPaymentDialog'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { formatDateTime, formatDate } from '@/lib/format'
+import { formatDateTime, formatDate, formatCurrency } from '@/lib/format'
 
 export function CustomerDetailPage() {
   const { id } = useParams()
@@ -504,7 +504,7 @@ export function CustomerDetailPage() {
               <p className="text-xs mt-1 text-destructive/90">
                 {t('customers:blockedDeleteDetail', {
                   name: customer.name,
-                  amount: `₱${balance.toFixed(2)}`,
+                  amount: formatCurrency(balance),
                 })}
               </p>
             </div>

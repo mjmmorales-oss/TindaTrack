@@ -184,5 +184,20 @@
   "aiScanAgainDesc": "Do you want to add newly detected items to your current review list, or start a fresh scan?",
   "aiScanAgainMerge": "Add to current items",
   "aiScanAgainReplace": "Replace all items",
-  "aiTapNow": "Tap for now"
+  "aiTapNow": "Tap for now",
+  "aiCaptureFailed": "Could not take the photo. Please try again.",
+  "aiUploadFailed": "Could not read that photo. Try a different image.",
+  "notProductBarcode": "Not a product barcode.",
+  "notProductBarcodeDesc": "Scan the barcode printed on the product.",
+  "pairingQrTitle": "Phone-pairing code",
+  "pairingQrPhoneDesc": "Pair this phone as a scanner?",
+  "pairingQrDesktopDesc": "That's a phone-pairing code; scan it with the phone.",
+  "pairThisPhone": "Pair this phone",
+  "usePhoneAsScanner": "Use phone as scanner",
+  "usePhoneAsScannerHint": "Scan with your phone, items appear here",
+  "phoneLabel": "Phone:",
+  "phoneOnline": "Online",
+  "phoneOffline": "Offline",
+  "scanButton": "Scan",
+  "paidNowTooHigh": "Paid now can't be more than the total. Use Cash instead."
 }

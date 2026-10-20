@@ -6,7 +6,7 @@ export const staffService = {
    * GET /api/users
    */
   async list(params = {}) {
-    return apiClient.get('/users', { params })
+    return apiClient.get('/users', params)
   },
 
   /**
@@ -27,10 +27,10 @@ export const staffService = {
 
   /**
    * Updates an existing staff user.
-   * PUT /api/users/{id}
+   * PATCH /api/users/{id} (Laravel registers PATCH only; PUT answered 405)
    */
   async update(id, data) {
-    return apiClient.put(`/users/${id}`, data)
+    return apiClient.patch(`/users/${id}`, data)
   },
 
   /**

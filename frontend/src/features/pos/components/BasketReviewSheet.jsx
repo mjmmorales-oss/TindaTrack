@@ -187,7 +187,9 @@ export function BasketReviewSheet({
         setConfirmedItems((prev) => [
           ...prev,
           {
-            id: `matched_${Date.now()}`,
+            // Keep the unmatched line's id: buildBasketFeedbackLines pairs it back to the
+            // original unknown item (a new id logged it as 'removed')
+            id: unmatchedItem.id,
             matched_product_id: product.id,
             matched_product: product,
             label: product.name,
@@ -243,10 +245,10 @@ export function BasketReviewSheet({
 
     const { add } = useCartStore.getState()
 
-    // 1. Add each confirmed item to cart with add_method: 'ai'
+    // 1. Add each confirmed item to cart with add_method 'ai_basket' (AiMetricsService buckets)
     for (const item of confirmedItems) {
       if (item.matched_product) {
-        add(item.matched_product, item.quantity, 'ai')
+        add(item.matched_product, item.quantity, 'ai_basket')
       }
     }
 

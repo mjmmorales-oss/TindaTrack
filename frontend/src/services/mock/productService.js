@@ -4,7 +4,8 @@
  * - POST   /api/products               -> ProductController@store
  * - GET    /api/products/{id}          -> ProductController@show
  * - PUT    /api/products/{id}          -> ProductController@update
- * - DELETE /api/products/{id}          -> ProductController@destroy
+ * - DELETE /api/products/{id}          -> ProductController@destroy (archives, frees barcode/SKU)
+ * - POST   /api/products/{id}/restore  -> ProductController@restore
  * - POST   /api/products/{id}/adjust   -> ProductController@adjustStock
  * - GET    /api/products/low-stock     -> ProductController@lowStock
  */
@@ -17,7 +18,8 @@ import {
   applySearch,
   applySort,
 } from '../../lib/mockApi.js'
-import { getCurrentUser } from '../../lib/authBridge.js'
+import { getCurrentUser, getCurrentUserRole } from '../../lib/authBridge.js'
+import { toImageBlob } from '../../lib/imagePrep.js'
 import { aiService } from './aiService.js'
 
 export const productService = {
@@ -35,9 +37,17 @@ export const productService = {
       page = 1,
       per_page = 15,
       sort = 'name',
+      archived,
     } = params
 
-    let items = [...useMockDb.getState().products]
+    const wantsArchived = archived === true || archived === 1 || archived === '1' || archived === 'true'
+    if (wantsArchived && getCurrentUserRole() !== 'owner') {
+      throw new ApiError(403, 'Only the owner can view archived products.')
+    }
+
+    let items = wantsArchived
+      ? [...(useMockDb.getState().archivedProducts || [])]
+      : [...useMockDb.getState().products]
 
     if (category_id) {
       items = items.filter((p) => String(p.category_id) === String(category_id))
@@ -261,18 +271,61 @@ export const productService = {
       throw new ApiError(404, 'Product not found.')
     }
 
-    // Check if sales reference this product
-    const hasSales = state.sales.some((s) => s.items.some((i) => i.product_id === prodId))
-    if (hasSales) {
-      // Soft-deactivate if sales exist to preserve historical audit
-      state.setProducts((prev) =>
-        prev.map((p) => (p.id === prodId ? { ...p, is_active: false } : p)),
-      )
-      return { message: 'Product has sales history; marked as inactive instead of deleted.' }
+    // Same as Laravel: soft-delete and free the barcode/SKU (kept in deleted_*).
+    const archivedRow = {
+      ...product,
+      deleted_barcode: product.barcode ?? null,
+      deleted_sku: product.sku ?? null,
+      barcode: null,
+      sku: null,
+      archived: true,
+      deleted_at: new Date().toISOString(),
+    }
+    state.setProducts((prev) => prev.filter((p) => p.id !== prodId))
+    state.setArchivedProducts((prev) => [archivedRow, ...prev.filter((p) => p.id !== prodId)])
+    return { message: 'Product deleted successfully.' }
+  },
+
+  /**
+   * Restores an archived product, giving back its barcode/SKU when still free (owner only).
+   * Future: POST /api/products/{id}/restore
+   */
+  async restore(id) {
+    await delay()
+    if (getCurrentUserRole() !== 'owner') {
+      throw new ApiError(403, 'This action is unauthorized.')
+    }
+    const prodId = Number(id)
+    const state = useMockDb.getState()
+    const live = state.products.find((p) => p.id === prodId)
+    if (live) {
+      return { data: live, message: 'Product is not archived.' }
+    }
+    const row = (state.archivedProducts || []).find((p) => p.id === prodId)
+    if (!row) {
+      throw new ApiError(404, 'Product not found.')
     }
 
-    state.setProducts((prev) => prev.filter((p) => p.id !== prodId))
-    return { message: 'Product deleted successfully.' }
+    const barcodeFree = !!row.deleted_barcode && !state.products.some((p) => p.barcode === row.deleted_barcode)
+    const skuFree = !!row.deleted_sku && !state.products.some((p) => p.sku === row.deleted_sku)
+    const restored = {
+      ...row,
+      barcode: barcodeFree ? row.deleted_barcode : null,
+      sku: skuFree ? row.deleted_sku : `TT-GEN-${String(prodId).padStart(3, '0')}`,
+      deleted_barcode: null,
+      deleted_sku: null,
+      archived: false,
+      deleted_at: null,
+      updated_at: new Date().toISOString(),
+    }
+    state.setArchivedProducts((prev) => prev.filter((p) => p.id !== prodId))
+    state.setProducts((prev) => [restored, ...prev])
+
+    let message = `${restored.name} has been restored.`
+    if (row.deleted_barcode && !barcodeFree) {
+      message += ' Its old barcode is now used by another product, so it was left empty.'
+    }
+    return { data: restored, message, barcode_restored: barcodeFree, sku_restored: skuFree }
   },
 
   /**
@@ -372,10 +425,11 @@ export const productService = {
       throw new ApiError(404, 'Product not found.')
     }
 
+    // The real endpoint only accepts a binary file, so reject anything else here too.
+    await toImageBlob(file)
+
     let mockUrl = ''
-    if (typeof file === 'string' && file.startsWith('data:')) {
-      mockUrl = file
-    } else if (file && typeof URL !== 'undefined' && URL.createObjectURL && file instanceof Blob) {
+    if (typeof URL !== 'undefined' && URL.createObjectURL) {
       try {
         mockUrl = URL.createObjectURL(file)
       } catch {

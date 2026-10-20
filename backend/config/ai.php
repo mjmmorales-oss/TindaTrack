@@ -33,6 +33,7 @@ return [
     'timeout' => (int) env('AI_TIMEOUT', 30),
     'per_user_per_minute' => (int) env('AI_PER_USER_PER_MINUTE', 6),
     'daily_limit' => (int) env('AI_DAILY_LIMIT', 500),
-    'max_image_kb' => (int) env('AI_MAX_IMAGE_KB', 1500),
+    // Must stay above the SPA's AI photo cap (1.4 MB, AiCapture AI_IMAGE_OPTIONS)
+    'max_image_kb' => (int) env('AI_MAX_IMAGE_KB', 5120),
     'save_scan_images' => (bool) env('AI_SAVE_SCAN_IMAGES', false),
 ];

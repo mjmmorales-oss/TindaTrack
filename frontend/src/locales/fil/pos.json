@@ -184,5 +184,20 @@
   "aiScanAgainDesc": "Gusto mo bang idagdag ang mga bagong paninda sa listahan, o magsimula ng bagong scan?",
   "aiScanAgainMerge": "Idagdag sa kasalukuyang mga item",
   "aiScanAgainReplace": "Palitan ang lahat ng item",
-  "aiTapNow": "Kunan agad"
+  "aiTapNow": "Kunan agad",
+  "aiCaptureFailed": "Hindi nakuhanan ng litrato. Subukan ulit.",
+  "aiUploadFailed": "Hindi mabasa ang litratong iyan. Sumubok ng ibang larawan.",
+  "notProductBarcode": "Hindi ito barcode ng produkto.",
+  "notProductBarcodeDesc": "I-scan ang barcode na nakalimbag sa produkto.",
+  "pairingQrTitle": "Code para i-pair ang phone",
+  "pairingQrPhoneDesc": "I-pair ang phone na ito bilang scanner?",
+  "pairingQrDesktopDesc": "Code iyan para sa phone; i-scan ito gamit ang phone.",
+  "pairThisPhone": "I-pair ang phone na ito",
+  "usePhoneAsScanner": "Gamitin ang phone bilang scanner",
+  "usePhoneAsScannerHint": "Mag-scan gamit ang phone, lalabas dito ang mga item",
+  "phoneLabel": "Phone:",
+  "phoneOnline": "Online",
+  "phoneOffline": "Offline",
+  "scanButton": "I-scan",
+  "paidNowTooHigh": "Hindi puwedeng mas malaki sa total ang bayad ngayon. Gamitin ang Cash."
 }

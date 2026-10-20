@@ -37,6 +37,7 @@ import {
   useRestoreDemoImages,
 } from '@/features/settings/hooks/useSettings'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { applyServerErrors } from '@/lib/formErrors'
 import { getAutoBarcodeLookup, setAutoBarcodeLookup } from '@/lib/barcodeSettings'
 
 export function SettingsPage() {
@@ -59,6 +60,7 @@ export function SettingsPage() {
     control,
     watch,
     reset,
+    setError,
     formState: { isDirty, errors },
   } = useForm({
     defaultValues: {
@@ -88,13 +90,21 @@ export function SettingsPage() {
         receipt_footer: settings.receipt_footer || 'Thank you! Please come again!',
         show_cashier_name: settings.show_cashier_name ?? true,
         default_reorder_level: settings.default_reorder_level || 10,
-        low_stock_threshold_percent: settings.low_stock_threshold_percent || 20,
+        low_stock_threshold_percent: settings.low_stock_threshold_percent ?? 20,
       })
     }
   }, [settings, reset])
 
   const onSubmit = async (data) => {
-    await updateMutation.mutateAsync(data)
+    try {
+      await updateMutation.mutateAsync(data)
+    } catch (err) {
+      // 422s show next to the field (the hook already toasted the summary)
+      applyServerErrors(err, setError, {
+        visibleFields: Object.keys(data),
+        fieldMap: { phone: 'contact_number' },
+      })
+    }
   }
 
   const handleConfirmReset = async () => {

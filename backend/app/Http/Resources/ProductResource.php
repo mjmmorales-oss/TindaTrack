@@ -33,6 +33,10 @@ class ProductResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'category' => new CategoryResource($this->whenLoaded('category')),
+            'archived' => $this->deleted_at !== null,
+            'deleted_at' => $this->deleted_at?->toIso8601String(),
+            'deleted_barcode' => $this->deleted_barcode,
+            'deleted_sku' => $this->deleted_sku,
         ];
 
         if (! $isCashier) {

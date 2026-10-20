@@ -54,7 +54,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
           categories={[{ id: 1, name: 'Beverages' }]}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Magdagdag ng Bagong Produkto|Magdagdag ng Paninda|Add Product/i)).toBeInTheDocument()
     })
 
@@ -68,7 +68,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
           categories={[{ id: 1, name: 'Beverages' }]}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/I-edit ang Produkto|I-edit ang Paninda|Edit Product/i)).toBeInTheDocument()
     })
 
@@ -76,7 +76,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
       renderWithProviders(
         <CategoryFormDialog open={true} onOpenChange={() => {}} category={null} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Bagong Kategorya|New Category/i)).toBeInTheDocument()
     })
 
@@ -84,14 +84,14 @@ describe('Interaction and Dialog Smoke Tests', () => {
       renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={null} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/Magdagdag ng Bagong Suki|Add Customer|New Customer|Register New Suki/i)).toBeInTheDocument()
 
       const customer = useMockDb.getState().customers[0]
       renderWithProviders(
         <CustomerFormDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/I-edit ang Suki|Edit Customer/i)).toBeInTheDocument()
     })
 
@@ -100,7 +100,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
       renderWithProviders(
         <AdjustStockDialog open={true} onOpenChange={() => {}} product={product} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByText(/I-adjust ang Stock|Adjust Stock/i)).toBeInTheDocument()
     })
 
@@ -109,7 +109,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
       renderWithProviders(
         <RecordPaymentDialog open={true} onOpenChange={() => {}} customer={customer} />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByRole('heading', { name: /Kolektahin ang Bayad|Record Payment|Collect Payment/i })).toBeInTheDocument()
     })
 
@@ -135,7 +135,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
           customers={customers}
         />,
       )
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       expect(await screen.findByRole('tab', { name: /Cash/i })).toBeInTheDocument()
 
       // Switch to Utang tab
@@ -147,14 +147,14 @@ describe('Interaction and Dialog Smoke Tests', () => {
     it('opens Add Cashier dialog on /staff', async () => {
       const user = userEvent.setup()
       renderRoute('/staff', { role: 'owner' })
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       await screen.findByText(/Mga Account ng Staff at Kahera|Staff & Cashier/i, {}, { timeout: 8000 })
 
       const addButton = await screen.findByRole('button', { name: /Magdagdag ng Kahera|Add Cashier|Add Staff/i }, { timeout: 8000 })
       await user.click(addButton)
 
       expect(await screen.findByRole('heading', { name: /Magdagdag ng Bagong Kahera|Add Cashier|New Cashier|Add Staff/i }, { timeout: 8000 })).toBeInTheDocument()
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
     })
   })
 
@@ -164,7 +164,7 @@ describe('Interaction and Dialog Smoke Tests', () => {
       async () => {
         const user = userEvent.setup()
         renderRoute('/inventory', { role: 'owner' })
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       await screen.findByText(/Pamamahala sa Imbentaryo|Inventory & Stock Management|Stock & Inventory/i, {}, { timeout: 8000 })
 
       const tabs = [
@@ -178,14 +178,14 @@ describe('Interaction and Dialog Smoke Tests', () => {
         await user.click(tabTrigger)
         const matched = await screen.findAllByText(tab.textMatch, {}, { timeout: 8000 })
         expect(matched.length).toBeGreaterThan(0)
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       }
     }, 20000)
 
     it('opens all tabs on /settings', async () => {
       const user = userEvent.setup()
       renderRoute('/settings', { role: 'owner' })
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       await screen.findByText(/Mga Setting ng Tindahan|Store Settings/i, {}, { timeout: 8000 })
 
       const tabs = [
@@ -200,23 +200,23 @@ describe('Interaction and Dialog Smoke Tests', () => {
         await user.click(tabTrigger)
         const matched = await screen.findAllByText(tab.textMatch, {}, { timeout: 8000 })
         expect(matched.length).toBeGreaterThan(0)
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       }
     }, 20000)
 
     it('opens all tabs on /customers/1', async () => {
       const user = userEvent.setup()
       renderRoute('/customers/1', { role: 'owner' })
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const ledgerTab = await screen.findByRole('tab', { name: /Ledger ng Utang|Credit Ledger/i }, { timeout: 8000 })
       expect(ledgerTab).toBeInTheDocument()
 
       const purchasesTab = await screen.findByRole('tab', { name: /Kasaysayan ng Bili|Purchase History/i })
       await user.click(purchasesTab)
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
 
       await user.click(ledgerTab)
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
     })
   })
 })

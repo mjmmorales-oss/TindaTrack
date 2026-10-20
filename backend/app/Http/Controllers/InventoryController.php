@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\StockMovementResource;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Support\DateInput;
 use App\Support\ListQuery;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,10 +64,10 @@ class InventoryController extends Controller
             'product_id' => 'product_id',
             'type' => 'type',
             'from' => function (Builder $q, $val) {
-                $q->where('created_at', '>=', Carbon::parse($val));
+                $q->where('created_at', '>=', DateInput::from($val));
             },
             'to' => function (Builder $q, $val) {
-                $q->where('created_at', '<=', Carbon::parse($val));
+                $q->where('created_at', '<=', DateInput::to($val));
             },
         ];
 

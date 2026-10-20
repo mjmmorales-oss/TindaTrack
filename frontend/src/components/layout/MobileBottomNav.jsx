@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard,
   MoreHorizontal,
@@ -13,6 +14,7 @@ import { useOverlayStore } from '@/stores/overlayStore'
 import { cn } from '@/lib/utils'
 
 export function MobileBottomNav() {
+  const { t } = useTranslation(['nav'])
   const [moreOpen, setMoreOpen] = useState(false)
   const isAnyModalOpen = useOverlayStore((s) => s.activeModalCount > 0)
   const { isKeyboardOpen: isKeyboardFromHook } = useVisualViewport()
@@ -43,7 +45,7 @@ export function MobileBottomNav() {
   return (
     <>
       <nav
-        aria-label="Mobile navigation"
+        aria-label={t('nav:mobileNav')}
         data-state={isHidden ? 'hidden' : 'visible'}
         className={cn(
           'border-border/80 bg-background/95 fixed right-0 bottom-0 left-0 z-40 border-t pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-md transition-all duration-200 md:hidden',
@@ -64,7 +66,7 @@ export function MobileBottomNav() {
             }
           >
             <LayoutDashboard className="h-5 w-5" />
-            <span>Home</span>
+            <span>{t('nav:home')}</span>
           </NavLink>
 
           {/* Products */}
@@ -80,14 +82,14 @@ export function MobileBottomNav() {
             }
           >
             <Package className="h-5 w-5" />
-            <span>Products</span>
+            <span>{t('nav:products')}</span>
           </NavLink>
 
           {/* Raised Center POS */}
           <div className="relative -top-3 flex flex-col items-center">
             <NavLink
               to="/pos"
-              aria-label="Open Point of Sale"
+              aria-label={t('nav:openPos')}
               className={({ isActive }) =>
                 cn(
                   'bg-primary text-primary-foreground ring-background flex h-13 w-13 items-center justify-center rounded-full shadow-lg ring-4 transition-transform active:scale-95',
@@ -115,7 +117,7 @@ export function MobileBottomNav() {
             }
           >
             <NotebookPen className="h-5 w-5" />
-            <span>Utang</span>
+            <span>{t('nav:utangShort')}</span>
           </NavLink>
 
           {/* More */}
@@ -125,7 +127,7 @@ export function MobileBottomNav() {
             className="text-muted-foreground hover:text-foreground flex w-14 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium transition-colors"
           >
             <MoreHorizontal className="h-5 w-5" />
-            <span>More</span>
+            <span>{t('nav:more')}</span>
           </button>
         </div>
       </nav>

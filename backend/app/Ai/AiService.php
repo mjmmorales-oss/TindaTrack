@@ -50,6 +50,8 @@ class AiService
             'model' => $model,
             'demo' => $providerName === 'mock',
             'daily_remaining' => $dailyRemaining,
+            // Settings → AI usage reads this (it used to exist only in the mock)
+            'daily_scans_today' => $dailyUsed,
             'daily_limit' => $dailyLimit,
             'per_minute' => $perMinute,
         ];
@@ -92,7 +94,7 @@ class AiService
             throw new AiException('Image content is empty.', 'ai_invalid_image', 422);
         }
 
-        $maxKb = (int) config('ai.max_image_kb', 1500);
+        $maxKb = (int) config('ai.max_image_kb', 5120);
         $maxBytes = $maxKb * 1024;
         if (strlen($bytes) > $maxBytes) {
             throw new AiException("Image size exceeds the maximum limit of {$maxKb} KB.", 'ai_oversize_image', 422);
@@ -256,7 +258,7 @@ class AiService
                     'name' => $product->name,
                     'price' => (float) $product->price,
                     'stock' => $stock,
-                    'image_url' => $product->image_url ?? (($product->relationLoaded('image') && $product->image) ? url("/api/products/{$product->id}/image") : null),
+                    'image_url' => $product->image_url ?? (($product->relationLoaded('image') && $product->image) ? "/api/product-images/{$product->image->id}" : null),
                     'unit' => $product->unit ?? 'pc',
                     'barcode' => $product->barcode,
                 ],

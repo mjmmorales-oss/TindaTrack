@@ -74,6 +74,50 @@ function canvasToBlob(canvas, mimeType, quality) {
 }
 
 /**
+ * Error thrown when something that is not an image (e.g. a canvas mistaken
+ * for a Blob, a data URL, undefined) is about to be sent to the server.
+ */
+export class InvalidImageError extends Error {
+  constructor(message = 'The photo could not be read. Please take or upload it again.') {
+    super(message)
+    this.name = 'InvalidImageError'
+  }
+}
+
+/**
+ * Normalizes an image input into a real Blob suitable for `FormData.append`.
+ * Accepts a Blob/File (returned as-is) or an HTMLCanvasElement / OffscreenCanvas
+ * (encoded as JPEG). Anything else is rejected with an InvalidImageError —
+ * real browsers throw "parameter 2 is not of type 'Blob'" otherwise.
+ *
+ * @param {Blob|File|HTMLCanvasElement|OffscreenCanvas} input
+ * @param {{ mimeType?: string, quality?: number }} [options]
+ * @returns {Promise<Blob>}
+ */
+export async function toImageBlob(input, options = {}) {
+  const { mimeType = 'image/jpeg', quality = 0.9 } = options
+
+  if (typeof Blob !== 'undefined' && input instanceof Blob) {
+    if (input.size === 0) throw new InvalidImageError()
+    return input
+  }
+
+  if (typeof HTMLCanvasElement !== 'undefined' && input instanceof HTMLCanvasElement) {
+    const blob = await canvasToBlob(input, mimeType, quality)
+    if (!(blob instanceof Blob)) throw new InvalidImageError()
+    return blob
+  }
+
+  if (typeof OffscreenCanvas !== 'undefined' && input instanceof OffscreenCanvas) {
+    const blob = await input.convertToBlob({ type: mimeType, quality })
+    if (!(blob instanceof Blob)) throw new InvalidImageError()
+    return blob
+  }
+
+  throw new InvalidImageError()
+}
+
+/**
  * Loads an image from a Blob/File or Canvas into a drawable element,
  * honouring EXIF orientation via createImageBitmap if available.
  *

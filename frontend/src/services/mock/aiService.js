@@ -1,4 +1,5 @@
 import { delay } from '@/lib/mockApi'
+import { toImageBlob } from '@/lib/imagePrep.js'
 import { useMockDb } from '@/mocks/db'
 import {
   normalizeBasketResult,
@@ -67,19 +68,23 @@ let mockExperiments = [
 export const aiService = {
   async getAiStatus() {
     await delay(50)
+    // Same keys as AiService::getStatus (settings flags come from /settings, not here)
+    const dailyLimit = 1500
     return {
       enabled: true,
-      research_mode: false,
-      visual_search_enabled: true,
-      save_scan_images: true,
       provider: 'mock',
       model: 'mock-gemini-2.5-flash',
+      demo: true,
+      daily_remaining: Math.max(0, dailyLimit - mockScans.length),
       daily_scans_today: mockScans.length,
-      daily_limit: 1500,
+      daily_limit: dailyLimit,
+      per_minute: 6,
     }
   },
 
-  async basketScan(imageBlob, _options = {}) {
+  async basketScan(input, _options = {}) {
+    // Same real-type guard as the API service: a canvas or string must never reach FormData.
+    const imageBlob = await toImageBlob(input)
     await delay(350)
     const { products } = useMockDb.getState()
     const activeProducts = (products || []).filter((p) => p.is_active && (p.stock_quantity ?? p.stock ?? 0) > 0)
@@ -173,6 +178,7 @@ export const aiService = {
   },
 
   async productScan(imageBlob, options = {}) {
+    await toImageBlob(imageBlob)
     await delay(350)
     const candidates = [
       {
@@ -436,7 +442,8 @@ export const aiService = {
     }
   },
 
-  async runExperimentCase(id, _imageBlob, groundTruth) {
+  async runExperimentCase(id, imageBlob, groundTruth) {
+    await toImageBlob(imageBlob)
     await delay(300)
     const exp = mockExperiments.find((e) => String(e.id) === String(id))
     if (!exp) {

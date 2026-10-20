@@ -33,6 +33,7 @@ import { useAdjustStock } from '@/features/inventory/hooks/useInventory'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
 import { Barcode } from '@/lib/barcode'
+import { lookupBarcode } from '@/services/barcode'
 import { beep } from '@/lib/feedback'
 import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
@@ -71,12 +72,21 @@ export function AdjustStockDialog({
   )
   const productList = productsRes?.data || []
 
-  const handleBarcodeScanned = (code) => {
+  const handleBarcodeScanned = async (code) => {
     setIsScannerOpen(false)
     const normalized = Barcode.normalize(code)
-    const matched = productList.find(
+    let matched = productList.find(
       (p) => p.barcode && Barcode.normalize(p.barcode) === normalized,
     )
+    // The picker only loads 100 products (API cap): ask the server for the rest
+    if (!matched) {
+      try {
+        const res = await lookupBarcode(normalized)
+        matched = res?.local_product || null
+      } catch {
+        matched = null
+      }
+    }
     if (matched) {
       setChosenProduct(matched)
       beep()
@@ -87,7 +97,7 @@ export function AdjustStockDialog({
   }
 
   useBarcodeWedge({
-    onBarcode: (code) => {
+    onScan: (code) => {
       if (!open || product) return
       handleBarcodeScanned(code)
     },
@@ -167,8 +177,8 @@ export function AdjustStockDialog({
       onOpenChange(false)
     } catch (err) {
       setErrorMsg(
-        err.response?.data?.message ||
-          err.message ||
+        err.message ||
+          err.response?.data?.message ||
           t('inventory:adjustFailed'),
       )
     }
@@ -313,7 +323,7 @@ export function AdjustStockDialog({
                                   </div>
                                   <Badge
                                     variant={
-                                      p.stock_quantity <= (p.reorder_level || 5)
+                                      p.stock_quantity <= (p.reorder_level ?? 5)
                                         ? 'warning'
                                         : 'outline'
                                     }

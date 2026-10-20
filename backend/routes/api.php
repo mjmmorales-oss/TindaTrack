@@ -58,6 +58,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/staff/ping', fn () => ['message' => 'Hello, staff! Any active role can see this.'])
         ->middleware('role:owner,cashier');
 
+    // Store profile + feature flags: POS, receipts and scanners need them for cashiers too
+    Route::get('/settings', [SettingsController::class, 'get']);
+
     // Dashboard (accessible by both owner and cashier with role-specific views)
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
@@ -70,7 +73,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/products/embeddings', [ProductEmbeddingController::class, 'index'])
         ->middleware('role:owner,cashier');
     Route::get('/products/{product}', [ProductController::class, 'show']);
+    // `.*` lets URLs/QR text reach the controller, which answers 422 instead of a route 404
     Route::get('/barcode-lookup/{barcode}', BarcodeLookupController::class)
+        ->where('barcode', '.*')
         ->middleware(['role:owner,cashier', 'throttle:30,1']);
 
     // Customers (cashiers can view, create suki, and edit details during transactions)
@@ -150,6 +155,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::post('/products/{product}/restore', [ProductController::class, 'restore'])->withTrashed();
         Route::post('/products/{product}/adjust', [ProductController::class, 'adjustStock']);
         Route::post('/products/{product}/image', [ProductImageController::class, 'upload']);
         Route::post('/products/{product}/image/import', [ProductImageController::class, 'import']);
@@ -177,8 +183,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::delete('/users/{user}', [UserController::class, 'destroy']);
         Route::post('/users/{user}/restore', [UserController::class, 'restore'])->withTrashed();
 
-        // Store settings
-        Route::get('/settings', [SettingsController::class, 'get']);
+        // Store settings (reading is shared below; changing is owner-only)
         Route::put('/settings', [SettingsController::class, 'update']);
         Route::post('/settings/restore-demo-images', [SettingsController::class, 'restoreDemoImages']);
     });

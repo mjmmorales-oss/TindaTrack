@@ -1,0 +1,116 @@
+{
+    "data": [
+        {
+            "amount_paid": "number",
+            "amount_tendered": "number",
+            "cart_duration_ms": "null",
+            "cart_started_at": "null",
+            "cashier": {
+                "created_at": "string",
+                "deleted_at": "null",
+                "email": "string",
+                "id": "number",
+                "is_active": "boolean",
+                "last_login_at": "null",
+                "must_change_password": "boolean",
+                "name": "string",
+                "phone": "null",
+                "role": "string",
+                "role_label": "string",
+                "sales_count": "number",
+                "sales_total_today": "number"
+            },
+            "change": "number",
+            "change_amount": "number",
+            "created_at": "string",
+            "customer": {
+                "address": "string",
+                "contact_number": "string",
+                "created_at": "string",
+                "credit_balance": "number",
+                "credit_limit": "number",
+                "id": "number",
+                "last_activity": "string",
+                "name": "string",
+                "nickname": "string",
+                "notes": "string",
+                "updated_at": "string"
+            },
+            "customer_id": "number",
+            "id": "number",
+            "items": [
+                {
+                    "add_method": "null",
+                    "id": "number",
+                    "product": {
+                        "archived": "boolean",
+                        "barcode": "string",
+                        "brand": "null",
+                        "category_id": "number",
+                        "cost_price": "number",
+                        "created_at": "string",
+                        "deleted_at": "null",
+                        "deleted_barcode": "null",
+                        "deleted_sku": "null",
+                        "description": "null",
+                        "id": "number",
+                        "image_url": "string",
+                        "is_active": "boolean",
+                        "name": "string",
+                        "price": "number",
+                        "profit_margin": "number",
+                        "reorder_level": "number",
+                        "size": "null",
+                        "sku": "string",
+                        "source": "string",
+                        "source_ref": "null",
+                        "stock": "number",
+                        "stock_quantity": "number",
+                        "unit": "string",
+                        "updated_at": "string"
+                    },
+                    "product_id": "number",
+                    "product_name": "string",
+                    "quantity": "number",
+                    "sale_id": "number",
+                    "subtotal": "number",
+                    "unit_cost": "number",
+                    "unit_price": "number"
+                }
+            ],
+            "notes": "null",
+            "payment_method": "string",
+            "payment_type": "string",
+            "sale_no": "string",
+            "sale_number": "string",
+            "status": "string",
+            "subtotal": "number",
+            "total": "number",
+            "total_amount": "number",
+            "updated_at": "string",
+            "user_id": "number",
+            "void_reason": "null",
+            "voided_at": "null",
+            "voided_by": "null"
+        }
+    ],
+    "links": {
+        "first": "string",
+        "last": "string",
+        "next": "string",
+        "prev": "null"
+    },
+    "meta": {
+        "current_page": "number",
+        "from": "number",
+        "last_page": "number",
+        "per_page": "number",
+        "to": "number",
+        "total": "number"
+    },
+    "summary": {
+        "average_sale": "number",
+        "total_amount": "number",
+        "total_count": "number"
+    }
+}

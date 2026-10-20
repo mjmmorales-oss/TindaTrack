@@ -15,11 +15,16 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.status = status
     this.errors = typeof payload === 'object' ? payload.errors || {} : {}
+    // Keep machine-readable fields such as `code` / `reason` (pairing, AI limits)
+    const extra = payload && typeof payload === 'object' ? payload : {}
+    this.code = extra.code
+    this.reason = extra.reason
 
     // Axios-compatible response structure
     this.response = {
       status,
       data: {
+        ...extra,
         message,
         errors: this.errors,
       },

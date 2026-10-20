@@ -44,3 +44,10 @@ export const AUTO_CAPTURE_SENSITIVITY = {
 export function getAutoCaptureProfile(sensitivity = 'medium') {
   return AUTO_CAPTURE_SENSITIVITY[sensitivity] || AUTO_CAPTURE_SENSITIVITY.medium
 }
+
+/**
+ * Browser timeout for AI photo requests. Laravel allows AI_TIMEOUT (30 s) per
+ * Gemini attempt plus one fallback-model retry, so the default 10–15 s axios
+ * timeouts aborted slow scans that the server still finished.
+ */
+export const AI_REQUEST_TIMEOUT_MS = 70000

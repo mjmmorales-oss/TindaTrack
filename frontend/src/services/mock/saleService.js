@@ -253,6 +253,12 @@ export const saleService = {
           targetCustomerId = customer.id
           if (amountPaid < 0) amountPaid = 0
           changeAmount = 0
+          // Same as Laravel CreateSaleAction: paying more than the total would lower the balance
+          if (amountPaid > computedTotal) {
+            errors.amount_paid = [
+              `The amount paid now (₱${amountPaid}) can't be more than the total (₱${computedTotal}). Use a cash sale instead.`,
+            ]
+          }
         }
       }
     }

@@ -7,6 +7,8 @@ import {
   Printer,
   Pencil,
   ArrowDownUp,
+  ArchiveRestore,
+  Plus,
 } from 'lucide-react'
 
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
@@ -28,11 +30,13 @@ import { Barcode } from '@/lib/barcode'
 import { lookupBarcode } from '@/services/barcode'
 import {
   useCreateProduct,
+  useRestoreProduct,
   useUploadProductImage,
 } from '@/features/products/hooks/useProducts'
 import { usePermissions } from '@/hooks/usePermissions'
 import { notify } from '@/lib/notify'
 import { resizeImage } from '@/lib/imageResize'
+import { PRODUCT_UNITS } from '@/features/products/schemas'
 
 /**
  * Unified "Add by Barcode" modal dialog.
@@ -59,8 +63,9 @@ export function AddByBarcodeDialog({
 
   const createMutation = useCreateProduct()
   const uploadImageMutation = useUploadProductImage()
+  const restoreMutation = useRestoreProduct()
 
-  // State machine: 'capture' | 'lookup' | 'found_online' | 'already_in_store' | 'not_found' | 'manual'
+  // State machine: 'capture' | 'lookup' | 'found_online' | 'already_in_store' | 'archived' | 'not_found' | 'manual'
   const [dialogState, setDialogState] = useState('capture')
   const [activeBarcode, setActiveBarcode] = useState('')
   const [lookupResult, setLookupResult] = useState(null)
@@ -109,6 +114,41 @@ export function AddByBarcodeDialog({
     setJustSavedHomemade(null)
   }, [])
 
+  // Continue to the add form: prefilled from the online catalog (c) or manual (e)
+  const proceedToAdd = useCallback((catalog) => {
+    if (catalog?.found) {
+      const combinedName =
+        catalog.brand &&
+        catalog.name &&
+        !catalog.name.toLowerCase().includes(catalog.brand.toLowerCase())
+          ? `${catalog.brand} ${catalog.name}${catalog.size ? ' ' + catalog.size : ''}`
+          : `${catalog.name || ''}${catalog.size ? ' ' + catalog.size : ''}`.trim()
+
+      setName(combinedName || catalog.name || '')
+      setBrand(catalog.brand || '')
+      setSize(catalog.size || '')
+      if (catalog.suggested_category_id) {
+        setCategoryId(String(catalog.suggested_category_id))
+      } else {
+        setCategoryId('')
+      }
+      if (catalog.image_url) {
+        setImageUrl(catalog.image_url)
+      }
+
+      setDialogState('found_online')
+      setTimeout(() => {
+        priceInputRef.current?.focus()
+      }, 150)
+    } else {
+      // State e: Not found online
+      setDialogState('not_found')
+      setTimeout(() => {
+        nameInputRef.current?.focus()
+      }, 150)
+    }
+  }, [])
+
   // Lookup barcode function
   const executeLookup = useCallback(
     async (codeToLookup) => {
@@ -132,38 +172,13 @@ export function AddByBarcodeDialog({
           return
         }
 
-        // State c: Found online
-        if (catalog?.found) {
-          const combinedName =
-            catalog.brand &&
-            catalog.name &&
-            !catalog.name.toLowerCase().includes(catalog.brand.toLowerCase())
-              ? `${catalog.brand} ${catalog.name}${catalog.size ? ' ' + catalog.size : ''}`
-              : `${catalog.name || ''}${catalog.size ? ' ' + catalog.size : ''}`.trim()
-
-          setName(combinedName || catalog.name || '')
-          setBrand(catalog.brand || '')
-          setSize(catalog.size || '')
-          if (catalog.suggested_category_id) {
-            setCategoryId(String(catalog.suggested_category_id))
-          } else {
-            setCategoryId('')
-          }
-          if (catalog.image_url) {
-            setImageUrl(catalog.image_url)
-          }
-
-          setDialogState('found_online')
-          setTimeout(() => {
-            priceInputRef.current?.focus()
-          }, 150)
-        } else {
-          // State e: Not found online
-          setDialogState('not_found')
-          setTimeout(() => {
-            nameInputRef.current?.focus()
-          }, 150)
+        // A deleted product used this barcode: offer Restore vs Add as new
+        if (res?.archived_product) {
+          setDialogState('archived')
+          return
         }
+
+        proceedToAdd(catalog)
       } catch (err) {
         notify.error(t('products:lookupError', 'Barcode lookup failed'), err?.message)
         setDialogState('not_found')
@@ -172,7 +187,7 @@ export function AddByBarcodeDialog({
         }, 150)
       }
     },
-    [resetFormFields, t],
+    [proceedToAdd, resetFormFields, t],
   )
 
   // Handle open / initialBarcode changes
@@ -223,7 +238,7 @@ export function AddByBarcodeDialog({
   // Save product logic
   const handleSaveProduct = async (andScanNext = false) => {
     if (!name.trim()) {
-      notify.error(t('products:nameLabel', 'Product name') + ' is required.')
+      notify.error(t('products:nameRequiredToast'))
       nameInputRef.current?.focus()
       return
     }
@@ -231,7 +246,7 @@ export function AddByBarcodeDialog({
     const rawPrice = typeof price === 'object' && price?.target ? price.target.value : price
     const numPrice = parseFloat(rawPrice)
     if (isNaN(numPrice) || numPrice < 0) {
-      notify.error(t('products:priceLabel', 'Selling price') + ' must be at least 0.')
+      notify.error(t('products:priceMinToast'))
       priceInputRef.current?.focus()
       return
     }
@@ -258,20 +273,24 @@ export function AddByBarcodeDialog({
         unit: unit || 'pc',
         image_url: pendingImage ? null : imageUrl || null,
         is_active: true,
-        source: dialogState === 'found_online' ? 'openfoodfacts' : 'manual',
+        source: dialogState === 'found_online' ? lookupResult?.catalog?.source || 'openfoodfacts' : 'manual',
         source_ref: activeBarcode || null,
       }
 
       const res = await createMutation.mutateAsync(payload)
       const savedProd = res.data
 
-      // Upload custom photo if provided
+      // Upload custom photo if provided (the product is saved already: never retry the create)
       if (pendingImage && savedProd?.id) {
-        await uploadImageMutation.mutateAsync({
-          id: savedProd.id,
-          file: pendingImage.file,
-          source: 'upload',
-        })
+        try {
+          await uploadImageMutation.mutateAsync({
+            id: savedProd.id,
+            file: pendingImage.file,
+            source: 'upload',
+          })
+        } catch {
+          notify.warning(t('products:savedWithoutPhoto'), t('products:savedWithoutPhotoDesc'))
+        }
       }
 
       setSessionProducts((prev) => [savedProd, ...prev])
@@ -306,6 +325,8 @@ export function AddByBarcodeDialog({
         return t('products:foundOnlineTitle', 'Found Online — Quick Add')
       case 'already_in_store':
         return t('products:alreadyInStoreTitle', 'Product Already in Inventory')
+      case 'archived':
+        return t('products:archivedFoundTitle', 'This product was deleted before')
       case 'not_found':
         return t('products:notFoundOnlineTitle', 'Not found online — add it manually')
       case 'manual':
@@ -448,6 +469,76 @@ export function AddByBarcodeDialog({
           })()}
 
           {/* ============================================================== */}
+          {/* STATE D2: ARCHIVED (deleted product owns this barcode) */}
+          {/* ============================================================== */}
+          {dialogState === 'archived' && (() => {
+            const prod = lookupResult?.archived_product
+            if (!prod) return null
+            const catalog = lookupResult?.catalog
+            return (
+              <div className="space-y-4 py-1">
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <ProductThumb
+                      name={prod.name}
+                      imageUrl={prod.image_url}
+                      size="lg"
+                      className="shrink-0 rounded-xl"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-foreground truncate">{prod.name}</h4>
+                      <p className="text-xs font-mono text-muted-foreground truncate">
+                        {prod.deleted_barcode || activeBarcode}
+                      </p>
+                      <Badge variant="secondary" className="mt-1">
+                        {t('products:archivedBadge', 'Archived')}
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('products:archivedFoundDesc', 'Restore it to keep its sales history, or add a brand-new product with this barcode.')}
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await restoreMutation.mutateAsync(prod.id)
+                        onSuccess?.()
+                        onOpenChange(false)
+                        onEditProduct?.(res?.data || prod)
+                      } catch {
+                        // toast handled by the mutation
+                      }
+                    }}
+                    disabled={restoreMutation.isPending}
+                    className="flex-1 gap-1.5 h-11 font-semibold"
+                  >
+                    {restoreMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArchiveRestore className="h-4 w-4" />
+                    )}
+                    {t('products:restoreIt', 'Restore it')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => proceedToAdd(catalog)}
+                    disabled={restoreMutation.isPending}
+                    className="flex-1 gap-1.5 h-11 font-semibold"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t('products:addAsNew', 'Add as new')}
+                  </Button>
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* ============================================================== */}
           {/* STATE C, E, F: COMPACT QUICK ADD FORMS */}
           {/* ============================================================== */}
           {(dialogState === 'found_online' ||
@@ -578,12 +669,11 @@ export function AddByBarcodeDialog({
                       onChange={(e) => setUnit(e.target.value)}
                       className="w-full h-10 px-3 rounded-lg border border-input bg-background text-base md:text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
-                      <option value="pc">Piece (pc)</option>
-                      <option value="pack">Pack</option>
-                      <option value="bottle">Bottle</option>
-                      <option value="can">Can</option>
-                      <option value="sachet">Sachet</option>
-                      <option value="kg">Kilogram (kg)</option>
+                      {PRODUCT_UNITS.map((u) => (
+                        <option key={u.value} value={u.value}>
+                          {u.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

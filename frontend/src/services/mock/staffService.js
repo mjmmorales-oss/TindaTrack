@@ -156,7 +156,8 @@ export const staffService = {
 
     return {
       data: newStaff,
-      temp_password: data.password?.trim() ? null : tempPassword,
+      // Same key as Laravel UserController (store / resetPassword)
+      temporary_password: data.password?.trim() ? null : tempPassword,
     }
   },
 
@@ -278,7 +279,8 @@ export const staffService = {
     return {
       message: 'Password reset successfully.',
       data: updated,
-      temp_password: data.password?.trim() ? null : tempPassword,
+      // Same key as Laravel UserController (store / resetPassword)
+      temporary_password: data.password?.trim() ? null : tempPassword,
     }
   },
 

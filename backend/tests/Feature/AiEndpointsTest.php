@@ -245,6 +245,17 @@ test('POST /api/scanner/ai-basket allows paired phone scanner to send basket pho
     $scanId = $response->json('data.scan.scan_id');
     $scan = AiScan::find($scanId);
     expect($scan->capture_mode)->toBe('auto');
+
+    // v2.2: the POS polls events and opens its review sheet from the event itself
+    $events = $this->withHeader('Authorization', "Bearer {$this->ownerToken}")
+        ->getJson("/api/scanner-sessions/{$session->id}/events")
+        ->assertOk()
+        ->json('data');
+
+    expect($events)->toHaveCount(1)
+        ->and($events[0]['type'])->toBe('ai_basket')
+        ->and($events[0]['payload']['scan_id'])->toBe($scanId)
+        ->and($events[0]['payload'])->toHaveKeys(['items', 'unmatched']);
 });
 
 test('product visual embeddings CRUD and 10-vector cap per product', function () {

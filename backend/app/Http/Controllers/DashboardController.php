@@ -192,6 +192,22 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Cashiers only see their own shift + what's running low (store-wide sales stay with the owner,
+        // like SaleController@show which forbids other cashiers' receipts)
+        if ($request->user()?->hasRole('cashier')) {
+            $currentSalesTotal = 0.0;
+            $salesDelta = null;
+            $currentTxCount = 0;
+            $txDelta = null;
+            $totalUtang = 0.0;
+            $debtorsCount = 0;
+            $cashTotal = 0.0;
+            $utangTotal = 0.0;
+            $salesTrend = [];
+            $topSellers = [];
+            $recentSales = collect();
+        }
+
         return response()->json([
             'data' => [
                 'range' => $range,

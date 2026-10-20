@@ -1,0 +1,31 @@
+{
+    "data": [
+        {
+            "address": "string",
+            "contact_number": "string",
+            "created_at": "string",
+            "credit_balance": "number",
+            "credit_limit": "number",
+            "id": "number",
+            "last_activity": "string",
+            "name": "string",
+            "nickname": "string",
+            "notes": "string",
+            "updated_at": "string"
+        }
+    ],
+    "links": {
+        "first": "string",
+        "last": "string",
+        "next": "string",
+        "prev": "null"
+    },
+    "meta": {
+        "current_page": "number",
+        "from": "number",
+        "last_page": "number",
+        "per_page": "number",
+        "to": "number",
+        "total": "number"
+    }
+}

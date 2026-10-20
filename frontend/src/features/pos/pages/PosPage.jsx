@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import {
-  X,
   ScanBarcode,
   Smartphone,
   LayoutGrid,
@@ -8,6 +7,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -32,6 +32,7 @@ import { AiCapture } from '@/components/ai/AiCapture'
 import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 import { BasketReviewSheet } from '@/features/pos/components/BasketReviewSheet'
 import { aiService } from '@/services/aiService'
+import { normalizeBasketResult } from '@/lib/aiContract'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useCustomers } from '@/features/customers/hooks/useCustomers'
@@ -41,8 +42,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAiConsent } from '@/hooks/useAiConsent'
 import { useHotkey } from '@/hooks/useHotkey'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
+import { useIsDesktop } from '@/hooks/useIsDesktop'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { Barcode } from '@/lib/barcode'
+import { Barcode, classifyScan } from '@/lib/barcode'
+import { handlePairingScan, notifyNotProductBarcode } from '@/lib/pairingScan'
+import { isDesktopPos } from '@/lib/device'
+import { countIndexedProducts, getVisualIndex, preloadVisualModel } from '@/lib/visualSearch'
 import { beep } from '@/lib/feedback'
 import { lookupBarcode } from '@/services/barcode'
 import { getScannerSession, endScannerSession } from '@/services/scanner'
@@ -60,6 +65,8 @@ const POS_SCANNER_SESSION_KEY = 'tt_pos_scanner_session'
 export function PosPage() {
   const { t } = useTranslation(['pos', 'common', 'scanner'])
   useDocumentTitle(t('pos:title', 'POS Terminal'))
+  const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
 
   const { user } = useAuth()
   const searchInputRef = useRef(null)
@@ -216,13 +223,31 @@ export function PosPage() {
   const handleScannedCode = useCallback(
     async (rawCode, options = {}) => {
       if (!rawCode) return
-      const normalized = Barcode.normalize(String(rawCode))
+      const findLocal = (code) =>
+        allProducts.find(
+          (p) => p.is_active && p.barcode && Barcode.normalize(p.barcode) === code,
+        )
+
+      // 0. Never send a pairing QR URL or free text to the barcode lookup
+      const scan = classifyScan(String(rawCode))
+      let product
+      if (scan.kind === 'pairing') {
+        // A bare code may also be a custom barcode; an exact product match wins
+        product = scan.fromUrl ? undefined : findLocal(Barcode.normalize(String(rawCode)))
+        if (!product) {
+          handlePairingScan(scan.code, { navigate })
+          return
+        }
+      } else if (scan.kind === 'unknown') {
+        notifyNotProductBarcode()
+        return
+      }
+
+      const normalized = product ? Barcode.normalize(product.barcode) : scan.value
       if (!normalized) return
 
       // 1. Resolve product locally first (exact barcode match)
-      let product = allProducts.find(
-        (p) => p.is_active && p.barcode && Barcode.normalize(p.barcode) === normalized,
-      )
+      product = product || findLocal(normalized)
 
       // 2. If not found in loaded product list, call lookupBarcode
       if (!product) {
@@ -265,20 +290,46 @@ export function PosPage() {
 
       // Found and in stock!
       const qty = Number(options?.quantity || options?.event?.quantity) || 1
-      addToCart(product, qty)
+      // add_method feeds the AI Lab checkout-time chart (barcode | phone | visual …)
+      addToCart(product, qty, options?.source === 'phone' ? 'phone' : 'barcode')
       beep()
       notify.success(`+${qty} ${product.name}`, t('pos:addedToCart', { name: product.name, defaultValue: `Added: ${product.name}` }))
     },
-    [allProducts, user, addToCart, t],
+    [allProducts, user, addToCart, t, navigate],
   )
 
-  // Hardware scanner wedge support
+  // Desktop POS: warm up the Visual Match model in idle time when products are taught
+  const visualSearchEnabled = settings?.visual_search_enabled !== false
+  useEffect(() => {
+    if (!settings || !visualSearchEnabled || !isDesktopPos()) return undefined
+    let alive = true
+    getVisualIndex().then((index) => {
+      if (alive && countIndexedProducts(index) > 0) preloadVisualModel()
+    })
+    return () => {
+      alive = false
+    }
+  }, [settings, visualSearchEnabled])
+
+  // Hardware scanner wedge support (off while a dialog with its own scanner/input is open)
   useBarcodeWedge({
-    onBarcode: (code) => {
+    onScan: (code) => {
       handleScannedCode(code, { source: 'wedge' })
     },
-    enabled: true,
+    enabled:
+      !isScannerSheetOpen &&
+      !isRegisterProductOpen &&
+      !isPaymentOpen &&
+      !isAiCaptureOpen &&
+      !isBasketReviewOpen,
   })
+
+  // Latest handler without re-subscribing (a new handler after every sale used to
+  // restart the subscription from event 0 and replay old scans)
+  const scannedCodeRef = useRef(handleScannedCode)
+  useEffect(() => {
+    scannedCodeRef.current = handleScannedCode
+  }, [handleScannedCode])
 
   // Live phone scanner subscription
   useEffect(() => {
@@ -287,15 +338,19 @@ export function PosPage() {
     const unsub = subscribeToScanner(pairedSession.id, {
       onEvent: (event) => {
         setIsScannerOnline(true)
-        if (event?.type === 'ai_basket' && event?.payload) {
+        // Laravel marks basket events with status/type 'ai_basket' (barcode 'AI_BASKET'); never treat as a scan
+        const isAiBasket =
+          event?.type === 'ai_basket' || event?.status === 'ai_basket' || event?.barcode === 'AI_BASKET'
+        if (isAiBasket) {
+          if (!event?.payload) return
           beep()
-          openBasketReview(event.payload, null)
+          openBasketReview(normalizeBasketResult(event.payload.scan || event.payload), null)
           notify.info(
             t('pos:aiBasketReceived', 'AI Basket Received'),
             t('pos:aiBasketReceivedDesc', 'Review detected items from phone scanner.'),
           )
         } else if (event?.barcode) {
-          handleScannedCode(event.barcode, { source: 'phone', event })
+          scannedCodeRef.current(event.barcode, { source: 'phone', event })
         }
       },
     })
@@ -321,7 +376,9 @@ export function PosPage() {
       unsub()
       clearInterval(timer)
     }
-  }, [pairedSession?.id, handleScannedCode, t])
+    // openBasketReview only sets state; t is stable per language
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pairedSession?.id, t])
 
   const handleDisconnectScanner = async () => {
     if (!pairedSession?.id) return
@@ -426,8 +483,8 @@ export function PosPage() {
     }
   }
 
-  const handleAddToCart = (product) => {
-    addToCart(product, 1)
+  const handleAddToCart = (product, _qty = 1, method = 'manual') => {
+    addToCart(product, 1, method)
   }
 
   const handleViewProduct = (product) => {
@@ -465,42 +522,45 @@ export function PosPage() {
               />
             </div>
 
-            {/* Actions: AI Basket, Scan, Pair Phone, Phone Badge */}
-            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
-                className="h-10 text-xs font-semibold px-3 gap-1.5 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
-              >
-                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                {t('pos:aiBasketScan', 'AI Basket')}
-              </Button>
-
+            {/* Actions: Scan, AI Basket (one row on phones); "Use phone as scanner" on desktop only */}
+            <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsScannerSheetOpen(true)}
-                className="h-10 text-xs font-semibold px-3 gap-1.5"
+                className="h-11 sm:h-10 flex-1 sm:flex-none text-xs font-semibold px-3 gap-1.5"
               >
                 <ScanBarcode className="h-4 w-4 text-primary" />
-                {t('pos:scanWithCamera', 'Scan')}
+                {t('pos:scanButton')}
               </Button>
 
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIsPairDialogOpen(true)}
-                className="h-10 text-xs font-semibold px-3 gap-1.5"
+                onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
+                className="h-11 sm:h-10 flex-1 sm:flex-none text-xs font-semibold px-3 gap-1.5 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
               >
-                <Smartphone className="h-4 w-4 text-primary" />
-                {t('pos:connectPhone', 'Connect Phone')}
+                <Sparkles className="h-4 w-4 text-primary motion-safe:animate-pulse" />
+                {t('pos:aiBasketScan', 'AI Basket')}
               </Button>
 
-              {pairedSession && (
+              {isDesktop && !pairedSession && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPairDialogOpen(true)}
+                  className="h-10 text-xs font-semibold px-3 gap-1.5"
+                  title={t('pos:usePhoneAsScannerHint')}
+                >
+                  <Smartphone className="h-4 w-4 text-primary" />
+                  {t('pos:usePhoneAsScanner')}
+                </Button>
+              )}
+
+              {isDesktop && pairedSession && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -510,7 +570,7 @@ export function PosPage() {
                       className="h-10 text-xs font-medium px-3 gap-2 border border-border"
                     >
                       <Smartphone className="h-4 w-4" />
-                      <span className="hidden md:inline">Phone:</span>
+                      <span className="hidden md:inline">{t('pos:phoneLabel')}</span>
                       <span
                         className={`flex items-center gap-1.5 font-semibold ${
                           isScannerOnline ? 'text-success' : 'text-muted-foreground'
@@ -521,7 +581,7 @@ export function PosPage() {
                             isScannerOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground'
                           }`}
                         />
-                        {isScannerOnline ? 'Online' : 'Offline'}
+                        {isScannerOnline ? t('pos:phoneOnline') : t('pos:phoneOffline')}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -536,19 +596,6 @@ export function PosPage() {
                 </DropdownMenu>
               )}
 
-              {searchQuery && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSearchQuery('')}
-                  className="h-10 text-xs px-2.5 shrink-0 sm:hidden"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  {t('pos:clearCart', 'Clear')}
-                </Button>
-              )}
-
               <Button
                 type="button"
                 variant="outline"
@@ -558,7 +605,7 @@ export function PosPage() {
                   setViewMode(next)
                   localStorage.setItem('tindatrack-pos-view-mode', next)
                 }}
-                className="h-10 w-10 shrink-0"
+                className="h-11 w-11 sm:h-10 sm:w-10 shrink-0"
                 title={viewMode === 'grid' ? t('pos:listView', 'Compact list view') : t('pos:gridView', 'Grid view')}
                 aria-label={viewMode === 'grid' ? t('pos:listView', 'Compact list view') : t('pos:gridView', 'Grid view')}
               >

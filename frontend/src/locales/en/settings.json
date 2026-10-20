@@ -161,5 +161,7 @@
   "autoCaptureSensitivityDesc": "Adjust how easily camera motion triggers the capture countdown.",
   "sensitivityLow": "Low (Steady counter / slow movement)",
   "sensitivityMedium": "Normal (Recommended)",
-  "sensitivityHigh": "High (Fast capture / sensitive)"
+  "sensitivityHigh": "High (Fast capture / sensitive)",
+  "installUnavailableTitle": "Install from the browser menu",
+  "installUnavailableDesc": "Open the browser menu (⋮) and choose \"Install app\" or \"Add to Home screen\"."
 }
