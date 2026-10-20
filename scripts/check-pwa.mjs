@@ -155,6 +155,14 @@ if (!fs.existsSync(manifestPath)) {
       }
     }
     logSuccess('All manifest icons exist and PNG header dimensions match declared sizes.')
+
+    // v2.2: an installed PWA on the phone opens straight to the phone scanner
+    const shortcuts = Array.isArray(manifest.shortcuts) ? manifest.shortcuts : []
+    if (!shortcuts.some((s) => s.url === '/scan')) {
+      logError('Manifest is missing the "Phone scanner → /scan" shortcut.')
+    } else {
+      logSuccess('Manifest has the "Phone scanner → /scan" shortcut.')
+    }
   } catch (err) {
     logError(`Failed to parse manifest.webmanifest: ${err.message}`)
   }

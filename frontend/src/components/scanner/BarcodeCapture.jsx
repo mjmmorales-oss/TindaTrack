@@ -47,6 +47,9 @@ const CAMERA_STORAGE_KEY = 'tt_barcode_camera_enabled'
  * @param {string} [props.placeholder] - Custom input placeholder
  * @param {'barcode'|'visual'|'ai_basket'} [props.defaultMode='barcode'] - Starting tab
  * @param {boolean} [props.hideAiBasket=false] - Hide the AI Basket tab
+ * @param {boolean} [props.hideVisual=false] - Hide Visual Match (needs the store catalog)
+ * @param {(blob: Blob, captureMode: string) => Promise<void>} [props.onBasketCapture] - Replaces the
+ *   default AI Basket upload (e.g. the paired phone sends through its device token)
  * @param {(code: string) => void} [props.onPairingCode] - Receives a scanned pairing code
  *   (QR URL or bare XXXX-XXXX). Without it, pairing QRs show the default pair/explain toast.
  */
@@ -62,13 +65,15 @@ export function BarcodeCapture({
   placeholder,
   defaultMode = 'barcode',
   hideAiBasket = false,
+  hideVisual = false,
+  onBasketCapture,
   onPairingCode,
 }) {
   const { t } = useTranslation(['scanner', 'products', 'common'])
   const { data: settingsRes } = useSettings()
   const settings = settingsRes?.data || {}
 
-  const visualSearchEnabled = settings.visual_search_enabled !== false
+  const visualSearchEnabled = settings.visual_search_enabled !== false && !hideVisual
   const aiBasketEnabled = settings.ai_enabled !== false
   const showAiBasket = aiBasketEnabled && !hideAiBasket
 
@@ -119,7 +124,7 @@ export function BarcodeCapture({
   })
 
   // Catalog products query for visual search matching
-  const { data: productsRes } = useProducts({ per_page: 250 })
+  const { data: productsRes } = useProducts({ per_page: 250 }, { enabled: visualSearchEnabled })
   const allProducts = productsRes?.data || []
 
   const inputRef = useRef(null)
@@ -286,6 +291,15 @@ export function BarcodeCapture({
 
   // Handle AI Basket photo upload/capture
   const handleBasketCaptured = async (blob, captureMode = 'manual') => {
+    if (onBasketCapture) {
+      setIsBasketAnalyzing(true)
+      try {
+        await onBasketCapture(blob, captureMode)
+      } finally {
+        setIsBasketAnalyzing(false)
+      }
+      return
+    }
     setIsBasketAnalyzing(true)
     let objectUrl = null
     try {
@@ -339,6 +353,15 @@ export function BarcodeCapture({
             )}
           </TabsList>
         </Tabs>
+      )}
+      {showTabs && (
+        <p className="text-xs text-muted-foreground -mt-1.5" data-testid="scanner-mode-hint">
+          {mode === 'visual'
+            ? t('scanner:modeHintVisual')
+            : mode === 'ai_basket'
+              ? t('scanner:modeHintAiBasket')
+              : t('scanner:modeHintBarcode')}
+        </p>
       )}
 
       {/* TAB 1: BARCODE SCANNER */}

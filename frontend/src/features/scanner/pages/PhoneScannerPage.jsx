@@ -12,20 +12,20 @@ import {
   Clock,
   ScanLine,
   RefreshCw,
-  Sparkles,
+  QrCode,
+  X,
 } from 'lucide-react'
 import { BarcodeCapture } from '@/components/scanner/BarcodeCapture'
-import { AiCapture } from '@/components/ai/AiCapture'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ModeToggle } from '@/components/common/ModeToggle'
 import { pairScanner, sendScan, scannerHeartbeat, sendAiBasket } from '@/services/scanner.js'
 import { beep, vibrate } from '@/lib/feedback'
-import { toMoney } from '@/lib/format'
+import { formatCurrency } from '@/lib/format'
+import { parsePairingCode } from '@/lib/barcode'
+import { notify } from '@/lib/notify'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useAiConsent } from '@/hooks/useAiConsent'
-import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
 const SCANNER_INFO_KEY = 'tt_scanner_info'
@@ -84,18 +84,8 @@ export function PhoneScannerPage() {
   const [isSending, setIsSending] = useState(false)
   const [lastScan, setLastScan] = useState(null)
   const [scanHistory, setScanHistory] = useState([])
-  const [isAiCapturing, setIsAiCapturing] = useState(false)
-  const [isSendingAi, setIsSendingAi] = useState(false)
-  const [aiStep, setAiStep] = useState('')
-
-  // AI First-Use Privacy Consent
-  const {
-    isConsentOpen,
-    setIsConsentOpen,
-    withConsent,
-    acceptConsent,
-    declineConsent,
-  } = useAiConsent()
+  // In-app camera for the laptop's pairing QR (no need to leave the app)
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false)
 
   const hasAutoPaired = useRef(false)
 
@@ -286,14 +276,12 @@ export function PhoneScannerPage() {
 
   // Handle AI basket photo capture from phone
   const handleAiBasketPhoto = async (blob, captureMode = 'manual') => {
-    setIsSendingAi(true)
-    setAiStep(t('scanner:aiSendingToPos', 'Processing basket with AI...'))
     try {
       const res = await sendAiBasket(blob, { capture_mode: captureMode })
       beep()
       vibrate(100)
-      setIsAiCapturing(false)
-      const count = res?.detected_count || res?.matched_count || 1
+      const scan = res?.scan || res
+      const count = scan?.items?.length ?? scan?.detected_count ?? scan?.matched_count ?? 0
       setLastScan({
         id: Date.now(),
         barcode: 'AI_BASKET',
@@ -308,6 +296,11 @@ export function PhoneScannerPage() {
         time: new Date().toLocaleTimeString('en-PH'),
       })
     } catch (err) {
+      const status = err?.status ?? err?.response?.status
+      if (status === 401) {
+        disconnect(t('scanner:sessionEndedRescan', 'Session ended. Please scan a new QR code.'))
+        return
+      }
       setLastScan({
         id: Date.now(),
         barcode: 'AI_BASKET',
@@ -315,10 +308,14 @@ export function PhoneScannerPage() {
         error: err?.message || t('scanner:aiBasketFailed', 'Failed to analyze basket.'),
         time: new Date().toLocaleTimeString('en-PH'),
       })
-    } finally {
-      setIsSendingAi(false)
-      setAiStep('')
     }
+  }
+
+  // The laptop's QR was read by the in-app camera: pair at once
+  const handleQrPairing = (code) => {
+    setIsQrScannerOpen(false)
+    setCodeInput(code)
+    handlePair(code)
   }
 
   return (
@@ -376,11 +373,26 @@ export function PhoneScannerPage() {
             </div>
 
             <div className="space-y-1.5 max-w-sm">
+              <span
+                data-testid="pairing-status"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground"
+              >
+                {isPairing ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+                )}
+                {isPairing
+                  ? t('scanner:statusPairing')
+                  : sessionEndedMessage
+                    ? t('scanner:statusEnded')
+                    : t('scanner:statusNotPaired')}
+              </span>
               <h2 className="text-xl font-bold tracking-tight">
-                {t('scanner:connectPhoneTitle', 'Connect Phone as Barcode Scanner')}
+                {t('scanner:usePhoneAsScannerTitle')}
               </h2>
               <p className="text-xs text-muted-foreground">
-                {t('scanner:pairInstructions', 'Type the 8-character pairing code shown on your laptop or POS terminal.')}
+                {t('scanner:pairInstructionsQr')}
               </p>
             </div>
 
@@ -398,6 +410,49 @@ export function PhoneScannerPage() {
                 <AlertDescription>{pairError}</AlertDescription>
               </Alert>
             )}
+
+            {isQrScannerOpen ? (
+              <div className="w-full max-w-sm space-y-2 text-left">
+                <BarcodeCapture
+                  onCode={(code) => {
+                    const pairing = parsePairingCode(code)
+                    if (pairing) handleQrPairing(pairing)
+                    else notify.warning(t('scanner:notPairingQr'), t('scanner:notPairingQrDesc'))
+                  }}
+                  onPairingCode={handleQrPairing}
+                  cameraDefault="on"
+                  autoFocus={false}
+                  hideAiBasket
+                  hideVisual
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsQrScannerOpen(false)}
+                  className="w-full h-11 gap-1.5"
+                >
+                  <X className="h-4 w-4" />
+                  {t('common:cancel', 'Cancel')}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => setIsQrScannerOpen(true)}
+                disabled={isPairing}
+                className="w-full max-w-sm h-14 text-base font-bold gap-2"
+              >
+                <QrCode className="h-5 w-5" />
+                {t('scanner:scanPairingQr')}
+              </Button>
+            )}
+
+            <div className="flex w-full max-w-sm items-center gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              {t('scanner:orTypeCode')}
+              <span className="h-px flex-1 bg-border" />
+            </div>
 
             <form
               onSubmit={(e) => {
@@ -427,6 +482,7 @@ export function PhoneScannerPage() {
               <Button
                 type="submit"
                 size="lg"
+                variant="outline"
                 disabled={isPairing || codeInput.length < 4}
                 className="w-full h-12 text-sm font-bold gap-2"
               >
@@ -445,40 +501,35 @@ export function PhoneScannerPage() {
               <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">
                 {t('scanner:howToConnect', 'How to connect?')}
               </p>
-              <p>
-                {t('scanner:howToConnectDesc', 'Open POS on your laptop, click "Connect Phone", and scan the QR or copy the code.')}
-              </p>
+              <p>{t('scanner:howToConnectQrDesc')}</p>
             </div>
-          </div>
-        ) : isAiCapturing ? (
-          /* AI BASKET CAPTURE MODE */
-          <div className="flex-1 flex flex-col justify-center">
-            <AiCapture
-              onCapture={handleAiBasketPhoto}
-              isAnalyzing={isSendingAi}
-              analyzingStep={aiStep}
-              onCancel={() => setIsAiCapturing(false)}
-              title={t('scanner:aiBasketScanTitle', 'AI Basket Scan')}
-              hint={t('scanner:aiBasketHint', 'Point camera at the customer basket, then tap Capture.')}
-            />
           </div>
         ) : (
           /* PAIRED STATE */
           <div className="flex-1 flex flex-col space-y-4">
-            {/* Scan Basket with AI Button */}
-            <Button
-              type="button"
-              onClick={() => withConsent(() => setIsAiCapturing(true))}
-              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs gap-2 shadow-sm rounded-xl"
+            {/* Connected banner */}
+            <div
+              data-testid="pairing-status"
+              className="flex items-center gap-2.5 rounded-xl border border-success/30 bg-success/10 px-3 py-2.5"
             >
-              <Sparkles className="w-4 h-4 animate-pulse" />
-              {t('scanner:scanBasketWithAi', 'Scan Basket with AI')}
-            </Button>
+              <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold leading-tight">{t('scanner:statusConnected')}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {t('scanner:statusConnectedTo', { store: sessionInfo.store_name })}
+                </p>
+              </div>
+            </div>
 
-            {/* Camera Viewfinder & Barcode Capture */}
+            {/* Tabs: Barcode | AI Basket (Visual Match needs the store catalog, so it stays on the POS) */}
             <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
               <BarcodeCapture
                 onCode={(code) => handleDetected(code)}
+                onPairingCode={() =>
+                  notify.info(t('scanner:alreadyConnected'), t('scanner:alreadyConnectedDesc'))
+                }
+                onBasketCapture={handleAiBasketPhoto}
+                hideVisual
                 cameraDefault="on"
                 continuous={true}
                 placeholder={t('scanner:typeBarcodePlaceholder', 'Type barcode here...')}
@@ -501,7 +552,7 @@ export function PhoneScannerPage() {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 rounded-lg"
+                  className="h-11 w-11 rounded-lg"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
                   aria-label={t('scanner:decreaseQuantity', 'Decrease quantity')}
@@ -517,7 +568,7 @@ export function PhoneScannerPage() {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 rounded-lg"
+                  className="h-11 w-11 rounded-lg"
                   onClick={() => setQuantity((q) => Math.min(99, q + 1))}
                   aria-label={t('scanner:increaseQuantity', 'Increase quantity')}
                 >
@@ -558,7 +609,7 @@ export function PhoneScannerPage() {
                             {lastScan.product?.name || 'Product'}
                           </p>
                           <span className="text-sm font-black font-mono shrink-0 text-success">
-                            {toMoney(lastScan.product?.price || 0)}
+                            {formatCurrency(lastScan.product?.price || 0)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -635,7 +686,7 @@ export function PhoneScannerPage() {
                       <div className="shrink-0 text-right">
                         {scan.status === 'found' ? (
                           <span className="text-[11px] font-bold text-success font-mono">
-                            {toMoney(scan.product?.price || 0)}
+                            {formatCurrency(scan.product?.price || 0)}
                           </span>
                         ) : scan.status === 'out_of_stock' ? (
                           <span className="text-[10px] font-semibold text-warning">
@@ -656,13 +707,6 @@ export function PhoneScannerPage() {
         )}
       </main>
 
-      {/* AI First-Use Consent Dialog */}
-      <FirstUseAiConsentDialog
-        open={isConsentOpen}
-        onOpenChange={setIsConsentOpen}
-        onAccept={acceptConsent}
-        onDecline={declineConsent}
-      />
     </div>
   )
 }

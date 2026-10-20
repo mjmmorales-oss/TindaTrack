@@ -143,7 +143,8 @@ export function InventoryPage() {
           // Unknown barcode: route to product create flow prefilled
           try {
             const res = await barcodeService.lookupBarcode(event.barcode)
-            const cat = res?.data?.catalog
+            // lookupBarcode already unwraps Laravel's { data } (api and mock)
+            const cat = res?.catalog ?? res?.data?.catalog
             if (cat?.found) {
               const combinedName =
                 cat.brand && cat.name && !cat.name.toLowerCase().includes(cat.brand.toLowerCase())

@@ -192,5 +192,11 @@
   "pairingQrTitle": "Code para i-pair ang phone",
   "pairingQrPhoneDesc": "I-pair ang phone na ito bilang scanner?",
   "pairingQrDesktopDesc": "Code iyan para sa phone; i-scan ito gamit ang phone.",
-  "pairThisPhone": "I-pair ang phone na ito"
+  "pairThisPhone": "I-pair ang phone na ito",
+  "usePhoneAsScanner": "Gamitin ang phone bilang scanner",
+  "usePhoneAsScannerHint": "Mag-scan gamit ang phone, lalabas dito ang mga item",
+  "phoneLabel": "Phone:",
+  "phoneOnline": "Online",
+  "phoneOffline": "Offline",
+  "scanButton": "I-scan"
 }

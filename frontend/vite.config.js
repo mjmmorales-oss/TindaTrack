@@ -70,6 +70,13 @@ export default defineConfig(({ command }) => {
               icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
             },
             {
+              // The phone opens straight to the pairing / scanner page
+              name: 'Phone scanner',
+              short_name: 'Scanner',
+              url: '/scan',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+            {
               name: 'Scan to add',
               short_name: 'Scan',
               url: '/products?action=add-by-barcode',

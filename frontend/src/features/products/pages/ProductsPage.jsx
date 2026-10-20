@@ -634,26 +634,36 @@ export function ProductsPage() {
                     setAddByBarcodeInitialCode('')
                     setAddByBarcodeOpen(true)
                   }}
-                  className="gap-1.5 shadow-xs h-9 font-medium text-xs"
+                  className="gap-2 shadow-xs h-auto min-h-11 py-1.5 font-medium text-xs"
                 >
-                  <ScanBarcode className="h-4 w-4" />
-                  <span>{t('products:addByBarcode', 'Add by barcode')}</span>
+                  <ScanBarcode className="h-4 w-4 shrink-0" />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{t('products:addByBarcode', 'Add by barcode')}</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {t('products:addByBarcodeSubtitle')}
+                    </span>
+                  </span>
                 </Button>
 
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
-                  className="gap-1.5 shadow-xs h-9 font-medium text-xs border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
+                  className="gap-2 shadow-xs h-auto min-h-11 py-1.5 font-medium text-xs border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
                 >
-                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                  <span>{t('products:addFromPhotoAi', 'AI Stock-In')}</span>
+                  <Sparkles className="h-4 w-4 shrink-0 text-primary motion-safe:animate-pulse" />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{t('products:addFromPhotoAi', 'AI Stock-In')}</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {t('products:addFromPhotoAiDesc', 'Snap up to 5 new products at once')}
+                    </span>
+                  </span>
                 </Button>
 
                 <Button
                   type="button"
                   onClick={handleCreate}
-                  className="gap-1.5 shadow-xs h-9 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs"
+                  className="gap-1.5 shadow-xs min-h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs"
                 >
                   <Plus className="h-4 w-4" />
                   <span>{t('products:addProduct', 'Add Product')}</span>
@@ -697,7 +707,7 @@ export function ProductsPage() {
                       <div>
                         <div className="font-medium">{t('products:addByBarcode', 'Add by barcode')}</div>
                         <div className="text-[10px] text-muted-foreground">
-                          {t('products:addByBarcodeDesc', 'Quick GTIN auto-fill')}
+                          {t('products:addByBarcodeSubtitle')}
                         </div>
                       </div>
                     </DropdownMenuItem>

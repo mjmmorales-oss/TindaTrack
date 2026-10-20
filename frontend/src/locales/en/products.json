@@ -226,7 +226,7 @@
   "addProductMenu": "Add Product Menu",
   "addMenuButton": "Add...",
   "addFromPhotoAi": "AI Stock-In",
-  "addFromPhotoAiDesc": "Snap up to 5 new products at once",
+  "addFromPhotoAiDesc": "Up to 5 new products in one photo",
   "addByBarcodeDesc": "Quick GTIN auto-fill",
   "addProductDesc": "Fill manual details",
   "aiCaptureTitle": "AI Stock-In",
@@ -294,5 +294,6 @@
   "takeThreePhotos": "Take 3 photos",
   "referencePhotoProgress": "Photo {{done}} of {{total}} saved",
   "referencePhotoTurn": "Turn the product a little, then take the next photo.",
-  "referencePhotoSaving": "Learning this product…"
+  "referencePhotoSaving": "Learning this product…",
+  "addByBarcodeSubtitle": "One product by barcode or QR"
 }

@@ -192,5 +192,11 @@
   "pairingQrTitle": "Phone-pairing code",
   "pairingQrPhoneDesc": "Pair this phone as a scanner?",
   "pairingQrDesktopDesc": "That's a phone-pairing code; scan it with the phone.",
-  "pairThisPhone": "Pair this phone"
+  "pairThisPhone": "Pair this phone",
+  "usePhoneAsScanner": "Use phone as scanner",
+  "usePhoneAsScannerHint": "Scan with your phone, items appear here",
+  "phoneLabel": "Phone:",
+  "phoneOnline": "Online",
+  "phoneOffline": "Offline",
+  "scanButton": "Scan"
 }

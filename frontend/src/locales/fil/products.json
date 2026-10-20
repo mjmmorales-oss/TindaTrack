@@ -226,7 +226,7 @@
   "addProductMenu": "Menu sa Pagdagdag ng Produkto",
   "addMenuButton": "Magdagdag...",
   "addFromPhotoAi": "AI Stock-In",
-  "addFromPhotoAiDesc": "Kunan ng litrato ang hanggang 5 bagong produkto",
+  "addFromPhotoAiDesc": "Hanggang 5 bagong produkto sa isang litrato",
   "addByBarcodeDesc": "Mabilis na pag-fill gamit ang GTIN",
   "addProductDesc": "Manu-manong ilagay ang detalye",
   "aiCaptureTitle": "AI Stock-In",
@@ -294,5 +294,6 @@
   "takeThreePhotos": "Kumuha ng 3 litrato",
   "referencePhotoProgress": "Na-save ang litrato {{done}} sa {{total}}",
   "referencePhotoTurn": "Paikutin nang kaunti ang produkto, saka kunan ulit.",
-  "referencePhotoSaving": "Inaaral ang produktong ito…"
+  "referencePhotoSaving": "Inaaral ang produktong ito…",
+  "addByBarcodeSubtitle": "Isang produkto gamit ang barcode o QR"
 }

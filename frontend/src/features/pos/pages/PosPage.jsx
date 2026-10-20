@@ -32,6 +32,7 @@ import { AiCapture } from '@/components/ai/AiCapture'
 import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog'
 import { BasketReviewSheet } from '@/features/pos/components/BasketReviewSheet'
 import { aiService } from '@/services/aiService'
+import { normalizeBasketResult } from '@/lib/aiContract'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useCustomers } from '@/features/customers/hooks/useCustomers'
@@ -329,9 +330,13 @@ export function PosPage() {
     const unsub = subscribeToScanner(pairedSession.id, {
       onEvent: (event) => {
         setIsScannerOnline(true)
-        if (event?.type === 'ai_basket' && event?.payload) {
+        // Laravel marks basket events with status/type 'ai_basket' (barcode 'AI_BASKET'); never treat as a scan
+        const isAiBasket =
+          event?.type === 'ai_basket' || event?.status === 'ai_basket' || event?.barcode === 'AI_BASKET'
+        if (isAiBasket) {
+          if (!event?.payload) return
           beep()
-          openBasketReview(event.payload, null)
+          openBasketReview(normalizeBasketResult(event.payload.scan || event.payload), null)
           notify.info(
             t('pos:aiBasketReceived', 'AI Basket Received'),
             t('pos:aiBasketReceivedDesc', 'Review detected items from phone scanner.'),
@@ -517,7 +522,7 @@ export function PosPage() {
                 className="h-11 sm:h-10 flex-1 sm:flex-none text-xs font-semibold px-3 gap-1.5"
               >
                 <ScanBarcode className="h-4 w-4 text-primary" />
-                {t('pos:scanWithCamera', 'Scan')}
+                {t('pos:scanButton')}
               </Button>
 
               <Button

@@ -27,5 +27,18 @@
   "theme": "Tema (Theme)",
   "themeLight": "Maliwanag (Light)",
   "themeDark": "Madilim (Dark)",
-  "themeSystem": "Ayon sa System"
+  "themeSystem": "Ayon sa System",
+  "salesHistory": "Kasaysayan ng Benta",
+  "stockInventory": "Stock at Imbentaryo",
+  "reportsAnalytics": "Mga Ulat",
+  "staffAccounts": "Mga Account ng Staff",
+  "storeSettings": "Settings ng Tindahan",
+  "menuTitle": "Menu ng TindaTrack",
+  "accountSecurity": "Account at Seguridad",
+  "usePhoneAsScanner": "Gamitin ang phone na ito bilang scanner",
+  "home": "Home",
+  "utangShort": "Utang",
+  "more": "Iba pa",
+  "openPos": "Buksan ang POS",
+  "mobileNav": "Mobile navigation"
 }
