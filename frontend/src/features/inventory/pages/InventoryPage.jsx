@@ -62,6 +62,7 @@ import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useIsDesktop } from '@/hooks/useIsDesktop'
 import { formatDateTime } from '@/lib/format'
 
 /**
@@ -69,7 +70,8 @@ import { formatDateTime } from '@/lib/format'
  * Features 4 tabs: Overview, Running Low (with bulk restock), Stock Movements, and Restock Checklist.
  */
 export function InventoryPage() {
-  const { t } = useTranslation(['inventory', 'common', 'products'])
+  const { t } = useTranslation(['inventory', 'common', 'products', 'pos'])
+  const isDesktop = useIsDesktop()
   useDocumentTitle(t('inventory:pageTitle'))
 
   const [activeTab, setActiveTab] = useState('overview')
@@ -251,15 +253,18 @@ export function InventoryPage() {
         description={t('inventory:pageSubtitle')}
         actions={
           <div className="flex flex-wrap items-center gap-2 print:hidden w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPairDialogOpen(true)}
-              className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5"
-            >
-              <Smartphone className="h-4 w-4" />
-              {pairedSession ? t('inventory:scanPhoneActive') : t('inventory:scanWithPhone')}
-            </Button>
+            {isDesktop && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPairDialogOpen(true)}
+                className="h-11 sm:h-9 flex-1 sm:flex-initial gap-1.5"
+                title={t('pos:usePhoneAsScannerHint')}
+              >
+                <Smartphone className="h-4 w-4" />
+                {pairedSession ? t('inventory:scanPhoneActive') : t('pos:usePhoneAsScanner')}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import {
-  X,
   ScanBarcode,
   Smartphone,
   LayoutGrid,
@@ -42,6 +41,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAiConsent } from '@/hooks/useAiConsent'
 import { useHotkey } from '@/hooks/useHotkey'
 import { useBarcodeWedge } from '@/hooks/useBarcodeWedge'
+import { useIsDesktop } from '@/hooks/useIsDesktop'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { Barcode, classifyScan } from '@/lib/barcode'
 import { handlePairingScan, notifyNotProductBarcode } from '@/lib/pairingScan'
@@ -65,6 +65,7 @@ export function PosPage() {
   const { t } = useTranslation(['pos', 'common', 'scanner'])
   useDocumentTitle(t('pos:title', 'POS Terminal'))
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
 
   const { user } = useAuth()
   const searchInputRef = useRef(null)
@@ -506,25 +507,14 @@ export function PosPage() {
               />
             </div>
 
-            {/* Actions: AI Basket, Scan, Pair Phone, Phone Badge */}
-            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
-                className="h-10 text-xs font-semibold px-3 gap-1.5 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
-              >
-                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                {t('pos:aiBasketScan', 'AI Basket')}
-              </Button>
-
+            {/* Actions: Scan, AI Basket (one row on phones); "Use phone as scanner" on desktop only */}
+            <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsScannerSheetOpen(true)}
-                className="h-10 text-xs font-semibold px-3 gap-1.5"
+                className="h-11 sm:h-10 flex-1 sm:flex-none text-xs font-semibold px-3 gap-1.5"
               >
                 <ScanBarcode className="h-4 w-4 text-primary" />
                 {t('pos:scanWithCamera', 'Scan')}
@@ -534,14 +524,28 @@ export function PosPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIsPairDialogOpen(true)}
-                className="h-10 text-xs font-semibold px-3 gap-1.5"
+                onClick={() => withConsent(() => setIsAiCaptureOpen(true))}
+                className="h-11 sm:h-10 flex-1 sm:flex-none text-xs font-semibold px-3 gap-1.5 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary"
               >
-                <Smartphone className="h-4 w-4 text-primary" />
-                {t('pos:connectPhone', 'Connect Phone')}
+                <Sparkles className="h-4 w-4 text-primary motion-safe:animate-pulse" />
+                {t('pos:aiBasketScan', 'AI Basket')}
               </Button>
 
-              {pairedSession && (
+              {isDesktop && !pairedSession && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPairDialogOpen(true)}
+                  className="h-10 text-xs font-semibold px-3 gap-1.5"
+                  title={t('pos:usePhoneAsScannerHint')}
+                >
+                  <Smartphone className="h-4 w-4 text-primary" />
+                  {t('pos:usePhoneAsScanner')}
+                </Button>
+              )}
+
+              {isDesktop && pairedSession && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -551,7 +555,7 @@ export function PosPage() {
                       className="h-10 text-xs font-medium px-3 gap-2 border border-border"
                     >
                       <Smartphone className="h-4 w-4" />
-                      <span className="hidden md:inline">Phone:</span>
+                      <span className="hidden md:inline">{t('pos:phoneLabel')}</span>
                       <span
                         className={`flex items-center gap-1.5 font-semibold ${
                           isScannerOnline ? 'text-success' : 'text-muted-foreground'
@@ -562,7 +566,7 @@ export function PosPage() {
                             isScannerOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground'
                           }`}
                         />
-                        {isScannerOnline ? 'Online' : 'Offline'}
+                        {isScannerOnline ? t('pos:phoneOnline') : t('pos:phoneOffline')}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -577,19 +581,6 @@ export function PosPage() {
                 </DropdownMenu>
               )}
 
-              {searchQuery && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSearchQuery('')}
-                  className="h-10 text-xs px-2.5 shrink-0 sm:hidden"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  {t('pos:clearCart', 'Clear')}
-                </Button>
-              )}
-
               <Button
                 type="button"
                 variant="outline"
@@ -599,7 +590,7 @@ export function PosPage() {
                   setViewMode(next)
                   localStorage.setItem('tindatrack-pos-view-mode', next)
                 }}
-                className="h-10 w-10 shrink-0"
+                className="h-11 w-11 sm:h-10 sm:w-10 shrink-0"
                 title={viewMode === 'grid' ? t('pos:listView', 'Compact list view') : t('pos:gridView', 'Grid view')}
                 aria-label={viewMode === 'grid' ? t('pos:listView', 'Compact list view') : t('pos:gridView', 'Grid view')}
               >

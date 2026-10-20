@@ -96,3 +96,33 @@ describe('A1: AI camera capture always produces a real Blob', () => {
     postSpy.mockRestore()
   })
 })
+
+describe('A1b: multipart uploads survive the real axios request pipeline', () => {
+  it('basketScan / uploadImage send FormData with the file (not JSON)', async () => {
+    const { api } = await import('@/lib/api')
+    const { aiService: apiAi } = await import('@/services/api/aiService.js')
+    const { productService: apiProducts } = await import('@/services/api/productService.js')
+
+    // A stub adapter sees the request *after* axios' transformRequest ran
+    const seen = []
+    const originalAdapter = api.defaults.adapter
+    api.defaults.adapter = async (config) => {
+      seen.push(config)
+      return { data: { data: { items: [], unmatched: [] } }, status: 200, statusText: 'OK', headers: {}, config }
+    }
+
+    try {
+      await apiAi.basketScan(new Blob([new Uint8Array([1, 2])], { type: 'image/jpeg' }), { capture_mode: 'auto' })
+      await apiProducts.uploadImage(5, new File([new Uint8Array([3])], 'p.jpg', { type: 'image/jpeg' }))
+    } finally {
+      api.defaults.adapter = originalAdapter
+    }
+
+    for (const config of seen) {
+      expect(config.data).toBeInstanceOf(FormData)
+      expect(config.data.get('image')).toBeInstanceOf(Blob)
+    }
+    expect(seen[0].data.get('capture_mode')).toBe('auto')
+    expect(seen).toHaveLength(2)
+  })
+})
