@@ -2,6 +2,7 @@ import axios from 'axios'
 import { apiClient } from './apiClient.js'
 import { ApiError } from '@/lib/mockApi'
 import { getApiBaseUrl } from '@/lib/api'
+import { toImageBlob } from '@/lib/imagePrep.js'
 
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
 
@@ -113,8 +114,9 @@ export const scannerService = {
    * @param {Blob|File} imageBlob
    */
   async sendAiBasket(imageBlob, options = {}) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'basket.jpg')
+    formData.append('image', image, 'basket.jpg')
     if (options.capture_mode) {
       formData.append('capture_mode', options.capture_mode)
     }

@@ -184,5 +184,7 @@
   "aiScanAgainDesc": "Gusto mo bang idagdag ang mga bagong paninda sa listahan, o magsimula ng bagong scan?",
   "aiScanAgainMerge": "Idagdag sa kasalukuyang mga item",
   "aiScanAgainReplace": "Palitan ang lahat ng item",
-  "aiTapNow": "Kunan agad"
+  "aiTapNow": "Kunan agad",
+  "aiCaptureFailed": "Hindi nakuhanan ng litrato. Subukan ulit.",
+  "aiUploadFailed": "Hindi mabasa ang litratong iyan. Sumubok ng ibang larawan."
 }

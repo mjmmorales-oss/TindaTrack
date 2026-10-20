@@ -18,6 +18,7 @@ import {
   applySort,
 } from '../../lib/mockApi.js'
 import { getCurrentUser } from '../../lib/authBridge.js'
+import { toImageBlob } from '../../lib/imagePrep.js'
 import { aiService } from './aiService.js'
 
 export const productService = {
@@ -372,10 +373,11 @@ export const productService = {
       throw new ApiError(404, 'Product not found.')
     }
 
+    // The real endpoint only accepts a binary file, so reject anything else here too.
+    await toImageBlob(file)
+
     let mockUrl = ''
-    if (typeof file === 'string' && file.startsWith('data:')) {
-      mockUrl = file
-    } else if (file && typeof URL !== 'undefined' && URL.createObjectURL && file instanceof Blob) {
+    if (typeof URL !== 'undefined' && URL.createObjectURL) {
       try {
         mockUrl = URL.createObjectURL(file)
       } catch {

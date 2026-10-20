@@ -3,6 +3,7 @@ import {
   normalizeBasketResult,
   normalizeProductScanResult,
 } from '@/lib/aiContract.js'
+import { toImageBlob } from '@/lib/imagePrep.js'
 
 export const aiService = {
   /**
@@ -22,8 +23,9 @@ export const aiService = {
    * @param {'auto'|'manual'|'upload'} [options.capture_mode]
    */
   async basketScan(imageBlob, options = {}) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'basket.jpg')
+    formData.append('image', image, 'basket.jpg')
     if (options.capture_mode) {
       formData.append('capture_mode', options.capture_mode)
     }
@@ -46,8 +48,9 @@ export const aiService = {
    * @param {Array<object>} [options.categories]
    */
   async productScan(imageBlob, options = {}) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'products.jpg')
+    formData.append('image', image, 'products.jpg')
     if (options.capture_mode) {
       formData.append('capture_mode', options.capture_mode)
     }
@@ -196,8 +199,9 @@ export const aiService = {
    * @param {Array<object>} groundTruth
    */
   async runExperimentCase(id, imageBlob, groundTruth) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'experiment_case.jpg')
+    formData.append('image', image, 'experiment_case.jpg')
     formData.append('ground_truth', JSON.stringify(groundTruth))
 
     const res = await apiClient.post(`/ai/experiments/${id}/cases`, formData, {

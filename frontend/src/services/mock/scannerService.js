@@ -1,6 +1,7 @@
 import { Barcode } from '@/lib/barcode'
 import { useMockDb } from '@/mocks/db'
 import { ApiError, delay } from '@/lib/mockApi'
+import { toImageBlob } from '@/lib/imagePrep.js'
 
 const SESSIONS_STORAGE_KEY = 'tindatrack_mock_scanner_sessions'
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
@@ -354,6 +355,7 @@ export const scannerService = {
   },
 
   async sendAiBasket(imageBlob, options = {}) {
+    await toImageBlob(imageBlob)
     await delay(250)
     const token =
       typeof sessionStorage !== 'undefined'

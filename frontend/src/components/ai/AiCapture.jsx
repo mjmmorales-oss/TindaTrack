@@ -17,6 +17,10 @@ import { cn } from '@/lib/utils'
 import { captureFrame, prepareForAi } from '@/lib/imagePrep'
 import { useAutoCapture } from '@/hooks/useAutoCapture'
 import { useSettings } from '@/features/settings/hooks/useSettings'
+import { notify } from '@/lib/notify'
+
+/** Resize/compress options for photos sent to the AI endpoints (backend cap is above 4 MB). */
+const AI_IMAGE_OPTIONS = { maxDim: 1600, maxBytes: 4 * 1024 * 1024, initialQuality: 0.85 }
 
 /**
  * Reusable AI Camera Capture Component with Auto-Capture engine.
@@ -179,20 +183,20 @@ export function AiCapture({
 
     try {
       if (videoRef.current) {
-        const blob = await captureFrame(videoRef.current, {
-          mimeType: 'image/jpeg',
-          quality: 0.9,
-          maxWidth: 1600,
-          maxHeight: 1600,
-        })
+        // captureFrame returns a canvas, not a Blob — encode it before handing it off.
+        const canvas = captureFrame(videoRef.current)
+        const blob = await prepareForAi(canvas, AI_IMAGE_OPTIONS)
+        if (!(blob instanceof Blob)) {
+          throw new Error('Captured frame could not be encoded as an image.')
+        }
         onCapture?.(blob, captureMode)
       }
-    } catch (err) {
-      console.error('Frame capture failed:', err)
+    } catch {
+      notify.error(t('pos:aiCaptureFailed', 'Could not take the photo. Please try again.'))
     } finally {
       setIsCapturing(false)
     }
-  }, [cameraStatus, isAnalyzing, isCapturing, onCapture])
+  }, [cameraStatus, isAnalyzing, isCapturing, onCapture, t])
 
   // Auto-capture hook engine
   const effectiveSensitivity =
@@ -213,14 +217,13 @@ export function AiCapture({
     if (!file) return
 
     try {
-      const prep = await prepareForAi(file, {
-        maxWidth: 1600,
-        maxHeight: 1600,
-        maxBytes: 4 * 1024 * 1024,
-      })
-      onCapture?.(prep.blob, 'upload')
-    } catch (err) {
-      console.error('Image prep failed:', err)
+      const blob = await prepareForAi(file, AI_IMAGE_OPTIONS)
+      if (!(blob instanceof Blob)) {
+        throw new Error('Uploaded photo could not be encoded as an image.')
+      }
+      onCapture?.(blob, 'upload')
+    } catch {
+      notify.error(t('pos:aiUploadFailed', 'Could not read that photo. Try a different image.'))
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''

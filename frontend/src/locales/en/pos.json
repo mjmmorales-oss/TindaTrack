@@ -184,5 +184,7 @@
   "aiScanAgainDesc": "Do you want to add newly detected items to your current review list, or start a fresh scan?",
   "aiScanAgainMerge": "Add to current items",
   "aiScanAgainReplace": "Replace all items",
-  "aiTapNow": "Tap for now"
+  "aiTapNow": "Tap for now",
+  "aiCaptureFailed": "Could not take the photo. Please try again.",
+  "aiUploadFailed": "Could not read that photo. Try a different image."
 }

@@ -1,4 +1,5 @@
 import { delay } from '@/lib/mockApi'
+import { toImageBlob } from '@/lib/imagePrep.js'
 import { useMockDb } from '@/mocks/db'
 import {
   normalizeBasketResult,
@@ -79,7 +80,9 @@ export const aiService = {
     }
   },
 
-  async basketScan(imageBlob, _options = {}) {
+  async basketScan(input, _options = {}) {
+    // Same real-type guard as the API service: a canvas or string must never reach FormData.
+    const imageBlob = await toImageBlob(input)
     await delay(350)
     const { products } = useMockDb.getState()
     const activeProducts = (products || []).filter((p) => p.is_active && (p.stock_quantity ?? p.stock ?? 0) > 0)
@@ -173,6 +176,7 @@ export const aiService = {
   },
 
   async productScan(imageBlob, options = {}) {
+    await toImageBlob(imageBlob)
     await delay(350)
     const candidates = [
       {
@@ -436,7 +440,8 @@ export const aiService = {
     }
   },
 
-  async runExperimentCase(id, _imageBlob, groundTruth) {
+  async runExperimentCase(id, imageBlob, groundTruth) {
+    await toImageBlob(imageBlob)
     await delay(300)
     const exp = mockExperiments.find((e) => String(e.id) === String(id))
     if (!exp) {

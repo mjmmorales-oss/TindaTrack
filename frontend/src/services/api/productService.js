@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient.js'
+import { toImageBlob } from '@/lib/imagePrep.js'
 
 export const productService = {
   /**
@@ -62,8 +63,9 @@ export const productService = {
    * POST /api/products/{id}/image
    */
   async uploadImage(id, file, source = 'upload') {
+    const image = await toImageBlob(file)
     const formData = new FormData()
-    formData.append('image', file)
+    formData.append('image', image, image.name || 'product.jpg')
     if (source) formData.append('source', source)
     return apiClient.post(`/products/${id}/image`, formData)
   },
