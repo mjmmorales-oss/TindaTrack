@@ -173,14 +173,14 @@ Also fixed in Phase B: cashiers could not read `/api/settings` (403 toasts on PO
 
 Log in on the laptop as the **owner** (local seed: `owner@tindatrack.test`; password from `DEMO_OWNER_PASSWORD`/`DEMO_PASSWORD` in `backend/.env`, `password` by default).
 
-1. **Barcode sale** — POS → **Scan** → keep the Barcode tab, scan a product (USB gun works anywhere on the POS page, or the camera). Tip: the night before, register 3–4 *real* products via Products → **Add by barcode** (scan the real barcode → Open Food Facts prefills → set price → Save) and sell those. → **Pay** → Cash → enter tendered amount → change is shown → Confirm → receipt.
-2. **AI Basket sale (3–4 items)** — POS → **AI Basket** → accept the AI consent once → put 3–4 store products in frame → Capture (or let auto-capture fire) → review sheet: check quantities, fix any item → **Add to cart** → Pay.
+1. **Barcode sale** — POS → **Scan** → keep the Barcode tab, scan a product (USB gun works anywhere on the POS page, or the camera). Tip: the night before, register 3–4 *real* products via Products → **Add by barcode** (scan the real barcode → Open Food Facts prefills → set price → Save) and sell those. → **Pay** → Cash → enter tendered amount → **Confirm Cash (Change: ₱…)** → receipt.
+2. **AI Basket sale (3–4 items)** — POS → **AI Basket** → accept the AI consent once → put 3–4 store products in frame → Capture (or let auto-capture fire) → review sheet: check quantities, fix any item → **Add to Cart** → Pay.
 3. **AI Stock-In (3 new items)** — Products → **AI Stock-In** → photo of 3 new products → review table: set category + price per row (required) → **Save all** → products appear with their cropped photos.
 4. **Visual Match (teach 3–5 products the night before)** — Products → open a product → *Reference photos* → **Take 3 photos** (turn it a little between shots). Repeat for 3–5 products. Demo: POS → **Scan** → **Visual Match** tab → it shows "Visual Match knows N products" → hold a taught product in the square → tap the match. If it hesitates for ~3 s, tap **Ask AI**.
 5. **Pair a phone by in-app QR** — Laptop: POS → **Use phone as scanner** (QR + code, "Waiting for phone…"). Phone: open the Network URL → login page → **Use this phone as a scanner** (or the installed PWA's "Phone scanner" shortcut) → **Scan pairing QR** → point at the laptop QR → "Connected ✓". Scan products on the phone → they appear in the laptop cart. Phone **AI Basket** tab → photo → the laptop opens the review sheet.
 6. **Utang sale and payment** — POS → add items → Pay → **Utang** tab → pick (or add) a customer → optional paid-now (must be ≤ total) → Confirm. Then **Utang** page → customer → **Record payment** → balance drops (overpaying is blocked).
-7. **Void** — Sales → open the sale → **Void** → reason (≥ 5 characters) → confirm → stock and utang are restored.
-8. **AI Lab metrics** — sidebar **AI Lab** → Metrics: scans, acceptance, latency, capture mode (auto/manual/upload), checkout time by add method → **Export CSV**.
+7. **Void** — Sales → open the sale → **Void Sale** → reason (≥ 5 characters) → **Confirm Void & Return Stock** → stock and utang are restored.
+8. **AI Lab metrics** — sidebar **AI Lab** → Metrics: scans, acceptance, latency, capture mode (auto/manual/upload), checkout time by add method → **Export Metrics (CSV)**.
 
 ### Backup plan (Wi-Fi or Gemini fails)
 
