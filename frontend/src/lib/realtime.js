@@ -14,13 +14,38 @@ import { TOKEN_KEY, getApiBaseUrl } from '@/lib/api.js'
  * @param {{ onEvent: (event: any) => void }} callbacks
  * @returns {() => void} unsubscribe function
  */
+const LAST_EVENT_KEY = (sessionId) => `tt_scanner_last_event:${sessionId}`
+
+function readLastEventId(sessionId) {
+  try {
+    return Number(sessionStorage.getItem(LAST_EVENT_KEY(sessionId))) || 0
+  } catch {
+    return 0
+  }
+}
+
+function writeLastEventId(sessionId, id) {
+  try {
+    sessionStorage.setItem(LAST_EVENT_KEY(sessionId), String(id))
+  } catch {
+    // ignore (private mode)
+  }
+}
+
 export function subscribeToScanner(sessionId, { onEvent }) {
   if (!sessionId) {
     return () => {}
   }
 
   const driver = import.meta.env?.VITE_REALTIME_DRIVER || 'polling'
-  let lastId = 0
+  // Resume after the last delivered event: re-subscribing (new handler, page reload)
+  // must never replay old scans into the cart
+  let lastId = readLastEventId(sessionId)
+  const deliver = (event) => {
+    lastId = event.id
+    writeLastEventId(sessionId, lastId)
+    onEvent?.(event)
+  }
   let consecutiveErrors = 0
   let isSubscribed = true
   let pollTimeoutId = null
@@ -37,8 +62,7 @@ export function subscribeToScanner(sessionId, { onEvent }) {
         if (data?.type === 'scanned' && data?.payload?.sessionId === sessionId) {
           const event = data.payload.event
           if (event && event.id > lastId) {
-            lastId = event.id
-            onEvent?.(event)
+            deliver(event)
           }
         }
       }
@@ -66,11 +90,8 @@ export function subscribeToScanner(sessionId, { onEvent }) {
         // Sort ascending by ID to ensure strict chronological delivery
         const sorted = [...events].sort((a, b) => a.id - b.id)
         for (const ev of sorted) {
-          if (ev.id > lastId) {
-            lastId = ev.id
-            if (isSubscribed) {
-              onEvent?.(ev)
-            }
+          if (ev.id > lastId && isSubscribed) {
+            deliver(ev)
           }
         }
       }
@@ -146,8 +167,7 @@ export function subscribeToScanner(sessionId, { onEvent }) {
             if (!isSubscribed) return
             const event = e?.event || e
             if (event && event.id > lastId) {
-              lastId = event.id
-              onEvent?.(event)
+              deliver(event)
             }
           })
 

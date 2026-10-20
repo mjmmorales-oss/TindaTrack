@@ -26,8 +26,10 @@ function firstPrivateIPv4() {
 }
 
 export default defineConfig(({ command }) => {
-  // Dev server only (never baked into production builds or the test run)
-  const lanIp = command === 'serve' && !process.env.VITEST ? firstPrivateIPv4() : ''
+  // `npm run dev:lan` only (HTTPS + relative /api through the proxy, reachable from a phone).
+  // Plain `npm run dev` talks to localhost:8000, which a phone can't reach, so it keeps the
+  // localhost warning. Never baked into production builds or the test run.
+  const lanIp = command === 'serve' && isDevHttps && !process.env.VITEST ? firstPrivateIPv4() : ''
   const devLanOrigin = lanIp ? `${isDevHttps ? 'https' : 'http'}://${lanIp}:${DEV_PORT}` : ''
 
   return {
@@ -119,7 +121,8 @@ export default defineConfig(({ command }) => {
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           runtimeCaching: [
             {
-              urlPattern: /^\/demo-products\/.*\.svg$/i,
+              // Workbox tests RegExps against the full URL, so "^/…" never matched: match the path
+              urlPattern: ({ url }) => /^\/demo-products\/.*\.svg$/i.test(url.pathname),
               handler: 'CacheFirst',
               options: {
                 cacheName: 'demo-product-images',
@@ -133,7 +136,8 @@ export default defineConfig(({ command }) => {
               },
             },
             {
-              urlPattern: /^\/api\/product-images\/.*/i,
+              // Also matches an API on another origin (Railway) in production
+              urlPattern: ({ url }) => url.pathname.startsWith('/api/product-images/'),
               handler: 'CacheFirst',
               options: {
                 cacheName: 'api-product-images',
@@ -147,7 +151,8 @@ export default defineConfig(({ command }) => {
               },
             },
             {
-              urlPattern: /^\/api\/.*/i,
+              // Everything else under /api is never cached
+              urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
               handler: 'NetworkOnly',
             },
             {

@@ -26,5 +26,11 @@
   "validationRequired": "This field is required.",
   "validationNumeric": "This field must be a number.",
   "validationUnique": "This value has already been taken.",
-  "validationInvalid": "The provided value is invalid."
+  "validationInvalid": "The provided value is invalid.",
+  "methodNotAllowed": "This action isn't available. Please refresh the app and try again.",
+  "tooLarge": "That file is too large. Please use a smaller photo.",
+  "aiRateLimited": "AI is busy — wait a few seconds and try again. Barcode scanning still works.",
+  "aiDailyLimit": "Today's AI limit is used up. Barcode scanning still works.",
+  "aiTimeout": "The AI took too long to answer. Try again, or scan the barcodes.",
+  "aiDisabled": "AI features are turned off in Settings."
 }

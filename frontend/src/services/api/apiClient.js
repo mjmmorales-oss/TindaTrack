@@ -1,5 +1,6 @@
 import { api } from '@/lib/api'
 import { ApiError } from '@/lib/mockApi'
+import { friendlyError } from '@/lib/notify'
 
 /**
  * Normalizes Axios errors into standard ApiError instances matching the Laravel JSON shape:
@@ -10,14 +11,19 @@ export async function handleRequest(requestPromise) {
     const response = await requestPromise
     return response.data
   } catch (error) {
+    let apiError
     if (error.response) {
       const { status, data } = error.response
-      throw new ApiError(status, data)
+      apiError = new ApiError(status, data)
+    } else {
+      // No response: network down, CORS, or timeout (status 0 so callers can tell it apart)
+      apiError = new ApiError(0, { message: error.message || 'Network Error', errors: {} })
+      apiError.code = error.code
     }
-    throw new ApiError(500, {
-      message: error.message || 'Could not reach server (Network error).',
-      errors: {},
-    })
+    // Raw framework text ("The route … could not be found", "Server Error") → plain en/fil
+    apiError.serverMessage = apiError.message
+    apiError.message = friendlyError(apiError)
+    throw apiError
   }
 }
 

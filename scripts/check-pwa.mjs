@@ -209,10 +209,17 @@ if (!fs.existsSync(swPath)) {
   if (swContent.length < 50) {
     logError('dist/sw.js is empty or unexpectedly small.')
   }
-  if (swContent.includes('"/api/') || swContent.includes("'/api/")) {
-    logError('dist/sw.js contains precached /api/ routes!')
+  // Look at the precache manifest entries only: runtime route matchers legitimately
+  // mention '/api/' (product images CacheFirst, everything else NetworkOnly)
+  const precachedUrls = [...swContent.matchAll(/\{url:"([^"]+)",revision:/g)].map((m) => m[1])
+  const precachedApi = precachedUrls.filter((u) => u.replace(/^\//, '').startsWith('api/'))
+  if (precachedApi.length) {
+    logError(`dist/sw.js precaches API routes: ${precachedApi.join(', ')}`)
   }
-  logSuccess('dist/sw.js exists and does not cache API routes.')
+  if (!swContent.includes('NetworkOnly')) {
+    logError('dist/sw.js has no NetworkOnly rule for /api/.')
+  }
+  logSuccess(`dist/sw.js precaches ${precachedUrls.length} assets and no /api/ routes.`)
 }
 
 // 6. Check Service Worker Registration in JS bundle

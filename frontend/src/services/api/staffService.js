@@ -6,7 +6,7 @@ export const staffService = {
    * GET /api/users
    */
   async list(params = {}) {
-    return apiClient.get('/users', { params })
+    return apiClient.get('/users', params)
   },
 
   /**

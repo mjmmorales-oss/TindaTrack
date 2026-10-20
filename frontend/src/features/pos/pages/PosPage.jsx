@@ -290,7 +290,8 @@ export function PosPage() {
 
       // Found and in stock!
       const qty = Number(options?.quantity || options?.event?.quantity) || 1
-      addToCart(product, qty)
+      // add_method feeds the AI Lab checkout-time chart (barcode | phone | visual …)
+      addToCart(product, qty, options?.source === 'phone' ? 'phone' : 'barcode')
       beep()
       notify.success(`+${qty} ${product.name}`, t('pos:addedToCart', { name: product.name, defaultValue: `Added: ${product.name}` }))
     },
@@ -323,6 +324,13 @@ export function PosPage() {
       !isBasketReviewOpen,
   })
 
+  // Latest handler without re-subscribing (a new handler after every sale used to
+  // restart the subscription from event 0 and replay old scans)
+  const scannedCodeRef = useRef(handleScannedCode)
+  useEffect(() => {
+    scannedCodeRef.current = handleScannedCode
+  }, [handleScannedCode])
+
   // Live phone scanner subscription
   useEffect(() => {
     if (!pairedSession?.id) return
@@ -342,7 +350,7 @@ export function PosPage() {
             t('pos:aiBasketReceivedDesc', 'Review detected items from phone scanner.'),
           )
         } else if (event?.barcode) {
-          handleScannedCode(event.barcode, { source: 'phone', event })
+          scannedCodeRef.current(event.barcode, { source: 'phone', event })
         }
       },
     })
@@ -368,7 +376,9 @@ export function PosPage() {
       unsub()
       clearInterval(timer)
     }
-  }, [pairedSession?.id, handleScannedCode, t])
+    // openBasketReview only sets state; t is stable per language
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pairedSession?.id, t])
 
   const handleDisconnectScanner = async () => {
     if (!pairedSession?.id) return
@@ -473,8 +483,8 @@ export function PosPage() {
     }
   }
 
-  const handleAddToCart = (product) => {
-    addToCart(product, 1)
+  const handleAddToCart = (product, _qty = 1, method = 'manual') => {
+    addToCart(product, 1, method)
   }
 
   const handleViewProduct = (product) => {

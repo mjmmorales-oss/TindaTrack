@@ -54,7 +54,8 @@ export function PairPhoneDialog({
   const apiBase = getApiBaseUrl()
   const isApiLocalhost =
     typeof apiBase === 'string' && /localhost|127\.0\.0\.1/.test(apiBase)
-  const isApiMismatch = !isLocalhostOrigin && pairingBase.source !== 'lan' && isApiLocalhost
+  // The phone follows the QR, then calls the API: a localhost API is unreachable from it
+  const isApiMismatch = !isLocalhostOrigin && isApiLocalhost
 
   const startNewSession = useCallback(
     async (isManualRefresh = false) => {

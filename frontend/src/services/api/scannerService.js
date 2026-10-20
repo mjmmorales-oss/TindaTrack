@@ -1,8 +1,10 @@
 import axios from 'axios'
 import { apiClient } from './apiClient.js'
 import { ApiError } from '@/lib/mockApi'
+import { friendlyError } from '@/lib/notify'
 import { getApiBaseUrl } from '@/lib/api'
 import { toImageBlob } from '@/lib/imagePrep.js'
+import { AI_REQUEST_TIMEOUT_MS } from '@/config/ai.js'
 
 const SCANNER_TOKEN_KEY = 'tt_scanner_token'
 
@@ -27,13 +29,13 @@ async function handleDeviceRequest(promise) {
     const res = await promise
     return res.data
   } catch (error) {
-    if (error.response) {
-      throw new ApiError(error.response.status, error.response.data)
-    }
-    throw new ApiError(500, {
-      message: error.message || 'Could not reach scanner server.',
-      errors: {},
-    })
+    const apiError = error.response
+      ? new ApiError(error.response.status, error.response.data)
+      : new ApiError(0, { message: error.message || 'Network Error', errors: {} })
+    if (!error.response) apiError.code = error.code
+    apiError.serverMessage = apiError.message
+    apiError.message = friendlyError(apiError)
+    throw apiError
   }
 }
 
@@ -123,6 +125,7 @@ export const scannerService = {
     const res = await handleDeviceRequest(
       deviceAxios.post('/scanner/ai-basket', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: AI_REQUEST_TIMEOUT_MS,
       })
     )
     return res?.data ?? res

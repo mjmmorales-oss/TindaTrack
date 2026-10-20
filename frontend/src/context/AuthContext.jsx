@@ -89,12 +89,10 @@ export function AuthProvider({ children }) {
   }, [clearSession])
 
   useEffect(() => {
-    const handleUnauthorized = (e) => {
+    const handleUnauthorized = () => {
       clearSession()
-      notify.error(
-        i18n.t('errors:sessionExpired', 'Session Expired (401)'),
-        e.detail || i18n.t('errors:unauthorized', 'Your session has expired. Please sign in again.'),
-      )
+      // The event detail is Laravel's raw "Unauthenticated." — always show the translated text
+      notify.error(i18n.t('errors:sessionExpired', 'Session Expired (401)'))
     }
 
     const handleForbidden = (e) => {

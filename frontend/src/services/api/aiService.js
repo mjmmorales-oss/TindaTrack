@@ -4,6 +4,7 @@ import {
   normalizeProductScanResult,
 } from '@/lib/aiContract.js'
 import { toImageBlob } from '@/lib/imagePrep.js'
+import { AI_REQUEST_TIMEOUT_MS } from '@/config/ai.js'
 
 export const aiService = {
   /**
@@ -31,8 +32,8 @@ export const aiService = {
     }
 
     const res = await apiClient.post('/ai/basket-scan', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       signal: options.signal,
+      timeout: AI_REQUEST_TIMEOUT_MS,
     })
     const data = res?.data ?? res
     return normalizeBasketResult(data)
@@ -56,8 +57,8 @@ export const aiService = {
     }
 
     const res = await apiClient.post('/ai/product-scan', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       signal: options.signal,
+      timeout: AI_REQUEST_TIMEOUT_MS,
     })
     const data = res?.data ?? res
     return normalizeProductScanResult(data, options.categories || [])
@@ -81,7 +82,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async listScans(params = {}) {
-    const res = await apiClient.get('/ai/scans', { params })
+    const res = await apiClient.get('/ai/scans', params)
     return res?.data ?? res
   },
 
@@ -92,9 +93,7 @@ export const aiService = {
    * @returns {Promise<Blob>}
    */
   async getScanImage(scanId) {
-    const res = await apiClient.get(`/ai/scans/${scanId}/image`, {
-      responseType: 'blob',
-    })
+    const res = await apiClient.get(`/ai/scans/${scanId}/image`, {}, { responseType: 'blob' })
     return res?.data ?? res
   },
 
@@ -104,7 +103,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async getMetrics(params = {}) {
-    const res = await apiClient.get('/ai/metrics', { params })
+    const res = await apiClient.get('/ai/metrics', params)
     return res?.data ?? res
   },
 
@@ -114,10 +113,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async exportMetricsCsv(params = {}) {
-    const res = await apiClient.get('/ai/metrics/export.csv', {
-      params,
-      responseType: 'text',
-    })
+    const res = await apiClient.get('/ai/metrics/export.csv', params, { responseType: 'text' })
     return res?.data ?? res
   },
 
@@ -127,7 +123,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async getEmbeddings(params = {}) {
-    const res = await apiClient.get('/products/embeddings', { params })
+    const res = await apiClient.get('/products/embeddings', params)
     return res?.data ?? res
   },
 
@@ -205,7 +201,7 @@ export const aiService = {
     formData.append('ground_truth', JSON.stringify(groundTruth))
 
     const res = await apiClient.post(`/ai/experiments/${id}/cases`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: AI_REQUEST_TIMEOUT_MS,
     })
     return res?.data ?? res
   },
@@ -226,9 +222,7 @@ export const aiService = {
    * @param {number|string} id
    */
   async exportExperimentCsv(id) {
-    const res = await apiClient.get(`/ai/experiments/${id}/export.csv`, {
-      responseType: 'text',
-    })
+    const res = await apiClient.get(`/ai/experiments/${id}/export.csv`, {}, { responseType: 'text' })
     return res?.data ?? res
   },
 }

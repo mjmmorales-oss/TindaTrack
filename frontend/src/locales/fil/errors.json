@@ -26,5 +26,11 @@
   "validationRequired": "Kailangan punan ang field na ito.",
   "validationNumeric": "Dapat numero ang ilagay dito.",
   "validationUnique": "Nagamit na ang halagang ito.",
-  "validationInvalid": "Hindi wasto ang inilagay na halaga."
+  "validationInvalid": "Hindi wasto ang inilagay na halaga.",
+  "methodNotAllowed": "Hindi available ang aksyong ito. I-refresh ang app at subukan ulit.",
+  "tooLarge": "Masyadong malaki ang file. Gumamit ng mas maliit na litrato.",
+  "aiRateLimited": "Abala ang AI — maghintay ng ilang segundo at subukan ulit. Gumagana pa rin ang barcode scanning.",
+  "aiDailyLimit": "Naubos na ang AI limit ngayong araw. Gumagana pa rin ang barcode scanning.",
+  "aiTimeout": "Natagalan ang AI sa pagsagot. Subukan ulit, o i-scan ang mga barcode.",
+  "aiDisabled": "Naka-off ang AI features sa Settings."
 }

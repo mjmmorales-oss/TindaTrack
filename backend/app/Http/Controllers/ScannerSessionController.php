@@ -78,7 +78,11 @@ class ScannerSessionController extends Controller
                 'device_label' => $session->device_label,
                 'last_seen_at' => $session->last_seen_at?->toIso8601String(),
                 'online' => $session->isOnline(),
-                'ended_at' => $session->ended_at?->toIso8601String(),
+                // An expired session is over for the POS too (the phone already gets 401)
+                'ended_at' => ($session->ended_at
+                    ?? ($session->expires_at && $session->expires_at->isPast() ? $session->expires_at : null))
+                    ?->toIso8601String(),
+                'expired' => (bool) ($session->expires_at && $session->expires_at->isPast()),
                 'mode' => $session->mode,
             ],
         ]);

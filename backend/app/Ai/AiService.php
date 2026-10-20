@@ -258,7 +258,7 @@ class AiService
                     'name' => $product->name,
                     'price' => (float) $product->price,
                     'stock' => $stock,
-                    'image_url' => $product->image_url ?? (($product->relationLoaded('image') && $product->image) ? url("/api/products/{$product->id}/image") : null),
+                    'image_url' => $product->image_url ?? (($product->relationLoaded('image') && $product->image) ? "/api/product-images/{$product->image->id}" : null),
                     'unit' => $product->unit ?? 'pc',
                     'barcode' => $product->barcode,
                 ],

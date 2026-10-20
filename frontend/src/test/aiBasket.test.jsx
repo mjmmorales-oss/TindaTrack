@@ -143,7 +143,7 @@ describe('AI Basket Scan and Cart Integration', () => {
       const items = useCartStore.getState().items
       expect(items.length).toBeGreaterThan(0)
       expect(items[0].product_id).toBe(101)
-      expect(items[0].add_method).toBe('ai')
+      expect(items[0].add_method).toBe('ai_basket') // AiMetricsService buckets 'ai_basket'
       expect(items[0].quantity).toBe(2)
     })
   })

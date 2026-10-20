@@ -66,7 +66,8 @@ api.interceptors.response.use(
           detail: error.response?.data?.message,
         }),
       )
-    } else if (error.response?.status === 403) {
+    } else if (error.response?.status === 403 && !error.response?.data?.code) {
+      // A 403 with a domain `code` (e.g. ai_disabled) is shown by the caller, not as "Access Denied"
       window.dispatchEvent(
         new CustomEvent('auth:forbidden', {
           detail: error.response?.data?.message,
