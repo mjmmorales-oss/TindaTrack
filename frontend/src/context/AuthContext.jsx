@@ -122,6 +122,18 @@ export function AuthProvider({ children }) {
   )
 
   const logout = useCallback(async () => {
+    // End a paired phone scanner while the token is still valid (doing it after /logout
+    // got a 401 → "Session Expired" toast, and the session stayed open on the server)
+    try {
+      const posSession = JSON.parse(sessionStorage.getItem('tt_pos_scanner_session') || 'null')
+      if (posSession?.id) {
+        const { endScannerSession } = await import('@/services/scanner.js')
+        await endScannerSession(posSession.id)
+        sessionStorage.removeItem('tt_pos_scanner_session')
+      }
+    } catch {
+      // best effort
+    }
     try {
       await api.post('/logout')
     } catch {

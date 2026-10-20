@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\User;
 
 test('new users can register as owner and receive a token', function () {
     $response = $this->postJson('/api/register', [
@@ -33,4 +34,25 @@ test('new users can register as owner and receive a token', function () {
         'role' => UserRole::Owner->value,
         'is_active' => true,
     ]);
+});
+
+test('v2.2: registration is closed once the store has an owner', function () {
+    User::factory()->owner()->create();
+
+    $this->postJson('/api/register', [
+        'name' => 'Second Owner',
+        'email' => 'second@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertForbidden()->assertJsonPath('code', 'registration_closed');
+
+    expect(User::where('email', 'second@example.com')->exists())->toBeFalse();
+
+    config(['app.allow_owner_registration' => true]);
+    $this->postJson('/api/register', [
+        'name' => 'Second Owner',
+        'email' => 'second@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertCreated();
 });

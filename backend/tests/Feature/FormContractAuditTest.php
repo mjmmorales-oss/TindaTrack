@@ -276,6 +276,8 @@ test('F3: auth login fixture succeeds', function () {
 });
 
 test('F3: auth register fixture succeeds', function () {
+    // The seeded store already has an owner; registration is closed by default since v2.2
+    config(['app.allow_owner_registration' => true]);
     $regPayload = loadFixture($this->fixturesDir, 'auth-register.json');
     $resReg = $this->postJson('/api/register', $regPayload);
     $resReg->assertCreated();

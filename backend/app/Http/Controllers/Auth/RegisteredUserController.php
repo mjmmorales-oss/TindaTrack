@@ -19,6 +19,15 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Anyone could sign up as a second owner and see/change everything in the single store
+        $ownerExists = User::withTrashed()->where('role', UserRole::Owner)->exists();
+        if ($ownerExists && ! config('app.allow_owner_registration')) {
+            return response()->json([
+                'message' => 'Registration is closed. Ask the store owner to create a staff account for you.',
+                'code' => 'registration_closed',
+            ], 403);
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

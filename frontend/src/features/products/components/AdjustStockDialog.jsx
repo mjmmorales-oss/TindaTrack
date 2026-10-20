@@ -167,8 +167,8 @@ export function AdjustStockDialog({
       onOpenChange(false)
     } catch (err) {
       setErrorMsg(
-        err.response?.data?.message ||
-          err.message ||
+        err.message ||
+          err.response?.data?.message ||
           t('inventory:adjustFailed'),
       )
     }

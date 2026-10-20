@@ -103,3 +103,14 @@ describe('C: phone scan events are never replayed into the cart', () => {
     expect(second).not.toHaveBeenCalled()
   })
 })
+
+describe('C: staff temporary password uses the Laravel key', () => {
+  it('mock create/reset return temporary_password (UserController shape)', async () => {
+    const { useMockDb } = await import('@/mocks/db')
+    useMockDb.getState().resetDemoData()
+    const mockStaff = (await import('@/services/mock/staffService.js')).default
+    const res = await mockStaff.create({ name: 'Test Cashier', email: 'new.cashier@example.com', role: 'cashier', generate_password: true })
+    expect(res.temporary_password).toEqual(expect.any(String))
+    expect(res).not.toHaveProperty('temp_password')
+  })
+})

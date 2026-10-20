@@ -149,8 +149,8 @@ export function PaymentDialog({
       setCompletedSale(res.data)
     } catch (err) {
       setApiError(
-        err.response?.data?.message ||
-          err.message ||
+        err.message ||
+          err.response?.data?.message ||
           t('pos:defaultTransactionError', 'Could not process transaction.'),
       )
     }

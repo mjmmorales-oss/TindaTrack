@@ -32,5 +32,6 @@
   "aiRateLimited": "Abala ang AI — maghintay ng ilang segundo at subukan ulit. Gumagana pa rin ang barcode scanning.",
   "aiDailyLimit": "Naubos na ang AI limit ngayong araw. Gumagana pa rin ang barcode scanning.",
   "aiTimeout": "Natagalan ang AI sa pagsagot. Subukan ulit, o i-scan ang mga barcode.",
-  "aiDisabled": "Naka-off ang AI features sa Settings."
+  "aiDisabled": "Naka-off ang AI features sa Settings.",
+  "registrationClosed": "Sarado na ang registration. Hilingin sa may-ari ng tindahan na gawan ka ng staff account."
 }

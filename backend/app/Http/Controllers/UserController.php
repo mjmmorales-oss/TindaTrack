@@ -77,7 +77,8 @@ class UserController extends Controller
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
+            // users.email is unique in the DB even for archived rows: check them too (was a 500)
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
             'phone' => ['nullable', 'string', 'max:50'],
             'role' => ['nullable', 'string', 'in:cashier'],
         ];
@@ -88,7 +89,10 @@ class UserController extends Controller
             $rules['password'] = ['required', 'string', Password::min(8)->letters()->numbers()];
         }
 
-        $validated = $request->validate($rules);
+        $archivedWithEmail = User::onlyTrashed()->where('email', trim((string) $request->input('email')))->exists();
+        $validated = $request->validate($rules, $archivedWithEmail ? [
+            'email.unique' => 'This email belongs to an archived staff member. Restore that account instead.',
+        ] : []);
 
         $temporaryPassword = null;
         if ($generatePassword || empty($validated['password'])) {
@@ -151,7 +155,7 @@ class UserController extends Controller
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($user->id)->whereNull('deleted_at'),
+                Rule::unique('users', 'email')->ignore($user->id),
             ],
             'phone' => ['nullable', 'string', 'max:50'],
         ]);
