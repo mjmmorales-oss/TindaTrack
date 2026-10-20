@@ -11,6 +11,8 @@ class ScannerEventResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            // Same discriminator the mock emits: 'ai_basket' events carry a basket result
+            'type' => $this->status === 'ai_basket' ? 'ai_basket' : 'scan',
             'scanner_session_id' => $this->scanner_session_id,
             'barcode' => $this->barcode,
             'status' => $this->status,
