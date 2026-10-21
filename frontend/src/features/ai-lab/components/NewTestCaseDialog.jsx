@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useRunExperimentCase } from '../hooks/useAiLab'
 import { prepareForAi } from '@/lib/imagePrep'
+import { AI_IMAGE_OPTIONS } from '@/config/ai'
 import { formatCurrency } from '@/lib/format'
 
 /**
@@ -41,7 +42,7 @@ export function NewTestCaseDialog({ open, onOpenChange, experimentId }) {
 
     setIsProcessingImage(true)
     try {
-      const preparedBlob = await prepareForAi(file, { maxDim: 1024, initialQuality: 0.85 })
+      const preparedBlob = await prepareForAi(file, AI_IMAGE_OPTIONS)
       setSelectedFile(preparedBlob)
       if (previewUrl) URL.revokeObjectURL(previewUrl)
       setPreviewUrl(URL.createObjectURL(preparedBlob))

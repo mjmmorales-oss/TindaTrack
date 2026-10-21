@@ -77,6 +77,12 @@ export function normalizeBasketResult(rawResponse) {
     latency_ms: Number(raw.latency_ms ?? raw.processing_time_ms ?? 0),
     catalog_size: Number(raw.catalog_size ?? 0),
     catalog_truncated: Boolean(raw.catalog_truncated ?? false),
+    prompt_version: raw.prompt_version ?? null,
+    // Server: { gemini_ms, postprocess_ms }; browser: { upload_ms, total_ms }
+    timings: raw.timings ?? null,
+    client_timings: raw.client_timings ?? null,
+    // Small photo the phone sends with its basket (POS review preview)
+    preview_data_url: raw.preview_data_url ?? null,
     items,
     unmatched_items: unmatchedItems,
     raw: raw.raw ?? null,
@@ -159,6 +165,8 @@ export function normalizeProductScanResult(rawResponse, categories = []) {
     provider: raw.provider ?? 'mock',
     model: raw.model ?? '',
     latency_ms: Number(raw.latency_ms ?? raw.processing_time_ms ?? 0),
+    timings: raw.timings ?? null,
+    client_timings: raw.client_timings ?? null,
     products,
     more_than_five: Boolean(raw.more_than_five || raw.total_visible > 5),
     raw: raw.raw ?? null,

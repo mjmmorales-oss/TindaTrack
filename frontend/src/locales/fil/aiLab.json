@@ -103,5 +103,13 @@
   "modeManual": "Pindot (Manual)",
   "modeUpload": "Pag-upload ng File",
   "acceptanceRate": "Rate ng Pagtanggap",
-  "avgCorrectionsPerScan": "Karaniwang Pagwawasto / Scan"
+  "avgCorrectionsPerScan": "Karaniwang Pagwawasto / Scan",
+  "timingSection": "Saan napupunta ang oras",
+  "timingDesc": "Karaniwang oras ng upload, Gemini at pagproseso bawat scan; basket-v1 vs basket-v2 at primary vs fallback na model.",
+  "timingGroup": "Grupo",
+  "timingScans": "Mga scan",
+  "timingUpload": "Upload",
+  "timingGemini": "Gemini",
+  "timingPostprocess": "Pagtutugma",
+  "timingAll": "Lahat ng scan"
 }

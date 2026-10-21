@@ -156,5 +156,7 @@
   "deviceLabel": "Device:",
   "phone": "Phone",
   "stepOpenPhoneApp": "1. On the phone, open TindaTrack → \"Use this phone as a scanner\" (or the camera app).",
-  "stepScanQrInApp": "2. Tap \"Scan pairing QR\" and point it at this QR (or type the code)."
+  "stepScanQrInApp": "2. Tap \"Scan pairing QR\" and point it at this QR (or type the code).",
+  "sentWaitingForCashier": "Sent to POS ✓. Waiting for cashier",
+  "scanNextBasket": "Scan next basket"
 }

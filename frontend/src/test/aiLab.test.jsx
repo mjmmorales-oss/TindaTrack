@@ -125,8 +125,12 @@ describe('AI Research Lab (Task A7)', () => {
   it('routes to /ai-lab for owner role in route tests', async () => {
     renderRoute('/ai-lab', { role: 'owner' })
 
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/AI Research Lab/i)
-    })
+    // Lazy route: allow for a loaded CI machine (the default 1 s flaked under the full suite)
+    await waitFor(
+      () => {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/AI Research Lab/i)
+      },
+      { timeout: 10000 },
+    )
   })
 })

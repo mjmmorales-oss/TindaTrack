@@ -351,7 +351,22 @@ export const scannerService = {
     session.last_seen_at = new Date().toISOString()
     saveSessions(sessions)
 
-    return { ended: false }
+    // Same as Laravel: the phone stays paused until the POS finished the last basket
+    return { ended: false, basket_pending: Boolean(session.basket_pending_at) }
+  },
+
+  /**
+   * The POS finished reviewing the phone's basket (lets the phone re-arm).
+   * Future: POST /api/scanner-sessions/{id}/basket-done
+   */
+  async basketDone(id) {
+    await delay(40)
+    const sessions = loadSessions()
+    const session = sessions.find((s) => s.id === id)
+    if (!session) throw new ApiError(404, { message: 'Scanner session not found.' })
+    session.basket_pending_at = null
+    saveSessions(sessions)
+    return { data: { basket_pending: false } }
   },
 
   async sendAiBasket(imageBlob, options = {}) {
@@ -374,23 +389,34 @@ export const scannerService = {
     const { aiService } = await import('./aiService.js')
     const result = await aiService.basketScan(imageBlob, options)
 
+    // Same as Laravel ScannerDeviceController@aiBasket: nothing detected → no POS event
+    if ((result.items || []).length === 0 && (result.unmatched_items || []).length === 0) {
+      saveSessions(sessions)
+      return { event_id: null, empty: true, scan: result, client_timings: result.client_timings }
+    }
+
+    const preview = typeof options.preview_data_url === 'string' && options.preview_data_url.length <= 140000
+      ? options.preview_data_url
+      : null
     const event = {
       id: ++nextEventId,
       scanner_session_id: session.id,
       type: 'ai_basket',
-      status: 'found',
-      quantity: result.matched_count || 1,
-      payload: result,
+      status: 'ai_basket',
+      barcode: 'AI_BASKET',
+      quantity: (result.items || []).length,
+      payload: { ...result, preview_data_url: preview },
       created_at: new Date().toISOString(),
       resolved_at: null,
     }
 
     session.events.push(event)
+    session.basket_pending_at = new Date().toISOString()
     saveSessions(sessions)
 
     broadcastMessage('ai_basket', { sessionId: session.id, event, result })
 
-    return result
+    return { event_id: event.id, empty: false, scan: result, client_timings: result.client_timings }
   },
 }
 

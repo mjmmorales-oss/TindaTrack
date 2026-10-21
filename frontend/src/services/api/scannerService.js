@@ -74,6 +74,13 @@ export const scannerService = {
   },
 
   /**
+   * POST /api/scanner-sessions/{id}/basket-done — the POS finished the phone's basket
+   */
+  async basketDone(id) {
+    return apiClient.post(`/scanner-sessions/${id}/basket-done`)
+  },
+
+  /**
    * GET /api/scanner/unknown-barcodes
    */
   async getUnknownBarcodes() {
@@ -122,13 +129,31 @@ export const scannerService = {
     if (options.capture_mode) {
       formData.append('capture_mode', options.capture_mode)
     }
+    if (options.preview_data_url) {
+      formData.append('preview_data_url', options.preview_data_url)
+    }
+    const startedAt = performance.now()
+    let uploadedAt = null
+    options.onStage?.('uploading')
     const res = await handleDeviceRequest(
       deviceAxios.post('/scanner/ai-basket', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: AI_REQUEST_TIMEOUT_MS,
+        onUploadProgress: (e) => {
+          if (e.total && e.loaded >= e.total && uploadedAt === null) {
+            uploadedAt = performance.now()
+            options.onStage?.('reading')
+          }
+        },
       })
     )
-    return res?.data ?? res
+    options.onStage?.('matching')
+    const data = res?.data ?? res
+    const doneAt = performance.now()
+    return {
+      ...data,
+      client_timings: { upload_ms: Math.round((uploadedAt ?? doneAt) - startedAt), total_ms: Math.round(doneAt - startedAt) },
+    }
   },
 }
 

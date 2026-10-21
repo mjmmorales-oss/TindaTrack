@@ -20,7 +20,8 @@ import { hasAbility } from '@/config/permissions'
 import { useCameraScanner } from '@/hooks/useCameraScanner'
 import { notify } from '@/lib/notify'
 import { beep, vibrate } from '@/lib/feedback'
-import { toImageBlob } from '@/lib/imagePrep'
+import { prepareForAi } from '@/lib/imagePrep'
+import { AI_IMAGE_OPTIONS } from '@/config/ai'
 import { aiService } from '@/services/aiService'
 import {
   VISUAL_MODEL_ID,
@@ -221,7 +222,7 @@ export function VisualMatchPanel({
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
         canvas.getContext('2d')?.drawImage(video, 0, 0)
-        const blob = await toImageBlob(canvas)
+        const blob = await prepareForAi(canvas, AI_IMAGE_OPTIONS)
         const res = await aiService.basketScan(blob, { capture_mode: 'manual' })
         const top = (res?.items || [])
           .filter((i) => i.matched_product_id || i.matched_product)

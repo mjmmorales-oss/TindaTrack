@@ -26,6 +26,7 @@ import { beep, vibrate } from '@/lib/feedback'
 import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 import { aiService } from '@/services/aiService'
+import { AUTO_CAPTURE } from '@/config/ai'
 
 const CAMERA_STORAGE_KEY = 'tt_barcode_camera_enabled'
 
@@ -50,6 +51,9 @@ const CAMERA_STORAGE_KEY = 'tt_barcode_camera_enabled'
  * @param {boolean} [props.hideVisual=false] - Hide Visual Match (needs the store catalog)
  * @param {(blob: Blob, captureMode: string) => Promise<void>} [props.onBasketCapture] - Replaces the
  *   default AI Basket upload (e.g. the paired phone sends through its device token)
+ * @param {boolean} [props.basketPaused=false] - Hold AI Basket auto-capture (phone waiting for the POS)
+ * @param {string} [props.basketPausedMessage]
+ * @param {number} [props.basketRearmKey=0] - Change to re-arm AI Basket auto-capture
  * @param {(code: string) => void} [props.onPairingCode] - Receives a scanned pairing code
  *   (QR URL or bare XXXX-XXXX). Without it, pairing QRs show the default pair/explain toast.
  */
@@ -67,6 +71,9 @@ export function BarcodeCapture({
   hideAiBasket = false,
   hideVisual = false,
   onBasketCapture,
+  basketPaused = false,
+  basketPausedMessage,
+  basketRearmKey = 0,
   onPairingCode,
 }) {
   const { t } = useTranslation(['scanner', 'products', 'common'])
@@ -81,6 +88,8 @@ export function BarcodeCapture({
   const [value, setValue] = useState('')
   const [validationError, setValidationError] = useState('')
   const [isBasketAnalyzing, setIsBasketAnalyzing] = useState(false)
+  const [basketStage, setBasketStage] = useState(null)
+  const [basketRearm, setBasketRearm] = useState(0)
 
   // AI First-Use Privacy Consent
   const {
@@ -294,9 +303,10 @@ export function BarcodeCapture({
     if (onBasketCapture) {
       setIsBasketAnalyzing(true)
       try {
-        await onBasketCapture(blob, captureMode)
+        await onBasketCapture(blob, captureMode, { onStage: setBasketStage })
       } finally {
         setIsBasketAnalyzing(false)
+        setBasketStage(null)
       }
       return
     }
@@ -306,7 +316,14 @@ export function BarcodeCapture({
       if (blob) {
         objectUrl = URL.createObjectURL(blob)
       }
-      const res = await aiService.basketScan(blob, { capture_mode: captureMode })
+      const res = await aiService.basketScan(blob, { capture_mode: captureMode, onStage: setBasketStage })
+      // Nothing detected: stay on the camera; auto-capture tries again in 2 s
+      if ((res.items || []).length === 0 && (res.unmatched_items || []).length === 0) {
+        if (objectUrl) URL.revokeObjectURL(objectUrl)
+        notify.info(t('pos:aiNothingDetected'), t('pos:aiNothingDetectedDesc'))
+        setBasketRearm((k) => k + 1)
+        return
+      }
       beep()
       vibrate()
       onBasketScanned?.(res, objectUrl)
@@ -317,6 +334,7 @@ export function BarcodeCapture({
       notify.error(t('scanner:aiBasketFailed', 'Failed to analyze basket.'), err?.message)
     } finally {
       setIsBasketAnalyzing(false)
+      setBasketStage(null)
     }
   }
 
@@ -473,8 +491,12 @@ export function BarcodeCapture({
           <AiCapture
             onCapture={handleBasketCaptured}
             isAnalyzing={isBasketAnalyzing}
+            analyzingStage={basketStage}
             autoCaptureEnabled={true}
-            featureKey="basket"
+            rearmKey={basketRearm + basketRearmKey}
+            rearmDelayMs={AUTO_CAPTURE.EMPTY_REARM_MS}
+            autoPaused={basketPaused}
+            autoPausedMessage={basketPausedMessage}
             hint={t('scanner:aiBasketHint', 'Point camera at the customer basket, then tap Capture.')}
           />
         </div>

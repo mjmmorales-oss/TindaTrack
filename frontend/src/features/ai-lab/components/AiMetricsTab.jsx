@@ -56,6 +56,8 @@ export function AiMetricsTab() {
   const visual = metrics.visual_search ?? {}
   const checkout = metrics.checkout_timing ?? {}
   const captureMode = metrics.capture_mode ?? {}
+  const timings = metrics.timings ?? {}
+  const formatMs = (ms) => (ms == null ? '—' : `${(ms / 1000).toFixed(1)} s`)
   const autoMode = captureMode.auto ?? {}
   const manualMode = captureMode.manual ?? {}
   const uploadMode = captureMode.upload ?? {}
@@ -306,6 +308,46 @@ export function AiMetricsTab() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Timing breakdown (v2.3): upload / Gemini / post-processing, v1 vs v2 prompt, primary vs fallback */}
+      <Card className="border-border" data-testid="timing-breakdown">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">{t('aiLab:timingSection')}</CardTitle>
+          <p className="text-xs text-muted-foreground">{t('aiLab:timingDesc')}</p>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b border-border/60">
+                <th className="py-1.5 pr-3 font-medium">{t('aiLab:timingGroup')}</th>
+                <th className="py-1.5 pr-3 font-medium text-right">{t('aiLab:timingScans')}</th>
+                <th className="py-1.5 pr-3 font-medium text-right">{t('aiLab:timingUpload')}</th>
+                <th className="py-1.5 pr-3 font-medium text-right">{t('aiLab:timingGemini')}</th>
+                <th className="py-1.5 pr-3 font-medium text-right">{t('aiLab:timingPostprocess')}</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono">
+              {[
+                ['overall', timings.overall ? { all: timings.overall } : {}],
+                ['prompt', timings.by_prompt_version || {}],
+                ['model', timings.by_model || {}],
+              ].flatMap(([kind, groups]) =>
+                Object.entries(groups).map(([name, row]) => (
+                  <tr key={`${kind}-${name}`} className="border-b border-border/40">
+                    <td className="py-1.5 pr-3 font-sans">
+                      {kind === 'overall' ? t('aiLab:timingAll') : name}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right">{row.scans_count ?? 0}</td>
+                    <td className="py-1.5 pr-3 text-right">{formatMs(row.avg_upload_ms)}</td>
+                    <td className="py-1.5 pr-3 text-right">{formatMs(row.avg_gemini_ms)}</td>
+                    <td className="py-1.5 pr-3 text-right">{formatMs(row.avg_postprocess_ms)}</td>
+                  </tr>
+                )),
+              )}
+            </tbody>
+          </table>
         </CardContent>
       </Card>
 

@@ -388,7 +388,7 @@ class AiService
         $postprocessStart = hrtime(true);
 
         // Preload all store products for duplicate detection
-        $existingProducts = Product::all(['id', 'name', 'barcode', 'category_id', 'price', 'unit']);
+        $existingProducts = Product::all(['id', 'name', 'barcode', 'category_id', 'price', 'unit', 'image_url']);
 
         $processedProducts = [];
         foreach ($visionResult->products as $raw) {
@@ -529,6 +529,7 @@ class AiService
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
+                        'image_url' => $p->image_url,
                         'reason' => 'barcode',
                     ];
                 }
@@ -550,6 +551,7 @@ class AiService
                     $bestMatch = [
                         'id' => $p->id,
                         'name' => $p->name,
+                        'image_url' => $p->image_url,
                         'reason' => 'name',
                         'similarity' => round($percent / 100, 2),
                     ];

@@ -6,6 +6,36 @@ import {
 import { toImageBlob } from '@/lib/imagePrep.js'
 import { AI_REQUEST_TIMEOUT_MS } from '@/config/ai.js'
 
+/**
+ * Posts a photo and measures the browser side: upload_ms (until the last byte left,
+ * via onUploadProgress) and total_ms (until the answer arrived).
+ */
+async function postPhoto(url, formData, { signal, onStage } = {}) {
+  const startedAt = performance.now()
+  let uploadedAt = null
+  onStage?.('uploading')
+  const res = await apiClient.post(url, formData, {
+    signal,
+    timeout: AI_REQUEST_TIMEOUT_MS,
+    onUploadProgress: (e) => {
+      if (e.total && e.loaded >= e.total && uploadedAt === null) {
+        uploadedAt = performance.now()
+        onStage?.('reading')
+      }
+    },
+  })
+  onStage?.('matching')
+  const doneAt = performance.now()
+  const data = res?.data ?? res
+  return {
+    ...data,
+    client_timings: {
+      upload_ms: Math.round((uploadedAt ?? doneAt) - startedAt),
+      total_ms: Math.round(doneAt - startedAt),
+    },
+  }
+}
+
 export const aiService = {
   /**
    * GET /api/ai/status
@@ -22,6 +52,7 @@ export const aiService = {
    * @param {object} [options]
    * @param {AbortSignal} [options.signal]
    * @param {'auto'|'manual'|'upload'} [options.capture_mode]
+   * @param {(stage: 'uploading'|'reading'|'matching') => void} [options.onStage]
    */
   async basketScan(imageBlob, options = {}) {
     const image = await toImageBlob(imageBlob)
@@ -31,12 +62,7 @@ export const aiService = {
       formData.append('capture_mode', options.capture_mode)
     }
 
-    const res = await apiClient.post('/ai/basket-scan', formData, {
-      signal: options.signal,
-      timeout: AI_REQUEST_TIMEOUT_MS,
-    })
-    const data = res?.data ?? res
-    return normalizeBasketResult(data)
+    return normalizeBasketResult(await postPhoto('/ai/basket-scan', formData, options))
   },
 
   /**
@@ -56,12 +82,7 @@ export const aiService = {
       formData.append('capture_mode', options.capture_mode)
     }
 
-    const res = await apiClient.post('/ai/product-scan', formData, {
-      signal: options.signal,
-      timeout: AI_REQUEST_TIMEOUT_MS,
-    })
-    const data = res?.data ?? res
-    return normalizeProductScanResult(data, options.categories || [])
+    return normalizeProductScanResult(await postPhoto('/ai/product-scan', formData, options), options.categories || [])
   },
 
   /**
@@ -70,8 +91,10 @@ export const aiService = {
    * @param {string|number} scanId
    * @param {Array<object>|{ lines: Array<object> }} payload
    */
-  async sendFeedback(scanId, payload) {
+  async sendFeedback(scanId, payload, options = {}) {
     const body = Array.isArray(payload) ? { lines: payload } : (payload?.lines ? payload : { lines: [] })
+    // The browser only knows the upload time after the scan returned
+    if (Number.isFinite(options.upload_ms)) body.upload_ms = Math.max(0, Math.round(options.upload_ms))
     const res = await apiClient.post(`/ai/scans/${scanId}/feedback`, body)
     return res?.data ?? res
   },

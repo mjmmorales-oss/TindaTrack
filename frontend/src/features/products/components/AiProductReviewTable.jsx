@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
+import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
+import { ProductThumb } from '@/components/common/ProductThumb'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { aiService } from '@/services/aiService'
@@ -354,7 +356,11 @@ export function AiProductReviewTable({
       if (scanResult?.scan_id) {
         try {
           const feedbackPayload = buildProductFeedbackLines(rows, scanResult)
-          aiService.sendFeedback(scanResult.scan_id, feedbackPayload.lines).catch(() => {})
+          aiService
+            .sendFeedback(scanResult.scan_id, feedbackPayload.lines, {
+              upload_ms: scanResult.client_timings?.upload_ms,
+            })
+            .catch(() => {})
         } catch {
           // Non-fatal feedback error
         }
@@ -429,6 +435,13 @@ export function AiProductReviewTable({
     }
   }
 
+  // Esc / X / Cancel never drop reviewed products without asking
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const requestClose = () => {
+    if (rows.length > 0) setShowDiscardConfirm(true)
+    else onOpenChange(false)
+  }
+
   const handleScanAgainClick = () => {
     onOpenChange(false)
     onScanAgain?.()
@@ -437,7 +450,8 @@ export function AiProductReviewTable({
   return (
     <ResponsiveDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => (next ? onOpenChange(true) : requestClose())}
+      dismissible={false}
       title={
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary">
@@ -656,9 +670,9 @@ export function AiProductReviewTable({
                       {/* Duplicate Alert Banner */}
                       {row.is_duplicate && row.possible_duplicate && (
                         <div className="flex items-center gap-2 p-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px]">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <ProductThumb imageUrl={row.possible_duplicate.image_url} name={row.possible_duplicate.name} size="sm" className="shrink-0" />
                           <span className="truncate">
-                            {t('products:alreadyInCatalog', 'Already in catalog')}: Looks like: <strong>{row.possible_duplicate.name}</strong>
+                            {t('products:alreadyInCatalog', 'Already in catalog')}: {t('products:looksLike')} <strong>{row.possible_duplicate.name}</strong>
                           </span>
                           <button
                             type="button"
@@ -959,8 +973,11 @@ export function AiProductReviewTable({
 
                 {row.is_duplicate && row.possible_duplicate && (
                   <div className="p-2 rounded bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs flex flex-col gap-1">
-                    <span>
-                      {t('products:alreadyInCatalog', 'Already in catalog')}: Looks like: <strong>{row.possible_duplicate.name}</strong>
+                    <span className="flex items-center gap-2">
+                      <ProductThumb imageUrl={row.possible_duplicate.image_url} name={row.possible_duplicate.name} size="sm" className="shrink-0" />
+                      <span>
+                        {t('products:alreadyInCatalog', 'Already in catalog')}: {t('products:looksLike')} <strong>{row.possible_duplicate.name}</strong>
+                      </span>
                     </span>
                     <button
                       type="button"
@@ -1143,7 +1160,7 @@ export function AiProductReviewTable({
               variant="outline"
               size="sm"
               disabled={isSaving}
-              onClick={() => onOpenChange(false)}
+              onClick={requestClose}
             >
               {t('common:cancel', 'Cancel')}
             </Button>
@@ -1173,6 +1190,19 @@ export function AiProductReviewTable({
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        onOpenChange={setShowDiscardConfirm}
+        title={t('products:aiDiscardReviewTitle')}
+        description={t('products:aiDiscardReviewDesc')}
+        confirmText={t('pos:aiDiscardConfirm')}
+        cancelText={t('pos:aiDiscardKeep')}
+        tone="destructive"
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          onOpenChange(false)
+        }}
+      />
     </ResponsiveDialog>
   )
 }

@@ -82,10 +82,14 @@ export const aiService = {
     }
   },
 
-  async basketScan(input, _options = {}) {
+  async basketScan(input, options = {}) {
     // Same real-type guard as the API service: a canvas or string must never reach FormData.
     const imageBlob = await toImageBlob(input)
-    await delay(350)
+    options.onStage?.('uploading')
+    await delay(50)
+    options.onStage?.('reading')
+    await delay(300)
+    options.onStage?.('matching')
     const { products } = useMockDb.getState()
     const activeProducts = (products || []).filter((p) => p.is_active && (p.stock_quantity ?? p.stock ?? 0) > 0)
     
@@ -174,12 +178,20 @@ export const aiService = {
       unmatched_items: unmatched,
       latency_ms: 350,
       model: 'mock-gemini-2.5-flash',
+      prompt_version: 'basket-v2',
+      // Same shape as the API service (server timings + browser timings)
+      timings: { gemini_ms: 350, postprocess_ms: 1 },
+      client_timings: { upload_ms: 0, total_ms: 350 },
     })
   },
 
   async productScan(imageBlob, options = {}) {
     await toImageBlob(imageBlob)
-    await delay(350)
+    options.onStage?.('uploading')
+    await delay(50)
+    options.onStage?.('reading')
+    await delay(300)
+    options.onStage?.('matching')
     const candidates = [
       {
         id: 'cand_1',
@@ -213,13 +225,15 @@ export const aiService = {
         products: candidates,
         more_than_five: false,
         latency_ms: 350,
+        timings: { gemini_ms: 350, postprocess_ms: 1 },
+        client_timings: { upload_ms: 0, total_ms: 350 },
         model: 'mock-gemini-2.5-flash',
       },
       options.categories || [],
     )
   },
 
-  async sendFeedback(scanId, payload) {
+  async sendFeedback(scanId, payload, _options = {}) {
     await delay(60)
     const lines = Array.isArray(payload) ? payload : (payload?.lines || [])
     return {
@@ -300,6 +314,17 @@ export const aiService = {
           acceptance_rate: 0.85,
           avg_corrections_per_scan: 0.5,
           lines_evaluated: 6,
+        },
+      },
+      // Same keys as AiMetricsService::calculateTimingMetrics
+      timings: {
+        overall: { scans_count: 12, avg_upload_ms: 600, avg_gemini_ms: 3200, avg_postprocess_ms: 12, avg_total_ms: 3200 },
+        by_prompt_version: {
+          'basket-v1': { scans_count: 6, avg_upload_ms: 1400, avg_gemini_ms: 14500, avg_postprocess_ms: 15, avg_total_ms: 14500 },
+          'basket-v2': { scans_count: 6, avg_upload_ms: 500, avg_gemini_ms: 3100, avg_postprocess_ms: 10, avg_total_ms: 3100 },
+        },
+        by_model: {
+          'mock-gemini-2.5-flash': { scans_count: 12, avg_upload_ms: 600, avg_gemini_ms: 3200, avg_postprocess_ms: 12, avg_total_ms: 3200 },
         },
       },
     }
