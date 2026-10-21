@@ -21,6 +21,7 @@ class ScannerSession extends Model
         'device_label',
         'paired_at',
         'last_seen_at',
+        'basket_pending_at',
         'ended_at',
         'expires_at',
     ];
@@ -31,6 +32,7 @@ class ScannerSession extends Model
             'pairing_expires_at' => 'datetime',
             'paired_at' => 'datetime',
             'last_seen_at' => 'datetime',
+            'basket_pending_at' => 'datetime',
             'ended_at' => 'datetime',
             'expires_at' => 'datetime',
         ];

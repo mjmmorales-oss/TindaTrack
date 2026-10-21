@@ -23,6 +23,10 @@ class AiScan extends Model
         'image_sha256',
         'image_id',
         'latency_ms',
+        'upload_ms',
+        'gemini_ms',
+        'postprocess_ms',
+        'model_used',
         'status',
         'error_code',
         'raw_response',
@@ -35,6 +39,9 @@ class AiScan extends Model
     {
         return [
             'latency_ms' => 'integer',
+            'upload_ms' => 'integer',
+            'gemini_ms' => 'integer',
+            'postprocess_ms' => 'integer',
             'catalog_size' => 'integer',
             'catalog_truncated' => 'boolean',
             'raw_response' => 'array',

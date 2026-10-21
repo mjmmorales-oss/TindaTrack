@@ -115,6 +115,23 @@ class ScannerSessionController extends Controller
     }
 
     /**
+     * The POS finished reviewing the phone's AI basket (added, discarded or scan again):
+     * lets the phone re-arm auto-capture.
+     */
+    public function basketDone(Request $request, string $id): JsonResponse
+    {
+        $session = ScannerSession::findOrFail($id);
+
+        if ($session->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
+
+        $session->forceFill(['basket_pending_at' => null])->save();
+
+        return response()->json(['data' => ['basket_pending' => false]]);
+    }
+
+    /**
      * End a scanner session.
      */
     public function destroy(Request $request, string $id): JsonResponse

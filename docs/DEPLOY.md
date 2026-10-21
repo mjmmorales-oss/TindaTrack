@@ -101,10 +101,16 @@ Follow these exact steps in order on deploy day:
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Primary Gemini multimodal vision model |
 | `GEMINI_FALLBACK_MODEL` | `gemini-1.5-flash` | Automated fallback model if primary model experiences 429 rate limit or 404 |
 | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta` | Google Generative Language REST API base endpoint |
-| `AI_TIMEOUT` | `30` | Request timeout in seconds for AI vision scans |
+| `AI_TIMEOUT` | `30` | Timeout in seconds for `php artisan ai:ping` |
+| `AI_PRIMARY_TIMEOUT` | `12` | Seconds before a basket/stock-in scan gives up on the primary model and tries the fallback |
+| `AI_FALLBACK_TIMEOUT` | `15` | Timeout for the fallback model (worst case ≈ 27 s) |
+| `GEMINI_THINKING_LEVEL` | `minimal` | Gemini "thinking" (most of the latency for a match-to-list task). `minimal`/`low`/`medium`/`high`/`none`; 3.x models get `thinking_level`, 2.x get `thinking_budget` (minimal = 0). Rejected fields are dropped automatically |
+| `GEMINI_MEDIA_RESOLUTION` | `MEDIA_RESOLUTION_MEDIUM` | Image token budget (`…_LOW`/`…_MEDIUM`/`…_HIGH`/`none`) |
+| `AI_MAX_OUTPUT_TOKENS` | `2048` | Output cap per scan |
+| `AI_CATALOG_FOCUS_THRESHOLD` | `150` | Above this many active products, the basket prompt lists only products with a photo or a sale in the last 30 days (max 400) |
 | `AI_PER_USER_PER_MINUTE` | `6` | Rate limiting guardrail to stay within Google AI Studio free tier limits |
 | `AI_DAILY_LIMIT` | `500` | Maximum daily scan requests across the store |
-| `AI_MAX_IMAGE_KB` | `5120` | Maximum uploaded image payload size for AI analysis in KB (keep above the SPA's 1.4 MB AI photo cap) |
+| `AI_MAX_IMAGE_KB` | `5120` | Maximum uploaded image payload size for AI analysis in KB (keep above the SPA's 600 KB AI photo cap) |
 | `AI_SAVE_SCAN_IMAGES` | `false` | Whether to persist raw scan photos in storage |
 | `BROADCAST_CONNECTION` | `log` | *(optional)* `pusher` if using Pusher WebSockets; otherwise defaults to polling |
 | `PUSHER_APP_ID` | `your-app-id` | *(optional)* Pusher App ID if `BROADCAST_CONNECTION=pusher` |
