@@ -7,31 +7,37 @@ export const AUTO_CAPTURE_DEFAULT = true
 export const AUTO_CAPTURE = {
   SAMPLE_WIDTH: 64,
   SAMPLE_HEIGHT: 48,
-  MOTION_THRESHOLD_PERCENT: 4.5, // % pixel diff to count as motion
-  STEADY_DURATION_MS: 1200, // time frame must stay still
-  COUNTDOWN_MS: 1500, // visual countdown before capture
-  SCENE_DIFFERENCE_THRESHOLD: 8.0, // must differ from previous capture
+  SAMPLE_INTERVAL_MS: 100, // ~10 fps
+  // Score = mean |Δ| of blurred, exposure-compensated luma, 0–100 (see lib/motion.js).
+  // Hand shake / autofocus / exposure drift stay well below 6; moving the phone is 10+.
+  MOTION_THRESHOLD: 6,
+  STEADY_DURATION_MS: 800, // hold still this long before the ring starts
+  COUNTDOWN_MS: 1000, // ring fills, then capture
+  SCENE_GUARD_MS: 3000, // only right after a capture…
+  SCENE_GUARD_THRESHOLD: 3, // …and only for a near-identical scene
   MIN_LUMINANCE: 35, // reject pitch-black frames (0-255 scale)
-  AUTO_COOLDOWN_MS: 3000, // minimum time between auto-captures
-  MAX_COUNTDOWN_ABORT_COUNT: 3, // if movement cancels countdown 3x, fall back to manual hint
+  AUTO_COOLDOWN_MS: 1500, // minimum time between auto-captures after re-arm
+  EMPTY_REARM_MS: 2000, // "Nothing detected": try again after this
+  ABORT_HINT_COUNT: 3, // aborted rings before the "hold still" hint (never gives up)
 }
 
 export const AUTO_CAPTURE_SENSITIVITY = {
+  // low = careful (needs a steadier, longer hold); high = captures most readily
   low: {
-    motionThreshold: 6.0,
-    steadyDurationMs: 1500,
+    motionThreshold: 4,
+    steadyDurationMs: 1100,
   },
   medium: {
-    motionThreshold: 4.5,
-    steadyDurationMs: 1200,
+    motionThreshold: 6,
+    steadyDurationMs: 800,
   },
   normal: {
-    motionThreshold: 4.5,
-    steadyDurationMs: 1200,
+    motionThreshold: 6,
+    steadyDurationMs: 800,
   },
   high: {
-    motionThreshold: 3.0,
-    steadyDurationMs: 900,
+    motionThreshold: 9,
+    steadyDurationMs: 600,
   },
 }
 
@@ -46,8 +52,16 @@ export function getAutoCaptureProfile(sensitivity = 'medium') {
 }
 
 /**
- * Browser timeout for AI photo requests. Laravel allows AI_TIMEOUT (30 s) per
- * Gemini attempt plus one fallback-model retry, so the default 10–15 s axios
- * timeouts aborted slow scans that the server still finished.
+ * Browser timeout for AI photo requests: above the server's worst case
+ * (AI_PRIMARY_TIMEOUT 12 s + AI_FALLBACK_TIMEOUT 15 s + upload), so the browser
+ * never aborts a scan the server is still finishing.
  */
-export const AI_REQUEST_TIMEOUT_MS = 70000
+export const AI_REQUEST_TIMEOUT_MS = 45000
+
+/**
+ * The one resize/compress setting for every photo sent to Gemini (AI Basket,
+ * AI Stock-In, phone basket, Visual Match "Ask AI", AI Lab cases). 1024 px is
+ * plenty for "which catalog product is this" and uploads ~3× faster than 1600 px.
+ * Stays far below every server limit (AI_MAX_IMAGE_KB 5120, PHP 2 MB).
+ */
+export const AI_IMAGE_OPTIONS = Object.freeze({ maxDim: 1024, maxBytes: 600 * 1024, initialQuality: 0.8 })
