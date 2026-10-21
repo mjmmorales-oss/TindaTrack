@@ -284,3 +284,28 @@ export async function cropBox(source, box_2d, marginPct = 6) {
     return await canvasToBlob(canvas, 'image/jpeg', 0.85)
   }
 }
+
+/** Preview the phone sends with an AI basket (the server rejects > 100 KB). */
+export const BASKET_PREVIEW_OPTIONS = Object.freeze({ maxDim: 480, maxBytes: 60 * 1024, initialQuality: 0.6 })
+
+/**
+ * Small JPEG data URL of a photo, for the POS review's photo pane.
+ * Resolves null when the photo can't be shrunk under the limit.
+ *
+ * @param {Blob|HTMLCanvasElement} source
+ * @returns {Promise<string|null>}
+ */
+export async function makePreviewDataUrl(source) {
+  try {
+    const blob = await prepareForAi(source, BASKET_PREVIEW_OPTIONS)
+    if (!(blob instanceof Blob) || blob.size > BASKET_PREVIEW_OPTIONS.maxBytes) return null
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}

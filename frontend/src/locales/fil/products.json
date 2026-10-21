@@ -299,5 +299,8 @@
   "savedWithoutPhoto": "Na-save ang produkto — hindi na-upload ang litrato",
   "savedWithoutPhotoDesc": "Buksan ang produkto at idagdag ulit ang litrato.",
   "nameRequiredToast": "Kailangan ang pangalan ng produkto.",
-  "priceMinToast": "Ang presyo ng benta ay dapat hindi bababa sa ₱0."
+  "priceMinToast": "Ang presyo ng benta ay dapat hindi bababa sa ₱0.",
+  "aiDiscardReviewTitle": "Itapon ang mga produktong ito?",
+  "aiDiscardReviewDesc": "Walang nase-save hangga't hindi mo tina-tap ang Save. Mawawala ang mga binago mo.",
+  "looksLike": "mukhang"
 }

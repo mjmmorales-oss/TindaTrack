@@ -33,6 +33,9 @@ import { FirstUseAiConsentDialog } from '@/components/ai/FirstUseAiConsentDialog
 import { BasketReviewSheet } from '@/features/pos/components/BasketReviewSheet'
 import { aiService } from '@/services/aiService'
 import { normalizeBasketResult } from '@/lib/aiContract'
+import { usePendingBasket } from '@/features/pos/hooks/usePendingBasket'
+import { AUTO_CAPTURE } from '@/config/ai'
+import { draftItemCount } from '@/features/pos/lib/basketReview'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useCategories } from '@/features/categories/hooks/useCategories'
 import { useCustomers } from '@/features/customers/hooks/useCustomers'
@@ -50,7 +53,7 @@ import { isDesktopPos } from '@/lib/device'
 import { countIndexedProducts, getVisualIndex, preloadVisualModel } from '@/lib/visualSearch'
 import { beep } from '@/lib/feedback'
 import { lookupBarcode } from '@/services/barcode'
-import { getScannerSession, endScannerSession } from '@/services/scanner'
+import { getScannerSession, endScannerSession, basketDone } from '@/services/scanner'
 import { subscribeToScanner } from '@/lib/realtime'
 import { notify } from '@/lib/notify'
 
@@ -123,63 +126,66 @@ export function PosPage() {
   } = useAiConsent()
   const [isAiCaptureOpen, setIsAiCaptureOpen] = useState(false)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+  const [aiStage, setAiStage] = useState(null)
+  // Bumped to re-arm the camera's auto-capture (e.g. "Nothing detected")
+  const [aiCaptureRearmKey, setAiCaptureRearmKey] = useState(0)
   const [aiAnalyzingStep, setAiAnalyzingStep] = useState('')
-  const [isBasketReviewOpen, setIsBasketReviewOpen] = useState(false)
-  const [aiScanResult, setAiScanResult] = useState(null)
-  const [aiScanImageSrc, setAiScanImageSrc] = useState(null)
-
   const [basketScanMode, setBasketScanMode] = useState('replace') // 'replace' | 'add'
 
-  const openBasketReview = (result, imageSrc = null) => {
-    setAiScanResult(result)
-    setAiScanImageSrc(imageSrc)
-    setIsBasketReviewOpen(true)
+  // The open AI Basket review (kept until Add to Cart / Discard, survives reloads).
+  // When a phone basket is finished, tell the phone so it can scan the next one.
+  const pairedSessionIdRef = useRef(null)
+  useEffect(() => {
+    pairedSessionIdRef.current = pairedSession?.id ?? null
+  }, [pairedSession?.id])
+  const basket = usePendingBasket({
+    onFinished: (done) => {
+      if (done.source === 'phone' && pairedSessionIdRef.current) {
+        basketDone(pairedSessionIdRef.current).catch(() => {})
+      }
+    },
+  })
+  const isBasketReviewOpen = basket.isOpen
+
+  const openBasketReview = (result, imageSrc = null, source = 'laptop') => {
+    basket.receive(result, imageSrc, source)
   }
+  // The phone subscription below only re-subscribes per session: read receive() via a ref
+  const receiveBasketRef = useRef(basket.receive)
+  useEffect(() => {
+    receiveBasketRef.current = basket.receive
+  }, [basket.receive])
 
   const handleScanAgain = (scanMode = 'replace') => {
     setBasketScanMode(scanMode)
-    setIsBasketReviewOpen(false)
+    if (scanMode === 'replace') basket.finish()
+    else basket.hide()
     setIsAiCaptureOpen(true)
   }
 
   const handleAiBasketCapture = async (blob, captureMode = 'manual') => {
     setIsAiAnalyzing(true)
-    setAiAnalyzingStep(t('pos:aiAnalyzingPreparing', 'Preparing photo for AI analysis...'))
     let objectUrl = null
     try {
       objectUrl = URL.createObjectURL(blob)
-      setAiAnalyzingStep(t('pos:aiAnalyzingDetecting', 'Detecting items with Gemini Vision...'))
-      const result = await aiService.basketScan(blob, { capture_mode: captureMode })
+      const result = await aiService.basketScan(blob, { capture_mode: captureMode, onStage: setAiStage })
+
+      // Nothing detected: stay on the camera (auto-capture re-arms) instead of an empty review
+      if ((result.items || []).length === 0 && (result.unmatched_items || []).length === 0) {
+        notify.info(t('pos:aiNothingDetected'), t('pos:aiNothingDetectedDesc'))
+        setAiCaptureRearmKey((k) => k + 1)
+        URL.revokeObjectURL(objectUrl)
+        return
+      }
+
       beep()
       setIsAiCaptureOpen(false)
 
-      if (basketScanMode === 'add' && aiScanResult) {
-        // Merge newly detected items into current review result
-        const mergedItems = [...(aiScanResult.items || [])]
-        for (const newItem of (result.items || [])) {
-          const existing = mergedItems.find(
-            (m) => m.matched_product_id === newItem.matched_product_id,
-          )
-          if (existing) {
-            existing.quantity += newItem.quantity
-          } else {
-            mergedItems.push(newItem)
-          }
-        }
-        const mergedUnmatched = [
-          ...(aiScanResult.unmatched_items || []),
-          ...(result.unmatched_items || []),
-        ]
-        openBasketReview(
-          {
-            ...result,
-            items: mergedItems,
-            unmatched_items: mergedUnmatched,
-          },
-          objectUrl,
-        )
+      if (basketScanMode === 'add' && basket.pending) {
+        // Merge into the cashier's edited list (quantities summed per product)
+        basket.mergeScan(result, objectUrl)
       } else {
-        openBasketReview(result, objectUrl)
+        openBasketReview(result, objectUrl, 'laptop')
       }
       setBasketScanMode('replace')
     } catch (err) {
@@ -193,6 +199,7 @@ export function PosPage() {
     } finally {
       setIsAiAnalyzing(false)
       setAiAnalyzingStep('')
+      setAiStage(null)
     }
   }
 
@@ -344,7 +351,8 @@ export function PosPage() {
         if (isAiBasket) {
           if (!event?.payload) return
           beep()
-          openBasketReview(normalizeBasketResult(event.payload.scan || event.payload), null)
+          // Never replaces an open review: receive() shows the "New scan from phone" banner
+          receiveBasketRef.current(normalizeBasketResult(event.payload.scan || event.payload), null, 'phone')
           notify.info(
             t('pos:aiBasketReceived', 'AI Basket Received'),
             t('pos:aiBasketReceivedDesc', 'Review detected items from phone scanner.'),
@@ -546,6 +554,21 @@ export function PosPage() {
                 {t('pos:aiBasketScan', 'AI Basket')}
               </Button>
 
+              {/* A review that was closed or interrupted (reload): pick it up again */}
+              {basket.pending && !basket.isOpen && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={basket.open}
+                  className="h-11 sm:h-10 text-xs font-semibold px-3 gap-1.5 border border-primary/40"
+                  data-testid="resume-basket"
+                >
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  {t('pos:aiResumeScan', { count: draftItemCount(basket.pending.draft) })}
+                </Button>
+              )}
+
               {isDesktop && !pairedSession && (
                 <Button
                   type="button"
@@ -732,7 +755,7 @@ export function PosPage() {
         }}
         onBasketScanned={(result, imageSrc) => {
           setIsScannerSheetOpen(false)
-          openBasketReview(result, imageSrc || null)
+          openBasketReview(result, imageSrc || null, 'scanner')
         }}
       />
 
@@ -783,7 +806,9 @@ export function PosPage() {
         <AiCapture
           onCapture={handleAiBasketCapture}
           isAnalyzing={isAiAnalyzing}
-          analyzingStep={aiAnalyzingStep}
+          analyzingStage={aiStage}
+          rearmKey={aiCaptureRearmKey}
+          rearmDelayMs={AUTO_CAPTURE.EMPTY_REARM_MS}
           onCancel={() => setIsAiCaptureOpen(false)}
         />
       </ResponsiveDialog>
@@ -791,15 +816,17 @@ export function PosPage() {
       {/* AI BASKET REVIEW SHEET */}
       <BasketReviewSheet
         open={isBasketReviewOpen}
-        onOpenChange={setIsBasketReviewOpen}
-        scanResult={aiScanResult}
-        imageSrc={aiScanImageSrc}
+        onOpenChange={(next) => (next ? basket.open() : basket.hide())}
+        scanResult={basket.pending?.result || null}
+        imageSrc={basket.pending?.imageSrc || null}
+        draft={basket.pending?.draft}
+        draftKey={basket.pending?.key}
+        onDraftChange={basket.setDraft}
+        incoming={basket.incoming}
+        onResolveIncoming={basket.resolveIncoming}
         onScanAgain={handleScanAgain}
-        onConfirmed={() => {
-          setIsBasketReviewOpen(false)
-          setAiScanResult(null)
-          setAiScanImageSrc(null)
-        }}
+        onConfirmed={basket.finish}
+        onDiscard={basket.finish}
       />
     </div>
   )

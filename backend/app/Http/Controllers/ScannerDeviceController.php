@@ -158,6 +158,23 @@ class ScannerDeviceController extends Controller
         ], 201);
     }
 
+    /** Largest preview accepted in an ai_basket event (decoded bytes). */
+    public const MAX_PREVIEW_BYTES = 100 * 1024;
+
+    /**
+     * A JPEG/PNG/WebP data URL of at most MAX_PREVIEW_BYTES, else null (the event is
+     * still created, just without the photo).
+     */
+    public static function acceptablePreview(mixed $value): ?string
+    {
+        if (! is_string($value) || ! preg_match('#^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$#', $value, $m)) {
+            return null;
+        }
+        $bytes = base64_decode($m[2], true);
+
+        return ($bytes !== false && strlen($bytes) <= self::MAX_PREVIEW_BYTES) ? $value : null;
+    }
+
     /**
      * Heartbeat from paired device to keep last_seen_at fresh.
      */
@@ -171,6 +188,8 @@ class ScannerDeviceController extends Controller
         return response()->json([
             'data' => [
                 'ended' => false,
+                // The phone keeps auto-capture paused until the POS has finished the last basket
+                'basket_pending' => $session->basket_pending_at !== null,
             ],
         ]);
     }
@@ -183,6 +202,8 @@ class ScannerDeviceController extends Controller
         $request->validate([
             'image' => ['required', 'file'],
             'capture_mode' => ['nullable', 'in:auto,manual,upload'],
+            'upload_ms' => ['nullable', 'integer', 'min:0', 'max:600000'],
+            'preview_data_url' => ['nullable', 'string'],
         ]);
 
         /** @var ScannerSession $session */
@@ -200,8 +221,20 @@ class ScannerDeviceController extends Controller
             $request->file('image'),
             $session->user,
             $session->id,
-            $request->input('capture_mode', 'manual')
+            $request->input('capture_mode', 'manual'),
+            $request->filled('upload_ms') ? (int) $request->input('upload_ms') : null
         );
+
+        // Nothing detected: never interrupt the POS with an empty basket
+        if (count($result['items']) === 0 && count($result['unmatched']) === 0) {
+            return response()->json([
+                'data' => [
+                    'event_id' => null,
+                    'empty' => true,
+                    'scan' => $result,
+                ],
+            ], 201);
+        }
 
         $event = ScannerEvent::create([
             'scanner_session_id' => $session->id,
@@ -216,10 +249,14 @@ class ScannerDeviceController extends Controller
                 'unmatched' => $result['unmatched'],
                 'items_count' => count($result['items']),
                 'unmatched_count' => count($result['unmatched']),
+                // Small photo so the POS review shows what the phone saw (dropped if too big)
+                'preview_data_url' => self::acceptablePreview($request->input('preview_data_url')),
             ],
             'resolved_at' => null,
             'created_at' => now(),
         ]);
+
+        $session->forceFill(['basket_pending_at' => now()])->save();
 
         try {
             event(new ScannerItemScanned($event));

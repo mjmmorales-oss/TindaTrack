@@ -10,6 +10,7 @@ import {
   Loader2,
   AlertCircle,
   X,
+  Check,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -18,14 +19,33 @@ import { captureFrame, prepareForAi } from '@/lib/imagePrep'
 import { useAutoCapture } from '@/hooks/useAutoCapture'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { notify } from '@/lib/notify'
+import { AI_IMAGE_OPTIONS } from '@/config/ai'
 
-/**
- * Resize/compress options for photos sent to the AI endpoints. Kept below every server
- * limit — AI_MAX_IMAGE_KB (5120 default, 1500 in older .env files), Railway 10 MB, and a
- * stock local PHP upload_max_filesize of 2 MB — so a photo is never dropped by PHP.
- * A 1600 px JPEG is normally 300–900 KB; quality steps down only if it is larger.
- */
-const AI_IMAGE_OPTIONS = { maxDim: 1600, maxBytes: 1400 * 1024, initialQuality: 0.85 }
+/** Live stages of an AI scan (the service reports 'uploading' → 'reading' → 'matching'). */
+const ANALYZING_STAGES = ['uploading', 'reading', 'matching']
+
+/** Filling ring for the auto-capture countdown (no numbers). */
+function CaptureRing({ progress = 0, size = 24 }) {
+  const r = (size - 4) / 2
+  const c = 2 * Math.PI * r
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" data-testid="capture-ring">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - progress)}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </svg>
+  )
+}
 
 /**
  * Reusable AI Camera Capture Component with Auto-Capture engine.
@@ -43,6 +63,11 @@ const AI_IMAGE_OPTIONS = { maxDim: 1600, maxBytes: 1400 * 1024, initialQuality: 
  * @param {boolean} [props.autoCaptureEnabled=true] - Whether auto-capture capability is enabled
  * @param {'basket'|'products'} [props.aiMode='basket'] - AI workflow mode for preference storage
  * @param {'low'|'medium'|'high'} [props.sensitivity] - Optional sensitivity override
+ * @param {'uploading'|'reading'|'matching'} [props.analyzingStage] - Live stage while analyzing
+ * @param {number} [props.rearmKey] - Change to re-arm auto-capture (review closed, empty result…)
+ * @param {number} [props.rearmDelayMs] - Delay before that re-arm
+ * @param {boolean} [props.autoPaused=false] - Hold auto-capture (e.g. phone waiting for the cashier)
+ * @param {string} [props.autoPausedMessage] - Shown while autoPaused
  */
 export function AiCapture({
   onCapture,
@@ -54,8 +79,18 @@ export function AiCapture({
   autoCaptureEnabled = true,
   aiMode = 'basket',
   sensitivity,
+  analyzingStage,
+  rearmKey = 0,
+  rearmDelayMs = 0,
+  autoPaused = false,
+  autoPausedMessage,
 }) {
   const { t } = useTranslation(['pos', 'common'])
+  const stageLabels = {
+    uploading: t('pos:aiStage_uploading'),
+    reading: t('pos:aiStage_reading'),
+    matching: t('pos:aiStage_matching'),
+  }
   const { data: settingsRes } = useSettings()
   const storeSettings = settingsRes?.data || {}
 
@@ -70,6 +105,27 @@ export function AiCapture({
   const [isTorchOn, setIsTorchOn] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
   const [isFlashing, setIsFlashing] = useState(false)
+  // The photo that was sent, shown dimmed behind "Analyzing…"
+  const [sentPhotoUrl, setSentPhotoUrl] = useState(null)
+  const [failedCaptures, setFailedCaptures] = useState(0)
+  const [elapsedMs, setElapsedMs] = useState(0)
+
+  const showSentPhoto = useCallback((blob) => {
+    setSentPhotoUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return blob ? URL.createObjectURL(blob) : null
+    })
+  }, [])
+  useEffect(() => () => sentPhotoUrl && URL.revokeObjectURL(sentPhotoUrl), [sentPhotoUrl])
+
+  // Elapsed seconds while analyzing, so a 4–6 s wait doesn't feel stuck
+  useEffect(() => {
+    if (!isAnalyzing) return undefined
+    const startedAt = Date.now()
+    setElapsedMs(0)
+    const id = setInterval(() => setElapsedMs(Date.now() - startedAt), 100)
+    return () => clearInterval(id)
+  }, [isAnalyzing])
 
   const isMockMode =
     import.meta.env.MODE === 'test' ||
@@ -194,14 +250,16 @@ export function AiCapture({
         if (!(blob instanceof Blob)) {
           throw new Error('Captured frame could not be encoded as an image.')
         }
+        showSentPhoto(blob)
         onCapture?.(blob, captureMode)
       }
     } catch {
       notify.error(t('pos:aiCaptureFailed', 'Could not take the photo. Please try again.'))
+      setFailedCaptures((n) => n + 1) // re-arm auto-capture
     } finally {
       setIsCapturing(false)
     }
-  }, [cameraStatus, isAnalyzing, isCapturing, onCapture, t])
+  }, [cameraStatus, isAnalyzing, isCapturing, onCapture, showSentPhoto, t])
 
   // Auto-capture hook engine
   const effectiveSensitivity =
@@ -214,6 +272,9 @@ export function AiCapture({
     isProcessing: isAnalyzing || isCapturing,
     sensitivity: effectiveSensitivity,
     mode: aiMode,
+    rearmKey: rearmKey + failedCaptures,
+    rearmDelayMs,
+    paused: autoPaused,
   })
 
   // Handle file input upload
@@ -226,6 +287,7 @@ export function AiCapture({
       if (!(blob instanceof Blob)) {
         throw new Error('Uploaded photo could not be encoded as an image.')
       }
+      showSentPhoto(blob)
       onCapture?.(blob, 'upload')
     } catch {
       notify.error(t('pos:aiUploadFailed', 'Could not read that photo. Try a different image.'))
@@ -334,7 +396,7 @@ export function AiCapture({
                 'absolute top-6 left-6 w-6 h-6 border-t-2 border-l-2 rounded-tl transition-colors duration-200',
                 auto.state === 'countdown'
                   ? 'border-primary ring-2 ring-primary/40'
-                  : auto.state === 'steady'
+                  : auto.state === 'hold_still'
                     ? 'border-emerald-400'
                     : 'border-white/60',
               )}
@@ -344,7 +406,7 @@ export function AiCapture({
                 'absolute top-6 right-6 w-6 h-6 border-t-2 border-r-2 rounded-tr transition-colors duration-200',
                 auto.state === 'countdown'
                   ? 'border-primary ring-2 ring-primary/40'
-                  : auto.state === 'steady'
+                  : auto.state === 'hold_still'
                     ? 'border-emerald-400'
                     : 'border-white/60',
               )}
@@ -354,7 +416,7 @@ export function AiCapture({
                 'absolute bottom-6 left-6 w-6 h-6 border-b-2 border-l-2 rounded-bl transition-colors duration-200',
                 auto.state === 'countdown'
                   ? 'border-primary ring-2 ring-primary/40'
-                  : auto.state === 'steady'
+                  : auto.state === 'hold_still'
                     ? 'border-emerald-400'
                     : 'border-white/60',
               )}
@@ -364,7 +426,7 @@ export function AiCapture({
                 'absolute bottom-6 right-6 w-6 h-6 border-b-2 border-r-2 rounded-br transition-colors duration-200',
                 auto.state === 'countdown'
                   ? 'border-primary ring-2 ring-primary/40'
-                  : auto.state === 'steady'
+                  : auto.state === 'hold_still'
                     ? 'border-emerald-400'
                     : 'border-white/60',
               )}
@@ -372,58 +434,44 @@ export function AiCapture({
           </div>
         )}
 
-        {/* Auto-Capture State Feedback Badges */}
+        {/* Auto-Capture State: Looking → Hold still → (ring) → Capturing → Analyzing */}
         {cameraStatus === 'ready' && !isAnalyzing && auto.isAutoEnabled && (
           <>
-            {auto.state === 'countdown' && (
-              <div className="absolute top-14 inset-x-0 z-20 flex justify-center pointer-events-none animate-in fade-in zoom-in-95">
+            <div className="absolute top-14 inset-x-4 z-20 flex justify-center pointer-events-none" data-testid="auto-state">
+              {auto.state === 'countdown' ? (
                 <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-xl border border-white/20">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-                  </span>
-                  <span>{t('pos:aiCapturingIn', { seconds: auto.countdownRemaining })}</span>
+                  <CaptureRing progress={auto.ringProgress} size={16} />
+                  <span>{t('pos:aiAutoCapturing')}</span>
                 </div>
-              </div>
-            )}
-
-            {auto.state === 'steady' && (
-              <div className="absolute top-14 inset-x-0 z-20 flex justify-center pointer-events-none animate-in fade-in">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600/90 text-white text-xs font-medium shadow-lg backdrop-blur-sm">
-                  <span className="inline-block w-2 h-2 rounded-full bg-white animate-pulse" />
-                  <span>{t('pos:aiHoldingSteady', 'Hold steady...')}</span>
+              ) : auto.state === 'hold_still' ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600/90 text-white text-xs font-medium shadow-lg">
+                  <span className="inline-block w-2 h-2 rounded-full bg-white motion-safe:animate-pulse" />
+                  <span>{t('pos:aiHoldStill')}</span>
                 </div>
-              </div>
-            )}
-
-            {auto.state === 'cooldown' && (
-              <div className="absolute top-14 inset-x-0 z-20 flex justify-center pointer-events-none animate-in fade-in">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900/80 text-white/70 border border-white/10 text-xs backdrop-blur-sm">
-                  <span>{t('pos:aiCooldown', 'Cooldown...')}</span>
+              ) : auto.state === 'capturing' ? (
+                <div className="px-3 py-1 rounded-full bg-black/75 text-white text-xs font-medium">{t('pos:aiCapturingNow')}</div>
+              ) : auto.state === 'paused' && autoPaused ? (
+                <div className="px-3 py-1.5 rounded-full bg-black/80 text-white text-xs font-medium text-center">
+                  {autoPausedMessage || t('pos:aiAutoPaused')}
                 </div>
-              </div>
-            )}
-
-            {auto.isSceneUnchanged && auto.state !== 'countdown' && auto.state !== 'cooldown' && (
-              <div className="absolute top-14 inset-x-4 z-20 flex justify-center pointer-events-none animate-in fade-in">
-                <div className="px-3 py-1 rounded-full bg-black/75 text-white/80 border border-white/15 text-[11px] text-center backdrop-blur-sm">
-                  <span>{t('pos:aiSceneUnchanged', 'Scene unchanged — introduce new items to auto-scan')}</span>
+              ) : auto.state === 'unchanged' ? (
+                <div className="px-3 py-1 rounded-full bg-black/75 text-white/80 border border-white/15 text-[11px] text-center">
+                  {t('pos:aiSceneUnchanged', 'Scene unchanged — introduce new items to auto-scan')}
                 </div>
-              </div>
-            )}
-
-            {auto.isSceneTooDark && auto.state !== 'countdown' && (
-              <div className="absolute top-14 inset-x-4 z-20 flex justify-center pointer-events-none animate-in fade-in">
+              ) : auto.state === 'dark' ? (
                 <div className="px-3 py-1 rounded-full bg-amber-500/90 text-black text-[11px] font-medium text-center shadow">
-                  <span>{t('pos:aiSceneTooDark', 'Lighting too low for auto-capture')}</span>
+                  {t('pos:aiSceneTooDark', 'Lighting too low for auto-capture')}
                 </div>
-              </div>
-            )}
+              ) : auto.state === 'looking' || auto.state === 'cooldown' ? (
+                <div className="px-3 py-1 rounded-full bg-black/60 text-white/80 text-[11px]">{t('pos:aiLooking')}</div>
+              ) : null}
+            </div>
 
-            {auto.abortCount >= 3 && auto.state !== 'countdown' && (
-              <div className="absolute bottom-3 inset-x-4 z-20 flex justify-center pointer-events-none animate-in fade-in">
-                <div className="px-3 py-1.5 rounded-lg bg-black/85 text-amber-300 border border-amber-500/30 text-[11px] text-center backdrop-blur-sm shadow-md">
-                  {t('pos:aiMovementWarning', 'Camera moving too much? Tap Capture manually.')}
+            {/* After a few interrupted rings: a hint, but auto-capture keeps trying */}
+            {auto.showHint && auto.state !== 'countdown' && (
+              <div className="absolute bottom-3 inset-x-4 z-20 flex justify-center pointer-events-none">
+                <div className="px-3 py-1.5 rounded-lg bg-black/85 text-amber-300 border border-amber-500/30 text-[11px] text-center shadow-md">
+                  {t('pos:aiHoldHint')}
                 </div>
               </div>
             )}
@@ -473,20 +521,41 @@ export function AiCapture({
 
         {/* AI Analyzing Backdrop Overlay */}
         {isAnalyzing && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/75 backdrop-blur-md text-white p-6 text-center animate-in fade-in duration-200">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center animate-pulse">
-                <Sparkles className="w-8 h-8 text-primary animate-bounce" />
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 text-white p-6 text-center animate-in fade-in duration-200" data-testid="analyzing-overlay">
+            {/* What was sent, dimmed (instead of a blank or the live camera) */}
+            {sentPhotoUrl && (
+              <img src={sentPhotoUrl} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-40" data-testid="analyzing-photo" />
+            )}
+            <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
+            <div className="relative flex flex-col items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center motion-safe:animate-pulse">
+                <Sparkles className="w-7 h-7 text-primary" />
               </div>
-            </div>
-            <div className="space-y-1">
               <h4 className="font-semibold text-base tracking-wide">
-                {t('pos:aiAnalyzingTitle', 'Analyzing Basket...')}
+                {t('pos:aiAnalyzingTitle', 'Analyzing Basket...')}{' '}
+                <span className="font-mono text-sm text-white/80 tabular-nums" data-testid="analyzing-elapsed">
+                  {(elapsedMs / 1000).toFixed(1)} s
+                </span>
               </h4>
-              <p className="text-xs text-white/70 max-w-xs">
-                {analyzingStep ||
-                  t('pos:aiAnalyzingDesc', 'Gemini AI is identifying items, quantities, and matching prices...')}
-              </p>
+              <ol className="space-y-1 text-left text-xs" aria-live="polite">
+                {ANALYZING_STAGES.map((stage, idx) => {
+                  const current = ANALYZING_STAGES.indexOf(analyzingStage || 'reading')
+                  const status = idx < current ? 'done' : idx === current ? 'active' : 'todo'
+                  return (
+                    <li key={stage} className={cn('flex items-center gap-2', status === 'todo' && 'text-white/50')} data-stage={stage} data-status={status}>
+                      {status === 'done' ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : status === 'active' ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                      ) : (
+                        <span className="inline-block h-3.5 w-3.5 rounded-full border border-white/40" />
+                      )}
+                      {stageLabels[stage]}
+                    </li>
+                  )
+                })}
+              </ol>
+              {analyzingStep && <p className="text-[11px] text-white/60 max-w-xs">{analyzingStep}</p>}
             </div>
           </div>
         )}
@@ -547,9 +616,7 @@ export function AiCapture({
               )}
             >
               {auto.state === 'countdown' ? (
-                <span className="text-base font-extrabold tracking-tight">
-                  {auto.countdownRemaining}s
-                </span>
+                <CaptureRing progress={auto.ringProgress} size={32} />
               ) : (
                 <Camera className="w-6 h-6" />
               )}

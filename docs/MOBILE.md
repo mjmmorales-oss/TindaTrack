@@ -58,7 +58,7 @@ This document details the mobile input, keyboard handling, and overlay architect
 Because browser automation tools cannot simulate iOS Safari's native software keyboard geometry, run these manual device checks on an iPhone and an Android phone running on local network (`npm run dev:lan`).
 
 ### Pre-test Setup
-1. Start dev server: `npm run dev:lan`.
+1. Start dev server: `npm run dev:lan`. It starts the API with `PHP_CLI_SERVER_WORKERS=4`, so the phone's polling and other requests keep working while an AI basket scan waits on Gemini (with one worker everything queued behind the scan). If you start the API yourself, use `PHP_CLI_SERVER_WORKERS=4 php artisan serve` (macOS/Linux).
 2. Connect your mobile device to the same Wi-Fi network and open the LAN URL printed in the terminal (e.g. `http://192.168.x.x:5173`).
 3. Log in as Owner (`nena@tindatrack.ph`).
 

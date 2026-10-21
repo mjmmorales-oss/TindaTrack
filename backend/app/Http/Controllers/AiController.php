@@ -39,13 +39,15 @@ class AiController extends Controller
         $request->validate([
             'image' => ['required', 'file'],
             'capture_mode' => ['nullable', 'in:auto,manual,upload'],
+            'upload_ms' => ['nullable', 'integer', 'min:0', 'max:600000'],
         ]);
 
         $result = $this->aiService->processBasket(
             $request->file('image'),
             $request->user(),
             null,
-            $request->input('capture_mode', 'manual')
+            $request->input('capture_mode', 'manual'),
+            $request->filled('upload_ms') ? (int) $request->input('upload_ms') : null
         );
 
         return response()->json([
@@ -63,12 +65,14 @@ class AiController extends Controller
         $request->validate([
             'image' => ['required', 'file'],
             'capture_mode' => ['nullable', 'in:auto,manual,upload'],
+            'upload_ms' => ['nullable', 'integer', 'min:0', 'max:600000'],
         ]);
 
         $result = $this->aiService->processNewProducts(
             $request->file('image'),
             $request->user(),
-            $request->input('capture_mode', 'manual')
+            $request->input('capture_mode', 'manual'),
+            $request->filled('upload_ms') ? (int) $request->input('upload_ms') : null
         );
 
         return response()->json([
@@ -98,7 +102,13 @@ class AiController extends Controller
             'lines.*.final_product_id' => ['nullable', 'integer'],
             'lines.*.final_quantity' => ['nullable', 'integer', 'min:0'],
             'lines.*.action' => ['required', 'in:accepted,qty_changed,product_changed,removed,added_manually'],
+            // The browser only knows how long the photo upload took after the scan returned
+            'upload_ms' => ['nullable', 'integer', 'min:0', 'max:600000'],
         ]);
+
+        if (isset($validated['upload_ms']) && $scan->upload_ms === null) {
+            $scan->forceFill(['upload_ms' => (int) $validated['upload_ms']])->save();
+        }
 
         // Idempotent: delete prior feedback for this scan
         $scan->feedback()->delete();

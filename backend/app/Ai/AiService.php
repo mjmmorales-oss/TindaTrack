@@ -10,10 +10,12 @@ use App\Models\AiScan;
 use App\Models\AiScanImage;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\ProductLookupService;
 use App\Support\Barcode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -164,7 +166,7 @@ class AiService
      *
      * @return array<string, mixed>
      */
-    public function processBasket(string|UploadedFile $image, ?User $user = null, ?string $scannerSessionId = null, ?string $captureMode = 'manual'): array
+    public function processBasket(string|UploadedFile $image, ?User $user = null, ?string $scannerSessionId = null, ?string $captureMode = 'manual', ?int $uploadMs = null): array
     {
         $this->checkLimits($user);
         $imageData = $this->validateImage($image);
@@ -173,14 +175,13 @@ class AiService
         $query = Product::where('is_active', true)->with(['category', 'image']);
         $totalActive = $query->count();
 
-        // 400 best selling or most recently updated
-        $activeProducts = $query->orderByDesc('updated_at')->limit(400)->get();
-        $catalogTruncated = $totalActive > 400;
+        $activeProducts = $this->basketCatalogProducts($query, $totalActive);
+        $catalogTruncated = $activeProducts->count() < $totalActive;
 
         $catalog = $activeProducts->map(fn (Product $p) => [
             'id' => $p->id,
             'name' => $p->name,
-            'size' => $p->unit ?? 'pc',
+            'unit' => $p->unit ?? 'pc',
             'category' => $p->category?->name ?? '',
         ])->values()->all();
 
@@ -193,6 +194,7 @@ class AiService
         );
 
         $this->recordUsage($user);
+        $postprocessStart = hrtime(true);
 
         // Post-processing for basket items:
         // 1. Group & merge duplicates by product_id
@@ -269,6 +271,7 @@ class AiService
             'items' => $finalItems,
             'unmatched' => $unmatched,
         ];
+        $postprocessMs = (int) round((hrtime(true) - $postprocessStart) / 1e6);
 
         $this->lazyPruneImages();
 
@@ -296,6 +299,10 @@ class AiService
                 'image_sha256' => $imageData['sha256'],
                 'image_id' => $imageId,
                 'latency_ms' => $visionResult->latencyMs,
+                'upload_ms' => $uploadMs,
+                'gemini_ms' => $visionResult->latencyMs,
+                'postprocess_ms' => $postprocessMs,
+                'model_used' => $visionResult->model,
                 'status' => 'ok',
                 'raw_response' => is_array($visionResult->raw) ? $visionResult->raw : ['raw' => $visionResult->raw],
                 'result' => $resultPayload,
@@ -314,6 +321,10 @@ class AiService
             'provider' => config('ai.provider', 'mock'),
             'model' => $visionResult->model,
             'latency_ms' => $visionResult->latencyMs,
+            'timings' => [
+                'gemini_ms' => $visionResult->latencyMs,
+                'postprocess_ms' => $postprocessMs,
+            ],
             'prompt_version' => $visionResult->promptVersion,
             'image_sha256' => $imageData['sha256'],
             'catalog_size' => $totalActive,
@@ -325,11 +336,41 @@ class AiService
     }
 
     /**
+     * Products sent to Gemini as the basket catalog. Small stores send everything (≤ 400).
+     * Above `ai.catalog_focus_threshold` active products, only those with a photo or a sale
+     * in the last 30 days go in (fewer prompt tokens, faster answers), still capped at 400.
+     *
+     * @param  Builder<Product>  $query
+     * @return Collection<int, Product>
+     */
+    protected function basketCatalogProducts($query, int $totalActive)
+    {
+        $cap = 400;
+        if ($totalActive <= (int) config('ai.catalog_focus_threshold', 150)) {
+            return (clone $query)->orderByDesc('updated_at')->limit($cap)->get();
+        }
+
+        $recentlySold = SaleItem::query()
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->where('sales.created_at', '>=', now()->subDays(30))
+            ->distinct()
+            ->pluck('sale_items.product_id');
+
+        $focused = (clone $query)
+            ->where(fn ($q) => $q->whereIn('id', $recentlySold)->orWhereNotNull('image_url')->orWhereHas('image'))
+            ->orderByDesc('updated_at')
+            ->limit($cap)
+            ->get();
+
+        return $focused->isNotEmpty() ? $focused : (clone $query)->orderByDesc('updated_at')->limit($cap)->get();
+    }
+
+    /**
      * Analyzes an intake photo of up to 5 new products, performing GTIN enrichment and duplicate detection.
      *
      * @return array<string, mixed>
      */
-    public function processNewProducts(string|UploadedFile $image, ?User $user = null, ?string $captureMode = 'manual'): array
+    public function processNewProducts(string|UploadedFile $image, ?User $user = null, ?string $captureMode = 'manual', ?int $uploadMs = null): array
     {
         $this->checkLimits($user);
         $imageData = $this->validateImage($image);
@@ -344,9 +385,10 @@ class AiService
         );
 
         $this->recordUsage($user);
+        $postprocessStart = hrtime(true);
 
         // Preload all store products for duplicate detection
-        $existingProducts = Product::all(['id', 'name', 'barcode', 'category_id', 'price', 'unit']);
+        $existingProducts = Product::all(['id', 'name', 'barcode', 'category_id', 'price', 'unit', 'image_url']);
 
         $processedProducts = [];
         foreach ($visionResult->products as $raw) {
@@ -409,6 +451,8 @@ class AiService
             'more_than_five' => (bool) $visionResult->moreThanFive,
         ];
 
+        $postprocessMs = (int) round((hrtime(true) - $postprocessStart) / 1e6);
+
         $this->lazyPruneImages();
 
         $imageId = null;
@@ -435,6 +479,10 @@ class AiService
                 'image_sha256' => $imageData['sha256'],
                 'image_id' => $imageId,
                 'latency_ms' => $visionResult->latencyMs,
+                'upload_ms' => $uploadMs,
+                'gemini_ms' => $visionResult->latencyMs,
+                'postprocess_ms' => $postprocessMs,
+                'model_used' => $visionResult->model,
                 'status' => 'ok',
                 'raw_response' => is_array($visionResult->raw) ? $visionResult->raw : ['raw' => $visionResult->raw],
                 'result' => $resultPayload,
@@ -455,6 +503,10 @@ class AiService
             'latency_ms' => $visionResult->latencyMs,
             'prompt_version' => $visionResult->promptVersion,
             'image_sha256' => $imageData['sha256'],
+            'timings' => [
+                'gemini_ms' => $visionResult->latencyMs,
+                'postprocess_ms' => $postprocessMs,
+            ],
             'products' => $processedProducts,
             'more_than_five' => (bool) $visionResult->moreThanFive,
             'raw' => $visionResult->raw,
@@ -477,6 +529,7 @@ class AiService
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
+                        'image_url' => $p->image_url,
                         'reason' => 'barcode',
                     ];
                 }
@@ -498,6 +551,7 @@ class AiService
                     $bestMatch = [
                         'id' => $p->id,
                         'name' => $p->name,
+                        'image_url' => $p->image_url,
                         'reason' => 'name',
                         'similarity' => round($percent / 100, 2),
                     ];

@@ -103,5 +103,13 @@
   "modeManual": "Manual Shutter",
   "modeUpload": "File Upload",
   "acceptanceRate": "Acceptance Rate",
-  "avgCorrectionsPerScan": "Avg Corrections / Scan"
+  "avgCorrectionsPerScan": "Avg Corrections / Scan",
+  "timingSection": "Where the time goes",
+  "timingDesc": "Average upload, Gemini and post-processing time per scan; basket-v1 vs basket-v2 prompt and primary vs fallback model.",
+  "timingGroup": "Group",
+  "timingScans": "Scans",
+  "timingUpload": "Upload",
+  "timingGemini": "Gemini",
+  "timingPostprocess": "Matching",
+  "timingAll": "All scans"
 }

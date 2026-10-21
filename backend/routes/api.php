@@ -104,6 +104,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         ->middleware('role:owner,cashier');
     Route::delete('/scanner-sessions/{id}', [ScannerSessionController::class, 'destroy'])
         ->middleware('role:owner,cashier');
+    Route::post('/scanner-sessions/{id}/basket-done', [ScannerSessionController::class, 'basketDone'])
+        ->middleware('role:owner,cashier');
 
     // AI vision & feedback (accessible by owner and cashier)
     Route::get('/ai/status', [AiController::class, 'status']);

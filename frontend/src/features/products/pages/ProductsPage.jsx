@@ -134,18 +134,23 @@ export function ProductsPage() {
   // AI Bulk Product Add states
   const [isAiCaptureOpen, setIsAiCaptureOpen] = useState(false)
   const [isAiScanning, setIsAiScanning] = useState(false)
-  const [aiScanningStep, setAiScanningStep] = useState('')
+  const [aiScanStage, setAiScanStage] = useState(null)
+  const [aiCaptureRearmKey, setAiCaptureRearmKey] = useState(0)
   const [isReviewTableOpen, setIsReviewTableOpen] = useState(false)
   const [productScanResult, setProductScanResult] = useState(null)
   const [capturedImageBlob, setCapturedImageBlob] = useState(null)
 
   const handleProductPhotoCapture = async (blob, captureMode = 'manual') => {
     setIsAiScanning(true)
-    setAiScanningStep(t('products:aiPreparingPhoto', 'Preparing photo for AI analysis...'))
     setCapturedImageBlob(blob)
     try {
-      setAiScanningStep(t('products:aiDetectingProducts', 'Detecting products and GTIN barcodes...'))
-      const result = await aiService.productScan(blob, { capture_mode: captureMode })
+      const result = await aiService.productScan(blob, { capture_mode: captureMode, onStage: setAiScanStage })
+      // Nothing detected: stay on the camera, auto-capture tries again in 2 s
+      if ((result.products || []).length === 0) {
+        notify.info(t('pos:aiNothingDetected'), t('pos:aiNothingDetectedDesc'))
+        setAiCaptureRearmKey((k) => k + 1)
+        return
+      }
       setProductScanResult(result)
       setIsAiCaptureOpen(false)
       setIsReviewTableOpen(true)
@@ -156,7 +161,7 @@ export function ProductsPage() {
       )
     } finally {
       setIsAiScanning(false)
-      setAiScanningStep('')
+      setAiScanStage(null)
     }
   }
 
@@ -867,12 +872,14 @@ export function ProductsPage() {
         <AiCapture
           onCapture={handleProductPhotoCapture}
           isAnalyzing={isAiScanning}
-          analyzingStep={aiScanningStep}
+          analyzingStage={aiScanStage}
+          rearmKey={aiCaptureRearmKey}
+          rearmDelayMs={2000}
           onCancel={() => setIsAiCaptureOpen(false)}
           title={t('products:aiCaptureTitle', 'AI Stock-In')}
           hint={t('products:aiCaptureDesc', 'Place up to 5 different products, labels facing the camera, then hold still.')}
           autoCaptureEnabled={true}
-          featureKey="stockin"
+          aiMode="stockin"
         />
       </ResponsiveDialog>
 

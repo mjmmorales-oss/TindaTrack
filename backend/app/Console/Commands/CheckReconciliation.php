@@ -60,13 +60,13 @@ class CheckReconciliation extends Command
         $uploadMax = $this->iniBytes((string) ini_get('upload_max_filesize'));
         $postMax = $this->iniBytes((string) ini_get('post_max_size'));
         if ($uploadMax > 0 && $uploadMax < 2 * 1024 * 1024) {
-            $warnings[] = 'PHP upload_max_filesize is below 2M: AI photos (up to 1.4 MB) may be dropped.';
+            $warnings[] = 'PHP upload_max_filesize is below 2M: large photos may be dropped.';
         }
         if ($postMax > 0 && $uploadMax > 0 && $postMax < $uploadMax) {
             $warnings[] = 'PHP post_max_size is smaller than upload_max_filesize.';
         }
-        if ((int) config('ai.max_image_kb') < 1500) {
-            $warnings[] = 'AI_MAX_IMAGE_KB is below the SPA\'s 1.4 MB AI photo cap.';
+        if ((int) config('ai.max_image_kb') < 600) {
+            $warnings[] = 'AI_MAX_IMAGE_KB is below the SPA\'s 600 KB AI photo cap.';
         }
 
         foreach ($warnings as $warning) {

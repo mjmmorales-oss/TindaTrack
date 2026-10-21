@@ -58,6 +58,33 @@ class AiMetricsService
             'checkout_timing' => $checkoutMetrics,
             'visual_search' => $visualMetrics,
             'capture_mode' => $captureModeMetrics,
+            'timings' => $this->calculateTimingMetrics($allScans),
+        ];
+    }
+
+    /**
+     * Where scan time goes (v2.3): averages of upload / Gemini / post-processing,
+     * by prompt version (basket-v1 vs basket-v2 for the paper) and by the model
+     * that actually answered (primary vs fallback).
+     *
+     * @param  Collection<int, AiScan>  $scans
+     * @return array<string, mixed>
+     */
+    protected function calculateTimingMetrics($scans): array
+    {
+        $avg = fn ($rows, string $col) => ($v = $rows->whereNotNull($col)->avg($col)) === null ? null : (int) round($v);
+        $summary = fn ($rows) => [
+            'scans_count' => $rows->count(),
+            'avg_upload_ms' => $avg($rows, 'upload_ms'),
+            'avg_gemini_ms' => $avg($rows, 'gemini_ms') ?? $avg($rows, 'latency_ms'),
+            'avg_postprocess_ms' => $avg($rows, 'postprocess_ms'),
+            'avg_total_ms' => $avg($rows, 'latency_ms'),
+        ];
+
+        return [
+            'overall' => $summary($scans),
+            'by_prompt_version' => $scans->groupBy(fn ($s) => $s->prompt_version ?? 'unknown')->map($summary)->all(),
+            'by_model' => $scans->groupBy(fn ($s) => $s->model_used ?? $s->model ?? 'unknown')->map($summary)->all(),
         ];
     }
 

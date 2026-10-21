@@ -156,5 +156,7 @@
   "deviceLabel": "Device:",
   "phone": "Phone",
   "stepOpenPhoneApp": "1. Sa phone, buksan ang TindaTrack → \"Gamitin ang phone na ito bilang scanner\" (o ang camera app).",
-  "stepScanQrInApp": "2. I-tap ang \"I-scan ang pairing QR\" at itutok sa QR na ito (o i-type ang code)."
+  "stepScanQrInApp": "2. I-tap ang \"I-scan ang pairing QR\" at itutok sa QR na ito (o i-type ang code).",
+  "sentWaitingForCashier": "Naipadala sa POS ✓. Hinihintay ang kahera",
+  "scanNextBasket": "I-scan ang susunod na basket"
 }

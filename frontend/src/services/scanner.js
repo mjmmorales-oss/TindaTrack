@@ -19,6 +19,7 @@ export const createScannerSession = (data) => scannerService.createScannerSessio
 export const getScannerSession = (id) => scannerService.getScannerSession(id)
 export const listScannerEvents = (id, after) => scannerService.listScannerEvents(id, after)
 export const endScannerSession = (id) => scannerService.endScannerSession(id)
+export const basketDone = (id) => scannerService.basketDone(id)
 export const getUnknownBarcodes = () => scannerService.getUnknownBarcodes()
 export const pairScanner = (data) => scannerService.pairScanner(data)
 export const sendScan = (data) => scannerService.sendScan(data)

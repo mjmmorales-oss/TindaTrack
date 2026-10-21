@@ -24,6 +24,7 @@ import { pairScanner, sendScan, scannerHeartbeat, sendAiBasket } from '@/service
 import { beep, vibrate } from '@/lib/feedback'
 import { formatCurrency } from '@/lib/format'
 import { parsePairingCode } from '@/lib/barcode'
+import { makePreviewDataUrl } from '@/lib/imagePrep'
 import { notify } from '@/lib/notify'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
@@ -86,6 +87,9 @@ export function PhoneScannerPage() {
   const [scanHistory, setScanHistory] = useState([])
   // In-app camera for the laptop's pairing QR (no need to leave the app)
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false)
+  // After sending a basket the phone waits for the cashier (no second basket on top)
+  const [waitingForCashier, setWaitingForCashier] = useState(false)
+  const [basketRearmKey, setBasketRearmKey] = useState(0)
 
   const hasAutoPaired = useRef(false)
 
@@ -201,19 +205,25 @@ export function PhoneScannerPage() {
   useEffect(() => {
     if (!sessionInfo) return
 
+    // Faster while waiting for the cashier, so the phone re-arms right after Add to Cart
     const timer = setInterval(async () => {
       try {
-        await scannerHeartbeat()
+        const res = await scannerHeartbeat()
+        const beat = res?.data ?? res
+        if (waitingForCashier && beat?.basket_pending === false) {
+          setWaitingForCashier(false)
+          setBasketRearmKey((k) => k + 1)
+        }
       } catch (err) {
         const status = err?.status ?? err?.response?.status
         if (status === 401) {
           disconnect(t('scanner:sessionEndedRescan', 'Session ended. Please scan a new QR code.'))
         }
       }
-    }, 10000)
+    }, waitingForCashier ? 2000 : 10000)
 
     return () => clearInterval(timer)
-  }, [sessionInfo, t])
+  }, [sessionInfo, waitingForCashier, t])
 
   // Disconnect function
   const disconnect = (message = null) => {
@@ -275,12 +285,33 @@ export function PhoneScannerPage() {
   }
 
   // Handle AI basket photo capture from phone
-  const handleAiBasketPhoto = async (blob, captureMode = 'manual') => {
+  const handleAiBasketPhoto = async (blob, captureMode = 'manual', { onStage } = {}) => {
     try {
-      const res = await sendAiBasket(blob, { capture_mode: captureMode })
+      // Small photo for the POS review (the server drops it if it's too big)
+      const preview = await makePreviewDataUrl(blob)
+      const res = await sendAiBasket(blob, {
+        capture_mode: captureMode,
+        onStage,
+        ...(preview ? { preview_data_url: preview } : {}),
+      })
+      const scan = res?.scan || res
+
+      // Nothing detected: nothing was sent to the POS; try again in 2 s
+      if (res?.empty) {
+        setLastScan({
+          id: Date.now(),
+          barcode: 'AI_BASKET',
+          status: 'unknown',
+          product: { name: t('pos:aiNothingDetected'), price: 0 },
+          time: new Date().toLocaleTimeString('en-PH'),
+        })
+        setBasketRearmKey((k) => k + 1)
+        return
+      }
+
       beep()
       vibrate(100)
-      const scan = res?.scan || res
+      setWaitingForCashier(true)
       const count = scan?.items?.length ?? scan?.detected_count ?? scan?.matched_count ?? 0
       setLastScan({
         id: Date.now(),
@@ -521,6 +552,26 @@ export function PhoneScannerPage() {
               </div>
             </div>
 
+            {waitingForCashier && (
+              <div
+                className="flex flex-col gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between"
+                data-testid="waiting-for-cashier"
+              >
+                <p className="text-sm font-medium">{t('scanner:sentWaitingForCashier')}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  onClick={() => {
+                    setWaitingForCashier(false)
+                    setBasketRearmKey((k) => k + 1)
+                  }}
+                >
+                  {t('scanner:scanNextBasket')}
+                </Button>
+              </div>
+            )}
+
             {/* Tabs: Barcode | AI Basket (Visual Match needs the store catalog, so it stays on the POS) */}
             <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
               <BarcodeCapture
@@ -529,6 +580,9 @@ export function PhoneScannerPage() {
                   notify.info(t('scanner:alreadyConnected'), t('scanner:alreadyConnectedDesc'))
                 }
                 onBasketCapture={handleAiBasketPhoto}
+                basketPaused={waitingForCashier}
+                basketPausedMessage={t('scanner:sentWaitingForCashier')}
+                basketRearmKey={basketRearmKey}
                 hideVisual
                 cameraDefault="on"
                 continuous={true}
