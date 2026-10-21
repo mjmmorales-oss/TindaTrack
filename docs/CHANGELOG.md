@@ -2,6 +2,15 @@
 
 All notable changes in Phase 3 of TindaTrack are documented here.
 
+## [v2.3.0] - 2026-10-21 - AI Basket speed, auto-capture that works, review that never vanishes
+
+Details and the human check: `docs/AUDIT-v2.3.0.md`.
+
+- **Speed:** Gemini thinking minimal/off, media resolution medium, output cap, 12 s primary → 15 s fallback (worst case ~27 s, was 60 s), basket-v2 slim catalog prompt, 1024 px / 600 KB photos, 4 local server workers, timing breakdown (upload / Gemini / matching) in the review and AI Lab, live analysis stages.
+- **Auto-capture:** shake- and exposure-tolerant motion score, 800 ms hold + 1 s ring, short same-scene guard, never gives up, re-arms after every result.
+- **Review:** phone pauses after sending until the POS finishes; incoming baskets ask Replace / Add / Ignore; no close on outside click or swipe; Esc/X confirm; pending scan survives reloads with a Resume chip.
+- **Images:** product thumbnails in the review (prop bug), phone photo preview, collapsing photo pane, sent photo behind the analyzing overlay.
+
 ## [v2.2.0] - 2026-10-21 - Demo-day fixes, phone & scanner UX, full-system bug hunt, hardening
 
 Full audit with root causes, tests and the demo script: `docs/AUDIT-v2.2.0.md`.
