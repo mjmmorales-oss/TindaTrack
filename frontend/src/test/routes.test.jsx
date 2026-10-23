@@ -88,7 +88,7 @@ function assertLayoutIntegrity(path) {
     guestRoutes.forEach(({ path, expected }) => {
       it(`renders ${path} without error`, async () => {
         renderRoute(path, { role: 'guest' })
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
         const elements = await screen.findAllByText(expected, {}, { timeout: 8000 })
         expect(elements.length).toBeGreaterThan(0)
         assertLayoutIntegrity(path)
@@ -118,7 +118,7 @@ function assertLayoutIntegrity(path) {
     ownerRoutes.forEach(({ path, expected }) => {
       it(`renders ${path} for owner`, async () => {
         renderRoute(path, { role: 'owner' })
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
         const elements = await screen.findAllByText(expected, {}, { timeout: 12000 })
         expect(elements.length).toBeGreaterThan(0)
         assertLayoutIntegrity(path)
@@ -143,7 +143,7 @@ function assertLayoutIntegrity(path) {
     cashierRoutes.forEach(({ path, expected }) => {
       it(`renders ${path} for cashier`, async () => {
         renderRoute(path, { role: 'cashier' })
-        expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+        expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
         const elements = await screen.findAllByText(expected, {}, { timeout: 12000 })
         expect(elements.length).toBeGreaterThan(0)
         assertLayoutIntegrity(path)
@@ -152,7 +152,7 @@ function assertLayoutIntegrity(path) {
 
     it('redirects cashier from owner-only route /inventory to /403', async () => {
       renderRoute('/inventory', { role: 'cashier' })
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const elements = await screen.findAllByText(/Bawal ang Aksyon|403/i, {}, { timeout: 8000 })
       expect(elements.length).toBeGreaterThan(0)
     })

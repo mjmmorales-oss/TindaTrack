@@ -27,5 +27,18 @@
   "theme": "Theme",
   "themeLight": "Light Mode",
   "themeDark": "Dark Mode",
-  "themeSystem": "System Theme"
+  "themeSystem": "System Theme",
+  "salesHistory": "Sales History",
+  "stockInventory": "Stock & Inventory",
+  "reportsAnalytics": "Reports & Analytics",
+  "staffAccounts": "Staff Accounts",
+  "storeSettings": "Store Settings",
+  "menuTitle": "TindaTrack Menu",
+  "accountSecurity": "Account & Security",
+  "usePhoneAsScanner": "Use this phone as a scanner",
+  "home": "Home",
+  "utangShort": "Utang",
+  "more": "More",
+  "openPos": "Open Point of Sale",
+  "mobileNav": "Mobile navigation"
 }

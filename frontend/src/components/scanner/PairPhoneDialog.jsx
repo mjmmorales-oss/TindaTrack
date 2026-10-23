@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeSVG } from 'qrcode.react'
 import {
-  Smartphone,
   QrCode,
   RefreshCw,
   AlertTriangle,
@@ -20,6 +19,7 @@ import {
 } from '@/services/scanner.js'
 import { notify } from '@/lib/notify'
 import { getApiBaseUrl } from '@/lib/api'
+import { buildPairingUrl, getPairingBaseUrl } from '@/lib/pairingUrl'
 
 /**
  * PairPhoneDialog
@@ -32,7 +32,7 @@ export function PairPhoneDialog({
   onPaired,
   mode = 'pos',
 }) {
-  const { t } = useTranslation(['scanner', 'common'])
+  const { t } = useTranslation(['scanner', 'common', 'pos'])
   const [session, setSession] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -47,17 +47,14 @@ export function PairPhoneDialog({
   const isPairedRef = useRef(false)
   const isCreatingRef = useRef(false)
 
-  const publicAppUrl =
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PUBLIC_APP_URL) ||
-    (typeof window !== 'undefined' ? window.location.origin : '')
-
-  const isLocalhostOrigin =
-    typeof publicAppUrl === 'string' &&
-    /localhost|127\.0\.0\.1/.test(publicAppUrl)
+  const pairingBase = getPairingBaseUrl()
+  // Only warn when the QR itself would point at localhost (the LAN origin fixes dev)
+  const isLocalhostOrigin = pairingBase.isLocalhost
 
   const apiBase = getApiBaseUrl()
   const isApiLocalhost =
     typeof apiBase === 'string' && /localhost|127\.0\.0\.1/.test(apiBase)
+  // The phone follows the QR, then calls the API: a localhost API is unreachable from it
   const isApiMismatch = !isLocalhostOrigin && isApiLocalhost
 
   const startNewSession = useCallback(
@@ -120,7 +117,7 @@ export function PairPhoneDialog({
         isCreatingRef.current = false
       }
     },
-    [mode],
+    [mode, t],
   )
 
   // Single session creation per dialog open (StrictMode-safe)
@@ -191,7 +188,7 @@ export function PairPhoneDialog({
           isPairedRef.current = true
           setPairedDevice(status.device_label || 'Phone')
           clearInterval(pollingRef.current)
-          notify.success(t('scanner:connectedTitle', 'Connected!'), `Phone: ${status.device_label || 'Phone'}`)
+          notify.success(t('scanner:phoneConnected'), status.device_label || t('scanner:phone'))
           onPaired?.({
             ...session,
             device_label: status.device_label,
@@ -206,10 +203,7 @@ export function PairPhoneDialog({
   }, [open, session, pairedDevice, onPaired, t])
 
   const pairingCode = session?.pairing_code || session?.data?.pairing_code || ''
-  const scanUrl =
-    session && pairingCode
-      ? `${publicAppUrl}/scan?code=${encodeURIComponent(pairingCode)}`
-      : ''
+  const scanUrl = session && pairingCode ? buildPairingUrl(pairingBase.baseUrl, pairingCode) : ''
 
   const minutes = timeLeft !== null ? Math.floor(timeLeft / 60) : 0
   const seconds = timeLeft !== null ? timeLeft % 60 : 0
@@ -230,8 +224,8 @@ export function PairPhoneDialog({
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t('scanner:connectPhoneTitle', 'Connect Phone as Barcode Scanner')}
-      description={t('scanner:connectPhoneDesc', 'Use your smartphone camera to scan products wirelessly.')}
+      title={t('pos:usePhoneAsScanner', 'Use phone as scanner')}
+      description={t('pos:usePhoneAsScannerHint', 'Scan with your phone, items appear here')}
       className="max-w-md"
     >
       <div className="space-y-4 py-2">
@@ -241,7 +235,7 @@ export function PairPhoneDialog({
             <AlertDescription className="text-warning-foreground font-medium">
               {t(
                 'scanner:localhostWarning',
-                'You are accessing on localhost. The phone camera cannot reach this over Wi-Fi. Run npm run dev:lan in the terminal or use the deployed link.',
+                "Phones can't open localhost. Run npm run dev:lan and open the Network address on this laptop.",
               )
                 .split('localhost')
                 .reduce((acc, part, idx) => {
@@ -250,6 +244,15 @@ export function PairPhoneDialog({
                 }, [])}
             </AlertDescription>
           </Alert>
+        )}
+
+        {pairingBase.source === 'lan' && (
+          <p className="text-xs text-muted-foreground">
+            {t('scanner:lanQrHint', {
+              url: pairingBase.baseUrl,
+              defaultValue: 'The QR uses this laptop’s Wi-Fi address ({{url}}). Keep the phone on the same Wi-Fi.',
+            })}
+          </p>
         )}
 
         {isApiMismatch && (
@@ -303,11 +306,11 @@ export function PairPhoneDialog({
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <div>
-              <p className="font-bold text-foreground text-base">
-                {t('scanner:connectedTitle', 'Connected!')}
+              <p className="font-bold text-foreground text-base" data-testid="pairing-wait-status">
+                {t('scanner:phoneConnected')}
               </p>
               <p className="text-sm text-muted-foreground">
-                Device: <span className="font-semibold text-foreground">{pairedDevice}</span>
+                {t('scanner:deviceLabel')} <span className="font-semibold text-foreground">{pairedDevice}</span>
               </p>
             </div>
             <p className="text-xs text-muted-foreground max-w-xs">
@@ -328,7 +331,7 @@ export function PairPhoneDialog({
               <div className="p-3 bg-white rounded-lg shadow-xs">
                 <QRCodeSVG
                   value={scanUrl}
-                  size={180}
+                  size={220}
                   level="M"
                   includeMargin={false}
                 />
@@ -358,13 +361,27 @@ export function PairPhoneDialog({
               </div>
             </div>
 
+            {/* Live pairing status (session poll every 2 s) */}
+            <div
+              role="status"
+              aria-live="polite"
+              data-testid="pairing-wait-status"
+              className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary/60 motion-safe:animate-ping" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+              </span>
+              {t('scanner:waitingForPhone')}
+            </div>
+
             {/* Steps Guide */}
             <div className="text-xs space-y-1.5 text-muted-foreground bg-card p-3 rounded-lg border border-border">
               <p className="font-semibold text-foreground text-[11px] uppercase tracking-wider">
                 {t('scanner:stepsTitle', 'Steps:')}
               </p>
-              <p>{t('scanner:stepOpenPhone', '1. Open your phone camera.')}</p>
-              <p>{t('scanner:stepScanQr', '2. Scan the QR code above (or visit /scan).')}</p>
+              <p>{t('scanner:stepOpenPhoneApp')}</p>
+              <p>{t('scanner:stepScanQrInApp')}</p>
               <p>{t('scanner:stepStartScanning', '3. Start scanning products!')}</p>
             </div>
 

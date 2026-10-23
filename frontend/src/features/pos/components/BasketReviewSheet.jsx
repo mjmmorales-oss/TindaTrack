@@ -9,13 +9,15 @@ import {
   ShoppingCart,
   Search,
   X,
-  Package,
   Camera,
+  Smartphone,
+  Timer,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ResponsiveDialog } from '@/components/overlays/ResponsiveDialog'
+import { ConfirmDialog } from '@/components/overlays/ConfirmDialog'
 import { Money } from '@/components/common/Money'
 import { ProductThumb } from '@/components/common/ProductThumb'
 import { useCartStore } from '@/stores/cartStore'
@@ -23,6 +25,7 @@ import { useProducts } from '@/features/products/hooks/useProducts'
 import { aiService } from '@/services/aiService'
 import { notify } from '@/lib/notify'
 import { buildBasketFeedbackLines } from '@/lib/aiContract.js'
+import { toReviewDraft } from '@/features/pos/lib/basketReview'
 
 /**
  * Helper to determine confidence badge styling.
@@ -56,8 +59,14 @@ function getConfidenceStyle(confidence = 0) {
  * @param {boolean} props.open
  * @param {(open: boolean) => void} props.onOpenChange
  * @param {object} props.scanResult
- * @param {string} props.imageSrc - Captured photo data/blob URL
- * @param {() => void} [props.onConfirmed]
+ * @param {string} props.imageSrc - Captured photo data/blob URL (falls back to the phone's preview)
+ * @param {{ confirmedItems: object[], unmatchedItems: object[] }} [props.draft] - The cashier's saved edits
+ * @param {string} [props.draftKey] - Changes when a different basket should be loaded
+ * @param {(draft: object) => void} [props.onDraftChange] - Every edit (kept by the POS page)
+ * @param {object|null} [props.incoming] - A basket that arrived while this one is open
+ * @param {(action: 'replace'|'add'|'ignore') => void} [props.onResolveIncoming]
+ * @param {() => void} [props.onConfirmed] - After Add to Cart
+ * @param {() => void} [props.onDiscard] - The cashier confirmed discarding this scan
  * @param {(mode: 'add'|'replace') => void} [props.onScanAgain]
  */
 export function BasketReviewSheet({
@@ -65,11 +74,17 @@ export function BasketReviewSheet({
   onOpenChange,
   scanResult,
   imageSrc,
+  draft,
+  draftKey,
+  onDraftChange,
+  incoming = null,
+  onResolveIncoming,
   onConfirmed,
+  onDiscard,
   onScanAgain,
 }) {
   const { t } = useTranslation(['pos', 'common'])
-  const { data: productsData } = useProducts({ per_page: 200 })
+  const { data: productsData } = useProducts({ per_page: 100 })
   const allProducts = productsData?.data || []
 
   // Internal state for reviewable items
@@ -77,43 +92,48 @@ export function BasketReviewSheet({
   const [unmatchedItems, setUnmatchedItems] = useState([])
   const [hoveredItemId, setHoveredItemId] = useState(null)
   const [showScanAgainChoice, setShowScanAgainChoice] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
   // Sub-modal / picker state
   const [pickerMode, setPickerMode] = useState(null) // 'swap' | 'add' | 'match'
   const [activePickerTargetId, setActivePickerTargetId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Sync state whenever scanResult changes
+  // Load a basket once per draftKey (not on every open): reopening/resuming keeps edits
+  const loadKey = draftKey ?? scanResult
+  const [loadedKey, setLoadedKey] = useState(null)
+  if (open && loadKey && loadKey !== loadedKey) {
+    const initial = draft ?? toReviewDraft(scanResult)
+    setLoadedKey(loadKey)
+    setConfirmedItems(initial.confirmedItems)
+    setUnmatchedItems(initial.unmatchedItems)
+    setHoveredItemId(null)
+    setPickerMode(null)
+    setActivePickerTargetId(null)
+  }
+  const isLoaded = open && loadKey && loadKey === loadedKey
+
+  // Report every edit so the POS page can keep it (sessionStorage) until Add to Cart / Discard
   useEffect(() => {
-    if (scanResult && open) {
-      const initialConfirmed = (scanResult.items || []).map((item, idx) => ({
-        id: item.id || `item_${idx}`,
-        matched_product_id: item.matched_product_id,
-        matched_product: item.matched_product,
-        label: item.label,
-        quantity: Math.max(1, Number(item.quantity) || 1),
-        confidence: item.confidence || 0.9,
-        bounding_box: item.bounding_box || null,
-        original_product_id: item.matched_product_id,
-        original_quantity: item.quantity,
-        is_manual: false,
-      }))
+    if (isLoaded) onDraftChange?.({ confirmedItems, unmatchedItems })
+    // onDraftChange is a stable setter from usePendingBasket
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmedItems, unmatchedItems, isLoaded])
 
-      const initialUnmatched = (scanResult.unmatched_items || []).map((item, idx) => ({
-        id: item.id || `unmatched_${idx}`,
-        label: item.label,
-        quantity: Math.max(1, Number(item.quantity) || 1),
-        confidence: item.confidence || 0.7,
-        bounding_box: item.bounding_box || null,
-      }))
+  const hasItems = confirmedItems.length > 0 || unmatchedItems.length > 0
+  const discard = () => {
+    setShowDiscardConfirm(false)
+    if (onDiscard) onDiscard()
+    else onOpenChange?.(false)
+  }
+  // Esc, X and Cancel: never drop a scan with items without asking
+  const requestClose = () => {
+    if (hasItems) setShowDiscardConfirm(true)
+    else discard()
+  }
 
-      setConfirmedItems(initialConfirmed)
-      setUnmatchedItems(initialUnmatched)
-      setHoveredItemId(null)
-      setPickerMode(null)
-      setActivePickerTargetId(null)
-    }
-  }, [scanResult, open])
+  const previewSrc = imageSrc || scanResult?.preview_data_url || null
+  const analyzedMs = scanResult?.client_timings?.total_ms || scanResult?.latency_ms || 0
 
   // Filter products for swap/add dialog
   const filteredProducts = useMemo(() => {
@@ -187,7 +207,9 @@ export function BasketReviewSheet({
         setConfirmedItems((prev) => [
           ...prev,
           {
-            id: `matched_${Date.now()}`,
+            // Keep the unmatched line's id: buildBasketFeedbackLines pairs it back to the
+            // original unknown item (a new id logged it as 'removed')
+            id: unmatchedItem.id,
             matched_product_id: product.id,
             matched_product: product,
             label: product.name,
@@ -243,10 +265,10 @@ export function BasketReviewSheet({
 
     const { add } = useCartStore.getState()
 
-    // 1. Add each confirmed item to cart with add_method: 'ai'
+    // 1. Add each confirmed item to cart with add_method 'ai_basket' (AiMetricsService buckets)
     for (const item of confirmedItems) {
       if (item.matched_product) {
-        add(item.matched_product, item.quantity, 'ai')
+        add(item.matched_product, item.quantity, 'ai_basket')
       }
     }
 
@@ -257,7 +279,11 @@ export function BasketReviewSheet({
         unmatchedItems,
         scanResult,
       )
-      aiService.sendFeedback(scanResult.scan_id, feedbackPayload.lines).catch(() => {})
+      aiService
+        .sendFeedback(scanResult.scan_id, feedbackPayload.lines, {
+          upload_ms: scanResult.client_timings?.upload_ms,
+        })
+        .catch(() => {})
     }
 
     notify.success(
@@ -269,13 +295,14 @@ export function BasketReviewSheet({
     )
 
     onConfirmed?.()
-    onOpenChange(false)
+    if (!onConfirmed) onOpenChange?.(false)
   }
 
   return (
     <ResponsiveDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => (next ? onOpenChange?.(true) : requestClose())}
+      dismissible={false}
       title={
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary">
@@ -284,21 +311,58 @@ export function BasketReviewSheet({
           <span>{t('pos:aiReviewTitle', 'Review AI Basket Scan')}</span>
         </div>
       }
-      description={t(
-        'pos:aiReviewDesc',
-        'Verify detected items and quantities before adding them to the cart.',
-      )}
+      description={
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span>
+            {t('pos:aiReviewDesc', 'Verify detected items and quantities before adding them to the cart.')}
+          </span>
+          {analyzedMs > 0 && (
+            <span className="inline-flex items-center gap-1 font-medium text-foreground" data-testid="analyzed-in">
+              <Timer className="h-3.5 w-3.5" />
+              {t('pos:aiAnalyzedIn', { seconds: (analyzedMs / 1000).toFixed(1) })}
+            </span>
+          )}
+        </span>
+      }
       className="sm:max-w-4xl"
     >
       <div className="flex flex-col gap-4 py-2">
+        {/* A basket from the phone while this one is open: never replace it silently */}
+        {incoming && (
+          <div
+            role="status"
+            data-testid="incoming-basket-banner"
+            className="flex flex-col gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="flex items-center gap-2 text-sm font-medium">
+              <Smartphone className="h-4 w-4 text-primary" />
+              {t('pos:aiIncomingScan', {
+                count: (incoming.result?.items || []).reduce((n, i) => n + (Number(i.quantity) || 0), 0),
+              })}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" className="h-11 sm:h-9" onClick={() => onResolveIncoming?.('replace')}>
+                {t('pos:aiIncomingReplace')}
+              </Button>
+              <Button type="button" size="sm" variant="outline" className="h-11 sm:h-9" onClick={() => onResolveIncoming?.('add')}>
+                {t('pos:aiIncomingAdd')}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" className="h-11 sm:h-9" onClick={() => onResolveIncoming?.('ignore')}>
+                {t('pos:aiIncomingIgnore')}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-          {/* Photo with Interactive SVG Bounding Box Overlay */}
-          <div className="md:col-span-5 flex flex-col gap-2">
+          {/* Photo with Interactive SVG Bounding Box Overlay (hidden when there is no photo) */}
+          {previewSrc && (
+          <div className="md:col-span-5 flex flex-col gap-2" data-testid="review-photo-pane">
             <div className="relative w-full aspect-square bg-neutral-900 rounded-xl overflow-hidden border border-border shadow-inner flex items-center justify-center">
-              {imageSrc ? (
+              {previewSrc && (
                 <>
                   <img
-                    src={imageSrc}
+                    src={previewSrc}
                     alt="Captured basket"
                     className="w-full h-full object-cover"
                   />
@@ -374,20 +438,18 @@ export function BasketReviewSheet({
                     })}
                   </svg>
                 </>
-              ) : (
-                <div className="text-muted-foreground flex flex-col items-center gap-2 p-6">
-                  <Package className="w-10 h-10 opacity-40" />
-                  <span className="text-xs">No image preview available</span>
-                </div>
               )}
             </div>
             <p className="text-[11px] text-muted-foreground text-center">
-              Hover over items or click boxes to locate detected products.
+              {t('pos:aiBoxesHint')}
             </p>
           </div>
+          )}
 
-          {/* Detected Products List */}
-          <div className="md:col-span-7 flex flex-col gap-3 max-h-[55vh] overflow-y-auto pr-1">
+          {/* Detected Products List (full width when there is no photo) */}
+          <div
+            className={`${previewSrc ? 'md:col-span-7' : 'md:col-span-12'} flex flex-col gap-3 max-h-[55vh] overflow-y-auto pr-1`}
+          >
             {/* Matched Products */}
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -432,9 +494,11 @@ export function BasketReviewSheet({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {/* ProductThumb's prop is imageUrl (src= always showed initials) */}
                       <ProductThumb
-                        src={item.matched_product?.image_url}
+                        imageUrl={item.matched_product?.image_url}
                         name={item.matched_product?.name || item.label}
+                        size="md"
                         className="w-10 h-10 rounded-lg shrink-0"
                       />
                       <div className="min-w-0 flex-1">
@@ -458,7 +522,7 @@ export function BasketReviewSheet({
                           {isLowStock && (
                             <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
                               <AlertTriangle className="w-3 h-3" />
-                              Max {stock}
+                              {t('pos:aiMaxStock', { stock })}
                             </span>
                           )}
                         </div>
@@ -546,7 +610,7 @@ export function BasketReviewSheet({
                             {item.label}
                           </p>
                           <p className="text-[11px] text-muted-foreground">
-                            Not found in active inventory.
+                            {t('pos:aiNotInInventory')}
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -616,12 +680,13 @@ export function BasketReviewSheet({
                   key={p.id}
                   type="button"
                   onClick={() => handleSelectProduct(p)}
-                  className="w-full text-left p-2 text-xs flex items-center justify-between hover:bg-muted/80 transition-colors"
+                  className="w-full text-left p-2 text-xs flex items-center justify-between gap-2 hover:bg-muted/80 transition-colors min-h-11"
                 >
+                  <ProductThumb imageUrl={p.image_url} name={p.name} size="sm" className="w-8 h-8 rounded-md shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{p.name}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {p.category?.name || 'General'} • Stock: {p.stock_quantity ?? p.stock ?? 0}
+                      {p.category?.name || t('pos:aiNoCategory')} • {t('pos:stock', 'Stock')}: {p.stock_quantity ?? p.stock ?? 0}
                     </p>
                   </div>
                   <Money amount={Number(p.price || 0)} className="font-semibold text-xs shrink-0" />
@@ -629,7 +694,7 @@ export function BasketReviewSheet({
               ))}
               {filteredProducts.length === 0 && (
                 <div className="p-3 text-center text-xs text-muted-foreground">
-                  No matching products found.
+                  {t('pos:aiNoProductsFound')}
                 </div>
               )}
             </div>
@@ -663,18 +728,13 @@ export function BasketReviewSheet({
                     onScanAgain?.('replace')
                   }
                 }}
-                className="gap-1.5"
+                className="gap-1.5 h-11 sm:h-9"
               >
                 <Camera className="w-4 h-4 text-primary" />
                 <span>{t('pos:aiScanAgain', 'Scan again')}</span>
               </Button>
             )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" size="sm" className="h-11 sm:h-9" onClick={requestClose}>
               {t('common:cancel', 'Cancel')}
             </Button>
             <Button
@@ -682,7 +742,7 @@ export function BasketReviewSheet({
               size="sm"
               disabled={confirmedItems.length === 0}
               onClick={handleAddToCart}
-              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="gap-1.5 h-11 sm:h-9 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <ShoppingCart className="w-4 h-4" />
               {t('pos:aiAddToCartBtn', 'Add to Cart')}
@@ -739,6 +799,17 @@ export function BasketReviewSheet({
           </Button>
         </div>
       </ResponsiveDialog>
+
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        onOpenChange={setShowDiscardConfirm}
+        title={t('pos:aiDiscardTitle')}
+        description={t('pos:aiDiscardDesc')}
+        confirmText={t('pos:aiDiscardConfirm')}
+        cancelText={t('pos:aiDiscardKeep')}
+        tone="destructive"
+        onConfirm={discard}
+      />
     </ResponsiveDialog>
   )
 }

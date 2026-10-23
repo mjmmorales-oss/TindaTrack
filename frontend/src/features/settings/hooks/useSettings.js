@@ -9,6 +9,7 @@ import {
 import { settingsService } from '@/services/settingsService'
 import { notify } from '@/lib/notify'
 import i18n from '@/i18n'
+import { hasApiSession } from '@/lib/api'
 
 export const settingsKeys = {
   all: ['settings'],
@@ -24,6 +25,7 @@ export function useSettings() {
     {
       queryKey: settingsKeys.all,
       queryFn: () => settingsService.get(),
+      enabled: hasApiSession(),
     },
     contextClient ? undefined : fallbackQueryClient,
   )

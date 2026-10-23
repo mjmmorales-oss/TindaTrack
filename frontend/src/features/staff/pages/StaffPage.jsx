@@ -198,11 +198,14 @@ export function StaffPage() {
       }
       if (values.password_mode === 'manual' && values.password) {
         payload.password = values.password
+      } else {
+        // Laravel requires a password unless asked to generate one
+        payload.generate_password = true
       }
       const res = await createMutation.mutateAsync(payload)
       setAddDialogOpen(false)
 
-      const generatedPwd = res.temp_password || (values.password_mode === 'manual' ? values.password : null)
+      const generatedPwd = (res?.temporary_password ?? res?.temp_password) || (values.password_mode === 'manual' ? values.password : null)
       if (generatedPwd) {
         setTempPasswordValue(generatedPwd)
         setTempPasswordModalOpen(true)
@@ -249,7 +252,7 @@ export function StaffPage() {
       })
       setResetDialogOpen(false)
 
-      const generatedPwd = res.temp_password || (values.password_mode === 'manual' ? values.password : null)
+      const generatedPwd = (res?.temporary_password ?? res?.temp_password) || (values.password_mode === 'manual' ? values.password : null)
       if (generatedPwd) {
         setTempPasswordValue(generatedPwd)
         setTempPasswordModalOpen(true)
@@ -533,10 +536,13 @@ export function StaffPage() {
 
                                     {!isArchived && (
                                       <>
-                                        <DropdownMenuItem onClick={() => handleOpenEdit(member)}>
-                                          <Edit className="h-4 w-4 mr-2" />
-                                          {t('users:editStaff')}
-                                        </DropdownMenuItem>
+                                        {/* The backend refuses edits to owner accounts here (owners use Account) */}
+                                        {!isOwner && (
+                                          <DropdownMenuItem onClick={() => handleOpenEdit(member)}>
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            {t('users:editStaff')}
+                                          </DropdownMenuItem>
+                                        )}
 
                                         {isSelf ? (
                                           <Tooltip>
@@ -701,10 +707,12 @@ export function StaffPage() {
 
                                 {!isArchived && (
                                   <>
-                                    <DropdownMenuItem onClick={() => handleOpenEdit(member)}>
-                                      <Edit className="h-4 w-4 mr-2" />
-                                      {t('users:editStaff')}
-                                    </DropdownMenuItem>
+                                    {!isOwner && (
+                                      <DropdownMenuItem onClick={() => handleOpenEdit(member)}>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        {t('users:editStaff')}
+                                      </DropdownMenuItem>
+                                    )}
 
                                     {!isSelf && !isOwner && (
                                       <DropdownMenuItem onClick={() => handleOpenReset(member)}>
@@ -1174,6 +1182,7 @@ export function StaffPage() {
                       variant="outline"
                       onClick={() => handleOpenEdit(targetStaff)}
                       className="gap-1.5"
+                      disabled={targetStaff.role === 'owner'}
                     >
                       <Edit className="h-3.5 w-3.5" />
                       {t('users:editStaff')}

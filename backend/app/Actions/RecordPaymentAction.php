@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\UtangPayment;
+use App\Support\DateInput;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -44,7 +45,7 @@ class RecordPaymentAction
                 'customer_id' => $customer->id,
                 'sale_id' => null,
                 'amount' => round($amount, 2),
-                'payment_date' => $paymentDate ?? now(),
+                'payment_date' => DateInput::moment($paymentDate) ?? now(),
                 'notes' => $notes,
                 'recorded_by' => $recorder->id,
             ]);

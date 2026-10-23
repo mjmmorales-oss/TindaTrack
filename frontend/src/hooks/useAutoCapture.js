@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import {
-  AUTO_CAPTURE,
-  getAutoCaptureProfile,
-} from '@/config/ai.js'
+import { AUTO_CAPTURE, getAutoCaptureProfile } from '@/config/ai.js'
+import { createAutoCaptureMachine, frameSignatureFromRgba } from '@/lib/motion'
 
 function safeRequestAnimationFrame(cb) {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -20,19 +18,27 @@ function safeCancelAnimationFrame(id) {
 }
 
 /**
- * Reusable auto-capture engine hook for camera viewfinders (AI Basket, AI Stock-In, Phone Scanner).
- * Performs lightweight 10-fps motion detection using an offscreen 64x48 canvas,
- * waits for camera steady state, runs a visual countdown, checks scene difference,
- * and triggers capture.
+ * Auto-capture engine for camera viewfinders (AI Basket, AI Stock-In, phone).
+ *
+ * Samples the video at ~10 fps into a 64×48 canvas, scores motion with a
+ * shake-tolerant measure (lib/motion.js) and drives a state machine:
+ * looking → hold_still → countdown (ring) → capturing → (re-arm) …
+ *
+ * Re-arms by itself when processing finishes (success or error) and whenever
+ * `rearmKey` changes (review closed, Scan again, phone basket done, empty result).
+ * React state is only updated when what is shown changes, not on every frame.
  *
  * @param {object} params
- * @param {import('react').RefObject<HTMLVideoElement>} params.videoRef - Reference to the HTML5 video element
- * @param {boolean} [params.enabled=true] - Master enable toggle from parent
- * @param {(mode: 'auto'|'manual') => void} params.onTriggerCapture - Callback when photo capture should occur
- * @param {boolean} [params.isProcessing=false] - Whether scan analysis is currently in progress
- * @param {'low'|'medium'|'high'} [params.sensitivity='medium'] - Motion sensitivity profile
- * @param {'basket'|'products'} [params.mode='basket'] - AI workflow mode for storage persistence
- * @param {number|null} [params.rateLimitBackoffUntil=null] - Timestamp until which rate limit backoff applies
+ * @param {import('react').RefObject<HTMLVideoElement>} params.videoRef
+ * @param {boolean} [params.enabled=true] - Camera ready and auto-capture allowed by the parent
+ * @param {(mode: 'auto'|'manual') => void} params.onTriggerCapture
+ * @param {boolean} [params.isProcessing=false] - A photo is being analyzed
+ * @param {'low'|'medium'|'normal'|'high'} [params.sensitivity='medium']
+ * @param {'basket'|'products'|'stockin'} [params.mode='basket'] - Preference storage key
+ * @param {number|null} [params.rateLimitBackoffUntil=null]
+ * @param {number} [params.rearmKey=0] - Change to re-arm (and forget the last photo)
+ * @param {number} [params.rearmDelayMs] - Wait before re-arming on a rearmKey change
+ * @param {boolean} [params.paused=false] - Parent pause (e.g. phone waiting for the cashier)
  */
 export function useAutoCapture({
   videoRef,
@@ -42,10 +48,11 @@ export function useAutoCapture({
   sensitivity = 'medium',
   mode = 'basket',
   rateLimitBackoffUntil = null,
+  rearmKey = 0,
+  rearmDelayMs = 0,
+  paused = false,
 }) {
-  const storageKey = mode === 'stockin' || mode === 'products'
-    ? 'tt.autoCapture.stockin'
-    : 'tt.autoCapture.basket'
+  const storageKey = mode === 'stockin' || mode === 'products' ? 'tt.autoCapture.stockin' : 'tt.autoCapture.basket'
 
   const [isAutoEnabled, setIsAutoEnabled] = useState(() => {
     if (typeof localStorage !== 'undefined') {
@@ -59,28 +66,72 @@ export function useAutoCapture({
     return enabled !== false
   })
 
-  const [state, setState] = useState('off') // 'off'|'watching'|'steady'|'countdown'|'capturing'|'paused'|'cooldown'
-  const [countdownRemaining, setCountdownRemaining] = useState(0)
+  // What the overlay shows. Updated only when it changes.
+  const [view, setView] = useState({ state: 'off', ringProgress: 0, showHint: false, abortCount: 0 })
   const [lastCaptureMode, setLastCaptureMode] = useState('auto')
-  const [motionScore, setMotionScore] = useState(0)
-  const [isSceneTooDark, setIsSceneTooDark] = useState(false)
-  const [isSceneUnchanged, setIsSceneUnchanged] = useState(false)
-  const [abortCount, setAbortCount] = useState(0)
 
-  // Offscreen canvas ref for sampling
+  const machineRef = useRef(null)
   const canvasRef = useRef(null)
-  const prevFrameLumaRef = useRef(null)
-  const lastCapturedLumaRef = useRef(null)
+  const lastSampleRef = useRef(0)
+  const rafRef = useRef(null)
+  const viewRef = useRef(view)
+  const onTriggerRef = useRef(onTriggerCapture)
+  const pauseRef = useRef({ isProcessing, paused, rateLimitBackoffUntil })
 
-  // Timing refs
-  const steadyStartTimeRef = useRef(null)
-  const countdownStartTimeRef = useRef(null)
-  const cooldownEndTimeRef = useRef(0)
-  const lastSampleTimeRef = useRef(0)
-  const animationFrameIdRef = useRef(null)
-  const isDocHiddenRef = useRef(false)
+  useEffect(() => {
+    onTriggerRef.current = onTriggerCapture
+  }, [onTriggerCapture])
+  useEffect(() => {
+    pauseRef.current = { isProcessing, paused, rateLimitBackoffUntil }
+  }, [isProcessing, paused, rateLimitBackoffUntil])
 
-  // Toggle user preference and save
+  const { motionThreshold, steadyDurationMs } = getAutoCaptureProfile(sensitivity)
+
+  const publish = useCallback((next) => {
+    const cur = viewRef.current
+    // ring progress in 10 % steps is plenty for a smooth fill
+    const ring = Math.round((next.ringProgress || 0) * 10) / 10
+    if (cur.state === next.state && cur.ringProgress === ring && cur.showHint === next.showHint && cur.abortCount === next.abortCount) {
+      return
+    }
+    const v = { state: next.state, ringProgress: ring, showHint: next.showHint, abortCount: next.abortCount }
+    viewRef.current = v
+    setView(v)
+  }, [])
+
+  // (Re)build the machine when the tuning changes
+  useEffect(() => {
+    machineRef.current = createAutoCaptureMachine({
+      motionThreshold,
+      steadyMs: steadyDurationMs,
+      countdownMs: AUTO_CAPTURE.COUNTDOWN_MS,
+      sceneGuardMs: AUTO_CAPTURE.SCENE_GUARD_MS,
+      sceneGuardThreshold: AUTO_CAPTURE.SCENE_GUARD_THRESHOLD,
+      minLuminance: AUTO_CAPTURE.MIN_LUMINANCE,
+      cooldownMs: AUTO_CAPTURE.AUTO_COOLDOWN_MS,
+      abortHintCount: AUTO_CAPTURE.ABORT_HINT_COUNT,
+    })
+  }, [motionThreshold, steadyDurationMs])
+
+  // Processing finished (success, error or cancel): ready for the next basket
+  const wasProcessingRef = useRef(isProcessing)
+  useEffect(() => {
+    if (wasProcessingRef.current && !isProcessing) {
+      machineRef.current?.rearm(Date.now())
+    }
+    wasProcessingRef.current = isProcessing
+  }, [isProcessing])
+
+  // Explicit re-arm from the parent: forget the last photo so a new basket always captures
+  const firstRearmRef = useRef(true)
+  useEffect(() => {
+    if (firstRearmRef.current) {
+      firstRearmRef.current = false
+      return
+    }
+    machineRef.current?.rearm(Date.now(), { delayMs: rearmDelayMs, clearReference: true })
+  }, [rearmKey, rearmDelayMs])
+
   const toggleAuto = useCallback(() => {
     setIsAutoEnabled((prev) => {
       const next = !prev
@@ -94,44 +145,20 @@ export function useAutoCapture({
     })
   }, [storageKey, mode])
 
-  // Manual trigger bypasses countdown and fires immediately
   const manualTrigger = useCallback(() => {
-    steadyStartTimeRef.current = null
-    countdownStartTimeRef.current = null
-    cooldownEndTimeRef.current = Date.now() + AUTO_CAPTURE.AUTO_COOLDOWN_MS
-    setCountdownRemaining(0)
+    machineRef.current?.markCaptured(Date.now())
     setLastCaptureMode('manual')
-    setState('capturing')
+    publish({ state: 'capturing', ringProgress: 0, showHint: false, abortCount: 0 })
+    onTriggerRef.current?.('manual')
+  }, [publish])
 
-    if (prevFrameLumaRef.current) {
-      lastCapturedLumaRef.current = new Uint8Array(prevFrameLumaRef.current)
-    }
-
-    onTriggerCapture?.('manual')
-  }, [onTriggerCapture])
-
-  // Track document visibility to pause loop
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      isDocHiddenRef.current = document.visibilityState === 'hidden'
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [])
-
-  // Core motion detection & auto-capture loop
+  // Sampling loop (~10 fps)
   useEffect(() => {
     if (!enabled || !isAutoEnabled) {
-      setState('off')
-      setCountdownRemaining(0)
-      return
+      publish({ state: 'off', ringProgress: 0, showHint: false, abortCount: 0 })
+      return undefined
     }
 
-    const { motionThreshold, steadyDurationMs } = getAutoCaptureProfile(sensitivity)
-
-    // Ensure offscreen canvas exists
     if (!canvasRef.current && typeof document !== 'undefined') {
       const c = document.createElement('canvas')
       c.width = AUTO_CAPTURE.SAMPLE_WIDTH
@@ -140,220 +167,67 @@ export function useAutoCapture({
     }
 
     let running = true
-
     const loop = (timestamp) => {
       if (!running) return
+      rafRef.current = safeRequestAnimationFrame(loop)
 
+      const { isProcessing: busy, paused: held, rateLimitBackoffUntil: backoff } = pauseRef.current
       const now = Date.now()
-
-      // Check external pause conditions
-      const isRateLimited = rateLimitBackoffUntil && now < rateLimitBackoffUntil
-      if (isProcessing || isDocHiddenRef.current || isRateLimited) {
-        setState('paused')
-        steadyStartTimeRef.current = null
-        countdownStartTimeRef.current = null
-        setCountdownRemaining(0)
-        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
+      if (busy) {
+        publish({ ...viewRef.current, state: 'analyzing', ringProgress: 0 })
+        return
+      }
+      const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden'
+      if (held || hidden || (backoff && now < backoff)) {
+        publish({ ...viewRef.current, state: 'paused', ringProgress: 0 })
         return
       }
 
-      // Check cooldown condition
-      if (now < cooldownEndTimeRef.current) {
-        setState('cooldown')
-        steadyStartTimeRef.current = null
-        countdownStartTimeRef.current = null
-        setCountdownRemaining(0)
-        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-        return
-      }
+      if (timestamp - lastSampleRef.current < AUTO_CAPTURE.SAMPLE_INTERVAL_MS) return
+      lastSampleRef.current = timestamp
 
       const video = videoRef?.current
-      // Video must be ready and playing
-      if (!video || video.readyState < 2 || video.paused || video.ended) {
-        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-        return
-      }
-
-      // Throttle sampling to ~10 fps (every 100ms)
-      if (timestamp - lastSampleTimeRef.current < 100) {
-        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-        return
-      }
-      lastSampleTimeRef.current = timestamp
-
       const canvas = canvasRef.current
-      if (!canvas) {
-        animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-        return
-      }
+      if (!video || video.readyState < 2 || video.paused || video.ended || !canvas) return
 
       try {
         const ctx = canvas.getContext('2d', { willReadFrequently: true })
-        if (!ctx) {
-          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-          return
-        }
-
+        if (!ctx) return
         ctx.drawImage(video, 0, 0, AUTO_CAPTURE.SAMPLE_WIDTH, AUTO_CAPTURE.SAMPLE_HEIGHT)
-        const frameData = ctx.getImageData(0, 0, AUTO_CAPTURE.SAMPLE_WIDTH, AUTO_CAPTURE.SAMPLE_HEIGHT).data
-        const totalPixels = AUTO_CAPTURE.SAMPLE_WIDTH * AUTO_CAPTURE.SAMPLE_HEIGHT
+        const { data } = ctx.getImageData(0, 0, AUTO_CAPTURE.SAMPLE_WIDTH, AUTO_CAPTURE.SAMPLE_HEIGHT)
+        const frame = frameSignatureFromRgba(data, AUTO_CAPTURE.SAMPLE_WIDTH, AUTO_CAPTURE.SAMPLE_HEIGHT)
 
-        // Compute luminance array and average luminance
-        const currentLuma = new Uint8Array(totalPixels)
-        let totalLuma = 0
-        for (let i = 0; i < totalPixels; i++) {
-          const r = frameData[i * 4]
-          const g = frameData[i * 4 + 1]
-          const b = frameData[i * 4 + 2]
-          // Standard ITU-R BT.601 luminance
-          const luma = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
-          currentLuma[i] = luma
-          totalLuma += luma
-        }
-
-        const avgLuma = totalLuma / totalPixels
-        const tooDark = avgLuma < AUTO_CAPTURE.MIN_LUMINANCE
-        setIsSceneTooDark(tooDark)
-
-        if (tooDark) {
-          // Reject pitch-black scene
-          steadyStartTimeRef.current = null
-          countdownStartTimeRef.current = null
-          setCountdownRemaining(0)
-          setState('watching')
-          prevFrameLumaRef.current = currentLuma
-          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-          return
-        }
-
-        // Compare against previous frame for motion calculation
-        let diffPixels = 0
-        const prevLuma = prevFrameLumaRef.current
-        if (prevLuma && prevLuma.length === totalPixels) {
-          for (let i = 0; i < totalPixels; i++) {
-            if (Math.abs(currentLuma[i] - prevLuma[i]) > 20) {
-              diffPixels++
-            }
-          }
-        }
-        prevFrameLumaRef.current = currentLuma
-
-        const motionPercent = Number(((diffPixels / totalPixels) * 100).toFixed(1))
-        setMotionScore(motionPercent)
-
-        // Compare against last captured frame (scene duplicate guard)
-        let sceneDiffPercent = 100
-        const lastCapturedLuma = lastCapturedLumaRef.current
-        if (lastCapturedLuma && lastCapturedLuma.length === totalPixels) {
-          let sceneDiffCount = 0
-          for (let i = 0; i < totalPixels; i++) {
-            if (Math.abs(currentLuma[i] - lastCapturedLuma[i]) > 25) {
-              sceneDiffCount++
-            }
-          }
-          sceneDiffPercent = (sceneDiffCount / totalPixels) * 100
-        }
-
-        const unchanged = sceneDiffPercent < AUTO_CAPTURE.SCENE_DIFFERENCE_THRESHOLD
-        setIsSceneUnchanged(unchanged)
-
-        const isMoving = motionPercent > motionThreshold
-
-        if (unchanged) {
-          // Current scene is the same as already captured scene; wait for user to change item/basket
-          steadyStartTimeRef.current = null
-          countdownStartTimeRef.current = null
-          setCountdownRemaining(0)
-          setState('watching')
-          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-          return
-        }
-
-        if (isMoving) {
-          // If motion spikes during countdown, abort countdown and count abort
-          if (countdownStartTimeRef.current) {
-            countdownStartTimeRef.current = null
-            setCountdownRemaining(0)
-            setAbortCount((prev) => prev + 1)
-          }
-          steadyStartTimeRef.current = null
-          setState('watching')
-          animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-          return
-        }
-
-        // Scene is steady and changed!
-        if (!steadyStartTimeRef.current) {
-          steadyStartTimeRef.current = now
-          setState('watching')
-        } else if (now - steadyStartTimeRef.current < steadyDurationMs) {
-          setState('steady')
-        } else {
-          // Camera has remained steady long enough -> Start or advance countdown
-          if (!countdownStartTimeRef.current) {
-            countdownStartTimeRef.current = now
-            setState('countdown')
-            setCountdownRemaining(Number((AUTO_CAPTURE.COUNTDOWN_MS / 1000).toFixed(1)))
-          } else {
-            const elapsed = now - countdownStartTimeRef.current
-            const remainingMs = Math.max(0, AUTO_CAPTURE.COUNTDOWN_MS - elapsed)
-            const remainingSec = Number((remainingMs / 1000).toFixed(1))
-            setCountdownRemaining(remainingSec)
-
-            if (remainingMs <= 0) {
-              // Countdown complete -> Fire auto-capture!
-              running = false
-              setState('capturing')
-              setLastCaptureMode('auto')
-              lastCapturedLumaRef.current = new Uint8Array(currentLuma)
-              cooldownEndTimeRef.current = now + AUTO_CAPTURE.AUTO_COOLDOWN_MS
-              steadyStartTimeRef.current = null
-              countdownStartTimeRef.current = null
-              setCountdownRemaining(0)
-
-              onTriggerCapture?.('auto')
-              return
-            } else {
-              setState('countdown')
-            }
-          }
+        const result = machineRef.current.step({ now, ...frame })
+        publish(result)
+        if (result.fire) {
+          setLastCaptureMode('auto')
+          onTriggerRef.current?.('auto')
         }
       } catch {
-        // Fallback gracefully on canvas errors
+        // canvas errors: try again next frame
       }
-
-      animationFrameIdRef.current = safeRequestAnimationFrame(loop)
     }
 
-    animationFrameIdRef.current = safeRequestAnimationFrame(loop)
-
+    rafRef.current = safeRequestAnimationFrame(loop)
     return () => {
       running = false
-      if (animationFrameIdRef.current) {
-        safeCancelAnimationFrame(animationFrameIdRef.current)
-      }
+      if (rafRef.current) safeCancelAnimationFrame(rafRef.current)
     }
-  }, [
-    enabled,
-    isAutoEnabled,
-    isProcessing,
-    sensitivity,
-    rateLimitBackoffUntil,
-    videoRef,
-    onTriggerCapture,
-  ])
+  }, [enabled, isAutoEnabled, videoRef, publish])
 
   return {
-    state,
-    countdownRemaining,
+    state: view.state,
+    ringProgress: view.ringProgress,
+    showHint: view.showHint,
+    abortCount: view.abortCount,
+    // compatibility with the v2.1 overlay
+    countdownRemaining: view.state === 'countdown' ? Number(((1 - view.ringProgress) * AUTO_CAPTURE.COUNTDOWN_MS / 1000).toFixed(1)) : 0,
+    isSceneTooDark: view.state === 'dark',
+    isSceneUnchanged: view.state === 'unchanged',
     lastCaptureMode,
-    motionScore,
-    isSceneTooDark,
-    isSceneUnchanged,
     manualTrigger,
     toggleAuto,
     isAutoEnabled,
-    abortCount,
   }
 }
 

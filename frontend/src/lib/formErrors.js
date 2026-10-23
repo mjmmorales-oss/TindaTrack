@@ -56,9 +56,10 @@ export function applyServerErrors(error, setErrorOrForm, { fieldMap = {}, visibl
 
   if (!backendErrors || typeof backendErrors !== 'object' || Array.isArray(backendErrors)) {
     // Non-422 or unexpected error shape: show toast
+    // error.message is already friendlyError()'d by apiClient; data.message may be raw
     const message =
-      error?.response?.data?.message ||
       error?.message ||
+      error?.response?.data?.message ||
       i18n.t('errors:serverError', { defaultValue: 'Something went wrong. Please try again.' })
     notify.error(message)
     return false

@@ -8,6 +8,7 @@ import {
   endOfYesterday,
   startOfMonth,
   endOfMonth,
+  endOfDay,
 } from 'date-fns'
 import { Calendar as CalendarIcon, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -140,7 +141,8 @@ export function DateRangePicker({
           mode="range"
           defaultMonth={value?.from || new Date()}
           selected={value}
-          onSelect={onChange}
+          // A picked end day must include that whole day (presets already use endOfToday etc.)
+          onSelect={(range) => onChange(range?.to ? { ...range, to: endOfDay(range.to) } : range)}
           numberOfMonths={1}
         />
       </div>

@@ -4,10 +4,12 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\ScannerSession;
 use App\Models\User;
 use Database\Seeders\ReferenceDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
@@ -276,8 +278,71 @@ test('F3: auth login fixture succeeds', function () {
 });
 
 test('F3: auth register fixture succeeds', function () {
+    // The seeded store already has an owner; registration is closed by default since v2.2
+    config(['app.allow_owner_registration' => true]);
     $regPayload = loadFixture($this->fixturesDir, 'auth-register.json');
     $resReg = $this->postJson('/api/register', $regPayload);
     $resReg->assertCreated();
     expect($resReg->json('token'))->not->toBeEmpty();
+});
+
+// ---------------------------------------------------------------------------
+// v2.2 C1.2: mutations that had no payload fixture. Each sends exactly what the
+// frontend service sends and must be accepted (2xx) with the expected effect.
+// ---------------------------------------------------------------------------
+
+test('v2.2: staff create with generated password returns temporary_password', function () {
+    $payload = loadFixture($this->fixturesDir, 'staff-create-generate.json');
+
+    $res = $this->withHeaders($this->ownerHeaders)->postJson('/api/users', $payload)->assertCreated();
+    expect($res->json('temporary_password'))->toBeString()->not->toBeEmpty();
+
+    $id = $res->json('data.id');
+    $this->withHeaders($this->ownerHeaders)
+        ->postJson("/api/users/{$id}/reset-password", loadFixture($this->fixturesDir, 'staff-reset-password-generate.json'))
+        ->assertOk()
+        ->assertJsonStructure(['temporary_password']);
+});
+
+test('v2.2: staff update (PATCH), toggle-active, archive and restore accept the SPA calls', function () {
+    $cashier = $this->cashier;
+    $payload = loadFixture($this->fixturesDir, 'staff-update.json');
+
+    $this->withHeaders($this->ownerHeaders)->patchJson("/api/users/{$cashier->id}", $payload)->assertOk();
+    $this->withHeaders($this->ownerHeaders)->patchJson("/api/users/{$cashier->id}/toggle-active")->assertOk();
+    $this->withHeaders($this->ownerHeaders)->deleteJson("/api/users/{$cashier->id}")->assertOk();
+    $this->withHeaders($this->ownerHeaders)->postJson("/api/users/{$cashier->id}/restore")->assertOk();
+});
+
+test('v2.2: phone pairing fixture pairs a fresh session and returns a device token', function () {
+    $session = ScannerSession::create([
+        'user_id' => $this->owner->id,
+        'mode' => 'pos',
+        'pairing_code' => 'ABCD-EFGH',
+        'pairing_expires_at' => now()->addMinutes(10),
+        'expires_at' => now()->addHours(8),
+    ]);
+
+    $res = $this->postJson('/api/scanner/pair', loadFixture($this->fixturesDir, 'scanner-pair.json'))->assertOk();
+    expect($res->json('data.token') ?? $res->json('token'))->toBeString()
+        ->and($session->fresh()->paired_at)->not->toBeNull();
+});
+
+test('v2.2: product restore and image import accept the SPA calls', function () {
+    Http::fake([
+        'images.openfoodfacts.org/*' => Http::response(
+            base64_decode('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q=='),
+            200,
+            ['Content-Type' => 'image/jpeg'],
+        ),
+    ]);
+    $product = Product::first();
+
+    $this->withHeaders($this->ownerHeaders)
+        ->postJson("/api/products/{$product->id}/image/import", loadFixture($this->fixturesDir, 'product-image-import.json'))
+        ->assertSuccessful();
+
+    $product->archive();
+    $this->withHeaders($this->ownerHeaders)->postJson("/api/products/{$product->id}/restore")->assertOk();
+    expect(Product::find($product->id))->not->toBeNull();
 });

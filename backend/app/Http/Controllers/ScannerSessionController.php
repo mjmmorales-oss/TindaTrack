@@ -78,7 +78,11 @@ class ScannerSessionController extends Controller
                 'device_label' => $session->device_label,
                 'last_seen_at' => $session->last_seen_at?->toIso8601String(),
                 'online' => $session->isOnline(),
-                'ended_at' => $session->ended_at?->toIso8601String(),
+                // An expired session is over for the POS too (the phone already gets 401)
+                'ended_at' => ($session->ended_at
+                    ?? ($session->expires_at && $session->expires_at->isPast() ? $session->expires_at : null))
+                    ?->toIso8601String(),
+                'expired' => (bool) ($session->expires_at && $session->expires_at->isPast()),
                 'mode' => $session->mode,
             ],
         ]);
@@ -108,6 +112,23 @@ class ScannerSessionController extends Controller
         return response()->json([
             'data' => ScannerEventResource::collection($events),
         ]);
+    }
+
+    /**
+     * The POS finished reviewing the phone's AI basket (added, discarded or scan again):
+     * lets the phone re-arm auto-capture.
+     */
+    public function basketDone(Request $request, string $id): JsonResponse
+    {
+        $session = ScannerSession::findOrFail($id);
+
+        if ($session->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
+
+        $session->forceFill(['basket_pending_at' => null])->save();
+
+        return response()->json(['data' => ['basket_pending' => false]]);
     }
 
     /**

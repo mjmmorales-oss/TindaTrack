@@ -49,9 +49,10 @@ class SettingsController extends Controller
             'receipt_header' => ['nullable', 'string', 'max:500'],
             'receipt_footer' => ['nullable', 'string', 'max:500'],
             'show_cashier_name' => ['nullable', 'boolean'],
-            'default_reorder_level' => ['nullable', 'integer', 'min:1'],
+            // NOT NULL column: an emptied field must not reach the database as null
+            'default_reorder_level' => ['sometimes', 'required', 'integer', 'min:1'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:1'],
-            'low_stock_threshold_percent' => ['nullable', 'numeric', 'min:0'],
+            'low_stock_threshold_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
             'currency' => ['nullable', 'string', 'max:10'],
             'timezone' => ['nullable', 'string', 'max:50'],
             'ai_enabled' => ['nullable', 'boolean'],
@@ -70,12 +71,7 @@ class SettingsController extends Controller
         if (isset($validated['contact_number']) && ! isset($validated['phone'])) {
             $validated['phone'] = $validated['contact_number'];
         }
-        unset(
-            $validated['contact_number'],
-            $validated['owner_name'],
-            $validated['show_cashier_name'],
-            $validated['low_stock_threshold_percent']
-        );
+        unset($validated['contact_number']);
 
         $setting = Setting::firstOrCreate(['id' => 1]);
         $setting->update($validated);

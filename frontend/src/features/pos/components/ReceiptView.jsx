@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Printer, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Money } from '@/components/common/Money'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatCurrency } from '@/lib/format'
 
 /**
  * Printable POS receipt preview displayed after successful sale checkout.
@@ -102,7 +102,7 @@ export function ReceiptView({ sale, settings, cashier, onNewSale }) {
                 </div>
                 <div className="flex justify-between text-[10px] text-muted-foreground">
                   <span>
-                    {item.quantity} × ₱{Number(item.unit_price).toFixed(2)}
+                    {item.quantity} × {formatCurrency(item.unit_price)}
                   </span>
                 </div>
               </div>

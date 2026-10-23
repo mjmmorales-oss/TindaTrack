@@ -118,8 +118,8 @@ export function CategoryFormDialog({
       const fieldError = err.response?.data?.errors?.name?.[0] || err.errors?.name?.[0]
       setErrorMessage(
         fieldError ||
-          err.response?.data?.message ||
           err.message ||
+          err.response?.data?.message ||
           t('categories:saveError'),
       )
     }

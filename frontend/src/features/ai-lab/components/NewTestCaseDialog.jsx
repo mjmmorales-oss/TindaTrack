@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { useProducts } from '@/features/products/hooks/useProducts'
 import { useRunExperimentCase } from '../hooks/useAiLab'
 import { prepareForAi } from '@/lib/imagePrep'
+import { AI_IMAGE_OPTIONS } from '@/config/ai'
+import { formatCurrency } from '@/lib/format'
 
 /**
  * Dialog to capture/upload a test case image and specify ground-truth items for evaluation.
@@ -40,7 +42,7 @@ export function NewTestCaseDialog({ open, onOpenChange, experimentId }) {
 
     setIsProcessingImage(true)
     try {
-      const preparedBlob = await prepareForAi(file, { maxDim: 1024, initialQuality: 0.85 })
+      const preparedBlob = await prepareForAi(file, AI_IMAGE_OPTIONS)
       setSelectedFile(preparedBlob)
       if (previewUrl) URL.revokeObjectURL(previewUrl)
       setPreviewUrl(URL.createObjectURL(preparedBlob))
@@ -179,7 +181,7 @@ export function NewTestCaseDialog({ open, onOpenChange, experimentId }) {
                 <option value="">-- {t('aiLab:chooseProduct')} --</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (₱{Number(p.price || 0).toFixed(2)})
+                    {p.name} ({formatCurrency(p.price || 0)})
                   </option>
                 ))}
               </select>

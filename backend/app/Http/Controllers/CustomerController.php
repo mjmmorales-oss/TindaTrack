@@ -18,12 +18,23 @@ class CustomerController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Customer::query();
+        $query = Customer::query()
+            ->withMax('sales', 'created_at')
+            ->withMax('utangPayments', 'payment_date');
+
+        $hasBalance = function (Builder $q, $val) {
+            if (filter_var($val, FILTER_VALIDATE_BOOLEAN)) {
+                $q->where('credit_balance', '>', 0);
+            }
+        };
 
         $allowedFilters = [
-            'has_balance' => function (Builder $q, $val) {
+            'has_balance' => $hasBalance,
+            // The Customers page sends with_balance / over_limit (same names as the mock)
+            'with_balance' => $hasBalance,
+            'over_limit' => function (Builder $q, $val) {
                 if (filter_var($val, FILTER_VALIDATE_BOOLEAN)) {
-                    $q->where('credit_balance', '>', 0);
+                    $q->whereColumn('credit_balance', '>', 'credit_limit');
                 }
             },
         ];
@@ -59,6 +70,8 @@ class CustomerController extends Controller
 
     public function show(Customer $customer): JsonResponse
     {
+        $customer->loadMax('sales', 'created_at')->loadMax('utangPayments', 'payment_date');
+
         return response()->json([
             'data' => new CustomerResource($customer),
         ]);

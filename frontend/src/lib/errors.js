@@ -50,6 +50,7 @@ export function getErrorMessage(error) {
   }
 
   if (status === 403) {
+    if (data?.code === 'registration_closed') return i18n.t('errors:registrationClosed')
     return i18n.t('errors:forbidden', 'You do not have permission to access this resource.')
   }
 

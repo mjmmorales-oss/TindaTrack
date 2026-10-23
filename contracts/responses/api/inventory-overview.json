@@ -1,0 +1,11 @@
+{
+    "data": {
+        "estimated_potential_profit": "number",
+        "in_stock_count": "number",
+        "low_stock_count": "number",
+        "out_of_stock_count": "number",
+        "total_products": "number",
+        "total_stock_value_cost": "number",
+        "total_stock_value_retail": "number"
+    }
+}

@@ -73,10 +73,19 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): JsonResponse
     {
-        if ($category->products()->count() > 0) {
+        if ($category->products()->exists()) {
             throw ValidationException::withMessages([
                 'category' => [
                     'This category still has assigned products. Move or delete those products before deleting this category.',
+                ],
+            ]);
+        }
+
+        // Archived products still reference the category (FK restrictOnDelete → was a 500)
+        if ($category->products()->onlyTrashed()->exists()) {
+            throw ValidationException::withMessages([
+                'category' => [
+                    'Archived products still use this category. Restore them and move them to another category first.',
                 ],
             ]);
         }

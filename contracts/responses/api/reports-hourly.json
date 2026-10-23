@@ -1,0 +1,10 @@
+{
+    "data": [
+        {
+            "hour": "number",
+            "label": "string",
+            "sales": "number",
+            "transactions": "number"
+        }
+    ]
+}

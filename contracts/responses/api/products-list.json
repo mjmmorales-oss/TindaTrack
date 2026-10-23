@@ -1,0 +1,56 @@
+{
+    "data": [
+        {
+            "archived": "boolean",
+            "barcode": "string",
+            "brand": "null",
+            "category": {
+                "code": "string",
+                "color": "string",
+                "created_at": "string",
+                "description": "string",
+                "icon": "string",
+                "id": "number",
+                "name": "string",
+                "product_count": "number",
+                "updated_at": "string"
+            },
+            "category_id": "number",
+            "cost_price": "number",
+            "created_at": "string",
+            "deleted_at": "null",
+            "deleted_barcode": "null",
+            "deleted_sku": "null",
+            "description": "null",
+            "id": "number",
+            "image_url": "string",
+            "is_active": "boolean",
+            "name": "string",
+            "price": "number",
+            "profit_margin": "number",
+            "reorder_level": "number",
+            "size": "null",
+            "sku": "string",
+            "source": "string",
+            "source_ref": "null",
+            "stock": "number",
+            "stock_quantity": "number",
+            "unit": "string",
+            "updated_at": "string"
+        }
+    ],
+    "links": {
+        "first": "string",
+        "last": "string",
+        "next": "string",
+        "prev": "null"
+    },
+    "meta": {
+        "current_page": "number",
+        "from": "number",
+        "last_page": "number",
+        "per_page": "number",
+        "to": "number",
+        "total": "number"
+    }
+}

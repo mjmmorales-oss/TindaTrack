@@ -89,12 +89,10 @@ export function AuthProvider({ children }) {
   }, [clearSession])
 
   useEffect(() => {
-    const handleUnauthorized = (e) => {
+    const handleUnauthorized = () => {
       clearSession()
-      notify.error(
-        i18n.t('errors:sessionExpired', 'Session Expired (401)'),
-        e.detail || i18n.t('errors:unauthorized', 'Your session has expired. Please sign in again.'),
-      )
+      // The event detail is Laravel's raw "Unauthenticated." — always show the translated text
+      notify.error(i18n.t('errors:sessionExpired', 'Session Expired (401)'))
     }
 
     const handleForbidden = (e) => {
@@ -124,6 +122,18 @@ export function AuthProvider({ children }) {
   )
 
   const logout = useCallback(async () => {
+    // End a paired phone scanner while the token is still valid (doing it after /logout
+    // got a 401 → "Session Expired" toast, and the session stayed open on the server)
+    try {
+      const posSession = JSON.parse(sessionStorage.getItem('tt_pos_scanner_session') || 'null')
+      if (posSession?.id) {
+        const { endScannerSession } = await import('@/services/scanner.js')
+        await endScannerSession(posSession.id)
+        sessionStorage.removeItem('tt_pos_scanner_session')
+      }
+    } catch {
+      // best effort
+    }
     try {
       await api.post('/logout')
     } catch {

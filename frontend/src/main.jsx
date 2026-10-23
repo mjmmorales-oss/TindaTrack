@@ -8,8 +8,13 @@ import '@fontsource-variable/geist-mono'
 import '@/i18n'
 import './index.css'
 import { initStandaloneMode } from '@/lib/standalone'
+import { initPwaInstallCapture } from '@/lib/pwaInstall'
 
 initStandaloneMode()
+initPwaInstallCapture()
+// Marker for scripts/check-prod-bundle.mjs: a production build must not use mock data
+document.documentElement.dataset.dataSource =
+  import.meta.env.VITE_DATA_SOURCE === 'mock' ? 'mock' : 'api'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -16,6 +16,9 @@ export function ReferencePhotosSection({ product, canManage = false }) {
   const queryClient = useQueryClient()
   const [isCaptureOpen, setIsCaptureOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  // "Take 3 photos": how many to take in this session and how many are saved
+  const [burstTarget, setBurstTarget] = useState(1)
+  const [burstDone, setBurstDone] = useState(0)
   const [deletingId, setDeletingId] = useState(null)
 
   const { data: embeddingsRes, isLoading } = useQuery({
@@ -34,7 +37,14 @@ export function ReferencePhotosSection({ product, canManage = false }) {
       (e.source === 'reference_photo' || e.source === 'correction'),
   )
 
+  const openCapture = (count) => {
+    setBurstTarget(count)
+    setBurstDone(0)
+    setIsCaptureOpen(true)
+  }
+
   const handleCapture = async (blob) => {
+    if (isSaving) return
     setIsSaving(true)
     try {
       const vector = await embedImage(blob)
@@ -44,8 +54,21 @@ export function ReferencePhotosSection({ product, canManage = false }) {
         vector,
       })
 
+      const done = burstDone + 1
+      setBurstDone(done)
+      // Rebuild the index after each save so Visual Match learns immediately
       invalidateVisualIndex()
       queryClient.invalidateQueries({ queryKey: ['product-embeddings', product.id] })
+
+      const remainingSlots = MAX_REFERENCE_PHOTOS_PER_PRODUCT - (referenceEmbeddings.length + 1)
+      if (done < burstTarget && remainingSlots > 0) {
+        notify.success(
+          t('products:referencePhotoProgress', { done, total: burstTarget }),
+          t('products:referencePhotoTurn'),
+        )
+        return
+      }
+
       notify.success(
         t('products:addReferencePhoto', 'Reference Photo Added'),
         t('products:referencePhotoSavedDesc', 'Saved extra photo to improve visual search recognition.'),
@@ -138,17 +161,29 @@ export function ReferencePhotosSection({ product, canManage = false }) {
           )}
 
           {referenceEmbeddings.length < MAX_REFERENCE_PHOTOS_PER_PRODUCT && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsCaptureOpen(true)}
-              disabled={isSaving}
-              className="w-full gap-2 text-xs font-medium h-9"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>{t('products:addReferencePhoto', 'Add Reference Photo')}</span>
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => openCapture(3)}
+                disabled={isSaving}
+                className="gap-2 text-xs font-medium h-11"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                <span>{t('products:takeThreePhotos')}</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => openCapture(1)}
+                disabled={isSaving}
+                className="gap-2 text-xs font-medium h-11"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>{t('products:addReferencePhoto', 'Add Reference Photo')}</span>
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -163,8 +198,15 @@ export function ReferencePhotosSection({ product, canManage = false }) {
         <div className="p-1">
           <AiCapture
             onCapture={handleCapture}
+            title={
+              burstTarget > 1
+                ? t('products:referencePhotoProgress', { done: burstDone, total: burstTarget })
+                : t('products:addReferencePhoto', 'Add Reference Photo')
+            }
             hint={t('products:referenceCaptureHint', 'Hold the product steady in the center of the frame.')}
-            analyzing={isSaving}
+            analyzingStep={t('products:referencePhotoSaving')}
+            isAnalyzing={isSaving}
+            autoCaptureEnabled={false}
           />
         </div>
       </ResponsiveDialog>

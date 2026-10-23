@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils'
  * @param {React.ReactNode} [props.footer] - Modal footer actions
  * @param {React.ReactNode} [props.trigger] - Optional trigger element
  * @param {string} [props.className] - Additional content classes
+ * @param {boolean} [props.dismissible=true] - false: clicks/focus outside and swipe-down don't
+ *   close it (Esc and the X still call onOpenChange(false), so the caller can confirm first)
  * @returns {React.JSX.Element}
  */
 export function ResponsiveDialog({
@@ -49,8 +51,14 @@ export function ResponsiveDialog({
   footer,
   trigger,
   className,
+  dismissible = true,
 }) {
   const isMobile = useIsMobile()
+  // Data-holding sheets (AI reviews) must only close through an explicit action
+  const keepOpen = (e) => e.preventDefault()
+  const outsideGuards = dismissible
+    ? {}
+    : { onInteractOutside: keepOpen, onPointerDownOutside: keepOpen, onFocusOutside: keepOpen }
 
   // Register open state in overlayStore to coordinate hiding bottom navigation
   useEffect(() => {
@@ -80,9 +88,10 @@ export function ResponsiveDialog({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false} dismissible={dismissible}>
         {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
         <DrawerContent
+          {...outsideGuards}
           className={cn(
             'flex max-h-[calc(var(--vvh,100dvh)-env(safe-area-inset-top)-12px)] flex-col',
             className,
@@ -118,6 +127,7 @@ export function ResponsiveDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
+        {...outsideGuards}
         className={cn(
           'flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg',
           className,

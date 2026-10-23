@@ -37,8 +37,8 @@ export function useRecordPayment() {
       notify.success(
         i18n.t('utang:paymentRecordedTitle'),
         i18n.t('utang:paymentRecordedDetail', {
-          amount: formatCurrency(res.data.payment.amount),
-          balance: formatCurrency(res.data.new_balance),
+          amount: formatCurrency(res?.data?.payment?.amount ?? 0),
+          balance: formatCurrency(res?.data?.new_balance ?? 0),
         }),
       )
     },

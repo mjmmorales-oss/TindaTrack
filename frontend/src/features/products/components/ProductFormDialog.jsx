@@ -186,11 +186,13 @@ export function ProductFormDialog({
         sizeBytes: resized.sizeBytes,
         source,
       })
-      setValue('image_url', resized.dataUrl, { shouldValidate: true })
+      // The photo travels as a file (pendingImage); a data URL in image_url broke the
+      // 2048-char rule and silently blocked Save
+      setValue('image_url', '', { shouldDirty: true, shouldValidate: true })
       setImageRemoved(false)
       setImageError(false)
     } catch (err) {
-      notify.error('Failed to process image: ' + err.message)
+      notify.error(t('products:imageOptimizeError', 'Could not process photo.'), err?.message)
     } finally {
       setIsOptimizingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -261,6 +263,14 @@ export function ProductFormDialog({
             t('products:barcodeRegisteredDesc', { name: res.local_product.name }),
           )
           return
+        }
+
+        // A deleted product used this barcode; saving creates a new product (codes were freed on delete).
+        if (res?.archived_product && !isEdit) {
+          notify.info(
+            t('products:archivedBarcodeHintTitle', 'Barcode from a deleted product'),
+            t('products:archivedBarcodeHint', { name: res.archived_product.name }),
+          )
         }
 
         // 2. Catalog found hit
@@ -390,7 +400,7 @@ export function ProductFormDialog({
         price: Number(values.price),
         cost_price: Number(values.cost_price || 0),
         stock_quantity: Number(values.stock_quantity || 0),
-        reorder_level: Number(values.reorder_level || 10),
+        reorder_level: Number(values.reorder_level ?? 10),
         barcode: values.barcode ? Barcode.normalize(values.barcode) : null,
         brand: values.brand?.trim() || null,
         size: values.size?.trim() || null,
@@ -420,13 +430,19 @@ export function ProductFormDialog({
         savedProduct = res.data
       }
 
-      // If user selected a new photo, upload it as a binary file to the database
+      // If user selected a new photo, upload it as a binary file to the database.
+      // The product is already saved: a failed upload must not keep the dialog in
+      // create mode (pressing Save again made a duplicate product)
       if (pendingImage && savedProduct?.id) {
-        await uploadImageMutation.mutateAsync({
-          id: savedProduct.id,
-          file: pendingImage.file,
-          source: pendingImage.source || 'upload',
-        })
+        try {
+          await uploadImageMutation.mutateAsync({
+            id: savedProduct.id,
+            file: pendingImage.file,
+            source: pendingImage.source || 'upload',
+          })
+        } catch {
+          notify.warning(t('products:savedWithoutPhoto'), t('products:savedWithoutPhotoDesc'))
+        }
       }
 
       onSuccess?.()
@@ -436,6 +452,12 @@ export function ProductFormDialog({
         visibleFields: Object.keys(DEFAULT_PRODUCT),
       })
     }
+  }
+
+  // Never fail silently: some fields (photo URL, advanced) can be collapsed out of view
+  const onInvalid = (formErrors) => {
+    if (formErrors.image_url) setShowUrlInput(true)
+    notify.error(t('errors:validationCheckFields'), Object.keys(formErrors).join(', '))
   }
 
   return (
@@ -495,7 +517,7 @@ export function ProductFormDialog({
           </div>
         }
       >
-        <form id="product-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form id="product-form" onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
           {/* Duplicate Barcode Warning */}
           {localDuplicate && (
             <Alert variant="destructive" className="py-2.5">

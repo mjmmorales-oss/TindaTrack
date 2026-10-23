@@ -11,6 +11,7 @@ import { productService } from '@/services/productService'
 import { scannerService } from '@/services/scannerService'
 import { notify } from '@/lib/notify'
 import i18n from '@/i18n'
+import { hasApiSession } from '@/lib/api'
 
 export const productKeys = {
   all: ['products'],
@@ -36,13 +37,14 @@ export function useUnknownBarcodes() {
   )
 }
 
-export function useProducts(params = {}) {
+export function useProducts(params = {}, { enabled = true } = {}) {
   const contextClient = useContext(QueryClientContext)
   return useQuery(
     {
       queryKey: productKeys.list(params),
       queryFn: () => productService.list(params),
       placeholderData: keepPreviousData,
+      enabled: enabled && hasApiSession(),
     },
     contextClient ? undefined : fallbackQueryClient,
   )
@@ -114,6 +116,27 @@ export function useDeleteProduct() {
     },
     onError: (err) => {
       notify.error(err.message || i18n.t('products:deleteError'))
+    },
+  })
+}
+
+export function useRestoreProduct() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productService.restore(id),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      const barcodeLost = res?.barcode_restored === false && !res?.data?.barcode
+      notify.success(
+        i18n.t('products:restoredSuccess', { name: res?.data?.name || '' }),
+        barcodeLost ? i18n.t('products:restoredBarcodeTaken') : undefined,
+      )
+    },
+    onError: (err) => {
+      notify.error(err.message || i18n.t('products:restoreError'))
     },
   })
 }

@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:lan": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web:lan\"",
-    "dev:api": "cd backend && php artisan serve",
+    "dev:api": "cd backend && cross-env PHP_CLI_SERVER_WORKERS=4 php artisan serve",
     "dev:web": "npm --prefix frontend run dev",
     "dev:web:lan": "npm --prefix frontend run dev:lan",
     "dev:order": "php -S 127.0.0.1:8080 -t ordering-system",
@@ -19,10 +19,13 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:mobile": "node frontend/scripts/check-mobile.mjs",
     "check:pwa": "node scripts/check-pwa.mjs",
+    "check-routes": "node scripts/check-routes.mjs",
+    "check:routes": "node scripts/check-routes.mjs",
     "gen:demo-art": "npm --prefix frontend run gen:demo-art",
     "gen:icons": "npm --prefix frontend run gen:icons"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "cross-env": "^10.1.0"
   }
 }

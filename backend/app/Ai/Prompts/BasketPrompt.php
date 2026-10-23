@@ -4,7 +4,7 @@ namespace App\Ai\Prompts;
 
 class BasketPrompt
 {
-    public const VERSION = 'basket-v1';
+    public const VERSION = 'basket-v2';
 
     /**
      * Builds the text prompt given a catalog array.
@@ -13,28 +13,37 @@ class BasketPrompt
      */
     public static function build(array $catalog): string
     {
+        // basket-v2: id|name|unit only (fewer prompt tokens). The category is added only to
+        // tell apart products that share a name.
+        $nameCounts = [];
+        foreach ($catalog as $p) {
+            $key = mb_strtolower(trim((string) ($p['name'] ?? '')));
+            $nameCounts[$key] = ($nameCounts[$key] ?? 0) + 1;
+        }
+
         $catalogLines = [];
         foreach ($catalog as $p) {
             $id = $p['id'] ?? '';
-            $name = $p['name'] ?? '';
-            $size = $p['size'] ?? ($p['unit'] ?? '');
+            $name = trim((string) ($p['name'] ?? ''));
+            $unit = $p['unit'] ?? ($p['size'] ?? '');
+            $line = "{$id}|{$name}|{$unit}";
             $category = $p['category'] ?? ($p['category_name'] ?? '');
-            $catalogLines[] = "{$id}|{$name}|{$size}|{$category}";
+            if ($category !== '' && ($nameCounts[mb_strtolower($name)] ?? 0) > 1) {
+                $line .= " ({$category})";
+            }
+            $catalogLines[] = $line;
         }
 
         $catalogText = implode("\n", $catalogLines);
 
         return <<<PROMPT
 You are a cashier assistant for a Philippine sari-sari store.
-Identify every sellable item visible in this basket photo.
-Count identical items carefully, including partially visible ones.
-Match each item ONLY to a product_id from the provided catalog.
+List every sellable item in this basket photo and count identical items (include partly visible ones).
+Use ONLY a product_id from the catalog below; never invent ids.
 If unsure or not in the catalog, put it in `unmatched` with a short label.
-Never invent product_ids.
-Return `box_2d` as [ymin, xmin, ymax, xmax] normalized 0–1000 for each item group.
-confidence is 0–1.
+box_2d = [ymin, xmin, ymax, xmax], 0–1000, one per item group. confidence 0–1.
 
-Store Catalog (Format: id|name|size|category):
+Catalog (id|name|unit):
 {$catalogText}
 PROMPT;
     }

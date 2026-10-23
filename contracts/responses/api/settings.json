@@ -1,0 +1,28 @@
+{
+    "data": {
+        "address": "string",
+        "ai_enabled": "boolean",
+        "ai_research_mode": "boolean",
+        "ai_save_scan_images": "boolean",
+        "auto_capture_basket": "boolean",
+        "auto_capture_sensitivity": "string",
+        "auto_capture_stockin": "boolean",
+        "contact_number": "string",
+        "created_at": "string",
+        "currency": "string",
+        "default_reorder_level": "number",
+        "id": "number",
+        "low_stock_threshold": "number",
+        "low_stock_threshold_percent": "number",
+        "owner_name": "null",
+        "phone": "string",
+        "receipt_footer": "string",
+        "receipt_header": "string",
+        "show_cashier_name": "boolean",
+        "store_name": "string",
+        "store_tagline": "string",
+        "timezone": "string",
+        "updated_at": "string",
+        "visual_search_enabled": "boolean"
+    }
+}

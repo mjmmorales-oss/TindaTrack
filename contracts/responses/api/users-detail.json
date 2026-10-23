@@ -1,0 +1,17 @@
+{
+    "data": {
+        "created_at": "string",
+        "deleted_at": "null",
+        "email": "string",
+        "id": "number",
+        "is_active": "boolean",
+        "last_login_at": "null",
+        "must_change_password": "boolean",
+        "name": "string",
+        "phone": "null",
+        "role": "string",
+        "role_label": "string",
+        "sales_count": "number",
+        "sales_total_today": "number"
+    }
+}

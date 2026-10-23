@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   BadgeCheck,
   ChartColumn,
@@ -7,6 +8,7 @@ import {
   Moon,
   ReceiptText,
   Settings,
+  Smartphone,
   Sun,
   Tags,
   UserCog,
@@ -30,6 +32,7 @@ import { useOverlayStore } from '@/stores/overlayStore'
 import { getAvatarUrl, getInitials } from '@/lib/avatar'
 
 export function MoreSheet({ open, onOpenChange }) {
+  const { t } = useTranslation(['nav'])
   const { user, logout } = useAuth()
   const { can } = usePermissions()
   const { theme, setTheme } = useTheme()
@@ -55,43 +58,43 @@ export function MoreSheet({ open, onOpenChange }) {
 
   const moreLinks = [
     {
-      title: 'Sales History',
+      title: t('nav:salesHistory'),
       path: '/sales',
       icon: ReceiptText,
       visible: true,
     },
     {
-      title: 'Categories',
+      title: t('nav:categories'),
       path: '/categories',
       icon: Tags,
       visible: can('categories.manage'),
     },
     {
-      title: 'Stock & Inventory',
+      title: t('nav:stockInventory'),
       path: '/inventory',
       icon: Warehouse,
       visible: can('inventory.adjust'),
     },
     {
-      title: 'Customers',
+      title: t('nav:customers'),
       path: '/customers',
       icon: Users,
       visible: can('customers.view'),
     },
     {
-      title: 'Reports & Analytics',
+      title: t('nav:reportsAnalytics'),
       path: '/reports',
       icon: ChartColumn,
       visible: can('reports.view'),
     },
     {
-      title: 'Staff Accounts',
+      title: t('nav:staffAccounts'),
       path: '/staff',
       icon: UserCog,
       visible: can('staff.manage'),
     },
     {
-      title: 'Store Settings',
+      title: t('nav:storeSettings'),
       path: '/settings',
       icon: Settings,
       visible: can('settings.manage'),
@@ -106,7 +109,7 @@ export function MoreSheet({ open, onOpenChange }) {
       >
         <SheetHeader className="pb-2 text-left">
           <SheetTitle className="text-base font-semibold">
-            TindaTrack Menu
+            {t('nav:menuTitle')}
           </SheetTitle>
         </SheetHeader>
 
@@ -128,7 +131,7 @@ export function MoreSheet({ open, onOpenChange }) {
             variant={user.role === 'owner' ? 'default' : 'secondary'}
             className="text-[10px] font-bold uppercase"
           >
-            {user.role}
+            {user.role === 'owner' ? t('nav:storeOwner') : t('nav:cashier')}
           </Badge>
         </div>
 
@@ -152,6 +155,16 @@ export function MoreSheet({ open, onOpenChange }) {
             })}
         </div>
 
+        {/* Phones only (this sheet is md:hidden): pair this phone with the laptop's POS */}
+        <Link
+          to="/scan"
+          onClick={() => onOpenChange(false)}
+          className="border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 mt-1 flex min-h-11 items-center gap-2.5 rounded-lg border p-3 text-sm font-medium transition-colors"
+        >
+          <Smartphone className="text-primary h-4 w-4 shrink-0" />
+          <span className="truncate">{t('nav:usePhoneAsScanner')}</span>
+        </Link>
+
         <Separator className="my-3" />
 
         <div className="space-y-2">
@@ -162,7 +175,7 @@ export function MoreSheet({ open, onOpenChange }) {
           >
             <span className="flex items-center gap-2.5">
               <BadgeCheck className="text-muted-foreground h-4 w-4" />
-              Account & Security
+              {t('nav:accountSecurity')}
             </span>
           </Link>
 
@@ -177,10 +190,10 @@ export function MoreSheet({ open, onOpenChange }) {
               ) : (
                 <Moon className="text-muted-foreground h-4 w-4" />
               )}
-              Appearance
+              {t('nav:theme')}
             </span>
-            <span className="text-muted-foreground text-xs capitalize">
-              {theme}
+            <span className="text-muted-foreground text-xs">
+              {theme === 'dark' ? t('nav:themeDark') : theme === 'light' ? t('nav:themeLight') : t('nav:themeSystem')}
             </span>
           </button>
 
@@ -190,7 +203,7 @@ export function MoreSheet({ open, onOpenChange }) {
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {t('nav:logout')}
           </Button>
         </div>
       </SheetContent>

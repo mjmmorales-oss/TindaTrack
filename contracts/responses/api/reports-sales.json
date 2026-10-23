@@ -1,0 +1,23 @@
+{
+    "data": {
+        "series": [
+            {
+                "cash": "number",
+                "cost": "number",
+                "gross_profit": "number",
+                "period": "string",
+                "sales": "number",
+                "transactions": "number",
+                "utang": "number"
+            }
+        ],
+        "summary": {
+            "profit_margin": "number",
+            "total_cash": "number",
+            "total_gross_profit": "number",
+            "total_sales": "number",
+            "total_transactions": "number",
+            "total_utang": "number"
+        }
+    }
+}

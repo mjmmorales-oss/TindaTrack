@@ -24,7 +24,7 @@ import { useSale, useVoidSale } from '@/features/sales/hooks/useSales'
 import { useSettings } from '@/features/settings/hooks/useSettings'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatCurrency } from '@/lib/format'
 
 export function SaleDetailPage() {
   const { id } = useParams()
@@ -298,7 +298,7 @@ export function SaleDetailPage() {
                     </div>
                     <div className="flex justify-between text-[10px] text-muted-foreground">
                       <span>
-                        {item.quantity} × ₱{Number(item.unit_price).toFixed(2)}
+                        {item.quantity} × {formatCurrency(item.unit_price)}
                       </span>
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export function SaleDetailPage() {
                           {item.quantity}
                         </td>
                         <td className="py-2.5 text-right text-muted-foreground">
-                          ₱{Number(item.unit_price).toFixed(2)}
+                          {formatCurrency(item.unit_price)}
                         </td>
                         <td className="py-2.5 text-right font-medium text-foreground">
                           <Money amount={item.subtotal} size="xs" />

@@ -166,7 +166,7 @@ describe('AiProductReviewTable (v2.1.0 G4 & G8)', () => {
 
     // Banner displays Already in catalog & Looks like
     expect(screen.getAllByText(/Already in catalog/i)[0]).toBeInTheDocument()
-    expect(screen.getAllByText(/Looks like:/i)[0]).toBeInTheDocument()
+    expect(screen.getAllByText(/Already in catalog/i)[0].textContent).toMatch(/looks like|mukhang/i)
 
     // Restock button is present and triggers restock callback
     const restockBtn = screen.getAllByText(/Add stock instead/i)[0]

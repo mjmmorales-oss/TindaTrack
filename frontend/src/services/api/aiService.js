@@ -3,6 +3,38 @@ import {
   normalizeBasketResult,
   normalizeProductScanResult,
 } from '@/lib/aiContract.js'
+import { toImageBlob } from '@/lib/imagePrep.js'
+import { AI_REQUEST_TIMEOUT_MS } from '@/config/ai.js'
+
+/**
+ * Posts a photo and measures the browser side: upload_ms (until the last byte left,
+ * via onUploadProgress) and total_ms (until the answer arrived).
+ */
+async function postPhoto(url, formData, { signal, onStage } = {}) {
+  const startedAt = performance.now()
+  let uploadedAt = null
+  onStage?.('uploading')
+  const res = await apiClient.post(url, formData, {
+    signal,
+    timeout: AI_REQUEST_TIMEOUT_MS,
+    onUploadProgress: (e) => {
+      if (e.total && e.loaded >= e.total && uploadedAt === null) {
+        uploadedAt = performance.now()
+        onStage?.('reading')
+      }
+    },
+  })
+  onStage?.('matching')
+  const doneAt = performance.now()
+  const data = res?.data ?? res
+  return {
+    ...data,
+    client_timings: {
+      upload_ms: Math.round((uploadedAt ?? doneAt) - startedAt),
+      total_ms: Math.round(doneAt - startedAt),
+    },
+  }
+}
 
 export const aiService = {
   /**
@@ -20,20 +52,17 @@ export const aiService = {
    * @param {object} [options]
    * @param {AbortSignal} [options.signal]
    * @param {'auto'|'manual'|'upload'} [options.capture_mode]
+   * @param {(stage: 'uploading'|'reading'|'matching') => void} [options.onStage]
    */
   async basketScan(imageBlob, options = {}) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'basket.jpg')
+    formData.append('image', image, 'basket.jpg')
     if (options.capture_mode) {
       formData.append('capture_mode', options.capture_mode)
     }
 
-    const res = await apiClient.post('/ai/basket-scan', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      signal: options.signal,
-    })
-    const data = res?.data ?? res
-    return normalizeBasketResult(data)
+    return normalizeBasketResult(await postPhoto('/ai/basket-scan', formData, options))
   },
 
   /**
@@ -46,18 +75,14 @@ export const aiService = {
    * @param {Array<object>} [options.categories]
    */
   async productScan(imageBlob, options = {}) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'products.jpg')
+    formData.append('image', image, 'products.jpg')
     if (options.capture_mode) {
       formData.append('capture_mode', options.capture_mode)
     }
 
-    const res = await apiClient.post('/ai/product-scan', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      signal: options.signal,
-    })
-    const data = res?.data ?? res
-    return normalizeProductScanResult(data, options.categories || [])
+    return normalizeProductScanResult(await postPhoto('/ai/product-scan', formData, options), options.categories || [])
   },
 
   /**
@@ -66,8 +91,10 @@ export const aiService = {
    * @param {string|number} scanId
    * @param {Array<object>|{ lines: Array<object> }} payload
    */
-  async sendFeedback(scanId, payload) {
+  async sendFeedback(scanId, payload, options = {}) {
     const body = Array.isArray(payload) ? { lines: payload } : (payload?.lines ? payload : { lines: [] })
+    // The browser only knows the upload time after the scan returned
+    if (Number.isFinite(options.upload_ms)) body.upload_ms = Math.max(0, Math.round(options.upload_ms))
     const res = await apiClient.post(`/ai/scans/${scanId}/feedback`, body)
     return res?.data ?? res
   },
@@ -78,7 +105,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async listScans(params = {}) {
-    const res = await apiClient.get('/ai/scans', { params })
+    const res = await apiClient.get('/ai/scans', params)
     return res?.data ?? res
   },
 
@@ -89,9 +116,7 @@ export const aiService = {
    * @returns {Promise<Blob>}
    */
   async getScanImage(scanId) {
-    const res = await apiClient.get(`/ai/scans/${scanId}/image`, {
-      responseType: 'blob',
-    })
+    const res = await apiClient.get(`/ai/scans/${scanId}/image`, {}, { responseType: 'blob' })
     return res?.data ?? res
   },
 
@@ -101,7 +126,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async getMetrics(params = {}) {
-    const res = await apiClient.get('/ai/metrics', { params })
+    const res = await apiClient.get('/ai/metrics', params)
     return res?.data ?? res
   },
 
@@ -111,10 +136,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async exportMetricsCsv(params = {}) {
-    const res = await apiClient.get('/ai/metrics/export.csv', {
-      params,
-      responseType: 'text',
-    })
+    const res = await apiClient.get('/ai/metrics/export.csv', params, { responseType: 'text' })
     return res?.data ?? res
   },
 
@@ -124,7 +146,7 @@ export const aiService = {
    * @param {object} [params]
    */
   async getEmbeddings(params = {}) {
-    const res = await apiClient.get('/products/embeddings', { params })
+    const res = await apiClient.get('/products/embeddings', params)
     return res?.data ?? res
   },
 
@@ -164,8 +186,8 @@ export const aiService = {
    * GET /api/ai/experiments
    */
   async getExperiments() {
-    const res = await apiClient.get('/ai/experiments')
-    return res?.data ?? res
+    // Keep Laravel's { data } envelope: AiExperimentsTab (and the mock) read res.data
+    return apiClient.get('/ai/experiments')
   },
 
   /**
@@ -174,8 +196,7 @@ export const aiService = {
    * @param {number|string} id
    */
   async getExperiment(id) {
-    const res = await apiClient.get(`/ai/experiments/${id}`)
-    return res?.data ?? res
+    return apiClient.get(`/ai/experiments/${id}`)
   },
 
   /**
@@ -196,12 +217,13 @@ export const aiService = {
    * @param {Array<object>} groundTruth
    */
   async runExperimentCase(id, imageBlob, groundTruth) {
+    const image = await toImageBlob(imageBlob)
     const formData = new FormData()
-    formData.append('image', imageBlob, 'experiment_case.jpg')
+    formData.append('image', image, 'experiment_case.jpg')
     formData.append('ground_truth', JSON.stringify(groundTruth))
 
     const res = await apiClient.post(`/ai/experiments/${id}/cases`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: AI_REQUEST_TIMEOUT_MS,
     })
     return res?.data ?? res
   },
@@ -222,9 +244,7 @@ export const aiService = {
    * @param {number|string} id
    */
   async exportExperimentCsv(id) {
-    const res = await apiClient.get(`/ai/experiments/${id}/export.csv`, {
-      responseType: 'text',
-    })
+    const res = await apiClient.get(`/ai/experiments/${id}/export.csv`, {}, { responseType: 'text' })
     return res?.data ?? res
   },
 }

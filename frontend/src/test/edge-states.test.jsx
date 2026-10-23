@@ -55,7 +55,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /products with empty database gracefully', async () => {
       renderRoute('/products')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Mga Paninda at Imbentaryo|Products & Inventory/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
       const emptyMatches = await screen.findAllByText(/Walang nakatalang paninda|Walang nahanap na datos|Walang nahanap|No products registered yet|No matching products/i, {}, { timeout: 12000 })
@@ -64,7 +64,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /categories with empty database gracefully', async () => {
       renderRoute('/categories')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Mga Kategorya|Product Categories|Categories/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
       const emptyMatches = await screen.findAllByText(/Walang nakatalang kategorya|Walang Kategorya|Walang nahanap|No categories/i, {}, { timeout: 12000 })
@@ -73,7 +73,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /sales with empty database gracefully', async () => {
       renderRoute('/sales')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Kasaysayan ng Benta|Sales History|Recent Sales/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
       const emptyMatches = await screen.findAllByText(/Walang naitalang transaksyon|Walang nahanap|No sales recorded|No sales records/i, {}, { timeout: 12000 })
@@ -82,7 +82,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /customers with empty database gracefully', async () => {
       renderRoute('/customers')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Direktoryo ng Suki|Customer Directory|Customers/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
       const emptyMatches = await screen.findAllByText(/Walang nakatalang suki|Walang nahanap|No customers/i, {}, { timeout: 12000 })
@@ -91,7 +91,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /utang with empty database gracefully', async () => {
       renderRoute('/utang')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Talaan ng Utang|Credit Ledger|Utang/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
       const emptyMatches = await screen.findAllByText(/Walang May Utang|Walang nahanap|No outstanding|No debtors|No active debtors|Walang aktibong may utang/i, {}, { timeout: 12000 })
@@ -100,7 +100,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /staff with empty database gracefully', async () => {
       renderRoute('/staff')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Mga Account ng Staff at Kahera|Staff & Cashier/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
       const emptyMatches = await screen.findAllByText(/Walang naitalang staff|Walang nahanap|No staff/i, {}, { timeout: 12000 })
@@ -109,7 +109,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders /inventory with empty database gracefully', async () => {
       renderRoute('/inventory')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const titleMatches = await screen.findAllByText(/Pamamahala sa Imbentaryo|Inventory & Stock Management|Stock & Inventory/i, {}, { timeout: 12000 })
       expect(titleMatches.length).toBeGreaterThan(0)
     })
@@ -118,7 +118,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
   describe('Non-existent Entity Detail Routes (404 handling)', () => {
     it('renders friendly not-found ErrorState on /products/999999', async () => {
       renderRoute('/products/999999')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const errorMatches = await screen.findAllByText(/Hindi mahanap ang produkto|Product not found/i, {}, { timeout: 12000 })
       expect(errorMatches.length).toBeGreaterThan(0)
       expect(screen.getByRole('button', { name: /Subukan Muli|Bumalik|Try Again|Go Back|Back|Retry/i })).toBeInTheDocument()
@@ -126,7 +126,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders friendly not-found ErrorState on /sales/999999', async () => {
       renderRoute('/sales/999999')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const errorMatches = await screen.findAllByText(/Hindi mahanap ang resibo|Sale not found|Receipt not found/i, {}, { timeout: 12000 })
       expect(errorMatches.length).toBeGreaterThan(0)
       expect(screen.getByRole('button', { name: /Subukan Muli|Bumalik|Try Again|Go Back|Back|Retry/i })).toBeInTheDocument()
@@ -134,7 +134,7 @@ describe('Edge States and Resilient Error Boundaries', () => {
 
     it('renders friendly not-found ErrorState on /customers/999999', async () => {
       renderRoute('/customers/999999')
-      expect(screen.queryByText(/Unexpected Error/i)).toBeNull()
+      expect(screen.queryByText(/Unexpected Error|Something went wrong|May nagkaproblema/i)).toBeNull()
       const errorMatches = await screen.findAllByText(/Hindi mahanap ang suki|Customer not found/i, {}, { timeout: 12000 })
       expect(errorMatches.length).toBeGreaterThan(0)
       expect(screen.getByRole('button', { name: /Subukan Muli|Bumalik|Try Again|Go Back|Back|Retry/i })).toBeInTheDocument()

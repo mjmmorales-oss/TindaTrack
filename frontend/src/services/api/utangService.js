@@ -22,10 +22,17 @@ export const utangService = {
    * POST /api/utang-payments
    */
   async recordPayment(customerId, data = {}) {
-    return apiClient.post('/utang-payments', {
+    const res = await apiClient.post('/utang-payments', {
       customer_id: customerId,
       ...data,
     })
+    // Laravel returns the UtangPaymentResource (with the updated customer); the UI and the
+    // mock use { payment, new_balance }
+    const payment = res?.data ?? res
+    return {
+      data: { payment, new_balance: payment?.customer?.credit_balance ?? null },
+      message: res?.message,
+    }
   },
 }
 

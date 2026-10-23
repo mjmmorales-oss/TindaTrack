@@ -17,7 +17,7 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:6,1')->name('password.email');
 
     Route::post('/reset-password', [NewPasswordController::class, 'store'])
-        ->name('password.store');
+        ->middleware('throttle:6,1')->name('password.store');
 });
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])

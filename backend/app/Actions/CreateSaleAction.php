@@ -45,6 +45,8 @@ class CreateSaleAction
             $itemsToCreate = [];
             $totalAmount = 0.0;
             $stockErrors = [];
+            // The same product on two lines must not oversell: check the running total per product
+            $requestedQty = [];
 
             foreach ($cartItems as $index => $item) {
                 $prodId = $item['product_id'] ?? null;
@@ -70,7 +72,8 @@ class CreateSaleAction
                     continue;
                 }
 
-                if ($qty > $prod->stock_quantity) {
+                $requestedQty[$prodId] = ($requestedQty[$prodId] ?? 0) + $qty;
+                if ($requestedQty[$prodId] > $prod->stock_quantity) {
                     $stockErrors["items.{$index}.quantity"] = [
                         "Insufficient stock for '{$prod->name}'. Current stock: {$prod->stock_quantity}.",
                     ];
@@ -122,6 +125,14 @@ class CreateSaleAction
                 if (! $customer) {
                     throw ValidationException::withMessages([
                         'customer_id' => ['Customer not found.'],
+                    ]);
+                }
+
+                if ($amountPaid > $totalAmount) {
+                    throw ValidationException::withMessages([
+                        'amount_paid' => [
+                            "The amount paid now (₱{$amountPaid}) can't be more than the total (₱{$totalAmount}). Use a cash sale instead.",
+                        ],
                     ]);
                 }
 

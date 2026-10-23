@@ -1,0 +1,12 @@
+{
+    "data": {
+        "daily_limit": "number",
+        "daily_remaining": "number",
+        "daily_scans_today": "number",
+        "demo": "boolean",
+        "enabled": "boolean",
+        "model": "string",
+        "per_minute": "number",
+        "provider": "string"
+    }
+}

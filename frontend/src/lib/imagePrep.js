@@ -74,6 +74,50 @@ function canvasToBlob(canvas, mimeType, quality) {
 }
 
 /**
+ * Error thrown when something that is not an image (e.g. a canvas mistaken
+ * for a Blob, a data URL, undefined) is about to be sent to the server.
+ */
+export class InvalidImageError extends Error {
+  constructor(message = 'The photo could not be read. Please take or upload it again.') {
+    super(message)
+    this.name = 'InvalidImageError'
+  }
+}
+
+/**
+ * Normalizes an image input into a real Blob suitable for `FormData.append`.
+ * Accepts a Blob/File (returned as-is) or an HTMLCanvasElement / OffscreenCanvas
+ * (encoded as JPEG). Anything else is rejected with an InvalidImageError —
+ * real browsers throw "parameter 2 is not of type 'Blob'" otherwise.
+ *
+ * @param {Blob|File|HTMLCanvasElement|OffscreenCanvas} input
+ * @param {{ mimeType?: string, quality?: number }} [options]
+ * @returns {Promise<Blob>}
+ */
+export async function toImageBlob(input, options = {}) {
+  const { mimeType = 'image/jpeg', quality = 0.9 } = options
+
+  if (typeof Blob !== 'undefined' && input instanceof Blob) {
+    if (input.size === 0) throw new InvalidImageError()
+    return input
+  }
+
+  if (typeof HTMLCanvasElement !== 'undefined' && input instanceof HTMLCanvasElement) {
+    const blob = await canvasToBlob(input, mimeType, quality)
+    if (!(blob instanceof Blob)) throw new InvalidImageError()
+    return blob
+  }
+
+  if (typeof OffscreenCanvas !== 'undefined' && input instanceof OffscreenCanvas) {
+    const blob = await input.convertToBlob({ type: mimeType, quality })
+    if (!(blob instanceof Blob)) throw new InvalidImageError()
+    return blob
+  }
+
+  throw new InvalidImageError()
+}
+
+/**
  * Loads an image from a Blob/File or Canvas into a drawable element,
  * honouring EXIF orientation via createImageBitmap if available.
  *
@@ -238,5 +282,30 @@ export async function cropBox(source, box_2d, marginPct = 6) {
     return await canvasToBlob(canvas, 'image/webp', 0.85)
   } catch {
     return await canvasToBlob(canvas, 'image/jpeg', 0.85)
+  }
+}
+
+/** Preview the phone sends with an AI basket (the server rejects > 100 KB). */
+export const BASKET_PREVIEW_OPTIONS = Object.freeze({ maxDim: 480, maxBytes: 60 * 1024, initialQuality: 0.6 })
+
+/**
+ * Small JPEG data URL of a photo, for the POS review's photo pane.
+ * Resolves null when the photo can't be shrunk under the limit.
+ *
+ * @param {Blob|HTMLCanvasElement} source
+ * @returns {Promise<string|null>}
+ */
+export async function makePreviewDataUrl(source) {
+  try {
+    const blob = await prepareForAi(source, BASKET_PREVIEW_OPTIONS)
+    if (!(blob instanceof Blob) || blob.size > BASKET_PREVIEW_OPTIONS.maxBytes) return null
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return null
   }
 }

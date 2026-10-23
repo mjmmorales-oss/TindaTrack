@@ -156,8 +156,9 @@ describe('B10: PairPhoneDialog Component', () => {
       expect(screen.getByText('ABCD-9876')).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/Open your phone camera|Buksan ang camera ng iyong phone/i)).toBeInTheDocument()
-    expect(screen.getByText(/Scan the QR code above|I-scan ang QR code sa itaas/i)).toBeInTheDocument()
+    expect(screen.getByText(/On the phone, open TindaTrack|Sa phone, buksan ang TindaTrack/i)).toBeInTheDocument()
+    expect(screen.getByText(/Scan pairing QR|I-scan ang pairing QR/i)).toBeInTheDocument()
+    expect(screen.getByTestId('pairing-wait-status')).toHaveTextContent(/Waiting for phone|Hinihintay/i)
   })
 
   it('shows localhost warning when origin is localhost', async () => {
@@ -436,9 +437,9 @@ describe('B10: PhoneScannerPage (/scan)', () => {
     fireEvent.submit(form)
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Session ended|Natapos na ang session/i),
-      ).toBeInTheDocument()
+      // Message in the alert + the "Session ended" status chip
+      expect(screen.getAllByText(/Session ended|Natapos na ang session|Natapos ang session/i).length).toBeGreaterThan(0)
+      expect(screen.getByTestId('pairing-status')).toHaveTextContent(/Session ended|Natapos ang session/i)
     })
   })
 

@@ -83,7 +83,7 @@ Follow these exact steps in order on deploy day:
 | `SESSION_DRIVER` | `database` | Session storage driver |
 | `MAIL_MAILER` | `log` | Mail driver (`log` for local/school demo, or `smtp` for production) |
 | `LOG_CHANNEL` | `stderr` | Standard container logging channel for Railway stdout/stderr |
-| `SANCTUM_EXPIRATION` | `10080` | Sanctum API bearer token lifespan in minutes (10080 = 7 days) |
+| `SANCTUM_EXPIRATION` | `10080` | Sanctum API bearer token lifespan in minutes (10080 = 7 days). `SANCTUM_TOKEN_EXPIRATION` is accepted as an alias |
 | `PRODUCT_LOOKUP_ENABLED` | `true` | Enables Open Food Facts live barcode lookup |
 | `OFF_USER_AGENT` | `"TindaTrack/2.0 (contact@yourstore.ph)"` | Required identifying user-agent for Open Food Facts API terms |
 | `DEMO_HISTORY_DAYS` | `60` | Days of demo transaction history generated during seeding |
@@ -91,15 +91,26 @@ Follow these exact steps in order on deploy day:
 | `DEMO_CASHIER_PASSWORD` | `your-secure-production-cashier-password` | Initial password for `cashier@tindatrack.test` created by production seeder |
 | `DEMO_OWNER_EMAIL` | `owner@tindatrack.test` | *(optional)* Override email for the primary owner account |
 | `DEMO_CASHIER_EMAIL` | `cashier@tindatrack.test` | *(optional)* Override email for the cashier account |
+| `DEMO_PASSWORD` | `password` | *(optional, local only)* Password for seeded demo accounts when the specific `DEMO_*_PASSWORD` is unset |
+| `DEMO_RESET_PASSWORDS` | `false` | *(optional)* `true` re-applies the demo passwords on every seed (keep `false` in production) |
+| `DEMO_BASE_DATE` | `2026-10-07 18:00:00` | *(optional)* Anchor date for generated demo sales history |
+| `ALLOW_OWNER_REGISTRATION` | `false` | Public `/register` is closed once an owner exists (single store). Set `true` only to create another owner on purpose |
+| `OFF_TIMEOUT` | `5` | *(optional)* Open Food Facts lookup timeout in seconds |
 | `AI_PROVIDER` | `gemini` | AI vision provider: `gemini` or `mock` (defaults to `gemini` if API key is set) |
 | `GEMINI_API_KEY` | `AIzaSy...` | Google AI Studio Gemini API key. Obtained free from [aistudio.google.com](https://aistudio.google.com) |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Primary Gemini multimodal vision model |
 | `GEMINI_FALLBACK_MODEL` | `gemini-1.5-flash` | Automated fallback model if primary model experiences 429 rate limit or 404 |
 | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta` | Google Generative Language REST API base endpoint |
-| `AI_TIMEOUT` | `30` | Request timeout in seconds for AI vision scans |
+| `AI_TIMEOUT` | `30` | Timeout in seconds for `php artisan ai:ping` |
+| `AI_PRIMARY_TIMEOUT` | `12` | Seconds before a basket/stock-in scan gives up on the primary model and tries the fallback |
+| `AI_FALLBACK_TIMEOUT` | `15` | Timeout for the fallback model (worst case ≈ 27 s) |
+| `GEMINI_THINKING_LEVEL` | `minimal` | Gemini "thinking" (most of the latency for a match-to-list task). `minimal`/`low`/`medium`/`high`/`none`; 3.x models get `thinking_level`, 2.x get `thinking_budget` (minimal = 0). Rejected fields are dropped automatically |
+| `GEMINI_MEDIA_RESOLUTION` | `MEDIA_RESOLUTION_MEDIUM` | Image token budget (`…_LOW`/`…_MEDIUM`/`…_HIGH`/`none`) |
+| `AI_MAX_OUTPUT_TOKENS` | `2048` | Output cap per scan |
+| `AI_CATALOG_FOCUS_THRESHOLD` | `150` | Above this many active products, the basket prompt lists only products with a photo or a sale in the last 30 days (max 400) |
 | `AI_PER_USER_PER_MINUTE` | `6` | Rate limiting guardrail to stay within Google AI Studio free tier limits |
 | `AI_DAILY_LIMIT` | `500` | Maximum daily scan requests across the store |
-| `AI_MAX_IMAGE_KB` | `1500` | Maximum uploaded image payload size for AI analysis in KB |
+| `AI_MAX_IMAGE_KB` | `5120` | Maximum uploaded image payload size for AI analysis in KB (keep above the SPA's 600 KB AI photo cap) |
 | `AI_SAVE_SCAN_IMAGES` | `false` | Whether to persist raw scan photos in storage |
 | `BROADCAST_CONNECTION` | `log` | *(optional)* `pusher` if using Pusher WebSockets; otherwise defaults to polling |
 | `PUSHER_APP_ID` | `your-app-id` | *(optional)* Pusher App ID if `BROADCAST_CONNECTION=pusher` |
@@ -111,12 +122,17 @@ Follow these exact steps in order on deploy day:
 
 | Variable | Example Value | Description |
 |---|---|---|
-| `VITE_API_URL` | `https://tindatrack-api.up.railway.app/api` | Railway backend API endpoint (must end in `/api`) |
+| `VITE_API_URL` | `https://tindatrack-api.up.railway.app/api` | Railway backend API endpoint (must end in `/api`; a trailing slash is tolerated) |
 | `VITE_DATA_SOURCE` | `api` | Production data driver (`api` connects to Laravel backend; `mock` is offline demo fallback) |
 | `VITE_REALTIME_DRIVER` | `polling` | Realtime sync driver (`polling` requires zero background workers; `pusher` for WebSockets) |
 | `VITE_PUBLIC_APP_URL` | `https://tindatrack.vercel.app` | Public canonical origin of the SPA, used in phone scanner QR code generation |
 | `VITE_PUSHER_APP_KEY` | *(optional)* | Pusher public key if `VITE_REALTIME_DRIVER=pusher` |
 | `VITE_PUSHER_APP_CLUSTER` | *(optional)* | Pusher cluster (e.g. `ap1`) |
+| `VITE_APP_NAME` | `TindaTrack` | *(optional)* App name in the UI |
+| `VITE_SHOW_DEMO_ACCOUNTS` | `false` | *(optional)* Show the demo-account picker on the login page (dev builds only) |
+| `VITE_MOCK_LATENCY` | `400` | *(optional, mock mode only)* Simulated latency in ms |
+
+Dev-only (never set on Vercel): `VITE_DEV_HTTPS=true` is set by `npm run dev:lan` (HTTPS + listen on Wi-Fi), and `VITE_DEV_LAN_ORIGIN` is injected by `vite.config.js` at dev-server start so the phone-pairing QR uses the laptop's Wi-Fi address. `scripts/check-prod-bundle.mjs` fails a production build made with `VITE_DATA_SOURCE=mock`.
 
 ---
 
@@ -129,6 +145,7 @@ Before deploying, you can verify your build locally using production-like comman
 cd backend
 composer install --no-dev --dry-run
 php artisan config:cache && php artisan route:cache
+php artisan tindatrack:check --production   # warns: APP_KEY, APP_DEBUG, FRONTEND_URL, Gemini key, storage link, upload limits
 php artisan config:clear && php artisan route:clear
 
 # 2. Frontend production build and bundle audit
@@ -136,6 +153,7 @@ cd ../frontend
 npm run build
 node ../scripts/check-prod-bundle.mjs
 node ../scripts/check-pwa.mjs
+node ../scripts/check-routes.mjs   # every SPA call has a Laravel route + method
 ```
 
 ---
