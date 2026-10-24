@@ -191,3 +191,13 @@ test('order lookup returns the stored result or 404', function () {
     $this->getJson('/api/integration/v1/orders/ORD-NOPE', $this->headers)
         ->assertNotFound();
 });
+
+test('integration API calls do not use up the staff login rate limit', function () {
+    // TindaOrder and the staff browser share one IP on the demo laptop.
+    foreach (range(1, 12) as $i) {
+        $this->getJson('/api/integration/v1/products', $this->headers)->assertOk();
+    }
+
+    $this->postJson('/api/login', ['email' => 'nobody@example.test', 'password' => 'wrong-password'])
+        ->assertStatus(422);
+});

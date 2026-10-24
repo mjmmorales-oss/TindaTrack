@@ -52,7 +52,9 @@ Route::prefix('scanner')->group(function () {
 // Auth: X-API-Key header (machine-to-machine), JSON in / JSON out
 // ==========================================
 Route::prefix('integration/v1')
-    ->middleware(['integration.key', 'throttle:120,1'])
+    // Own limiter key ("integration"): without it these calls share the per-IP counter
+    // with /api/login (throttle:10,1), so TindaOrder traffic locked staff out (429).
+    ->middleware(['integration.key', 'throttle:120,1,integration'])
     ->controller(InventoryIntegrationController::class)
     ->group(function () {
         Route::get('/products', 'products');
