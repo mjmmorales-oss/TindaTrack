@@ -17,7 +17,7 @@ $log->execute([$order['order_id']]);
 $exchange = $log->fetch();
 ?>
 <?php if ($flash): ?>
-    <div class="alert alert-<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div>
+    <div class="alert alert-<?= e($flash['type']) ?> dev-only"><?= e($flash['message']) ?></div>
 <?php endif; ?>
 
 <div class="page-head">
@@ -33,19 +33,33 @@ $exchange = $log->fetch();
     <?php endif; ?>
 </div>
 
+<?php
+$customerMessages = [
+    'confirmed' => ['ok', 'Thank you! Your order is confirmed.', 'Your items are reserved. Pick them up at Tindahan ni Aling Nena and pay at the counter.'],
+    'rejected' => ['bad', 'Sorry, we cannot fill this order.', 'Some items do not have enough stock right now. Nothing was reserved, so you can change the quantities and order again.'],
+    'pending' => ['warn', 'We received your order.', 'The store system is busy right now, so your order is saved and waiting. Tap "Retry sending to inventory" in a moment.'],
+    'failed' => ['bad', 'Your order could not be sent.', 'Please ask the store for help.'],
+];
+[$tone, $headline, $detail] = $customerMessages[$order['status']] ?? ['warn', 'Order saved.', ''];
+?>
+<div class="notice notice-<?= e($tone) ?> cust-only">
+    <strong><?= e($headline) ?></strong>
+    <span><?= e($detail) ?></span>
+</div>
+
 <div class="card">
-    <h2>Result from System 2 (TindaTrack)</h2>
-    <p><?= e($order['api_message'] ?? '—') ?> <span class="muted">(HTTP <?= e($order['api_http_status'] ?? '—') ?>)</span></p>
+    <h2><span class="dev-only">Result from System 2 (TindaTrack)</span><span class="cust-only">Your items</span></h2>
+    <p class="dev-only"><?= e($order['api_message'] ?? '—') ?> <span class="muted">(HTTP <?= e($order['api_http_status'] ?? '—') ?>)</span></p>
     <table>
-        <thead><tr><th>Product ID</th><th>Product</th><th>Qty ordered</th><th>Unit price</th><th>Available quantity</th><th>Stock status</th></tr></thead>
+        <thead><tr><th class="dev-only">Product ID</th><th>Product</th><th>Qty ordered</th><th>Unit price</th><th class="dev-only">Available quantity</th><th><span class="dev-only">Stock status</span><span class="cust-only">Availability</span></th></tr></thead>
         <tbody>
         <?php foreach ($order['items'] as $i): ?>
             <tr>
-                <td><?= e($i['product_id']) ?></td>
-                <td><?= e($i['product_name'] ?? '—') ?></td>
+                <td class="dev-only"><?= e($i['product_id']) ?></td>
+                <td><?= e($i['product_name'] ?? (is_customer_view() ? 'Item #' . $i['product_id'] : '—')) ?></td>
                 <td><?= e($i['quantity']) ?></td>
                 <td><?= $i['unit_price'] !== null ? peso($i['unit_price']) : '—' ?></td>
-                <td><?= e($i['available_quantity'] ?? '—') ?></td>
+                <td class="dev-only"><?= e($i['available_quantity'] ?? '—') ?></td>
                 <td><?= $i['stock_status'] ? status_badge($i['stock_status']) : '—' ?></td>
             </tr>
         <?php endforeach; ?>
@@ -57,7 +71,7 @@ $exchange = $log->fetch();
 </div>
 
 <?php if ($exchange): ?>
-<div class="exchange">
+<div class="exchange dev-only">
     <div class="card">
         <h2>① Request sent by System 1</h2>
         <p class="mono"><?= e($exchange['method']) ?> <?= e($exchange['endpoint']) ?><br>Content-Type: application/json<br>X-API-Key: ••••••••</p>

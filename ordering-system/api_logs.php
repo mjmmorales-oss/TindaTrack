@@ -6,13 +6,14 @@ $logs = db()->query('SELECT * FROM api_logs ORDER BY id DESC LIMIT 50')->fetchAl
 
 render_header('Integration Log', 'api_logs.php');
 ?>
-<h1>Integration Log</h1>
-<p class="muted">Every request System 1 sent to System 2, with the exact JSON exchanged (latest 50). Stored in <code>tindaorder.api_logs</code>.</p>
+<div class="alert alert-success cust-only">This page is for developers. <a href="<?= e(view_url('developer')) ?>">Switch to Developer view</a> to see every API call.</div>
+<h1 class="dev-only">Integration Log</h1>
+<p class="muted dev-only">Every request System 1 sent to System 2, with the exact JSON exchanged (latest 50). Stored in <code>tindaorder.api_logs</code>.</p>
 <?php if (! $logs): ?>
-    <div class="card"><p>No API calls yet.</p></div>
+    <div class="card dev-only"><p>No API calls yet.</p></div>
 <?php endif; ?>
 <?php foreach ($logs as $l): ?>
-    <details class="card log">
+    <details class="card log dev-only">
         <summary>
             <span class="method method-<?= e(strtolower($l['method'])) ?>"><?= e($l['method']) ?></span>
             <code><?= e(parse_url($l['endpoint'], PHP_URL_PATH) . (parse_url($l['endpoint'], PHP_URL_QUERY) ? '?' . parse_url($l['endpoint'], PHP_URL_QUERY) : '')) ?></code>

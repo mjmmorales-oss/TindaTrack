@@ -97,3 +97,36 @@ pre { background: var(--code-bg); color: var(--code-ink); padding: 12px; border-
     .hero-meta { align-items: flex-start; }
     table { font-size: 13px; }
 }
+
+/* ---------- Customer view / Developer view ----------
+   Same pages, two audiences. Developer view (default) shows the integration evidence;
+   customer view hides it and shows a cleaner shop. */
+.view-customer .dev-only { display: none !important; }
+.view-developer .cust-only { display: none !important; }
+
+.view-switch { display: inline-flex; background: rgba(255,255,255,.14); border-radius: 999px; padding: 3px; gap: 2px; }
+.view-switch a { color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; opacity: .85; white-space: nowrap; }
+.view-switch a.on { background: #fff; color: var(--brand); opacity: 1; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.view-switch a:hover { opacity: 1; }
+
+.view-customer .hero { background: linear-gradient(120deg, #4f46e5 0%, #7c3aed 100%); border: 0; color: #fff; padding: 26px 24px; }
+.view-customer .hero h1 { font-size: 30px; }
+.view-customer .hero p { color: rgba(255,255,255,.9); max-width: 560px; }
+.view-customer .hero .pill-ok { background: rgba(255,255,255,.95); }
+.view-customer .product { transition: box-shadow .15s ease, transform .15s ease; }
+.view-customer .product:hover { box-shadow: 0 10px 24px rgba(29,27,46,.10); transform: translateY(-2px); }
+.view-customer .product h3 { font-size: 17px; }
+
+.thumb { height: 96px; border-radius: 12px; display: grid; place-items: center; font-size: 30px; font-weight: 800; letter-spacing: 1px;
+    color: hsl(var(--hue) 55% 28%); background: linear-gradient(135deg, hsl(var(--hue) 85% 92%), hsl(calc(var(--hue) + 40) 80% 84%)); margin-bottom: 6px; }
+
+.notice { display: flex; flex-direction: column; gap: 4px; border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; font-size: 15px; }
+.notice strong { font-size: 18px; }
+.notice-ok { background: var(--ok-bg); color: var(--ok-ink); }
+.notice-warn { background: var(--warn-bg); color: var(--warn-ink); }
+.notice-bad { background: var(--bad-bg); color: var(--bad-ink); }
+
+@media (max-width: 760px) {
+    .view-switch { width: 100%; justify-content: center; }
+}
+.view-customer main.wrap { padding-top: 20px; }

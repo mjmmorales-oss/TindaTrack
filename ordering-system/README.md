@@ -46,3 +46,12 @@ TindaOrder (System 1)  ── HTTP + JSON + X-API-Key ──▶  TindaTrack Inve
 | Rejected | 409 insufficient stock, or 422 invalid data |
 | Pending | System 2 could not be reached — use **Retry sending** |
 | Failed | 401 wrong API key, or another unexpected error |
+
+## Customer view and Developer view
+
+Every page has a switch in the top bar:
+
+- **Customer view** – what a shopper sees: a clean shop with friendly order messages. The integration details are hidden.
+- **Developer view** (default) – the same pages plus the integration evidence: the API status line (`GET /products · HTTP 200`), product IDs/SKUs, the JSON request and response of each order, HTTP status codes, the JSON/XML stock check and the Integration Log.
+
+The choice is kept in a cookie (`to_view`) and can be set with `?view=customer` or `?view=developer` on any page. Both views call System 2 in exactly the same way; only the presentation differs.

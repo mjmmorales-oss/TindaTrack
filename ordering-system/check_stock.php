@@ -32,7 +32,7 @@ render_header('Stock check', 'index.php');
     <div class="alert alert-error"><?= e($json['data']['message'] ?? ('HTTP ' . $json['status'] . ' ' . ($json['error'] ?? ''))) ?></div>
 <?php endif; ?>
 
-<div class="exchange">
+<div class="exchange dev-only">
     <div class="card">
         <h2>JSON response</h2>
         <p class="mono">GET /products/<?= e($productId) ?>/stock · HTTP <?= e($json['status']) ?></p>
